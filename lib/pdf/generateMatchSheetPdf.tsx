@@ -3,6 +3,57 @@ import { Document, Page, Text, View, Image, StyleSheet, renderToBuffer } from "@
 
 const LOGO_PATH = path.join(process.cwd(), "public", "images", "logoligadeinvierno.png")
 
+// ─── Layout calculator ────────────────────────────────────────────────────────
+
+// A4 portrait: 842pt. paddingTop 30 + paddingBottom 30 = 782pt usable.
+// Empirically derived: fixed sections consume ~532pt, leaving 250pt for
+// player rows + obs box. A 15pt buffer guards against react-pdf micro-rounding.
+// Overflow threshold with default row height (20pt): N=9 exactly fills the page.
+function computeLayout(playerCount: number): {
+  playerPaddingV: number
+  playerFontSize: number
+  orderBoxSize: number
+  obsBoxHeight: number
+} {
+  // All values empirically calibrated against react-pdf A4 rendering.
+  // FIXED ≈ 540pt (header + info + roster titles/headers + results + obs-title + sigs + footer).
+  // Available = 782 - 540 = 242pt for player rows + obs box.
+  // rowH values measured via binary search on the dev server.
+  const AVAILABLE = 242
+
+  let playerPaddingV: number
+  let playerFontSize: number
+  let orderBoxSize: number
+  let rowH: number   // empirical row height for this tier
+  let obsMax: number // max safe obs for this tier (at worst-case N)
+
+  if (playerCount <= 8) {
+    // Comfortable: original default settings
+    playerPaddingV = 5; playerFontSize = 8.5; orderBoxSize = 13
+    rowH = 21;  obsMax = 70
+  } else if (playerCount <= 10) {
+    // Slightly tighter
+    playerPaddingV = 3; playerFontSize = 8; orderBoxSize = 13
+    rowH = 17;  obsMax = 60
+  } else if (playerCount <= 14) {
+    // Compact
+    playerPaddingV = 2; playerFontSize = 8; orderBoxSize = 11
+    rowH = 14.5; obsMax = 35
+  } else if (playerCount <= 18) {
+    // Very compact
+    playerPaddingV = 1; playerFontSize = 7.5; orderBoxSize = 10
+    rowH = 12;  obsMax = 25
+  } else {
+    // Maximum density (19-20): no vertical padding
+    playerPaddingV = 0; playerFontSize = 7.5; orderBoxSize = 10
+    rowH = 10.5; obsMax = 25
+  }
+
+  const obsBoxHeight = Math.max(15, Math.min(obsMax, AVAILABLE - playerCount * rowH))
+
+  return { playerPaddingV, playerFontSize, orderBoxSize, obsBoxHeight }
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface MatchSheetData {
@@ -130,8 +181,6 @@ const s = StyleSheet.create({
   playerNum: { width: 16, fontSize: 8, color: MUTED },
   playerName: { flex: 1, fontSize: 8.5, color: TEXT },
   playerOrderBox: {
-    width: 13,
-    height: 13,
     borderWidth: 1,
     borderColor: BORDER,
     marginLeft: 6,
@@ -336,6 +385,9 @@ function MatchSheetDocument({ data }: { data: MatchSheetData }) {
   const dateDisplay = data.date ? formatDateAR(data.date) : "—"
   const timeDisplay = data.time ? `${data.time} hs` : "—"
 
+  const playerCount = Math.max(data.homePlayers.length, data.awayPlayers.length)
+  const { playerPaddingV, playerFontSize, orderBoxSize, obsBoxHeight } = computeLayout(playerCount)
+
   return (
     <Document
       title={`Planilla — ${data.homeTeam} vs ${data.awayTeam}`}
@@ -391,10 +443,10 @@ function MatchSheetDocument({ data }: { data: MatchSheetData }) {
                 <Text style={s.rosterEmpty}>Sin jugadores registrados</Text>
               ) : (
                 data.homePlayers.map((name, i) => (
-                  <View key={i} style={s.playerRow}>
-                    <Text style={s.playerNum}>{i + 1}.</Text>
-                    <Text style={s.playerName}>{name}</Text>
-                    <View style={s.playerOrderBox} />
+                  <View key={i} style={[s.playerRow, { paddingVertical: playerPaddingV }]}>
+                    <Text style={[s.playerNum, { fontSize: playerFontSize }]}>{i + 1}.</Text>
+                    <Text style={[s.playerName, { fontSize: playerFontSize }]}>{name}</Text>
+                    <View style={[s.playerOrderBox, { width: orderBoxSize, height: orderBoxSize }]} />
                   </View>
                 ))
               )}
@@ -407,10 +459,10 @@ function MatchSheetDocument({ data }: { data: MatchSheetData }) {
                 <Text style={s.rosterEmpty}>Sin jugadores registrados</Text>
               ) : (
                 data.awayPlayers.map((name, i) => (
-                  <View key={i} style={s.playerRow}>
-                    <Text style={s.playerNum}>{i + 1}.</Text>
-                    <Text style={s.playerName}>{name}</Text>
-                    <View style={s.playerOrderBox} />
+                  <View key={i} style={[s.playerRow, { paddingVertical: playerPaddingV }]}>
+                    <Text style={[s.playerNum, { fontSize: playerFontSize }]}>{i + 1}.</Text>
+                    <Text style={[s.playerName, { fontSize: playerFontSize }]}>{name}</Text>
+                    <View style={[s.playerOrderBox, { width: orderBoxSize, height: orderBoxSize }]} />
                   </View>
                 ))
               )}
@@ -470,7 +522,7 @@ function MatchSheetDocument({ data }: { data: MatchSheetData }) {
         {/* ── OBSERVACIONES ── */}
         <View style={s.obsSection}>
           <Text style={s.sectionTitle}>Observaciones</Text>
-          <View style={s.obsBox}>
+          <View style={[s.obsBox, { minHeight: obsBoxHeight }]}>
             <Text style={s.obsPlaceholder}> </Text>
           </View>
         </View>
@@ -511,3 +563,4 @@ function MatchSheetDocument({ data }: { data: MatchSheetData }) {
 export async function generateMatchSheetPdf(data: MatchSheetData): Promise<Buffer> {
   return renderToBuffer(<MatchSheetDocument data={data} />)
 }
+
