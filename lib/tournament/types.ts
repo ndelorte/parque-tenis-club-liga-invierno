@@ -1,3 +1,25 @@
+export interface TournamentRules {
+  courtsPerSeries: number;
+  courtsToWinSeries: number;
+  pointsForWin: number;
+  pointsForLoss: number;
+  pointsForWalkover: number;
+  walkoverCourtsWon: number;
+  walkoverSetsWon: number;
+  walkoverGamesWon: number;
+}
+
+export const DEFAULT_RULES: TournamentRules = {
+  courtsPerSeries: 3,
+  courtsToWinSeries: 2,
+  pointsForWin: 2,
+  pointsForLoss: 1,
+  pointsForWalkover: 0,
+  walkoverCourtsWon: 3,
+  walkoverSetsWon: 6,
+  walkoverGamesWon: 36,
+};
+
 export type SeriesStatus =
   | "scheduled"
   | "rescheduled"
