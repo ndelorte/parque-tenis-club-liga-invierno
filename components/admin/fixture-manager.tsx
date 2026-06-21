@@ -22,10 +22,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { CATEGORIES, LEAGUE, formatDate, type CategoryId } from "@/lib/liga"
+import { mockSeriesCaballerosA } from "@/mock/data"
+import { MatchSheetButton } from "@/components/admin/fixture/MatchSheetButton"
 import { cn } from "@/lib/utils"
 
 type FixtureDraft = {
   id: string
+  seriesId?: string
   round: string
   home: string
   away: string
@@ -35,7 +38,7 @@ type FixtureDraft = {
   originalDate: string
 }
 
-function buildDraft(categoryId: CategoryId): FixtureDraft[] {
+function buildDraftFromLeague(categoryId: CategoryId): FixtureDraft[] {
   return LEAGUE[categoryId].matches.map((m, i) => ({
     id: `${categoryId}-${i}`,
     round: m.round,
@@ -46,6 +49,27 @@ function buildDraft(categoryId: CategoryId): FixtureDraft[] {
     status: m.status,
     originalDate: m.date,
   }))
+}
+
+// Caballeros A uses the proper mock data from mock/data.ts (has player lists and real IDs)
+function buildDraftFromMockSeries(): FixtureDraft[] {
+  return mockSeriesCaballerosA.map((s) => ({
+    id: s.id,
+    seriesId: s.id,
+    round: s.round?.name ?? "",
+    home: s.home_team?.name ?? "",
+    away: s.away_team?.name ?? "",
+    date: s.scheduled_date ?? "",
+    time: s.scheduled_time ?? "20:00",
+    status:
+      s.status === "completed" || s.status === "walkover" ? "played" : "upcoming",
+    originalDate: s.original_scheduled_date ?? s.scheduled_date ?? "",
+  }))
+}
+
+function buildDraft(categoryId: CategoryId): FixtureDraft[] {
+  if (categoryId === "cab-a") return buildDraftFromMockSeries()
+  return buildDraftFromLeague(categoryId)
 }
 
 export function FixtureManager() {
@@ -170,6 +194,8 @@ export function FixtureManager() {
                 </div>
 
                 <div className="flex flex-wrap items-end gap-3">
+                  {m.seriesId && <MatchSheetButton seriesId={m.seriesId} />}
+
                   <div>
                     <Label className="mb-1.5 flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       <CalendarDays className="size-3.5" />
