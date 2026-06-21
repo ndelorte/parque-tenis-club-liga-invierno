@@ -55,7 +55,7 @@ export function Activities() {
                 <div className="mt-6 flex-1" />
                 <Button asChild variant="secondary" className="w-fit">
                   <a
-                    href={waLink(act.waMessage)}
+                    href={waLink(act.waMessage, "waNumber" in act ? act.waNumber : undefined)}
                     target="_blank"
                     rel="noopener noreferrer"
                   >

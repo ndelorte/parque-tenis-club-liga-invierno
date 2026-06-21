@@ -11,16 +11,16 @@ export const CLUB = {
     "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4094.6364414014197!2d-58.24266628780437!3d-34.72724576392108!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95a32e5223b0926f%3A0x468799f47d90418a!2sParque%20Tenis!5e1!3m2!1ses!2sar!4v1782056640642!5m2!1ses!2sar",
 } as const
 
-export function waLink(message: string) {
-  const digits = CLUB.whatsapp.replace(/\D/g, "")
+export function waLink(message: string, number?: string) {
+  const digits = (number ?? CLUB.whatsapp).replace(/\D/g, "")
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
 }
 
 export const NAV_LINKS = [
-  { label: "Actividades", href: "#actividades" },
+  { label: "Actividades", href: "/#actividades" },
   { label: "Liga de Invierno", href: "/liga-invierno" },
-  { label: "Ubicación", href: "#ubicacion" },
-  { label: "Contacto", href: "#contacto" },
+  { label: "Ubicación", href: "/#ubicacion" },
+  { label: "Contacto", href: "/#contacto" },
 ]
 
 export const ACTIVITIES = [
@@ -61,6 +61,7 @@ export const ACTIVITIES = [
       "Competí todo el año en torneos por categorías. Ranking, premios y mucho tenis.",
     image: "/images/torneos y competencia.jpeg",
     points: ["Por categorías", "Ranking del club", "Premios"],
+    waNumber: "+5491134359489",
     waMessage:
       "Hola! Quiero info sobre los torneos y la competencia en Parque Tenis Club.",
   },
