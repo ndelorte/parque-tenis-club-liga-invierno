@@ -52,7 +52,7 @@ export function Hero() {
             variant="outline"
             className="h-13 border-background/40 bg-background/10 px-7 text-base text-background backdrop-blur-sm hover:bg-background/20 hover:text-background"
           >
-            <a href="#liga">
+            <a href="/liga-invierno">
               <Trophy className="size-5" />
               Liga de Invierno
               <ArrowRight className="size-4" />
