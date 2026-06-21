@@ -6,6 +6,10 @@ type TeamRow = Database["public"]["Tables"]["teams"]["Row"]
 type PlayerRow = Database["public"]["Tables"]["players"]["Row"]
 type TeamPlayerRow = Database["public"]["Tables"]["team_players"]["Row"]
 
+type TeamWithPlayersRow = TeamRow & {
+  team_players: (TeamPlayerRow & { players: PlayerRow | null })[]
+}
+
 export async function getTeamsByCategory(categoryId: string): Promise<Team[]> {
   const supabase = await createClient()
 
@@ -28,8 +32,44 @@ export async function getTeamsByCategory(categoryId: string): Promise<Team[]> {
   }))
 }
 
-type TeamWithPlayersRow = TeamRow & {
-  team_players: (TeamPlayerRow & { players: PlayerRow | null })[]
+export async function getTeamsWithPlayersByCategory(
+  categoryId: string,
+): Promise<(Team & { players: (TeamPlayer & { player: Player })[] })[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("teams")
+    .select(`
+      *,
+      team_players(
+        id, player_id, is_captain, active,
+        players(id, first_name, last_name, display_name, active)
+      )
+    `)
+    .eq("category_id", categoryId)
+    .eq("active", true)
+    .order("name")
+
+  if (error || !data) return []
+
+  return (data as unknown as TeamWithPlayersRow[]).map((row) => ({
+    id: row.id,
+    category_id: row.category_id,
+    name: row.name,
+    slug: row.slug,
+    captain_name: row.captain_name ?? undefined,
+    active: row.active,
+    players: row.team_players
+      .filter((tp) => tp.active)
+      .map((tp) => ({
+        id: tp.id,
+        team_id: row.id,
+        player_id: tp.player_id,
+        is_captain: tp.is_captain,
+        active: tp.active,
+        player: tp.players as Player,
+      })),
+  }))
 }
 
 export async function getTeamBySlug(

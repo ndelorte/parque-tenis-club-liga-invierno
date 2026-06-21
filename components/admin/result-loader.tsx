@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useTransition } from "react"
 import {
   Trophy,
   CalendarDays,
@@ -9,6 +9,7 @@ import {
   CircleDot,
   ShieldAlert,
   MapPin,
+  Loader2,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -24,8 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { CATEGORIES, LEAGUE, formatDate, type CategoryId } from "@/lib/liga"
 import { cn } from "@/lib/utils"
+import { saveSeriesResult } from "@/app/actions/liga"
+import type { AdminBundle } from "@/app/admin/page"
+import type { Team, TeamPlayer, Player } from "@/lib/tournament/types"
 
 type Side = "home" | "away"
 
@@ -43,81 +46,86 @@ type SeriesForm = {
   saved: boolean
 }
 
-const RESERVES = ["Suplente A", "Suplente B"]
-
-function rosterOf(categoryId: CategoryId, teamName: string): string[] {
-  const team = LEAGUE[categoryId].teams.find((t) => t.name === teamName)
-  if (!team) return [...RESERVES]
-  return [...team.players, ...RESERVES]
+function emptyForm(): CourtForm {
+  return { homePlayers: ["", ""], awayPlayers: ["", ""], score: "", winner: null, wo: false }
 }
 
-function buildInitialSeries(
-  categoryId: CategoryId,
-  home: string,
-  away: string,
-  courts: (boolean | null)[],
-): SeriesForm {
-  const homeRoster = rosterOf(categoryId, home)
-  const awayRoster = rosterOf(categoryId, away)
-  const mk = (i: number): CourtForm => ({
-    homePlayers: [
-      homeRoster[i % homeRoster.length],
-      homeRoster[(i + 1) % homeRoster.length],
-    ],
-    awayPlayers: [
-      awayRoster[i % awayRoster.length],
-      awayRoster[(i + 1) % awayRoster.length],
-    ],
-    score: "",
-    winner: courts[i] === true ? "home" : courts[i] === false ? "away" : null,
-    wo: false,
-  })
-  return { courts: [mk(0), mk(1), mk(2)], generalWo: null, saved: false }
+function buildInitialForm(): SeriesForm {
+  return {
+    courts: [emptyForm(), emptyForm(), emptyForm()],
+    generalWo: null,
+    saved: false,
+  }
 }
 
-export function ResultLoader() {
-  const [categoryId, setCategoryId] = useState<CategoryId>("cab-a")
+type TeamWithPlayers = Team & { players: (TeamPlayer & { player: Player })[] }
 
-  const rounds = useMemo(() => {
-    const seen = new Map<string, { round: string; date: string }>()
-    for (const m of LEAGUE[categoryId].matches) {
-      if (!seen.has(m.round)) seen.set(m.round, { round: m.round, date: m.date })
-    }
-    return Array.from(seen.values())
-  }, [categoryId])
+function rosterOf(team: TeamWithPlayers): { id: string; name: string }[] {
+  return team.players.map((tp) => ({
+    id: tp.player_id,
+    name: tp.player?.display_name ?? tp.player_id,
+  }))
+}
 
-  const [round, setRound] = useState<string>(rounds[0]?.round ?? "")
+export function ResultLoader({ bundles }: { bundles: AdminBundle[] }) {
+  const [categoryId, setCategoryId] = useState<string>(bundles[0]?.category.id ?? "")
+  const [roundId, setRoundId] = useState<string>("")
+  const [forms, setForms] = useState<Record<string, SeriesForm>>({})
+  const [isPending, startTransition] = useTransition()
+  const [saveError, setSaveError] = useState<string | null>(null)
 
-  const activeRound = rounds.some((r) => r.round === round)
-    ? round
-    : rounds[0]?.round ?? ""
-
-  const series = useMemo(
-    () => LEAGUE[categoryId].matches.filter((m) => m.round === activeRound),
-    [categoryId, activeRound],
+  const activeBundle = useMemo(
+    () => bundles.find((b) => b.category.id === categoryId) ?? bundles[0],
+    [bundles, categoryId],
   )
 
-  const [forms, setForms] = useState<Record<string, SeriesForm>>({})
+  const rounds = useMemo(() => activeBundle?.rounds ?? [], [activeBundle])
 
-  function keyOf(home: string, away: string) {
-    return `${categoryId}|${activeRound}|${home}|${away}`
+  const activeRoundId = rounds.some((r) => r.id === roundId) ? roundId : (rounds[0]?.id ?? "")
+  const activeRound = rounds.find((r) => r.id === activeRoundId)
+
+  function keyOf(seriesId: string) {
+    return `${categoryId}|${seriesId}`
   }
 
-  function getForm(home: string, away: string, courts: (boolean | null)[]) {
-    const k = keyOf(home, away)
-    return forms[k] ?? buildInitialSeries(categoryId, home, away, courts)
+  function getForm(seriesId: string): SeriesForm {
+    return forms[keyOf(seriesId)] ?? buildInitialForm()
   }
 
-  function updateForm(
-    home: string,
-    away: string,
-    courts: (boolean | null)[],
-    updater: (prev: SeriesForm) => SeriesForm,
-  ) {
-    const k = keyOf(home, away)
+  function updateForm(seriesId: string, updater: (prev: SeriesForm) => SeriesForm) {
     setForms((prev) => {
-      const base = prev[k] ?? buildInitialSeries(categoryId, home, away, courts)
-      return { ...prev, [k]: updater(base) }
+      const k = keyOf(seriesId)
+      return { ...prev, [k]: updater(prev[k] ?? buildInitialForm()) }
+    })
+  }
+
+  function handleSave(
+    seriesId: string,
+    homeTeamId: string,
+    awayTeamId: string,
+    form: SeriesForm,
+  ) {
+    setSaveError(null)
+    startTransition(async () => {
+      try {
+        if (form.generalWo !== null) {
+          const winnerId = form.generalWo === "home" ? homeTeamId : awayTeamId
+          await saveSeriesResult(seriesId, activeBundle!.category.id, [], true, winnerId)
+        } else {
+          const courts = form.courts.map((c, i) => ({
+            courtNumber: (i + 1) as 1 | 2 | 3,
+            homePlayers: c.homePlayers as [string, string],
+            awayPlayers: c.awayPlayers as [string, string],
+            score: c.score,
+            winnerId: c.winner === "home" ? homeTeamId : awayTeamId,
+            isWalkover: c.wo,
+          }))
+          await saveSeriesResult(seriesId, activeBundle!.category.id, courts, false)
+        }
+        updateForm(seriesId, (prev) => ({ ...prev, saved: true }))
+      } catch (e) {
+        setSaveError(e instanceof Error ? e.message : "Error al guardar")
+      }
     })
   }
 
@@ -132,15 +140,19 @@ export function ResultLoader() {
             </Label>
             <Select
               value={categoryId}
-              onValueChange={(v) => setCategoryId(v as CategoryId)}
+              onValueChange={(v) => {
+                if (v) setCategoryId(v)
+                setRoundId("")
+                setForms({})
+              }}
             >
               <SelectTrigger className="h-11 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {CATEGORIES.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.label}
+                {bundles.map((b) => (
+                  <SelectItem key={b.category.id} value={b.category.id}>
+                    {b.category.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -152,14 +164,18 @@ export function ResultLoader() {
               <CalendarDays className="size-3.5 text-winter" />
               Fecha
             </Label>
-            <Select value={activeRound} onValueChange={(v) => setRound(v ?? "")}>
+            <Select
+              value={activeRoundId}
+              onValueChange={(v) => setRoundId(v ?? "")}
+            >
               <SelectTrigger className="h-11 w-full">
-                <SelectValue />
+                <SelectValue placeholder="Seleccioná una fecha" />
               </SelectTrigger>
               <SelectContent>
                 {rounds.map((r) => (
-                  <SelectItem key={r.round} value={r.round}>
-                    {r.round} · {formatDate(r.date)}
+                  <SelectItem key={r.id} value={r.id}>
+                    {r.name}
+                    {r.scheduled_date ? ` · ${r.scheduled_date}` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -168,22 +184,45 @@ export function ResultLoader() {
         </CardContent>
       </Card>
 
-      {series.length === 0 && (
+      {saveError && (
+        <p className="text-sm text-destructive">{saveError}</p>
+      )}
+
+      {rounds.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          No hay series para esta fecha.
+          No hay fechas cargadas. Importá el fixture primero.
         </p>
       )}
 
-      {series.map((m) => (
-        <SeriesEditor
-          key={`${m.home}-${m.away}`}
-          categoryId={categoryId}
-          home={m.home}
-          away={m.away}
-          form={getForm(m.home, m.away, m.courts)}
-          onChange={(updater) => updateForm(m.home, m.away, m.courts, updater)}
-        />
-      ))}
+      {activeRound?.series.length === 0 && rounds.length > 0 && (
+        <p className="text-sm text-muted-foreground">No hay series para esta fecha.</p>
+      )}
+
+      {activeRound?.series.map((s) => {
+        const homeTeam = activeBundle?.teamsWithPlayers.find((t) => t.id === s.home_team_id)
+        const awayTeam = activeBundle?.teamsWithPlayers.find((t) => t.id === s.away_team_id)
+        const homeRoster = homeTeam ? rosterOf(homeTeam) : []
+        const awayRoster = awayTeam ? rosterOf(awayTeam) : []
+        const homeName = s.home_team?.name ?? s.home_team_id
+        const awayName = s.away_team?.name ?? s.away_team_id
+        const form = getForm(s.id)
+
+        return (
+          <SeriesEditor
+            key={s.id}
+            home={homeName}
+            away={awayName}
+            homeTeamId={s.home_team_id}
+            awayTeamId={s.away_team_id}
+            homeRoster={homeRoster}
+            awayRoster={awayRoster}
+            form={form}
+            isPending={isPending}
+            onChange={(updater) => updateForm(s.id, updater)}
+            onSave={(form) => handleSave(s.id, s.home_team_id, s.away_team_id, form)}
+          />
+        )
+      })}
     </div>
   )
 }
@@ -195,25 +234,32 @@ function previewScore(form: SeriesForm) {
 }
 
 function SeriesEditor({
-  categoryId,
   home,
   away,
+  homeTeamId,
+  awayTeamId,
+  homeRoster,
+  awayRoster,
   form,
+  isPending,
   onChange,
+  onSave,
 }: {
-  categoryId: CategoryId
   home: string
   away: string
+  homeTeamId: string
+  awayTeamId: string
+  homeRoster: { id: string; name: string }[]
+  awayRoster: { id: string; name: string }[]
   form: SeriesForm
+  isPending: boolean
   onChange: (updater: (prev: SeriesForm) => SeriesForm) => void
+  onSave: (form: SeriesForm) => void
 }) {
-  const homeRoster = rosterOf(categoryId, home)
-  const awayRoster = rosterOf(categoryId, away)
   const { home: homeScore, away: awayScore } = previewScore(form)
   const decided = homeScore >= 2 || awayScore >= 2
-  const allSet = form.courts.every((c) => c.winner !== null)
-  const winner =
-    homeScore > awayScore ? home : awayScore > homeScore ? away : null
+  const allSet = form.generalWo !== null || form.courts.every((c) => c.winner !== null)
+  const winner = homeScore > awayScore ? home : awayScore > homeScore ? away : null
 
   function setCourt(i: number, patch: Partial<CourtForm>) {
     onChange((prev) => {
@@ -232,7 +278,7 @@ function SeriesEditor({
         ...c,
         winner: side,
         wo: true,
-        score: "W.O.",
+        score: "6-0 6-0",
       })) as SeriesForm["courts"]
       return { ...prev, generalWo: side, courts, saved: false }
     })
@@ -258,10 +304,7 @@ function SeriesEditor({
               Lista para guardar
             </Badge>
           ) : (
-            <Badge
-              variant="outline"
-              className="gap-1 border-border text-muted-foreground"
-            >
+            <Badge variant="outline" className="gap-1 border-border text-muted-foreground">
               <CircleDot className="size-3" />
               En carga
             </Badge>
@@ -273,14 +316,20 @@ function SeriesEditor({
             Resultado general
           </span>
           <span className="font-heading text-xl font-extrabold text-foreground">
-            {homeScore}
-            <span className="px-1 text-muted-foreground">–</span>
-            {awayScore}
+            {form.generalWo !== null
+              ? "WO"
+              : `${homeScore} – ${awayScore}`}
           </span>
-          {decided && winner && (
+          {decided && winner && form.generalWo === null && (
             <Badge className="ml-auto gap-1 bg-primary/10 text-primary hover:bg-primary/10">
               <Trophy className="size-3" />
               Gana {winner}
+            </Badge>
+          )}
+          {form.generalWo !== null && (
+            <Badge className="ml-auto gap-1 bg-accent/10 text-accent hover:bg-accent/10">
+              <ShieldAlert className="size-3" />
+              WO general — Gana {form.generalWo === "home" ? home : away}
             </Badge>
           )}
         </div>
@@ -312,96 +361,101 @@ function SeriesEditor({
           </div>
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-3">
-          {form.courts.map((court, i) => (
-            <div
-              key={i}
-              className="space-y-3 rounded-xl border border-border border-l-4 border-l-winter bg-card p-3"
-            >
-              <div className="flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  <MapPin className="size-3.5 text-winter" />
-                  Cancha {i + 1}
-                </span>
-                <label className="flex items-center gap-1.5 text-xs font-medium text-foreground">
-                  <Checkbox
-                    checked={court.wo}
-                    onCheckedChange={(v) =>
-                      setCourt(i, {
-                        wo: v === true,
-                        score: v === true ? "W.O." : "",
-                      })
-                    }
-                  />
-                  W.O.
-                </label>
-              </div>
+        {form.generalWo === null && (
+          <div className="grid gap-3 lg:grid-cols-3">
+            {form.courts.map((court, i) => (
+              <div
+                key={i}
+                className="space-y-3 rounded-xl border border-border border-l-4 border-l-winter bg-card p-3"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <MapPin className="size-3.5 text-winter" />
+                    Cancha {i + 1}
+                  </span>
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                    <Checkbox
+                      checked={court.wo}
+                      onCheckedChange={(v) =>
+                        setCourt(i, { wo: v === true, score: v === true ? "6-0 6-0" : "" })
+                      }
+                    />
+                    W.O.
+                  </label>
+                </div>
 
-              <PlayerPair
-                label={home}
-                tone="primary"
-                roster={homeRoster}
-                value={court.homePlayers}
-                onChange={(p) => setCourt(i, { homePlayers: p })}
-              />
-              <PlayerPair
-                label={away}
-                tone="accent"
-                roster={awayRoster}
-                value={court.awayPlayers}
-                onChange={(p) => setCourt(i, { awayPlayers: p })}
-              />
-
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Resultado</Label>
-                <Input
-                  value={court.score}
-                  placeholder="6-4 6-3"
-                  disabled={court.wo}
-                  onChange={(e) => setCourt(i, { score: e.target.value })}
-                  className="h-9"
+                <PlayerPair
+                  label={home}
+                  tone="primary"
+                  roster={homeRoster}
+                  value={court.homePlayers}
+                  onChange={(p) => setCourt(i, { homePlayers: p })}
                 />
-              </div>
+                <PlayerPair
+                  label={away}
+                  tone="accent"
+                  roster={awayRoster}
+                  value={court.awayPlayers}
+                  onChange={(p) => setCourt(i, { awayPlayers: p })}
+                />
 
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={court.winner === "home" ? "default" : "outline"}
-                  onClick={() => setCourt(i, { winner: "home" })}
-                  className="text-xs"
-                >
-                  Gana {home}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={court.winner === "away" ? "default" : "outline"}
-                  onClick={() => setCourt(i, { winner: "away" })}
-                  className="text-xs"
-                >
-                  Gana {away}
-                </Button>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Resultado</Label>
+                  <Input
+                    value={court.score}
+                    placeholder="6-4 6-3"
+                    disabled={court.wo}
+                    onChange={(e) => setCourt(i, { score: e.target.value })}
+                    className="h-9"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={court.winner === "home" ? "default" : "outline"}
+                    onClick={() => setCourt(i, { winner: "home" })}
+                    className="text-xs"
+                  >
+                    Gana {home}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={court.winner === "away" ? "default" : "outline"}
+                    onClick={() => setCourt(i, { winner: "away" })}
+                    className="text-xs"
+                  >
+                    Gana {away}
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         <Separator />
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            {allSet
-              ? "Las 3 canchas tienen ganador."
-              : `Faltan ${form.courts.filter((c) => c.winner === null).length} cancha(s) por definir.`}
+            {form.generalWo !== null
+              ? "WO general configurado."
+              : allSet
+                ? "Las 3 canchas tienen ganador."
+                : `Faltan ${form.courts.filter((c) => c.winner === null).length} cancha(s) por definir.`}
           </p>
           <Button
             type="button"
-            disabled={!allSet}
-            onClick={() => onChange((prev) => ({ ...prev, saved: true }))}
+            disabled={!allSet || isPending}
+            onClick={() => onSave(form)}
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            <Save className="size-4" />
+            {isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Save className="size-4" />
+            )}
             Guardar serie
           </Button>
         </div>
@@ -419,7 +473,7 @@ function PlayerPair({
 }: {
   label: string
   tone: "primary" | "accent"
-  roster: string[]
+  roster: { id: string; name: string }[]
   value: [string, string]
   onChange: (v: [string, string]) => void
 }) {
@@ -428,9 +482,7 @@ function PlayerPair({
       <span
         className={cn(
           "inline-block rounded-md px-2 py-0.5 text-xs font-semibold",
-          tone === "primary"
-            ? "bg-primary/10 text-primary"
-            : "bg-accent/15 text-accent",
+          tone === "primary" ? "bg-primary/10 text-primary" : "bg-accent/15 text-accent",
         )}
       >
         {label}
@@ -447,12 +499,12 @@ function PlayerPair({
             }}
           >
             <SelectTrigger className="h-9 w-full">
-              <SelectValue />
+              <SelectValue placeholder="Jugador" />
             </SelectTrigger>
             <SelectContent>
               {roster.map((p) => (
-                <SelectItem key={p} value={p}>
-                  {p}
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
                 </SelectItem>
               ))}
             </SelectContent>

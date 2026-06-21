@@ -1,66 +1,66 @@
-import { notFound } from "next/navigation";
-import type { Metadata } from "next";
-import {
-  mockCategories,
-  mockTournament,
-  getCategoryBySlug,
-  getStandingsByCategory,
-  getSeriesByCategory,
-  getTeamsByCategory,
-} from "@/mock/data";
-import { TournamentHeader } from "@/components/liga/TournamentHeader";
-import { StandingsTable } from "@/components/liga/StandingsTable";
-import { FixtureList } from "@/components/liga/FixtureList";
-import { TeamCard } from "@/components/liga/TeamCard";
-import { CategoryTabs } from "@/components/liga/CategoryTabs";
+import { notFound } from "next/navigation"
+import type { Metadata } from "next"
+import { getCategoryBySlug, getCategoriesForTournament } from "@/lib/data/categories"
+import { getActiveTournament } from "@/lib/data/tournaments"
+import { getTeamsByCategory } from "@/lib/data/teams"
+import { getStandingsSnapshot } from "@/lib/data/standings"
+import { getRoundsWithSeries } from "@/lib/data/series"
+import { TournamentHeader } from "@/components/liga/TournamentHeader"
+import { StandingsTable } from "@/components/liga/StandingsTable"
+import { FixtureList } from "@/components/liga/FixtureList"
+import { TeamCard } from "@/components/liga/TeamCard"
+import { CategoryTabs } from "@/components/liga/CategoryTabs"
+
+export const dynamic = "force-dynamic"
 
 interface Props {
-  params: Promise<{ slug: string }>;
-}
-
-export function generateStaticParams() {
-  return mockCategories.map((c) => ({ slug: c.slug }));
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
-  const category = getCategoryBySlug(slug);
-  if (!category) return {};
+  const { slug } = await params
+  const category = await getCategoryBySlug(slug)
+  if (!category) return {}
   return {
     title: `${category.name} | Liga de Invierno | Parque Tenis Club`,
     description: `Tabla de posiciones, fixture y equipos de la categoría ${category.name}.`,
-  };
+  }
 }
 
 export default async function CategoriaPage({ params }: Props) {
-  const { slug } = await params;
-  const category = getCategoryBySlug(slug);
-  if (!category) notFound();
+  const { slug } = await params
+  const category = await getCategoryBySlug(slug)
+  if (!category) notFound()
 
-  const standings = getStandingsByCategory(slug);
-  const series = getSeriesByCategory(slug);
-  const teams = getTeamsByCategory(slug);
+  const [tournament, categories, teams, standings, rounds] = await Promise.all([
+    getActiveTournament(),
+    getCategoriesForTournament(category.tournament_id),
+    getTeamsByCategory(category.id),
+    getStandingsSnapshot(category.id),
+    getRoundsWithSeries(category.id),
+  ])
+
+  const series = rounds.flatMap((r) =>
+    r.series.map((s) => ({ ...s, round: r })),
+  )
 
   return (
     <div>
-      <TournamentHeader tournament={mockTournament} />
-      <CategoryTabs categories={mockCategories} />
+      {tournament && <TournamentHeader tournament={tournament} />}
+      <CategoryTabs categories={categories} />
 
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-10">
         <h2 className="text-xl font-bold text-gray-900">{category.name}</h2>
 
-        {/* Tabla de posiciones */}
         <section>
           <h3 className="font-semibold text-gray-800 mb-3">Tabla de posiciones</h3>
           <StandingsTable standings={standings} />
         </section>
 
-        {/* Fixture y resultados */}
         <section>
           <FixtureList series={series} />
         </section>
 
-        {/* Equipos */}
         {teams.length > 0 && (
           <section>
             <h3 className="font-semibold text-gray-800 mb-3">Equipos</h3>
@@ -73,5 +73,5 @@ export default async function CategoriaPage({ params }: Props) {
         )}
       </div>
     </div>
-  );
+  )
 }

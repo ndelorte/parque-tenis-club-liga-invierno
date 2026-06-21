@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useTransition } from "react"
 import {
   CalendarDays,
   Clock,
@@ -8,6 +8,8 @@ import {
   Check,
   RotateCcw,
   CalendarClock,
+  Loader2,
+  Trophy,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -21,102 +23,131 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { CATEGORIES, LEAGUE, formatDate, type CategoryId } from "@/lib/liga"
-import { mockSeriesCaballerosA } from "@/mock/data"
-import { MatchSheetButton } from "@/components/admin/fixture/MatchSheetButton"
 import { cn } from "@/lib/utils"
+import { saveReschedule } from "@/app/actions/liga"
+import { MatchSheetButton } from "@/components/admin/fixture/MatchSheetButton"
+import type { AdminBundle } from "@/app/admin/page"
 
-type FixtureDraft = {
-  id: string
-  seriesId?: string
-  round: string
+type Draft = {
+  seriesId: string
+  roundName: string
   home: string
   away: string
   date: string
   time: string
-  status: "played" | "upcoming"
   originalDate: string
+  originalTime: string
+  status: string
+  dirty: boolean
+  saved: boolean
 }
 
-function buildDraftFromLeague(categoryId: CategoryId): FixtureDraft[] {
-  return LEAGUE[categoryId].matches.map((m, i) => ({
-    id: `${categoryId}-${i}`,
-    round: m.round,
-    home: m.home,
-    away: m.away,
-    date: m.date,
-    time: "09:00",
-    status: m.status,
-    originalDate: m.date,
-  }))
+function formatDate(iso: string) {
+  if (!iso) return "—"
+  const d = new Date(iso + "T00:00:00")
+  return d.toLocaleDateString("es-AR", {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+  })
 }
 
-// Caballeros A uses the proper mock data from mock/data.ts (has player lists and real IDs)
-function buildDraftFromMockSeries(): FixtureDraft[] {
-  return mockSeriesCaballerosA.map((s) => ({
-    id: s.id,
-    seriesId: s.id,
-    round: s.round?.name ?? "",
-    home: s.home_team?.name ?? "",
-    away: s.away_team?.name ?? "",
-    date: s.scheduled_date ?? "",
-    time: s.scheduled_time ?? "20:00",
-    status:
-      s.status === "completed" || s.status === "walkover" ? "played" : "upcoming",
-    originalDate: s.original_scheduled_date ?? s.scheduled_date ?? "",
-  }))
+function buildDrafts(bundle: AdminBundle): Draft[] {
+  return bundle.rounds.flatMap((round) =>
+    round.series.map((s) => ({
+      seriesId: s.id,
+      roundName: round.name,
+      home: s.home_team?.name ?? s.home_team_id,
+      away: s.away_team?.name ?? s.away_team_id,
+      date: s.scheduled_date ?? "",
+      time: s.scheduled_time ?? "",
+      originalDate: s.original_scheduled_date ?? s.scheduled_date ?? "",
+      originalTime: s.original_scheduled_time ?? s.scheduled_time ?? "",
+      status: s.status,
+      dirty: false,
+      saved: false,
+    })),
+  )
 }
 
-function buildDraft(categoryId: CategoryId): FixtureDraft[] {
-  if (categoryId === "cab-a") return buildDraftFromMockSeries()
-  return buildDraftFromLeague(categoryId)
-}
-
-export function FixtureManager() {
-  const [active, setActive] = useState<CategoryId>("cab-a")
-  const [drafts, setDrafts] = useState<Record<string, FixtureDraft[]>>(() => ({
-    "cab-a": buildDraft("cab-a"),
-  }))
+export function FixtureManager({ bundles }: { bundles: AdminBundle[] }) {
+  const [categoryId, setCategoryId] = useState<string>(bundles[0]?.category.id ?? "")
+  const [drafts, setDrafts] = useState<Record<string, Draft[]>>({})
+  const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<string | null>(null)
 
-  const matches = useMemo(() => {
-    if (!drafts[active]) {
-      const next = buildDraft(active)
-      setDrafts((d) => ({ ...d, [active]: next }))
-      return next
-    }
-    return drafts[active]
-  }, [drafts, active])
+  const activeBundle = useMemo(
+    () => bundles.find((b) => b.category.id === categoryId) ?? bundles[0],
+    [bundles, categoryId],
+  )
 
-  function update(id: string, patch: Partial<FixtureDraft>) {
-    setDrafts((d) => ({
-      ...d,
-      [active]: (d[active] ?? buildDraft(active)).map((m) =>
-        m.id === id ? { ...m, ...patch } : m,
-      ),
-    }))
+  const rows: Draft[] = useMemo(() => {
+    if (!activeBundle) return []
+    return drafts[activeBundle.category.id] ?? buildDrafts(activeBundle)
+  }, [drafts, activeBundle])
+
+  function update(seriesId: string, patch: Partial<Draft>) {
+    const catId = activeBundle!.category.id
+    setDrafts((prev) => {
+      const base = prev[catId] ?? buildDrafts(activeBundle!)
+      return {
+        ...prev,
+        [catId]: base.map((d) =>
+          d.seriesId === seriesId ? { ...d, ...patch, dirty: true, saved: false } : d,
+        ),
+      }
+    })
     setSavedAt(null)
   }
 
-  function reset(id: string) {
-    setDrafts((d) => ({
-      ...d,
-      [active]: (d[active] ?? buildDraft(active)).map((m) =>
-        m.id === id ? { ...m, date: m.originalDate } : m,
-      ),
-    }))
-    setSavedAt(null)
+  function resetRow(seriesId: string) {
+    const catId = activeBundle!.category.id
+    setDrafts((prev) => {
+      const base = prev[catId] ?? buildDrafts(activeBundle!)
+      return {
+        ...prev,
+        [catId]: base.map((d) =>
+          d.seriesId === seriesId
+            ? { ...d, date: d.originalDate, time: d.originalTime, dirty: false, saved: false }
+            : d,
+        ),
+      }
+    })
   }
 
-  function save() {
-    setSavedAt(
-      new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }),
-    )
+  function handleSaveAll() {
+    const dirty = rows.filter((r) => r.dirty)
+    if (dirty.length === 0) return
+    setError(null)
+    startTransition(async () => {
+      try {
+        await Promise.all(dirty.map((d) => saveReschedule(d.seriesId, d.date, d.time)))
+        const catId = activeBundle!.category.id
+        setDrafts((prev) => {
+          const base = prev[catId] ?? buildDrafts(activeBundle!)
+          return {
+            ...prev,
+            [catId]: base.map((d) =>
+              d.dirty ? { ...d, dirty: false, saved: true } : d,
+            ),
+          }
+        })
+        setSavedAt(
+          new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }),
+        )
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Error al guardar")
+      }
+    })
   }
 
-  const sorted = [...matches].sort((a, b) => {
-    if (a.status !== b.status) return a.status === "upcoming" ? -1 : 1
-    return a.date.localeCompare(b.date)
+  const dirtyCount = rows.filter((r) => r.dirty).length
+
+  const sorted = [...rows].sort((a, b) => {
+    const played = (s: string) => s === "completed" || s === "walkover"
+    if (played(a.status) !== played(b.status)) return played(a.status) ? 1 : -1
+    return (a.date || "z").localeCompare(b.date || "z")
   })
 
   return (
@@ -124,17 +155,24 @@ export function FixtureManager() {
       <Card className="border-t-4 border-t-winter">
         <CardContent className="py-4">
           <div className="w-full sm:max-w-xs">
-            <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <Label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <Trophy className="size-3.5 text-accent" />
               Categoría
             </Label>
-            <Select value={active} onValueChange={(v) => setActive(v as CategoryId)}>
+            <Select
+              value={categoryId}
+              onValueChange={(v) => {
+                if (v) setCategoryId(v)
+                setSavedAt(null)
+              }}
+            >
               <SelectTrigger className="h-11 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {CATEGORIES.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.label}
+                {bundles.map((b) => (
+                  <SelectItem key={b.category.id} value={b.category.id}>
+                    {b.category.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -143,15 +181,25 @@ export function FixtureManager() {
         </CardContent>
       </Card>
 
+      {error && <p className="text-sm text-destructive">{error}</p>}
+
+      {sorted.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          No hay series cargadas para esta categoría.
+        </p>
+      )}
+
       <div className="space-y-3">
         {sorted.map((m) => {
-          const moved = m.date !== m.originalDate
+          const moved =
+            !!m.date && !!m.originalDate && m.date !== m.originalDate
+          const played = m.status === "completed" || m.status === "walkover"
           return (
             <Card
-              key={m.id}
+              key={m.seriesId}
               className={cn(
                 "overflow-hidden border-l-4",
-                m.status === "upcoming" ? "border-l-winter" : "border-l-muted",
+                played ? "border-l-muted" : "border-l-winter",
               )}
             >
               <CardContent className="flex flex-col gap-4 py-4 lg:flex-row lg:items-end lg:justify-between">
@@ -159,17 +207,15 @@ export function FixtureManager() {
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge
                       className={cn(
-                        m.status === "upcoming"
-                          ? "bg-winter text-winter-foreground hover:bg-winter"
-                          : "bg-secondary text-secondary-foreground hover:bg-secondary",
+                        played
+                          ? "bg-secondary text-secondary-foreground hover:bg-secondary"
+                          : "bg-winter text-winter-foreground hover:bg-winter",
                       )}
                     >
-                      {m.round}
+                      {m.roundName}
                     </Badge>
-                    {m.status === "played" && (
-                      <span className="text-xs font-medium text-muted-foreground">
-                        Jugada
-                      </span>
+                    {played && (
+                      <span className="text-xs font-medium text-muted-foreground">Jugada</span>
                     )}
                     {moved && (
                       <Badge className="gap-1 bg-accent text-accent-foreground hover:bg-accent">
@@ -177,24 +223,28 @@ export function FixtureManager() {
                         Reprogramada
                       </Badge>
                     )}
+                    {m.saved && (
+                      <Badge className="gap-1 bg-primary text-primary-foreground hover:bg-primary">
+                        <Check className="size-3" />
+                        Guardada
+                      </Badge>
+                    )}
                   </div>
                   <p className="mt-2 font-heading text-base font-bold text-foreground">
-                    {m.home} <span className="text-muted-foreground">vs</span>{" "}
-                    {m.away}
+                    {m.home} <span className="text-muted-foreground">vs</span> {m.away}
                   </p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    Fecha actual: {formatDate(m.date)}
-                    {moved && (
-                      <span className="text-accent">
-                        {" "}
-                        (antes {formatDate(m.originalDate)})
-                      </span>
-                    )}
-                  </p>
+                  {m.date && (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Fecha actual: {formatDate(m.date)}
+                      {moved && (
+                        <span className="text-accent"> (antes {formatDate(m.originalDate)})</span>
+                      )}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap items-end gap-3">
-                  {m.seriesId && <MatchSheetButton seriesId={m.seriesId} />}
+                  <MatchSheetButton seriesId={m.seriesId} />
 
                   <div>
                     <Label className="mb-1.5 flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -204,7 +254,7 @@ export function FixtureManager() {
                     <Input
                       type="date"
                       value={m.date}
-                      onChange={(e) => update(m.id, { date: e.target.value })}
+                      onChange={(e) => update(m.seriesId, { date: e.target.value })}
                       aria-label={`Fecha de ${m.home} vs ${m.away}`}
                       className="h-10 w-[10.5rem]"
                     />
@@ -217,7 +267,7 @@ export function FixtureManager() {
                     <Input
                       type="time"
                       value={m.time}
-                      onChange={(e) => update(m.id, { time: e.target.value })}
+                      onChange={(e) => update(m.seriesId, { time: e.target.value })}
                       aria-label={`Hora de ${m.home} vs ${m.away}`}
                       className="h-10 w-[7rem]"
                     />
@@ -225,8 +275,8 @@ export function FixtureManager() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => reset(m.id)}
-                    disabled={!moved}
+                    onClick={() => resetRow(m.seriesId)}
+                    disabled={!m.dirty}
                     aria-label="Restaurar fecha original"
                     className="h-10 shrink-0 text-muted-foreground hover:bg-secondary disabled:opacity-40"
                   >
@@ -239,25 +289,32 @@ export function FixtureManager() {
         })}
       </div>
 
-      <div className="sticky bottom-4 z-10 flex items-center justify-between gap-3 rounded-2xl border border-border bg-card/95 p-3 shadow-lg backdrop-blur">
-        {savedAt ? (
-          <Badge className="gap-1 bg-primary text-primary-foreground hover:bg-primary">
-            <Check className="size-3.5" />
-            Guardado {savedAt}
-          </Badge>
-        ) : (
-          <span className="text-sm text-muted-foreground">
-            Editá las fechas y guardá los cambios
-          </span>
-        )}
-        <Button
-          onClick={save}
-          className="h-11 bg-primary text-primary-foreground hover:bg-primary/90"
-        >
-          <Save className="size-4" />
-          Guardar fixture
-        </Button>
-      </div>
+      {sorted.length > 0 && (
+        <div className="sticky bottom-4 z-10 flex items-center justify-between gap-3 rounded-2xl border border-border bg-card/95 p-3 shadow-lg backdrop-blur">
+          {savedAt ? (
+            <Badge className="gap-1 bg-primary text-primary-foreground hover:bg-primary">
+              <Check className="size-3.5" />
+              Guardado {savedAt}
+            </Badge>
+          ) : dirtyCount > 0 ? (
+            <span className="text-sm text-muted-foreground">
+              {dirtyCount} serie{dirtyCount !== 1 ? "s" : ""} con cambios
+            </span>
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              Editá las fechas y guardá los cambios
+            </span>
+          )}
+          <Button
+            onClick={handleSaveAll}
+            disabled={dirtyCount === 0 || isPending}
+            className="h-11 bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            {isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+            Guardar fixture
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import {
   CalendarClock,
@@ -13,15 +13,8 @@ import {
   ChevronDown,
   MapPin,
 } from "lucide-react"
-import {
-  CATEGORIES,
-  LEAGUE,
-  formatDate,
-  seriesResult,
-  type CategoryId,
-  type Match,
-} from "@/lib/liga"
-import { slugify, getSeriesDetail, type CourtDetail } from "@/lib/equipos"
+import type { Category, Team, StandingsRow, CourtMatch } from "@/lib/tournament/types"
+import type { RoundWithSeries } from "@/lib/data/series"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -34,28 +27,58 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 
+type CategoryBundle = {
+  category: Category
+  standings: StandingsRow[]
+  rounds: RoundWithSeries[]
+  teams: Team[]
+}
+
+type LigaBoardProps = {
+  bundles: CategoryBundle[]
+}
+
 const TEAM_TINTS = [
   "bg-primary/15 text-primary",
   "bg-winter/20 text-winter",
   "bg-accent/15 text-accent",
 ]
 
-export function LigaBoard() {
-  const [active, setActive] = useState<CategoryId>("cab-a")
-  const data = LEAGUE[active]
+function formatDate(dateStr?: string): string {
+  if (!dateStr) return "Fecha a confirmar"
+  const date = new Date(`${dateStr}T00:00:00`)
+  return date.toLocaleDateString("es-AR", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  })
+}
 
-  const upcoming = useMemo(
-    () => data.matches.filter((m) => m.status === "upcoming"),
-    [data],
+export function LigaBoard({ bundles }: LigaBoardProps) {
+  const [activeSlug, setActiveSlug] = useState<string>(bundles[0]?.category.slug ?? "")
+
+  const activeBundle = bundles.find((b) => b.category.slug === activeSlug) ?? bundles[0]
+
+  if (!activeBundle) {
+    return (
+      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+        <p className="text-sm text-muted-foreground">No hay categorías disponibles.</p>
+      </section>
+    )
+  }
+
+  const allSeries = activeBundle.rounds.flatMap((r) =>
+    r.series.map((s) => ({ ...s, roundName: r.name })),
   )
-  const played = useMemo(
-    () =>
-      data.matches
-        .filter((m) => m.status === "played")
-        .sort((a, b) => b.date.localeCompare(a.date)),
-    [data],
+
+  const upcoming = allSeries.filter(
+    (s) => s.status === "scheduled" || s.status === "rescheduled",
   )
-  const nextDate = upcoming[0]?.date
+  const played = allSeries
+    .filter((s) => s.status === "completed" || s.status === "walkover")
+    .sort((a, b) => (b.scheduled_date ?? "").localeCompare(a.scheduled_date ?? ""))
+
+  const nextDate = upcoming[0]?.scheduled_date
 
   return (
     <section className="relative isolate overflow-hidden">
@@ -80,20 +103,20 @@ export function LigaBoard() {
             Elegí tu categoría
           </h2>
           <div className="mt-4 flex flex-wrap gap-2">
-            {CATEGORIES.map((c) => (
+            {bundles.map((b) => (
               <button
-                key={c.id}
+                key={b.category.slug}
                 type="button"
-                onClick={() => setActive(c.id)}
-                aria-pressed={active === c.id}
+                onClick={() => setActiveSlug(b.category.slug)}
+                aria-pressed={activeSlug === b.category.slug}
                 className={cn(
                   "rounded-full px-4 py-2 text-sm font-semibold shadow-sm ring-1 transition-all duration-200",
-                  active === c.id
+                  activeSlug === b.category.slug
                     ? "scale-105 bg-primary text-primary-foreground ring-primary"
                     : "bg-card text-secondary-foreground ring-border hover:-translate-y-0.5 hover:bg-winter/10 hover:text-primary hover:ring-winter/40",
                 )}
               >
-                {c.label}
+                {b.category.name}
               </button>
             ))}
           </div>
@@ -111,73 +134,76 @@ export function LigaBoard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-10">#</TableHead>
-                      <TableHead>Equipo</TableHead>
-                      <TableHead className="text-center">PJ</TableHead>
-                      <TableHead className="text-center">G</TableHead>
-                      <TableHead className="text-center">P</TableHead>
-                      <TableHead className="text-center">
-                        <span title="Canchas a favor / en contra">Canchas</span>
-                      </TableHead>
-                      <TableHead className="text-center">Pts</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.standings.map((r) => (
-                      <TableRow
-                        key={r.team}
-                        className={cn(
-                          r.pos === 1 && "bg-accent/5",
-                          r.pos <= 3 && "font-medium",
-                        )}
-                      >
-                        <TableCell>
-                          <span
-                            className={cn(
-                              "inline-flex size-6 items-center justify-center rounded-full text-xs font-bold",
-                              podiumClass(r.pos),
-                            )}
-                          >
-                            {r.pos}
-                          </span>
-                        </TableCell>
-                        <TableCell className="font-medium text-foreground">
-                          <span className="flex items-center gap-1.5">
-                            {r.pos <= 3 && (
-                              <Medal className={cn("size-4", podiumIcon(r.pos))} />
-                            )}
-                            {r.team}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center text-muted-foreground">
-                          {r.played}
-                        </TableCell>
-                        <TableCell className="text-center text-muted-foreground">
-                          {r.won}
-                        </TableCell>
-                        <TableCell className="text-center text-muted-foreground">
-                          {r.lost}
-                        </TableCell>
-                        <TableCell className="text-center text-muted-foreground">
-                          {r.courtsFor}:{r.courtsAgainst}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <span className="inline-flex min-w-7 justify-center rounded-md bg-primary/10 px-1.5 py-0.5 font-bold text-primary">
-                            {r.points}
-                          </span>
-                        </TableCell>
+              {activeBundle.standings.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Sin resultados cargados todavía.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-10">#</TableHead>
+                        <TableHead>Equipo</TableHead>
+                        <TableHead className="text-center">PJ</TableHead>
+                        <TableHead className="text-center">G</TableHead>
+                        <TableHead className="text-center">P</TableHead>
+                        <TableHead className="text-center">
+                          <span title="Canchas a favor / en contra">Canchas</span>
+                        </TableHead>
+                        <TableHead className="text-center">Pts</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {activeBundle.standings.map((r) => (
+                        <TableRow
+                          key={r.team_id}
+                          className={cn(
+                            r.position === 1 && "bg-accent/5",
+                            r.position <= 3 && "font-medium",
+                          )}
+                        >
+                          <TableCell>
+                            <span
+                              className={cn(
+                                "inline-flex size-6 items-center justify-center rounded-full text-xs font-bold",
+                                podiumClass(r.position),
+                              )}
+                            >
+                              {r.position}
+                            </span>
+                          </TableCell>
+                          <TableCell className="font-medium text-foreground">
+                            <span className="flex items-center gap-1.5">
+                              {r.position <= 3 && (
+                                <Medal className={cn("size-4", podiumIcon(r.position))} />
+                              )}
+                              {r.team.name}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center text-muted-foreground">
+                            {r.played}
+                          </TableCell>
+                          <TableCell className="text-center text-muted-foreground">
+                            {r.won}
+                          </TableCell>
+                          <TableCell className="text-center text-muted-foreground">
+                            {r.lost}
+                          </TableCell>
+                          <TableCell className="text-center text-muted-foreground">
+                            {r.courts_won}:{r.courts_lost}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span className="inline-flex min-w-7 justify-center rounded-md bg-primary/10 px-1.5 py-0.5 font-bold text-primary">
+                              {r.points}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
               <p className="mt-3 text-xs text-muted-foreground">
-                PJ: jugados · G: ganados · P: perdidos · Canchas: a favor:en
-                contra · Pts: 2 por serie ganada.
+                PJ: jugados · G: ganados · P: perdidos · Canchas: a favor:en contra · Pts: 2 por serie ganada.
               </p>
             </CardContent>
           </Card>
@@ -204,18 +230,18 @@ export function LigaBoard() {
                   No hay series programadas por el momento.
                 </p>
               )}
-              {upcoming.map((m, i) => (
+              {upcoming.map((s) => (
                 <div
-                  key={i}
+                  key={s.id}
                   className="rounded-xl border border-border border-l-4 border-l-winter bg-winter/5 p-3"
                 >
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {m.round}
+                    {s.roundName}
                   </p>
                   <div className="mt-1 flex items-center justify-between gap-2 text-sm font-semibold text-foreground">
-                    <span className="text-pretty">{m.home}</span>
+                    <span className="text-pretty">{s.home_team?.name ?? s.home_team_id}</span>
                     <span className="text-xs text-muted-foreground">vs</span>
-                    <span className="text-pretty text-right">{m.away}</span>
+                    <span className="text-pretty text-right">{s.away_team?.name ?? s.away_team_id}</span>
                   </div>
                 </div>
               ))}
@@ -239,8 +265,8 @@ export function LigaBoard() {
                 Todavía no hay fechas jugadas en esta categoría.
               </p>
             )}
-            {played.map((m, i) => (
-              <SeriesCard key={i} match={m} categoryId={active} />
+            {played.map((s) => (
+              <SeriesCard key={s.id} series={s} />
             ))}
           </CardContent>
         </Card>
@@ -256,52 +282,57 @@ export function LigaBoard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Serie</TableHead>
-                    <TableHead className="text-center">Canchas</TableHead>
-                    <TableHead className="text-right">Estado</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.matches.map((m, i) => {
-                    const res = seriesResult(m.courts)
-                    return (
-                      <TableRow key={i}>
-                        <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                          {formatDate(m.date)}
-                        </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground">
-                          {m.home}{" "}
-                          <span className="text-muted-foreground">vs</span>{" "}
-                          {m.away}
-                        </TableCell>
-                        <TableCell className="text-center text-sm font-semibold text-foreground">
-                          {m.status === "played" ? `${res.home}–${res.away}` : "—"}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {m.status === "played" ? (
-                            <Badge
-                              variant="secondary"
-                              className="bg-primary/10 text-primary"
-                            >
-                              Jugada
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-accent text-accent-foreground hover:bg-accent">
-                              Por jugar
-                            </Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+            {allSeries.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Sin fixture cargado.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Serie</TableHead>
+                      <TableHead className="text-center">Canchas</TableHead>
+                      <TableHead className="text-right">Estado</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {allSeries.map((s) => {
+                      const isDone = s.status === "completed" || s.status === "walkover"
+                      return (
+                        <TableRow key={s.id}>
+                          <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+                            {formatDate(s.scheduled_date)}
+                          </TableCell>
+                          <TableCell className="text-sm font-medium text-foreground">
+                            {s.home_team?.name ?? s.home_team_id}{" "}
+                            <span className="text-muted-foreground">vs</span>{" "}
+                            {s.away_team?.name ?? s.away_team_id}
+                          </TableCell>
+                          <TableCell className="text-center text-sm font-semibold text-foreground">
+                            {isDone
+                              ? s.is_general_walkover
+                                ? "WO"
+                                : `${s.home_courts_won ?? 0}–${s.away_courts_won ?? 0}`
+                              : "—"}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {isDone ? (
+                              <Badge variant="secondary" className="bg-primary/10 text-primary">
+                                Jugada
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-accent text-accent-foreground hover:bg-accent">
+                                Por jugar
+                              </Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -316,10 +347,10 @@ export function LigaBoard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {data.teams.map((t, i) => (
+            {activeBundle.teams.map((t, i) => (
               <Link
-                key={t.name}
-                href={`/liga-invierno/equipos/${slugify(t.name)}`}
+                key={t.id}
+                href={`/liga-invierno/equipos/${t.slug}`}
                 className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-winter/50 hover:shadow-md"
               >
                 <span
@@ -335,9 +366,9 @@ export function LigaBoard() {
                     {t.name}
                     <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-winter" />
                   </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {t.players[0]} · {t.players[1]}
-                  </p>
+                  {t.captain_name && (
+                    <p className="mt-1 text-sm text-muted-foreground">{t.captain_name}</p>
+                  )}
                 </div>
               </Link>
             ))}
@@ -362,16 +393,31 @@ function podiumIcon(pos: number) {
   return "text-muted-foreground"
 }
 
-function SeriesCard({
-  match,
-  categoryId,
-}: {
-  match: Match
-  categoryId: CategoryId
-}) {
+type SeriesWithRound = {
+  id: string
+  home_team?: Team
+  away_team?: Team
+  home_team_id: string
+  away_team_id: string
+  home_courts_won?: number
+  away_courts_won?: number
+  winner_team_id?: string
+  walkover_winner_team_id?: string
+  is_general_walkover: boolean
+  status: string
+  scheduled_date?: string
+  roundName: string
+  court_matches: CourtMatch[]
+}
+
+function SeriesCard({ series }: { series: SeriesWithRound }) {
   const [open, setOpen] = useState(false)
-  const detail = getSeriesDetail(categoryId, match)
-  const homeWon = detail.homeScore > detail.awayScore
+  const homeWon =
+    series.winner_team_id === series.home_team_id ||
+    series.walkover_winner_team_id === series.home_team_id
+
+  const homeName = series.home_team?.name ?? series.home_team_id
+  const awayName = series.away_team?.name ?? series.away_team_id
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border border-l-4 border-l-primary">
@@ -386,17 +432,19 @@ function SeriesCard({
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate font-heading text-sm font-bold text-foreground">
-            <span className={cn(homeWon && "text-primary")}>{match.home}</span>{" "}
+            <span className={cn(homeWon && "text-primary")}>{homeName}</span>{" "}
             <span className="text-muted-foreground">vs</span>{" "}
-            <span className={cn(!homeWon && "text-primary")}>{match.away}</span>
+            <span className={cn(!homeWon && "text-primary")}>{awayName}</span>
           </p>
           <p className="text-xs text-muted-foreground">
-            {match.round} · {formatDate(match.date)}
+            {series.roundName} · {formatDate(series.scheduled_date)}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Badge className="bg-primary text-primary-foreground hover:bg-primary">
-            {detail.homeScore}–{detail.awayScore}
+            {series.is_general_walkover
+              ? "WO"
+              : `${series.home_courts_won ?? 0}–${series.away_courts_won ?? 0}`}
           </Badge>
           <ChevronDown
             className={cn(
@@ -407,70 +455,63 @@ function SeriesCard({
         </div>
       </button>
 
-      {open && (
+      {open && series.court_matches.length > 0 && (
         <div className="space-y-2 border-t border-border bg-secondary/30 p-3">
-          {detail.courts.map((c) => (
-            <CourtRow key={c.court} court={c} />
-          ))}
+          {series.court_matches
+            .sort((a, b) => a.court_number - b.court_number)
+            .map((cm) => (
+              <CourtRow key={cm.id} court={cm} />
+            ))}
+        </div>
+      )}
+      {open && series.court_matches.length === 0 && (
+        <div className="border-t border-border bg-secondary/30 px-4 py-3">
+          <p className="text-xs text-muted-foreground">Sin detalle de canchas.</p>
         </div>
       )}
     </div>
   )
 }
 
-function CourtRow({ court }: { court: CourtDetail }) {
+function CourtRow({ court }: { court: CourtMatch }) {
+  const homeWon = court.winner_team_id
+    ? court.winner_team_id === court.home_player_1_id
+      ? true
+      : false
+    : null
+
   return (
     <div className="rounded-xl border border-border bg-card p-3">
       <div className="flex items-center justify-between">
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <MapPin className="size-3.5 text-winter" />
-          Cancha {court.court}
+          Cancha {court.court_number}
         </span>
-        {court.wo && (
-          <Badge className="bg-accent text-accent-foreground hover:bg-accent">
-            W.O.
-          </Badge>
+        {court.is_court_walkover && (
+          <Badge className="bg-accent text-accent-foreground hover:bg-accent">W.O.</Badge>
         )}
       </div>
-      <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-        <PairCell players={court.homePlayers} winner={court.winner === "home"} />
-        <span className="font-heading text-sm font-bold text-foreground">
-          {court.score}
-        </span>
-        <PairCell
-          players={court.awayPlayers}
-          winner={court.winner === "away"}
-          align="right"
-        />
-      </div>
-    </div>
-  )
-}
-
-function PairCell({
-  players,
-  winner,
-  align = "left",
-}: {
-  players: [string, string]
-  winner: boolean
-  align?: "left" | "right"
-}) {
-  return (
-    <div className={cn(align === "right" && "text-right")}>
-      {players.map((p) => (
-        <p
-          key={p}
-          className={cn(
-            "truncate text-xs",
-            winner
-              ? "font-bold text-foreground"
-              : "font-medium text-muted-foreground",
+      <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs">
+        <div>
+          {court.home_player_1 && (
+            <p className="truncate font-medium text-foreground">{court.home_player_1.display_name}</p>
           )}
-        >
-          {p}
-        </p>
-      ))}
+          {court.home_player_2 && (
+            <p className="truncate font-medium text-foreground">{court.home_player_2.display_name}</p>
+          )}
+        </div>
+        <span className="font-heading text-sm font-bold text-foreground">
+          {court.score ?? "—"}
+        </span>
+        <div className="text-right">
+          {court.away_player_1 && (
+            <p className="truncate font-medium text-foreground">{court.away_player_1.display_name}</p>
+          )}
+          {court.away_player_2 && (
+            <p className="truncate font-medium text-foreground">{court.away_player_2.display_name}</p>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

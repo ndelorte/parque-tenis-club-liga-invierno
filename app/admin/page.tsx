@@ -7,6 +7,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ResultLoader } from "@/components/admin/result-loader"
 import { TeamManager } from "@/components/admin/team-manager"
 import { FixtureManager } from "@/components/admin/fixture-manager"
+import { getActiveTournament } from "@/lib/data/tournaments"
+import { getCategoriesForTournament } from "@/lib/data/categories"
+import { getRoundsWithSeries } from "@/lib/data/series"
+import { getTeamsByCategory, getTeamsWithPlayersByCategory } from "@/lib/data/teams"
+import type { Category, Team, TeamPlayer, Player } from "@/lib/tournament/types"
+import type { RoundWithSeries } from "@/lib/data/series"
+
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Panel de carga | Liga de Invierno",
@@ -14,7 +22,28 @@ export const metadata: Metadata = {
     "Dashboard interno para cargar resultados de la Liga de Invierno de Parque Tenis Club.",
 }
 
-export default function AdminPage() {
+export type AdminBundle = {
+  category: Category
+  rounds: RoundWithSeries[]
+  teams: Team[]
+  teamsWithPlayers: (Team & { players: (TeamPlayer & { player: Player })[] })[]
+}
+
+export default async function AdminPage() {
+  const tournament = await getActiveTournament()
+  const categories = tournament ? await getCategoriesForTournament(tournament.id) : []
+
+  const bundles: AdminBundle[] = await Promise.all(
+    categories.map(async (category) => {
+      const [rounds, teams, teamsWithPlayers] = await Promise.all([
+        getRoundsWithSeries(category.id),
+        getTeamsByCategory(category.id),
+        getTeamsWithPlayersByCategory(category.id),
+      ])
+      return { category, rounds, teams, teamsWithPlayers }
+    }),
+  )
+
   return (
     <div className="min-h-dvh bg-background">
       <header className="sticky top-0 z-30 border-b border-border bg-primary text-primary-foreground">
@@ -54,7 +83,8 @@ export default function AdminPage() {
             Gestión de la liga
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Cargá resultados, administrá los planteles de cada equipo y reprogramá las fechas del fixture.
+            Cargá resultados, administrá los planteles de cada equipo y reprogramá las fechas del
+            fixture.
           </p>
         </div>
 
@@ -75,13 +105,13 @@ export default function AdminPage() {
           </TabsList>
 
           <TabsContent value="resultados" className="mt-5">
-            <ResultLoader />
+            <ResultLoader bundles={bundles} />
           </TabsContent>
           <TabsContent value="jugadores" className="mt-5">
-            <TeamManager />
+            <TeamManager bundles={bundles} />
           </TabsContent>
           <TabsContent value="fixture" className="mt-5">
-            <FixtureManager />
+            <FixtureManager bundles={bundles} />
           </TabsContent>
         </Tabs>
       </main>
