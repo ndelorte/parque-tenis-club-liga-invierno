@@ -17,15 +17,39 @@
   --color-accent-foreground: #ffffff;
   --color-secondary: #f3f4f6;
   --color-secondary-foreground: #111827;
+  --color-muted: #f3f4f6;
   --color-muted-foreground: #6b7280;
   --color-card: #ffffff;
+  --color-card-foreground: #111827;
   --color-border: #e5e7eb;
   --color-input: #e5e7eb;
   --color-ring: #2d8653;
   --color-surface: #f9fafb;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+
+  /* Winter / Liga de Invierno */
+  --color-winter: #4d90c4;
+  --color-winter-foreground: #ffffff;
 
   /* Fonts */
   --font-heading: var(--font-geist-sans);
+
+  /* Animations */
+  --animate-bob: bob 3s ease-in-out infinite;
+  --animate-snow: snow-fall 12s linear infinite;
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes snow-fall {
+  0% { transform: translateY(-24px) translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 0.7; }
+  100% { transform: translateY(110vh) translateX(var(--snow-drift, 0)); opacity: 0; }
 }
 
 body {

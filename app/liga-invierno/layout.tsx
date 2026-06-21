@@ -1,5 +1,5 @@
-import { Navbar } from "@/components/layout/Navbar"
-import { Footer } from "@/components/layout/Footer"
+import { SiteHeader } from "@/components/site-header"
+import { SiteFooter } from "@/components/site-footer"
 
 export default function LigaInviernoLayout({
   children,
@@ -7,10 +7,10 @@ export default function LigaInviernoLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <Navbar />
-      <main className="flex-1">{children}</main>
-      <Footer />
-    </div>
+    <>
+      <SiteHeader />
+      {children}
+      <SiteFooter />
+    </>
   )
 }
