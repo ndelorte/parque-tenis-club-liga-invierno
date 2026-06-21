@@ -1,4 +1,7 @@
-import { Document, Page, Text, View, StyleSheet, renderToBuffer } from "@react-pdf/renderer"
+import path from "node:path"
+import { Document, Page, Text, View, Image, StyleSheet, renderToBuffer } from "@react-pdf/renderer"
+
+const LOGO_PATH = path.join(process.cwd(), "public", "images", "logoligadeinvierno.png")
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,11 +58,9 @@ const s = StyleSheet.create({
     letterSpacing: 1,
   },
   headerClub: { fontSize: 9, color: "#bbf7d0", marginTop: 2 },
-  headerSeason: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 11,
-    color: WHITE,
-    textAlign: "right",
+  headerLogo: {
+    height: 38,
+    objectFit: "contain",
   },
 
   // Section title
@@ -128,6 +129,14 @@ const s = StyleSheet.create({
   },
   playerNum: { width: 16, fontSize: 8, color: MUTED },
   playerName: { flex: 1, fontSize: 8.5, color: TEXT },
+  playerOrderBox: {
+    width: 13,
+    height: 13,
+    borderWidth: 1,
+    borderColor: BORDER,
+    marginLeft: 6,
+    alignSelf: "center",
+  },
   rosterEmpty: {
     paddingHorizontal: 8,
     paddingVertical: 6,
@@ -340,7 +349,7 @@ function MatchSheetDocument({ data }: { data: MatchSheetData }) {
             <Text style={s.headerTitle}>LIGA DE INVIERNO</Text>
             <Text style={s.headerClub}>Parque Tenis Club</Text>
           </View>
-          <Text style={s.headerSeason}>2026</Text>
+          <Image src={LOGO_PATH} style={s.headerLogo} />
         </View>
 
         {/* ── DATOS DEL PARTIDO ── */}
@@ -385,6 +394,7 @@ function MatchSheetDocument({ data }: { data: MatchSheetData }) {
                   <View key={i} style={s.playerRow}>
                     <Text style={s.playerNum}>{i + 1}.</Text>
                     <Text style={s.playerName}>{name}</Text>
+                    <View style={s.playerOrderBox} />
                   </View>
                 ))
               )}
@@ -400,6 +410,7 @@ function MatchSheetDocument({ data }: { data: MatchSheetData }) {
                   <View key={i} style={s.playerRow}>
                     <Text style={s.playerNum}>{i + 1}.</Text>
                     <Text style={s.playerName}>{name}</Text>
+                    <View style={s.playerOrderBox} />
                   </View>
                 ))
               )}
