@@ -76,21 +76,35 @@ Abrir [http://localhost:3000](http://localhost:3000).
 
 ### Listas de buena fe
 
-Crear `data/listas-buena-fe.csv` con el formato:
-
-```csv
-categoria,equipo,capitan,jugador
-Caballeros A,Los Halcones,Juan Pérez,Juan Pérez
-Caballeros A,Los Halcones,Juan Pérez,Martín Gómez
-Caballeros A,Drop Shot,Carlos López,Carlos López
-```
-
-- `categoria` debe coincidir exactamente con el nombre de la categoría en Supabase.
-- El `capitan` debe aparecer también como `jugador` en alguna fila del mismo equipo.
-- Un jugador puede estar en equipos de **distintas** categorías, pero no en dos equipos de la misma categoría.
+Copiá el template y completalo con los datos reales:
 
 ```bash
-# Probar sin escribir nada
+cp data/templates/lista-buena-fe.example.csv data/listas-buena-fe.csv
+# editá data/listas-buena-fe.csv con los datos reales
+```
+
+**Formato** (`data/templates/lista-buena-fe.example.csv`):
+
+```
+categoria,equipo,capitan,jugador
+```
+
+| Columna | Descripción |
+|---------|-------------|
+| `categoria` | Nombre **exacto** de la categoría en Supabase. Ej: `Caballeros A` |
+| `equipo` | Nombre del equipo. Se genera el slug automáticamente. |
+| `capitan` | Nombre completo del capitán. Debe ser igual en todas las filas del equipo. |
+| `jugador` | Nombre completo del jugador. **Una fila por jugador.** |
+
+**Reglas importantes:**
+- El capitán debe aparecer también como `jugador` en alguna fila del mismo equipo.
+- Si un equipo tiene 5 jugadores, tiene 5 filas (todas con el mismo `equipo` y `capitan`).
+- Un jugador puede estar en equipos de **distintas** categorías.
+- Un jugador **no puede** estar en dos equipos de la misma categoría (el importador lo rechaza).
+- Los nombres deben ser consistentes en todas las filas — una variación de mayúsculas o tilde crea un jugador duplicado.
+
+```bash
+# Validar el CSV sin escribir nada en la base
 npm run import:rosters -- --file ./data/listas-buena-fe.csv --dry-run
 
 # Importar
@@ -99,20 +113,38 @@ npm run import:rosters -- --file ./data/listas-buena-fe.csv
 
 ### Fixture
 
-Crear `data/fixture.csv` con el formato:
-
-```csv
-categoria,fase,fecha_numero,fecha_nombre,equipo_local,equipo_visitante,dia,hora
-Caballeros A,regular,1,Fecha 1,Los Halcones,Drop Shot,2026-07-10,20:00
-```
-
-- `fase`: `regular` | `quarterfinal` | `semifinal` | `final`
-- `dia`: formato `YYYY-MM-DD`
-- `hora`: formato `HH:MM`
-- Los equipos deben existir previamente (importar listas de buena fe primero).
+Copiá el template y completalo con los datos reales:
 
 ```bash
-# Probar sin escribir nada
+cp data/templates/fixture.example.csv data/fixture.csv
+# editá data/fixture.csv con los datos reales
+```
+
+**Formato** (`data/templates/fixture.example.csv`):
+
+```
+categoria,fase,fecha_numero,fecha_nombre,equipo_local,equipo_visitante,dia,hora
+```
+
+| Columna | Descripción |
+|---------|-------------|
+| `categoria` | Nombre **exacto** de la categoría en Supabase. |
+| `fase` | `regular` \| `quarterfinal` \| `semifinal` \| `final` |
+| `fecha_numero` | Número entero de la fecha: `1`, `2`, `3`… |
+| `fecha_nombre` | Nombre legible: `Fecha 1`, `Semifinal`, etc. |
+| `equipo_local` | Nombre del equipo local (debe existir en la categoría). |
+| `equipo_visitante` | Nombre del equipo visitante (debe existir en la categoría). |
+| `dia` | Fecha en formato `YYYY-MM-DD`. Ej: `2026-07-10` |
+| `hora` | Hora de inicio en formato `HH:MM`. Ej: `20:00`. Se puede dejar vacío. |
+
+**Reglas importantes:**
+- Los equipos **deben existir** antes de importar el fixture. Si falta alguno, el importador falla con un mensaje claro indicando qué equipo y qué categoría.
+- El orden correcto siempre es: listas de buena fe → fixture.
+- Los nombres de equipos deben coincidir exactamente con los importados (mismo texto, mismas tildes).
+- Las series duplicadas (mismo round + mismo par de equipos) se omiten con un aviso, no con error.
+
+```bash
+# Validar el CSV sin escribir nada en la base
 npm run import:fixture -- --file ./data/fixture.csv --dry-run
 
 # Importar
@@ -130,10 +162,12 @@ npm run validate:data -- --category "Caballeros A"
 ```
 
 El validador reporta:
-- Cantidad de equipos por categoría vs. lo esperado
-- Equipos sin jugadores o sin capitán
-- Jugadores en dos equipos de la misma categoría
-- Series con equipos inexistentes, duplicadas o sin horario
+- Cantidad de equipos por categoría vs. `teams_count` esperado en Supabase
+- Equipos sin jugadores o sin capitán asignado
+- Jugadores activos en dos equipos de la misma categoría
+- Series que referencian equipos fuera de la categoría
+- Series duplicadas en el mismo round
+- Series sin horario definido
 
 ---
 

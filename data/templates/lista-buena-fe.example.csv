@@ -1,0 +1,45 @@
+# Lista de buena fe — Formato esperado por import-rosters.ts
+#
+# Columnas:
+#   categoria     → nombre exacto de la categoría en Supabase (case-sensitive)
+#   equipo        → nombre del equipo (se genera el slug automáticamente)
+#   capitan       → nombre completo del capitán (debe aparecer también como jugador)
+#   jugador       → nombre completo de cada jugador del equipo
+#
+# Reglas:
+#   - Una fila por jugador. Si un equipo tiene 5 jugadores, tiene 5 filas.
+#   - El capitán debe tener su propia fila como jugador.
+#   - Un jugador puede estar en equipos de distintas categorías.
+#   - Un jugador NO puede estar en dos equipos de la misma categoría.
+#   - Los nombres deben coincidir exactamente en todas las filas del mismo equipo.
+#
+categoria,equipo,capitan,jugador
+Caballeros A,Los Halcones,Juan Pérez,Juan Pérez
+Caballeros A,Los Halcones,Juan Pérez,Martín Gómez
+Caballeros A,Los Halcones,Juan Pérez,Federico Díaz
+Caballeros A,Los Halcones,Juan Pérez,Rodrigo Suárez
+Caballeros A,Drop Shot,Carlos López,Carlos López
+Caballeros A,Drop Shot,Carlos López,Tomás Ruiz
+Caballeros A,Drop Shot,Carlos López,Sebastián Vera
+Caballeros A,Saque y Volea,Diego Fernández,Diego Fernández
+Caballeros A,Saque y Volea,Diego Fernández,Pablo Romero
+Caballeros A,Saque y Volea,Diego Fernández,Nicolás Castro
+Caballeros B,Red Alta,Andrés Molina,Andrés Molina
+Caballeros B,Red Alta,Andrés Molina,Emilio Sosa
+Caballeros B,Red Alta,Andrés Molina,Gonzalo Herrera
+Caballeros B,Los Pibes,Tomás Acosta,Tomás Acosta
+Caballeros B,Los Pibes,Tomás Acosta,Bruno Luna
+Caballeros B,Los Pibes,Tomás Acosta,Ignacio Ríos
+Damas A,Las Tigras,María López,María López
+Damas A,Las Tigras,María López,Carolina Ferreyra
+Damas A,Las Tigras,María López,Adriana Giménez
+Damas A,Volea Fina,Laura Cabrera,Laura Cabrera
+Damas A,Volea Fina,Laura Cabrera,Patricia Maldonado
+Damas A,Volea Fina,Laura Cabrera,Romina Ledesma
+Mixto A,Match Point,Carlos Vera,Carlos Vera
+Mixto A,Match Point,Carlos Vera,María Ruiz
+Mixto A,Match Point,Carlos Vera,Lucas Benítez
+Mixto A,Match Point,Carlos Vera,Ana Coronel
+Mixto A,Dúo Dinámico,Pablo Godoy,Pablo Godoy
+Mixto A,Dúo Dinámico,Pablo Godoy,Sofía Méndez
+Mixto A,Dúo Dinámico,Pablo Godoy,Roberto Quiroga
