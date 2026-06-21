@@ -127,15 +127,18 @@
 **Respuesta**: Se arma una mini-tabla solo con los equipos empatados, usando únicamente los resultados de los partidos entre ellos. Criterios dentro de la mini-tabla:
 
 ```
-5a. Diferencia de canchas en enfrentamientos directos
-5b. Diferencia de sets en enfrentamientos directos
-5c. Diferencia de games en enfrentamientos directos
+5a. Puntos en enfrentamientos directos
+5b. Diferencia de canchas en enfrentamientos directos
+5c. Diferencia de sets en enfrentamientos directos
+5d. Diferencia de games en enfrentamientos directos
 ```
 
 Para 2 equipos: se comparan las 2 series entre ellos (ida y vuelta).
 Para 3 o más: mini-tabla entre el subconjunto completo.
 
-**Residual**: ver OQ-03b para el caso de empate aun después de 5c.
+**Nota de implementación**: Se agregó "puntos" como primer criterio H2H (Sprint 6b) — es el criterio estándar de mini-tabla que permite ordenar cuando un equipo ganó más series directas. Los criterios de diferencias (5b–5d) aplican cuando los puntos H2H están empatados.
+
+**Residual**: ver OQ-03b para el caso de empate aun después de 5d.
 
 ---
 

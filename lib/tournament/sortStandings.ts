@@ -64,9 +64,12 @@ function sortByH2H(
     }
   }
 
-  const h2hStats = new Map<string, { courts_diff: number; sets_diff: number; games_diff: number }>();
+  const h2hStats = new Map<
+    string,
+    { points: number; courts_diff: number; sets_diff: number; games_diff: number }
+  >();
   for (const team of tiedTeams) {
-    h2hStats.set(team.team_id, { courts_diff: 0, sets_diff: 0, games_diff: 0 });
+    h2hStats.set(team.team_id, { points: 0, courts_diff: 0, sets_diff: 0, games_diff: 0 });
   }
 
   for (const s of series) {
@@ -78,16 +81,20 @@ function sortByH2H(
     if (s.is_general_walkover && s.walkover_winner_team_id) {
       const winnerIsHome = s.walkover_winner_team_id === s.home_team_id;
       if (winnerIsHome) {
+        homeStats.points += rules.pointsForWin;
         homeStats.courts_diff += rules.walkoverCourtsWon;
         homeStats.sets_diff += rules.walkoverSetsWon;
         homeStats.games_diff += rules.walkoverGamesWon;
+        awayStats.points += rules.pointsForWalkover;
         awayStats.courts_diff -= rules.walkoverCourtsWon;
         awayStats.sets_diff -= rules.walkoverSetsWon;
         awayStats.games_diff -= rules.walkoverGamesWon;
       } else {
+        awayStats.points += rules.pointsForWin;
         awayStats.courts_diff += rules.walkoverCourtsWon;
         awayStats.sets_diff += rules.walkoverSetsWon;
         awayStats.games_diff += rules.walkoverGamesWon;
+        homeStats.points += rules.pointsForWalkover;
         homeStats.courts_diff -= rules.walkoverCourtsWon;
         homeStats.sets_diff -= rules.walkoverSetsWon;
         homeStats.games_diff -= rules.walkoverGamesWon;
@@ -112,6 +119,14 @@ function sortByH2H(
         away_games += result.away_games_won;
       }
 
+      if (home_courts > away_courts) {
+        homeStats.points += rules.pointsForWin;
+        awayStats.points += rules.pointsForLoss;
+      } else {
+        awayStats.points += rules.pointsForWin;
+        homeStats.points += rules.pointsForLoss;
+      }
+
       homeStats.courts_diff += home_courts - away_courts;
       homeStats.sets_diff += home_sets - away_sets;
       homeStats.games_diff += home_games - away_games;
@@ -124,6 +139,7 @@ function sortByH2H(
   return [...tiedTeams].sort((a, b) => {
     const aH2H = h2hStats.get(a.team_id)!;
     const bH2H = h2hStats.get(b.team_id)!;
+    if (bH2H.points !== aH2H.points) return bH2H.points - aH2H.points;
     if (bH2H.courts_diff !== aH2H.courts_diff) return bH2H.courts_diff - aH2H.courts_diff;
     if (bH2H.sets_diff !== aH2H.sets_diff) return bH2H.sets_diff - aH2H.sets_diff;
     if (bH2H.games_diff !== aH2H.games_diff) return bH2H.games_diff - aH2H.games_diff;

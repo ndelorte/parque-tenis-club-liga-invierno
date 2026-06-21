@@ -11,13 +11,19 @@ export function calculateSeriesResult(series: {
   away_team_id: string;
   court_matches: Array<{ score?: string; is_court_walkover: boolean }>;
 }): SeriesResult {
+  const scoredMatches = series.court_matches.filter((m) => m.score);
+  if (scoredMatches.length !== 3) {
+    throw new Error(
+      `Serie incompleta: se requieren exactamente 3 canchas con score, hay ${scoredMatches.length}`,
+    );
+  }
+
   let home_courts_won = 0;
   let away_courts_won = 0;
 
-  for (const match of series.court_matches) {
-    if (!match.score) continue;
+  for (const match of scoredMatches) {
     const result = calculateCourtMatchResult({
-      score: match.score,
+      score: match.score!,
       is_court_walkover: match.is_court_walkover,
     });
     if (result.winner_side === "home") home_courts_won++;

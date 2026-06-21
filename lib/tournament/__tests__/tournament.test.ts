@@ -113,6 +113,31 @@ describe("parseScore", () => {
     expect(result.home_sets_won).toBe(1);
     expect(result.away_sets_won).toBe(2);
   });
+
+  it("lanza error si el score está vacío", () => {
+    expect(() => parseScore("")).toThrow("Score vacío");
+    expect(() => parseScore("   ")).toThrow("Score vacío");
+  });
+
+  it("lanza error si hay menos de 2 sets (1 solo set)", () => {
+    expect(() => parseScore("6-4")).toThrow("al menos 2 sets");
+  });
+
+  it("lanza error si hay más de 3 sets", () => {
+    expect(() => parseScore("6-4 3-6 7-6 6-2")).toThrow("más de 3 sets");
+  });
+
+  it("lanza error si un set está mal formateado (sin guión)", () => {
+    expect(() => parseScore("64 6-2")).toThrow("Set mal formateado");
+  });
+
+  it("lanza error si un set está empatado (6-6)", () => {
+    expect(() => parseScore("6-6 6-4")).toThrow("Set empatado inválido");
+  });
+
+  it("lanza error si el tercer set no es 7-6 ni 6-7", () => {
+    expect(() => parseScore("6-4 3-6 7-5")).toThrow("Tercer set inválido");
+  });
 });
 
 // ─── calculateCourtMatchResult ───────────────────────────────────────────────
@@ -234,6 +259,28 @@ describe("calculateSeriesResult", () => {
     expect(result.home_courts_won).toBe(2);
     expect(result.away_courts_won).toBe(1);
     expect(result.winner_team_id).toBe("A");
+  });
+
+  it("lanza error si la serie tiene solo 2 canchas con score", () => {
+    const series = {
+      home_team_id: "A",
+      away_team_id: "B",
+      court_matches: [
+        { score: "6-4 6-2", is_court_walkover: false },
+        { score: "3-6 4-6", is_court_walkover: false },
+        { is_court_walkover: false },
+      ],
+    };
+    expect(() => calculateSeriesResult(series)).toThrow("Serie incompleta");
+  });
+
+  it("lanza error si la serie no tiene ninguna cancha con score", () => {
+    const series = {
+      home_team_id: "A",
+      away_team_id: "B",
+      court_matches: [],
+    };
+    expect(() => calculateSeriesResult(series)).toThrow("Serie incompleta");
   });
 });
 
@@ -372,6 +419,49 @@ describe("sortStandings", () => {
       makeCourtMatch("m3", "s1", 3, "6-3 6-4"),
     ];
     const sorted = sortStandings(rows, [s1], matches, DEFAULT_RULES);
+    expect(sorted[0].team_id).toBe("A");
+    expect(sorted[1].team_id).toBe("B");
+  });
+
+  it("desempate H2H ida y vuelta: suma canchas de ambas series (A gana 3-0 en casa, pierde 1-2 de visitante)", () => {
+    const [A, B] = ["A", "B"].map(makeTeam);
+    const rows = [makeRow(B, 6, 0, 0, 0), makeRow(A, 6, 0, 0, 0)];
+    // Serie 1: A local gana 3-0
+    const s1 = makeSeries("s1", "A", "B");
+    // Serie 2: B local gana 2-1 (A visitante gana solo 1 cancha)
+    const s2 = makeSeries("s2", "B", "A");
+    const matches = [
+      makeCourtMatch("m1", "s1", 1, "6-4 6-2"), // A gana
+      makeCourtMatch("m2", "s1", 2, "6-3 6-1"), // A gana
+      makeCourtMatch("m3", "s1", 3, "6-0 6-2"), // A gana
+      makeCourtMatch("m4", "s2", 1, "6-4 6-2"), // B (local) gana
+      makeCourtMatch("m5", "s2", 2, "3-6 4-6"), // A (visitante) gana
+      makeCourtMatch("m6", "s2", 3, "6-3 6-1"), // B (local) gana
+    ];
+    // H2H puntos: A=2+1=3, B=1+2=3 (empatados)
+    // H2H courts_diff: A=(3-0)+(1-2)=+2, B=(0-3)+(2-1)=-2 → gana A
+    const sorted = sortStandings(rows, [s1, s2], matches, DEFAULT_RULES);
+    expect(sorted[0].team_id).toBe("A");
+    expect(sorted[1].team_id).toBe("B");
+  });
+
+  it("desempate H2H puntos: A gana ambas series (ida y vuelta)", () => {
+    const [A, B] = ["A", "B"].map(makeTeam);
+    const rows = [makeRow(B, 6, 0, 0, 0), makeRow(A, 6, 0, 0, 0)];
+    // Serie 1: A local gana 2-1
+    const s1 = makeSeries("s1", "A", "B");
+    // Serie 2: B local, A visitante gana 2-1
+    const s2 = makeSeries("s2", "B", "A");
+    const matches = [
+      makeCourtMatch("m1", "s1", 1, "6-4 6-2"), // A gana
+      makeCourtMatch("m2", "s1", 2, "3-6 4-6"), // B gana
+      makeCourtMatch("m3", "s1", 3, "6-3 6-4"), // A gana
+      makeCourtMatch("m4", "s2", 1, "3-6 4-6"), // A (visitante) gana
+      makeCourtMatch("m5", "s2", 2, "3-6 4-6"), // A (visitante) gana
+      makeCourtMatch("m6", "s2", 3, "6-4 6-2"), // B (local) gana
+    ];
+    // H2H puntos: A=2+2=4, B=1+1=2 → gana A por puntos H2H
+    const sorted = sortStandings(rows, [s1, s2], matches, DEFAULT_RULES);
     expect(sorted[0].team_id).toBe("A");
     expect(sorted[1].team_id).toBe("B");
   });
