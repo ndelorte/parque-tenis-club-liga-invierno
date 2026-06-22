@@ -35,9 +35,11 @@ import {
   type PlayerInfo,
   getStandingsForAdmin,
   getPlayoffSeriesForAdmin,
+  getTeamsForAdmin,
   createQuarterFinalSeries,
   saveSeriesResult,
   updateSeriesSchedule,
+  upsertPlayoffSeries,
 } from "@/app/actions/admin"
 import {
   generateSixTeamQuarterfinals,
@@ -142,14 +144,21 @@ export function PlayoffManager({ categories }: { categories: CategoryForAdmin[] 
 
   function loadData(catId: string) {
     startTransition(async () => {
-      const [s, ps] = await Promise.all([
+      const [s, ps, teams] = await Promise.all([
         getStandingsForAdmin(catId),
         getPlayoffSeriesForAdmin(catId),
+        getTeamsForAdmin(catId),
       ])
       setPlayoffSeries(ps)
 
+      // Usar standings reales si hay 6+, sino usar los equipos en orden como provisional
+      const effectiveStandings: StandingForAdmin[] =
+        s.length >= 6
+          ? s
+          : teams.slice(0, 6).map((t, i) => ({ teamId: t.id, teamName: t.name, position: i + 1 }))
+
       try {
-        const rows = standingsToRows(s)
+        const rows = standingsToRows(effectiveStandings)
         const generated = generateSixTeamQuarterfinals(rows)
         const merged = mergeProvisionalBracketWithScheduledMatches(
           generated,
@@ -167,12 +176,7 @@ export function PlayoffManager({ categories }: { categories: CategoryForAdmin[] 
         setBracketError(null)
       } catch (e) {
         setBracket(null)
-        const errMsg = e instanceof Error ? e.message : String(e)
-        setBracketError(
-          s.length < 6
-            ? `Se necesitan al menos 6 equipos con posiciones para generar el cuadro (hay ${s.length}).`
-            : errMsg
-        )
+        setBracketError(e instanceof Error ? e.message : String(e))
       }
     })
   }
@@ -340,8 +344,13 @@ function BracketSection({
       {/* Bye 2° */}
       <ByeCard seed={2} teamName={bracket.byes[1].team.name} />
 
-      {/* Semifinales y final — placeholder */}
-      <SemiFinalPlaceholder bracket={bracket} playoffSeries={playoffSeries} />
+      {/* Semifinales y final */}
+      <SemiFinalAndFinalSection
+        bracket={bracket}
+        categoryId={categoryId}
+        playoffSeries={playoffSeries}
+        onRefresh={onRefresh}
+      />
     </div>
   )
 }
@@ -523,70 +532,153 @@ function QFCard({
   )
 }
 
-// ─── Semifinal / Final placeholder ───────────────────────────────────────────
+// ─── Semifinal / Final scheduling ────────────────────────────────────────────
 
-function SemiFinalPlaceholder({
+function SemiFinalAndFinalSection({
   bracket,
+  categoryId,
   playoffSeries,
+  onRefresh,
 }: {
   bracket: ProvisionalBracket
+  categoryId: string
   playoffSeries: PlayoffSeriesForAdmin[]
+  onRefresh: () => void
 }) {
-  const sfSeries = playoffSeries.filter((s) => s.phase === "semifinal")
-  const finalSeries = playoffSeries.filter((s) => s.phase === "final")
-  const qf1Done = bracket.quarterfinals[0].status === "completed" || bracket.quarterfinals[0].status === "walkover"
-  const qf2Done = bracket.quarterfinals[1].status === "completed" || bracket.quarterfinals[1].status === "walkover"
+  // SF1: 1° vs ganador CF1 (4°vs5°)
+  const sf1Existing = playoffSeries.find(
+    (s) => s.phase === "semifinal" &&
+      (s.homeTeam.id === bracket.byes[0].team.id || s.awayTeam.id === bracket.byes[0].team.id),
+  )
+  // SF2: ganador CF2 (3°vs6°) vs 2°
+  const sf2Existing = playoffSeries.find(
+    (s) => s.phase === "semifinal" && s.id !== sf1Existing?.id &&
+      (s.homeTeam.id === bracket.byes[1].team.id || s.awayTeam.id === bracket.byes[1].team.id),
+  ) ?? playoffSeries.find((s) => s.phase === "semifinal" && s.id !== sf1Existing?.id)
+
+  const finalExisting = playoffSeries.find((s) => s.phase === "final")
 
   return (
-    <div className="space-y-3 opacity-60">
+    <div className="space-y-4">
       <Separator />
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Semifinal</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <PendingMatchCard
-          label="SF1"
-          description={`${bracket.byes[0].team.name} vs Ganador CF1`}
-          ready={qf1Done}
-          hasSeries={sfSeries.length > 0}
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Semifinales</p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <PlayoffScheduleCard
+          label="SF 1"
+          description={`${bracket.byes[0].team.name} vs Ganador CF 1`}
+          existing={sf1Existing}
+          onSave={async (date, time) => {
+            await upsertPlayoffSeries({
+              categoryId,
+              phase: "semifinal",
+              homeTeamId: bracket.byes[0].team.id,
+              awayTeamId: bracket.quarterfinals[1].home.team.id,
+              scheduledDate: date,
+              scheduledTime: time,
+              existingSeriesId: sf1Existing?.id,
+            })
+            onRefresh()
+          }}
         />
-        <PendingMatchCard
-          label="SF2"
-          description={`${bracket.byes[1].team.name} vs Ganador CF2`}
-          ready={qf2Done}
-          hasSeries={sfSeries.length > 1}
+        <PlayoffScheduleCard
+          label="SF 2"
+          description={`Ganador CF 2 vs ${bracket.byes[1].team.name}`}
+          existing={sf2Existing}
+          onSave={async (date, time) => {
+            await upsertPlayoffSeries({
+              categoryId,
+              phase: "semifinal",
+              homeTeamId: bracket.quarterfinals[0].home.team.id,
+              awayTeamId: bracket.byes[1].team.id,
+              scheduledDate: date,
+              scheduledTime: time,
+              existingSeriesId: sf2Existing?.id,
+            })
+            onRefresh()
+          }}
         />
       </div>
       <Separator />
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Final</p>
-      <PendingMatchCard
+      <PlayoffScheduleCard
         label="Final"
-        description="Ganador SF1 vs Ganador SF2"
-        ready={sfSeries.length >= 2 && sfSeries.every((s) => s.status === "completed" || s.status === "walkover")}
-        hasSeries={finalSeries.length > 0}
+        description="Ganador SF 1 vs Ganador SF 2"
+        existing={finalExisting}
+        onSave={async (date, time) => {
+          await upsertPlayoffSeries({
+            categoryId,
+            phase: "final",
+            homeTeamId: bracket.byes[0].team.id,
+            awayTeamId: bracket.byes[1].team.id,
+            scheduledDate: date,
+            scheduledTime: time,
+            existingSeriesId: finalExisting?.id,
+          })
+          onRefresh()
+        }}
       />
     </div>
   )
 }
 
-function PendingMatchCard({
+function PlayoffScheduleCard({
   label,
   description,
-  ready,
-  hasSeries,
+  existing,
+  onSave,
 }: {
   label: string
   description: string
-  ready: boolean
-  hasSeries: boolean
+  existing?: PlayoffSeriesForAdmin
+  onSave: (date: string, time: string) => Promise<void>
 }) {
+  const [date, setDate] = useState(existing?.scheduledDate ?? "")
+  const [time, setTime] = useState(existing?.scheduledTime ?? "")
+  const [saving, setSaving] = useState(false)
+
+  async function handleSave() {
+    if (!date) return
+    setSaving(true)
+    await onSave(date, time)
+    setSaving(false)
+  }
+
   return (
-    <div className="rounded-xl border border-dashed border-border px-4 py-3 space-y-1">
+    <div className="space-y-3 rounded-xl border border-border p-3">
       <div className="flex items-center gap-2">
         <Badge variant="outline" className="text-xs">{label}</Badge>
-        {hasSeries && <Badge className="text-xs bg-primary text-primary-foreground">Creado</Badge>}
+        {existing?.scheduledDate && (
+          <Badge className="text-xs bg-primary/10 text-primary hover:bg-primary/10">Programado</Badge>
+        )}
       </div>
       <p className="text-sm text-muted-foreground">{description}</p>
-      {!ready && !hasSeries && (
-        <p className="text-xs text-muted-foreground italic">Disponible cuando se completen los cuartos</p>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Fecha</Label>
+          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-9" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Hora</Label>
+          <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="h-9" />
+        </div>
+      </div>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="w-full"
+        disabled={!date || saving}
+        onClick={handleSave}
+      >
+        {saving ? <Loader2 className="size-4 animate-spin" /> : existing ? <Save className="size-4" /> : <Plus className="size-4" />}
+        {existing ? "Actualizar fecha" : "Programar"}
+      </Button>
+      {existing?.scheduledDate && (
+        <p className="text-xs text-muted-foreground">
+          <Clock className="size-3 inline mr-1" />
+          {formatDate(existing.scheduledDate)}
+          {existing.scheduledTime ? ` ${formatTime(existing.scheduledTime)}` : ""}
+        </p>
       )}
     </div>
   )

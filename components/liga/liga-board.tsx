@@ -19,6 +19,7 @@ import {
 import type { Category, Team, StandingsRow, CourtMatch } from "@/lib/tournament/types"
 import type { RoundWithSeries } from "@/lib/data/series"
 import type { ProvisionalBracket } from "@/lib/playoffs/types"
+import type { PlayoffSeriesSimple } from "@/lib/data/playoffs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -37,6 +38,7 @@ type CategoryBundle = {
   rounds: RoundWithSeries[]
   teams: Team[]
   bracket: ProvisionalBracket | null
+  playoffSeries: PlayoffSeriesSimple[]
 }
 
 type LigaBoardProps = {
@@ -419,18 +421,53 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
 
         {/* Playoff bracket */}
         {activeBundle.bracket && (
-          <BracketCard bracket={activeBundle.bracket} />
+          <BracketCard bracket={activeBundle.bracket} playoffSeries={activeBundle.playoffSeries} />
         )}
       </div>
     </section>
   )
 }
 
-function BracketCard({ bracket }: { bracket: ProvisionalBracket }) {
-  // QF[1] = 4° vs 5° → enfrenta al 1° en SF
-  // QF[0] = 3° vs 6° → enfrenta al 2° en SF
+function BracketCard({
+  bracket,
+  playoffSeries,
+}: {
+  bracket: ProvisionalBracket
+  playoffSeries: PlayoffSeriesSimple[]
+}) {
+  // QF[1] = 4° vs 5° → vence al 1° en SF1
+  // QF[0] = 3° vs 6° → vence al 2° en SF2
   const qfTop = bracket.quarterfinals[1]
   const qfBottom = bracket.quarterfinals[0]
+
+  // Resolución de ganadores QF para mostrar en SF
+  const allTeams = [
+    bracket.byes[0].team,
+    bracket.byes[1].team,
+    bracket.quarterfinals[0].home.team,
+    bracket.quarterfinals[0].away.team,
+    bracket.quarterfinals[1].home.team,
+    bracket.quarterfinals[1].away.team,
+  ]
+  const teamName = (id?: string) => allTeams.find((t) => t.id === id)?.name
+
+  const qfTopWinnerName = qfTop.winnerTeamId ? teamName(qfTop.winnerTeamId) : undefined
+  const qfBottomWinnerName = qfBottom.winnerTeamId ? teamName(qfBottom.winnerTeamId) : undefined
+
+  // Series SF y Final
+  const sfSeries = playoffSeries.filter((s) => s.phase === "semifinal")
+  const finalSeries = playoffSeries.find((s) => s.phase === "final")
+
+  // SF1: la serie donde el local es el 1° seed (bye[0])
+  const sf1 = sfSeries.find((s) => s.home_team_id === bracket.byes[0].team.id || s.away_team_id === bracket.byes[0].team.id)
+  // SF2: la serie donde el visitante es el 2° seed (bye[1])
+  const sf2 = sfSeries.find(
+    (s) => s.id !== sf1?.id && (s.home_team_id === bracket.byes[1].team.id || s.away_team_id === bracket.byes[1].team.id),
+  ) ?? sfSeries.find((s) => s.id !== sf1?.id)
+
+  // Ganadores de SF para mostrar en Final
+  const sf1WinnerName = sf1?.winner_team_id ? teamName(sf1.winner_team_id) : undefined
+  const sf2WinnerName = sf2?.winner_team_id ? teamName(sf2.winner_team_id) : undefined
 
   return (
     <Card className="mt-6 overflow-hidden border-t-4 border-t-accent">
@@ -443,30 +480,131 @@ function BracketCard({ bracket }: { bracket: ProvisionalBracket }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mx-auto max-w-sm space-y-3">
-          {/* Mitad superior: 1° BYE + 4°vs5° */}
+        <div className="mx-auto max-w-sm space-y-4">
+
+          {/* ── CUARTOS DE FINAL ── */}
+          <RoundLabel label="Cuartos de Final" />
           <div className="space-y-1.5">
             <ByePill slot={bracket.byes[0]} />
             <QFMatchup qf={qfTop} />
           </div>
-
           <div className="flex items-center gap-3">
             <div className="flex-1 border-t border-dashed border-border/60" />
             <Snowflake className="size-3 text-muted-foreground/40" />
             <div className="flex-1 border-t border-dashed border-border/60" />
           </div>
-
-          {/* Mitad inferior: 3°vs6° + 2° BYE */}
           <div className="space-y-1.5">
             <QFMatchup qf={qfBottom} />
             <ByePill slot={bracket.byes[1]} />
           </div>
+
+          {/* ── SEMIFINALES ── */}
+          <RoundLabel label="Semifinales" />
+          <div className="space-y-2">
+            <SFMatchup
+              label="SF 1"
+              home={{ name: bracket.byes[0].team.name, seed: 1, known: true }}
+              away={{ name: qfTopWinnerName ?? "Ganador CF 1", known: !!qfTopWinnerName }}
+              series={sf1}
+            />
+            <SFMatchup
+              label="SF 2"
+              home={{ name: qfBottomWinnerName ?? "Ganador CF 2", known: !!qfBottomWinnerName }}
+              away={{ name: bracket.byes[1].team.name, seed: 2, known: true }}
+              series={sf2}
+            />
+          </div>
+
+          {/* ── FINAL ── */}
+          <RoundLabel label="Final" />
+          <SFMatchup
+            label="Final"
+            home={{ name: sf1WinnerName ?? "Ganador SF 1", known: !!sf1WinnerName }}
+            away={{ name: sf2WinnerName ?? "Ganador SF 2", known: !!sf2WinnerName }}
+            series={finalSeries}
+          />
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
           Cuadro provisorio según posiciones actuales. Se actualiza con cada resultado.
         </p>
       </CardContent>
     </Card>
+  )
+}
+
+function RoundLabel({ label }: { label: string }) {
+  return (
+    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
+  )
+}
+
+type SlotInfo = { name: string; seed?: number; known: boolean }
+
+function SFMatchup({
+  label,
+  home,
+  away,
+  series,
+}: {
+  label: string
+  home: SlotInfo
+  away: SlotInfo
+  series?: PlayoffSeriesSimple
+}) {
+  const isCompleted = series?.status === "completed" || series?.status === "walkover"
+  const isScheduled = series?.status === "scheduled" || series?.status === "rescheduled"
+
+  return (
+    <div className={cn(
+      "space-y-2 rounded-xl border px-4 py-3",
+      isCompleted ? "border-l-4 border-l-primary border-border bg-primary/5" : "border-border bg-card",
+    )}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</span>
+        {isCompleted && (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+            <CheckCircle2 className="size-3" /> Jugado
+          </span>
+        )}
+        {isScheduled && (
+          <span className="inline-flex items-center gap-1 text-xs text-amber-600">
+            <AlertCircle className="size-3" /> Programado
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <SFSlot slot={home} winnerId={series?.winner_team_id ?? undefined} isHome />
+        <span className="text-xs text-muted-foreground">vs</span>
+        <SFSlot slot={away} winnerId={series?.winner_team_id ?? undefined} />
+      </div>
+
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Clock className="size-3.5 shrink-0" />
+        {series?.scheduled_date ? (
+          <span>
+            {series.scheduled_date.split("-").reverse().join("/")}
+            {series.scheduled_time ? ` · ${series.scheduled_time.slice(0, 5)} hs` : ""}
+          </span>
+        ) : (
+          <span className="italic">Fecha a confirmar</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function SFSlot({ slot, winnerId, isHome }: { slot: SlotInfo; winnerId?: string; isHome?: boolean }) {
+  // For SF/Final we can't always match winner by team name, so just highlight if series is completed
+  // and this slot was the winner (we don't have team IDs here, so show bold if completed and known)
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-1.5 text-sm",
+      slot.known ? "font-semibold text-foreground" : "italic text-muted-foreground",
+    )}>
+      {slot.seed && <SeedBadge seed={slot.seed} small />}
+      <span className="max-w-[130px] truncate sm:max-w-none">{slot.name}</span>
+    </span>
   )
 }
 

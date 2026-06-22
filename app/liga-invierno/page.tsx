@@ -73,7 +73,7 @@ export default async function LigaInviernoPage({ searchParams }: Props) {
         bracket = null
       }
 
-      return { category, standings, rounds, teams, bracket }
+      return { category, standings, rounds, teams, bracket, playoffSeries }
     }),
   )
 

@@ -636,6 +636,96 @@ export async function createQuarterFinalSeries(
   }
 }
 
+// phase_round_numbers: semifinal=101, final=102
+const PHASE_CONFIG: Record<"semifinal" | "final", { roundNumber: number; name: string }> = {
+  semifinal: { roundNumber: 101, name: "Semifinal" },
+  final: { roundNumber: 102, name: "Final" },
+}
+
+export async function upsertPlayoffSeries(params: {
+  categoryId: string
+  phase: "semifinal" | "final"
+  homeTeamId: string
+  awayTeamId: string
+  scheduledDate: string | null
+  scheduledTime: string | null
+  existingSeriesId?: string
+}): Promise<{ success: boolean; seriesId?: string; error?: string }> {
+  const { categoryId, phase, homeTeamId, awayTeamId, scheduledDate, scheduledTime, existingSeriesId } = params
+  const supabase = createAdminClient()
+
+  try {
+    if (existingSeriesId) {
+      const { error } = await supabase
+        .from("series")
+        .update({ scheduled_date: scheduledDate, scheduled_time: scheduledTime })
+        .eq("id", existingSeriesId)
+      if (error) return { success: false, error: error.message }
+      revalidatePath("/admin")
+      revalidatePath("/liga-invierno")
+      return { success: true, seriesId: existingSeriesId }
+    }
+
+    const cfg = PHASE_CONFIG[phase]
+    const { data: existingRound } = await supabase
+      .from("rounds")
+      .select("id")
+      .eq("category_id", categoryId)
+      .eq("phase", phase)
+      .maybeSingle()
+
+    let roundId: string
+    if (existingRound) {
+      roundId = (existingRound as any).id
+    } else {
+      const { data: newRound, error: roundError } = await supabase
+        .from("rounds")
+        .insert({ category_id: categoryId, phase, round_number: cfg.roundNumber, name: cfg.name, status: "scheduled" })
+        .select("id")
+        .single()
+      if (roundError || !newRound) return { success: false, error: roundError?.message ?? "Error al crear la ronda" }
+      roundId = (newRound as any).id
+    }
+
+    // Check if a series for this pair already exists
+    const { data: existingSeries } = await supabase
+      .from("series")
+      .select("id")
+      .eq("round_id", roundId)
+      .or(`and(home_team_id.eq.${homeTeamId},away_team_id.eq.${awayTeamId}),and(home_team_id.eq.${awayTeamId},away_team_id.eq.${homeTeamId})`)
+      .maybeSingle()
+
+    if (existingSeries) {
+      await supabase.from("series").update({ scheduled_date: scheduledDate, scheduled_time: scheduledTime }).eq("id", (existingSeries as any).id)
+      revalidatePath("/admin")
+      revalidatePath("/liga-invierno")
+      return { success: true, seriesId: (existingSeries as any).id }
+    }
+
+    const { data: newSeries, error: seriesError } = await supabase
+      .from("series")
+      .insert({
+        round_id: roundId,
+        category_id: categoryId,
+        home_team_id: homeTeamId,
+        away_team_id: awayTeamId,
+        scheduled_date: scheduledDate,
+        scheduled_time: scheduledTime,
+        status: "scheduled",
+        is_general_walkover: false,
+      })
+      .select("id")
+      .single()
+
+    if (seriesError || !newSeries) return { success: false, error: seriesError?.message ?? "Error al crear la serie" }
+    revalidatePath("/admin")
+    revalidatePath("/liga-invierno")
+    return { success: true, seriesId: (newSeries as any).id }
+  } catch (e) {
+    return { success: false, error: String(e) }
+  }
+}
+
 export async function updateSeriesSchedule(
   seriesId: string,
   date: string,

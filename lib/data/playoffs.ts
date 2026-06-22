@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 export type PlayoffSeriesSimple = {
   id: string
   round_id: string
+  phase: "quarterfinal" | "semifinal" | "final"
   home_team_id: string
   away_team_id: string
   scheduled_date?: string
@@ -24,7 +25,7 @@ type SeriesRow = {
 
 type RoundWithSeriesRow = {
   id: string
-  phase: string
+  phase: "quarterfinal" | "semifinal" | "final"
   series: SeriesRow[]
 }
 
@@ -50,6 +51,7 @@ export async function getPlayoffSeries(
       result.push({
         id: s.id,
         round_id: s.round_id,
+        phase: round.phase,
         home_team_id: s.home_team_id,
         away_team_id: s.away_team_id,
         scheduled_date: s.scheduled_date ?? undefined,
