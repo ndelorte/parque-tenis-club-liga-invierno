@@ -3,11 +3,11 @@ import { cn } from "@/lib/utils"
 import type { ProvisionalBracket, QuarterFinalMatchup, PlayoffSlot } from "@/lib/playoffs/types"
 
 type ThirdPlace = {
-  homeTeamName: string
-  awayTeamName: string
+  homeTeamName?: string
+  awayTeamName?: string
   scheduledDate?: string
   scheduledTime?: string
-  status: string
+  status?: string
 }
 
 interface Props {
@@ -32,13 +32,11 @@ export function PlayoffBracket({ bracket, thirdPlace }: Props) {
           <ByeRow slot={bracket.byes[1]} />
         </div>
 
-        {/* 3er y 4to puesto — desconectado del bracket principal */}
-        {thirdPlace && (
-          <div className="lg:w-72 lg:shrink-0">
-            <p className="text-xs text-gray-400 mb-2 italic">Partido separado</p>
-            <ThirdPlaceCard thirdPlace={thirdPlace} />
-          </div>
-        )}
+        {/* 3er y 4to puesto — siempre visible, desconectado del bracket principal */}
+        <div className="lg:w-72 lg:shrink-0">
+          <p className="text-xs text-gray-400 mb-2 italic">Partido separado</p>
+          <ThirdPlaceCard thirdPlace={thirdPlace} />
+        </div>
       </div>
     </div>
   )
@@ -105,9 +103,9 @@ function QFRow({ qf }: { qf: QuarterFinalMatchup }) {
   )
 }
 
-function ThirdPlaceCard({ thirdPlace }: { thirdPlace: ThirdPlace }) {
-  const isCompleted = thirdPlace.status === "completed" || thirdPlace.status === "walkover"
-  const isScheduled = thirdPlace.status === "scheduled" || thirdPlace.status === "rescheduled"
+function ThirdPlaceCard({ thirdPlace }: { thirdPlace?: ThirdPlace }) {
+  const isCompleted = thirdPlace?.status === "completed" || thirdPlace?.status === "walkover"
+  const isScheduled = thirdPlace?.status === "scheduled" || thirdPlace?.status === "rescheduled"
 
   return (
     <div
@@ -138,14 +136,18 @@ function ThirdPlaceCard({ thirdPlace }: { thirdPlace: ThirdPlace }) {
       </div>
 
       <div className="flex items-center gap-2 flex-wrap text-sm font-medium text-gray-800">
-        <span className="truncate max-w-[120px] sm:max-w-none">{thirdPlace.homeTeamName}</span>
+        <span className="truncate max-w-[120px] sm:max-w-none">
+          {thirdPlace?.homeTeamName ?? <span className="italic font-normal text-muted-foreground">A definir</span>}
+        </span>
         <span className="text-muted-foreground">vs</span>
-        <span className="truncate max-w-[120px] sm:max-w-none">{thirdPlace.awayTeamName}</span>
+        <span className="truncate max-w-[120px] sm:max-w-none">
+          {thirdPlace?.awayTeamName ?? <span className="italic font-normal text-muted-foreground">A definir</span>}
+        </span>
       </div>
 
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <Clock className="size-3.5 shrink-0" />
-        {thirdPlace.scheduledDate ? (
+        {thirdPlace?.scheduledDate ? (
           <span>
             {formatDate(thirdPlace.scheduledDate)}
             {thirdPlace.scheduledTime ? ` — ${formatTime(thirdPlace.scheduledTime)}` : ""}

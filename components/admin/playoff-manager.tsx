@@ -582,8 +582,6 @@ function SemiFinalAndFinalSection({
         : sf2Existing?.awayTeam.name) ?? "?"
     : null
 
-  const bothLosersKnown = !!sf1LoserId && !!sf2LoserId
-
   return (
     <div className="space-y-4">
       <Separator />
@@ -648,29 +646,28 @@ function SemiFinalAndFinalSection({
         </div>
         <div className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">3er y 4to Puesto</p>
-          {bothLosersKnown ? (
-            <PlayoffScheduleCard
-              label="3° / 4°"
-              description={`${sf1LoserName ?? "?"} vs ${sf2LoserName ?? "?"}`}
-              existing={thirdPlaceExisting}
-              onSave={async (date, time) => {
-                await upsertPlayoffSeries({
-                  categoryId,
-                  phase: "third_place",
-                  homeTeamId: sf1LoserId!,
-                  awayTeamId: sf2LoserId!,
-                  scheduledDate: date,
-                  scheduledTime: time,
-                  existingSeriesId: thirdPlaceExisting?.id,
-                })
-                onRefresh()
-              }}
-            />
-          ) : (
-            <div className="rounded-xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-              Disponible cuando se conozcan los resultados de las semifinales
-            </div>
-          )}
+          <PlayoffScheduleCard
+            label="3° / 4°"
+            description={
+              sf1LoserName && sf2LoserName
+                ? `${sf1LoserName} vs ${sf2LoserName}`
+                : "Perdedor SF 1 vs Perdedor SF 2"
+            }
+            existing={thirdPlaceExisting}
+            onSave={async (date, time) => {
+              await upsertPlayoffSeries({
+                categoryId,
+                phase: "third_place",
+                // Usar los perdedores reales si se conocen; sino placeholder (1° y 2°)
+                homeTeamId: sf1LoserId ?? bracket.byes[0].team.id,
+                awayTeamId: sf2LoserId ?? bracket.byes[1].team.id,
+                scheduledDate: date,
+                scheduledTime: time,
+                existingSeriesId: thirdPlaceExisting?.id,
+              })
+              onRefresh()
+            }}
+          />
         </div>
       </div>
     </div>
