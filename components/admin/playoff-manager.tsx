@@ -557,6 +557,32 @@ function SemiFinalAndFinalSection({
   ) ?? playoffSeries.find((s) => s.phase === "semifinal" && s.id !== sf1Existing?.id)
 
   const finalExisting = playoffSeries.find((s) => s.phase === "final")
+  const thirdPlaceExisting = playoffSeries.find((s) => s.phase === "third_place")
+
+  // Perdedores de las semifinales (disponibles una vez que hay resultado)
+  const sf1LoserId = sf1Existing?.winnerTeamId
+    ? (sf1Existing.homeTeam.id === sf1Existing.winnerTeamId
+        ? sf1Existing.awayTeam.id
+        : sf1Existing.homeTeam.id)
+    : null
+  const sf1LoserName = sf1LoserId
+    ? (sf1Existing?.homeTeam.id === sf1LoserId
+        ? sf1Existing?.homeTeam.name
+        : sf1Existing?.awayTeam.name) ?? "?"
+    : null
+
+  const sf2LoserId = sf2Existing?.winnerTeamId
+    ? (sf2Existing.homeTeam.id === sf2Existing.winnerTeamId
+        ? sf2Existing.awayTeam.id
+        : sf2Existing.homeTeam.id)
+    : null
+  const sf2LoserName = sf2LoserId
+    ? (sf2Existing?.homeTeam.id === sf2LoserId
+        ? sf2Existing?.homeTeam.name
+        : sf2Existing?.awayTeam.name) ?? "?"
+    : null
+
+  const bothLosersKnown = !!sf1LoserId && !!sf2LoserId
 
   return (
     <div className="space-y-4">
@@ -599,24 +625,54 @@ function SemiFinalAndFinalSection({
         />
       </div>
       <Separator />
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Final</p>
-      <PlayoffScheduleCard
-        label="Final"
-        description="Ganador SF 1 vs Ganador SF 2"
-        existing={finalExisting}
-        onSave={async (date, time) => {
-          await upsertPlayoffSeries({
-            categoryId,
-            phase: "final",
-            homeTeamId: bracket.byes[0].team.id,
-            awayTeamId: bracket.byes[1].team.id,
-            scheduledDate: date,
-            scheduledTime: time,
-            existingSeriesId: finalExisting?.id,
-          })
-          onRefresh()
-        }}
-      />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Final</p>
+          <PlayoffScheduleCard
+            label="Final"
+            description="Ganador SF 1 vs Ganador SF 2"
+            existing={finalExisting}
+            onSave={async (date, time) => {
+              await upsertPlayoffSeries({
+                categoryId,
+                phase: "final",
+                homeTeamId: bracket.byes[0].team.id,
+                awayTeamId: bracket.byes[1].team.id,
+                scheduledDate: date,
+                scheduledTime: time,
+                existingSeriesId: finalExisting?.id,
+              })
+              onRefresh()
+            }}
+          />
+        </div>
+        <div className="space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">3er y 4to Puesto</p>
+          {bothLosersKnown ? (
+            <PlayoffScheduleCard
+              label="3° / 4°"
+              description={`${sf1LoserName ?? "?"} vs ${sf2LoserName ?? "?"}`}
+              existing={thirdPlaceExisting}
+              onSave={async (date, time) => {
+                await upsertPlayoffSeries({
+                  categoryId,
+                  phase: "third_place",
+                  homeTeamId: sf1LoserId!,
+                  awayTeamId: sf2LoserId!,
+                  scheduledDate: date,
+                  scheduledTime: time,
+                  existingSeriesId: thirdPlaceExisting?.id,
+                })
+                onRefresh()
+              }}
+            />
+          ) : (
+            <div className="rounded-xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+              Disponible cuando se conozcan los resultados de las semifinales
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

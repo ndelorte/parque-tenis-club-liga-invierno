@@ -80,6 +80,17 @@ export default async function CategoriaPage({ params }: Props) {
     bracket = null
   }
 
+  const thirdPlaceSeries = playoffSeries.find((s) => s.phase === "third_place")
+  const thirdPlace = thirdPlaceSeries
+    ? {
+        homeTeamName: teams.find((t) => t.id === thirdPlaceSeries.home_team_id)?.name ?? "Equipo",
+        awayTeamName: teams.find((t) => t.id === thirdPlaceSeries.away_team_id)?.name ?? "Equipo",
+        scheduledDate: thirdPlaceSeries.scheduled_date,
+        scheduledTime: thirdPlaceSeries.scheduled_time,
+        status: thirdPlaceSeries.status,
+      }
+    : undefined
+
   return (
     <div>
       {tournament && <TournamentHeader tournament={tournament} />}
@@ -95,7 +106,7 @@ export default async function CategoriaPage({ params }: Props) {
 
         {bracket && (
           <section>
-            <PlayoffBracket bracket={bracket} />
+            <PlayoffBracket bracket={bracket} thirdPlace={thirdPlace} />
           </section>
         )}
 
