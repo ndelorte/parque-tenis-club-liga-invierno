@@ -16,7 +16,12 @@ export const metadata = {
     "Torneo por equipos de dobles. Posiciones, fixture, resultados y equipos de las categorías Caballeros, Damas y Mixto.",
 }
 
-export default async function LigaInviernoPage() {
+interface Props {
+  searchParams: Promise<{ categoria?: string }>
+}
+
+export default async function LigaInviernoPage({ searchParams }: Props) {
+  const { categoria } = await searchParams
   const tournament = await getActiveTournament()
   const categories = tournament ? await getCategoriesForTournament(tournament.id) : []
 
@@ -34,7 +39,7 @@ export default async function LigaInviernoPage() {
   return (
     <main className="min-h-dvh bg-background">
       <LigaHeader />
-      <LigaBoard bundles={bundles} />
+      <LigaBoard bundles={bundles} initialCategory={categoria} />
       <LigaReglamento />
       <WhatsappFab />
     </main>

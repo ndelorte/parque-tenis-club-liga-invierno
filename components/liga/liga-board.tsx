@@ -36,6 +36,7 @@ type CategoryBundle = {
 
 type LigaBoardProps = {
   bundles: CategoryBundle[]
+  initialCategory?: string
 }
 
 const TEAM_TINTS = [
@@ -54,8 +55,11 @@ function formatDate(dateStr?: string): string {
   })
 }
 
-export function LigaBoard({ bundles }: LigaBoardProps) {
-  const [activeSlug, setActiveSlug] = useState<string>(bundles[0]?.category.slug ?? "")
+export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
+  const defaultSlug = (initialCategory && bundles.some((b) => b.category.slug === initialCategory))
+    ? initialCategory
+    : (bundles[0]?.category.slug ?? "")
+  const [activeSlug, setActiveSlug] = useState<string>(defaultSlug)
 
   const activeBundle = bundles.find((b) => b.category.slug === activeSlug) ?? bundles[0]
 
