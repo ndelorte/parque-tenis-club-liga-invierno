@@ -1,34 +1,34 @@
 categoria,fase,fecha_numero,fecha_nombre,equipo_local,equipo_visitante,dia,hora
 Damas A,regular,1,Fecha 1,Gin Tonic,Ese no es el pique,2026-06-26,12:00
-Damas A,regular,1,Fecha 1,Fifteen love,E.U.M.,2026-06-28,9:00
+Damas A,regular,1,Fecha 1,Fifteen love,E.U.M.,2026-06-28,09:00
 Damas A,regular,1,Fecha 1,Red de Amigas,Las Juan Carlas,2026-06-30,19:30
 Damas A,regular,2,Fecha 2,Gin Tonic,Fifteen love,2026-07-05,11:00
 Damas A,regular,2,Fecha 2,Ese no es el pique,Red de amigas,2026-07-09,16:00
-Damas A,regular,2,Fecha 2,E.U.M,Las Juan Carlas,2026-07-09,9:00
+Damas A,regular,2,Fecha 2,E.U.M,Las Juan Carlas,2026-07-09,09:00
 Damas A,regular,3,Fecha 3,Gin Tonic,E.U.M.,2026-07-14,19:30
 Damas A,regular,3,Fecha 3,Ese no es el pique,Las Juan Carlas,2026-07-18,12:00
 Damas A,regular,3,Fecha 3,Red de Amigas,Fifteen love,2026-07-19,11:00
-Damas A,regular,4,Fecha 4,Gin Tonic,Red de amigas,2026-07-26,9:00
+Damas A,regular,4,Fecha 4,Gin Tonic,Red de amigas,2026-07-26,09:00
 Damas A,regular,4,Fecha 4,Ese no es el pique,E.U.M.,2026-07-23,19:30
 Damas A,regular,4,Fecha 4,Las Juan Carlas,Fifteen love,2026-07-25,18:00
 Damas A,regular,5,Fecha 5,Gin Tonic,Las Juan Carlas,2026-07-30,19:30
 Damas A,regular,5,Fecha 5,Ese no es el pique,Fifteen love,2026-08-01,12:00
 Damas A,regular,5,Fecha 5,E.U.M,Red de amigas,2026-08-02,12:00
-Damas B,regular,1,Fecha 1,Raquets & Beer,Old Georgian Club,2026-06-28,11:00
-Damas B,regular,1,Fecha 1,Winter Break,Bandada de invierno,2026-07-05,9:00
+Damas B,regular,1,Fecha 1,Raquets & Beers,Old Georgian Club,2026-06-28,11:00
+Damas B,regular,1,Fecha 1,Winter Break,Bandada de invierno,2026-07-05,09:00
 Damas B,regular,1,Fecha 1,Dream Team,La escondida,2026-07-02,19:30
-Damas B,regular,2,Fecha 2,Raquets & Beer,Bandada de invierno,2026-07-09,18:00
+Damas B,regular,2,Fecha 2,Raquets & Beers,Bandada de invierno,2026-07-09,18:00
 Damas B,regular,2,Fecha 2,Old Georgian Club,La Escondida,2026-07-07,19:30
 Damas B,regular,2,Fecha 2,Winter Break,Dream team,2026-07-11,12:00
-Damas B,regular,3,Fecha 3,Raquets & Beer,La escondida,2026-07-16,19:30
-Damas B,regular,3,Fecha 3,Dream Team,Bandada de invierno,2026-07-19,9:00
+Damas B,regular,3,Fecha 3,Raquets & Beers,La escondida,2026-07-16,19:30
+Damas B,regular,3,Fecha 3,Dream Team,Bandada de invierno,2026-07-19,09:00
 Damas B,regular,3,Fecha 3,Old Georgian Club,Winter Break,2026-07-18,14:00
-Damas B,regular,4,Fecha 4,Raquets & Beer,Dream team,2026-07-21,19:30
+Damas B,regular,4,Fecha 4,Raquets & Beers,Dream team,2026-07-21,19:30
 Damas B,regular,4,Fecha 4,La escondida,Winter Break,2026-07-26,11:00
 Damas B,regular,4,Fecha 4,Bandada de invierno,Old Georgian Club,2026-07-25,12:00
-Damas B,regular,5,Fecha 5,Raquets & Beer,Winter Break,2026-08-04,19:30
+Damas B,regular,5,Fecha 5,Raquets & Beers,Winter Break,2026-08-04,19:30
 Damas B,regular,5,Fecha 5,Dream Team,Old Georgian Club,2026-07-28,19:30
-Damas B,regular,5,Fecha 5,La escondida,Bandada de invierno,2026-08-02,9:00
+Damas B,regular,5,Fecha 5,La escondida,Bandada de invierno,2026-08-02,09:00
 Caballeros A,regular,1,Fecha 1,Finito Tenis Club,Los de Siempre,2026-07-01,21:00
 Caballeros A,regular,1,Fecha 1,Los Arizu,Tincho pasame el alias,2026-07-02,21:00
 Caballeros A,regular,1,Fecha 1,Parque tenis,Los Desconocidos,2026-07-03,21:00
@@ -81,7 +81,7 @@ Mixto B,regular,2,Fecha 2,Mixtura sur,Winter Break,2026-07-05,18:00
 Mixto B,regular,2,Fecha 2,Toma2team,Five Star,2026-07-11,18:00
 Mixto B,regular,2,Fecha 2,Pure Mixto,Saque y Red,2026-07-10,19:30
 Mixto B,regular,3,Fecha 3,Mixtura sur,Saque y Red,2026-07-12,11:00
-Mixto B,regular,3,Fecha 3,Winter Break,Five Star,2026-07-12,9:00
+Mixto B,regular,3,Fecha 3,Winter Break,Five Star,2026-07-12,09:00
 Mixto B,regular,3,Fecha 3,Pure Mixto,Toma2team,2026-07-12,14:00
 Mixto B,regular,4,Fecha 4,Mixtura sur,Five Star,2026-07-19,16:00
 Mixto B,regular,4,Fecha 4,Toma2team,Saque y Red,2026-07-19,18:00
