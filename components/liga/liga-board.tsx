@@ -276,11 +276,6 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
           </Card>
         </div>
 
-        {/* Playoff bracket */}
-        {activeBundle.bracket && (
-          <BracketCard bracket={activeBundle.bracket} />
-        )}
-
         {/* All results */}
         <Card className="mt-6 overflow-hidden border-t-4 border-t-primary">
           <CardHeader>
@@ -406,6 +401,11 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
             ))}
           </CardContent>
         </Card>
+
+        {/* Playoff bracket */}
+        {activeBundle.bracket && (
+          <BracketCard bracket={activeBundle.bracket} />
+        )}
       </div>
     </section>
   )
