@@ -71,6 +71,28 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
     )
   }
 
+  const standings =
+    activeBundle.standings.length > 0
+      ? activeBundle.standings
+      : activeBundle.teams.map((t, i) => ({
+          team_id: t.id,
+          team: t,
+          played: 0,
+          won: 0,
+          lost: 0,
+          points: 0,
+          courts_won: 0,
+          courts_lost: 0,
+          courts_diff: 0,
+          sets_won: 0,
+          sets_lost: 0,
+          sets_diff: 0,
+          games_won: 0,
+          games_lost: 0,
+          games_diff: 0,
+          position: i + 1,
+        }))
+
   const allSeries = activeBundle.rounds.flatMap((r) =>
     r.series.map((s) => ({ ...s, roundName: r.name })),
   )
@@ -138,74 +160,70 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {activeBundle.standings.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sin resultados cargados todavía.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-10">#</TableHead>
-                        <TableHead>Equipo</TableHead>
-                        <TableHead className="text-center">PJ</TableHead>
-                        <TableHead className="text-center">G</TableHead>
-                        <TableHead className="text-center">P</TableHead>
-                        <TableHead className="text-center">
-                          <span title="Canchas a favor / en contra">Canchas</span>
-                        </TableHead>
-                        <TableHead className="text-center">Pts</TableHead>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-10">#</TableHead>
+                      <TableHead>Equipo</TableHead>
+                      <TableHead className="text-center">PJ</TableHead>
+                      <TableHead className="text-center">G</TableHead>
+                      <TableHead className="text-center">P</TableHead>
+                      <TableHead className="text-center">
+                        <span title="Canchas a favor / en contra">Canchas</span>
+                      </TableHead>
+                      <TableHead className="text-center">Pts</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {standings.map((r) => (
+                      <TableRow
+                        key={r.team_id}
+                        className={cn(
+                          r.position === 1 && "bg-accent/5",
+                          r.position <= 3 && "font-medium",
+                        )}
+                      >
+                        <TableCell>
+                          <span
+                            className={cn(
+                              "inline-flex size-6 items-center justify-center rounded-full text-xs font-bold",
+                              podiumClass(r.position),
+                            )}
+                          >
+                            {r.position}
+                          </span>
+                        </TableCell>
+                        <TableCell className="font-medium text-foreground">
+                          <span className="flex items-center gap-1.5">
+                            {r.position <= 3 && (
+                              <Medal className={cn("size-4", podiumIcon(r.position))} />
+                            )}
+                            {r.team.name}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center text-muted-foreground">
+                          {r.played}
+                        </TableCell>
+                        <TableCell className="text-center text-muted-foreground">
+                          {r.won}
+                        </TableCell>
+                        <TableCell className="text-center text-muted-foreground">
+                          {r.lost}
+                        </TableCell>
+                        <TableCell className="text-center text-muted-foreground">
+                          {r.courts_won}:{r.courts_lost}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex min-w-7 justify-center rounded-md bg-primary/10 px-1.5 py-0.5 font-bold text-primary">
+                            {r.points}
+                          </span>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {activeBundle.standings.map((r) => (
-                        <TableRow
-                          key={r.team_id}
-                          className={cn(
-                            r.position === 1 && "bg-accent/5",
-                            r.position <= 3 && "font-medium",
-                          )}
-                        >
-                          <TableCell>
-                            <span
-                              className={cn(
-                                "inline-flex size-6 items-center justify-center rounded-full text-xs font-bold",
-                                podiumClass(r.position),
-                              )}
-                            >
-                              {r.position}
-                            </span>
-                          </TableCell>
-                          <TableCell className="font-medium text-foreground">
-                            <span className="flex items-center gap-1.5">
-                              {r.position <= 3 && (
-                                <Medal className={cn("size-4", podiumIcon(r.position))} />
-                              )}
-                              {r.team.name}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-center text-muted-foreground">
-                            {r.played}
-                          </TableCell>
-                          <TableCell className="text-center text-muted-foreground">
-                            {r.won}
-                          </TableCell>
-                          <TableCell className="text-center text-muted-foreground">
-                            {r.lost}
-                          </TableCell>
-                          <TableCell className="text-center text-muted-foreground">
-                            {r.courts_won}:{r.courts_lost}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <span className="inline-flex min-w-7 justify-center rounded-md bg-primary/10 px-1.5 py-0.5 font-bold text-primary">
-                              {r.points}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
               <p className="mt-3 text-xs text-muted-foreground">
                 PJ: jugados · G: ganados · P: perdidos · Canchas: a favor:en contra · Pts: 2 por serie ganada.
               </p>

@@ -48,10 +48,32 @@ export default async function CategoriaPage({ params }: Props) {
     r.series.map((s) => ({ ...s, round: r })),
   )
 
+  const effectiveStandings =
+    standings.length > 0
+      ? standings
+      : teams.map((t, i) => ({
+          team_id: t.id,
+          team: t,
+          played: 0,
+          won: 0,
+          lost: 0,
+          points: 0,
+          courts_won: 0,
+          courts_lost: 0,
+          courts_diff: 0,
+          sets_won: 0,
+          sets_lost: 0,
+          sets_diff: 0,
+          games_won: 0,
+          games_lost: 0,
+          games_diff: 0,
+          position: i + 1,
+        }))
+
   let bracket = null
   try {
-    if (standings.length >= 6) {
-      const generated = generateProvisionalBracket(standings, standings.length)
+    if (effectiveStandings.length >= 6) {
+      const generated = generateProvisionalBracket(effectiveStandings, effectiveStandings.length)
       bracket = mergeProvisionalBracketWithScheduledMatches(generated, playoffSeries)
     }
   } catch {
@@ -68,7 +90,7 @@ export default async function CategoriaPage({ params }: Props) {
 
         <section>
           <h3 className="font-semibold text-gray-800 mb-3">Tabla de posiciones</h3>
-          <StandingsTable standings={standings} />
+          <StandingsTable standings={effectiveStandings} />
         </section>
 
         {bracket && (
