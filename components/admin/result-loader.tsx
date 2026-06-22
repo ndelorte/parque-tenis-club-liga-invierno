@@ -177,7 +177,9 @@ export function ResultLoader({ categories }: { categories: CategoryForAdmin[] })
             </Label>
             <Select value={categoryId} onValueChange={(v) => { if (v) setCategoryId(v) }}>
               <SelectTrigger className="h-11 w-full">
-                <SelectValue />
+                <SelectValue placeholder="Seleccioná una categoría">
+                  {categories.find((c) => c.id === categoryId)?.name}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {categories.map((c) => (
@@ -200,7 +202,9 @@ export function ResultLoader({ categories }: { categories: CategoryForAdmin[] })
               disabled={rounds.length === 0}
             >
               <SelectTrigger className="h-11 w-full">
-                <SelectValue placeholder="Seleccioná una fecha" />
+                <SelectValue placeholder="Seleccioná una fecha">
+                  {rounds.find((r) => r.id === activeRoundId)?.name}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {rounds.map((r) => (
@@ -544,7 +548,11 @@ function PlayerPair({
             }}
           >
             <SelectTrigger className="h-9 w-full">
-              <SelectValue placeholder="Jugador" />
+              <SelectValue placeholder="Sin asignar">
+                {value[idx] != null
+                  ? players.find((p) => p.id === value[idx])?.displayName
+                  : undefined}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={NULL_VALUE}>Sin asignar</SelectItem>

@@ -196,7 +196,9 @@ export function PlayoffManager({ categories }: { categories: CategoryForAdmin[] 
             </Label>
             <Select value={categoryId} onValueChange={(v) => { if (v) setCategoryId(v) }}>
               <SelectTrigger className="h-11 max-w-xs">
-                <SelectValue />
+                <SelectValue placeholder="Seleccioná una categoría">
+                  {categories.find((c) => c.id === categoryId)?.name}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {categories.map((c) => (
@@ -939,7 +941,11 @@ function PlayerPairSelector({
             }}
           >
             <SelectTrigger className="h-9 w-full">
-              <SelectValue placeholder="Jugador" />
+              <SelectValue placeholder="Sin asignar">
+                {value[idx] != null
+                  ? players.find((p) => p.id === value[idx])?.displayName
+                  : undefined}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={NULL_VALUE}>Sin asignar</SelectItem>
