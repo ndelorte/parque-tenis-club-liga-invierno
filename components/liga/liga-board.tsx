@@ -102,14 +102,22 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
     r.series.map((s) => ({ ...s, roundName: r.name })),
   )
 
-  const upcoming = allSeries.filter(
-    (s) => s.status === "scheduled" || s.status === "rescheduled",
-  )
   const played = allSeries
     .filter((s) => s.status === "completed" || s.status === "walkover")
     .sort((a, b) => (b.scheduled_date ?? "").localeCompare(a.scheduled_date ?? ""))
 
-  const nextDate = upcoming[0]?.scheduled_date
+  // Primer round regular con al menos una serie sin terminar
+  const nextRound = [...activeBundle.rounds]
+    .filter((r) => r.phase === "regular")
+    .sort((a, b) => a.round_number - b.round_number)
+    .find((r) =>
+      r.series.some(
+        (s) => s.status !== "completed" && s.status !== "walkover" && s.status !== "cancelled",
+      ),
+    )
+  const nextRoundSeries = nextRound
+    ? nextRound.series.map((s) => ({ ...s, roundName: nextRound.name }))
+    : []
 
   return (
     <section className="relative isolate overflow-hidden">
@@ -242,30 +250,31 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {nextDate && (
+              {nextRound && (
                 <Badge className="gap-1 bg-winter text-winter-foreground hover:bg-winter">
                   <Snowflake className="size-3" />
-                  {formatDate(nextDate)}
+                  {nextRound.name}
                 </Badge>
               )}
-              {upcoming.length === 0 && (
+              {nextRoundSeries.length === 0 && (
                 <p className="text-sm text-muted-foreground">
                   No hay series programadas por el momento.
                 </p>
               )}
-              {upcoming.map((s) => (
+              {nextRoundSeries.map((s) => (
                 <div
                   key={s.id}
                   className="rounded-xl border border-border border-l-4 border-l-winter bg-winter/5 p-3"
                 >
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {s.roundName}
-                  </p>
-                  <div className="mt-1 flex items-center justify-between gap-2 text-sm font-semibold text-foreground">
+                  <div className="flex items-center justify-between gap-2 text-sm font-semibold text-foreground">
                     <span className="text-pretty">{s.home_team?.name ?? s.home_team_id}</span>
-                    <span className="text-xs text-muted-foreground">vs</span>
+                    <span className="text-xs font-normal text-muted-foreground">vs</span>
                     <span className="text-pretty text-right">{s.away_team?.name ?? s.away_team_id}</span>
                   </div>
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    {formatDate(s.scheduled_date)}
+                    {s.scheduled_time ? ` · ${s.scheduled_time.slice(0, 5)} hs` : " · Hora a confirmar"}
+                  </p>
                 </div>
               ))}
             </CardContent>
@@ -312,7 +321,7 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Fecha</TableHead>
+                      <TableHead>Ronda / Horario</TableHead>
                       <TableHead>Serie</TableHead>
                       <TableHead className="text-center">Canchas</TableHead>
                       <TableHead className="text-right">Estado</TableHead>
@@ -323,8 +332,12 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
                       const isDone = s.status === "completed" || s.status === "walkover"
                       return (
                         <TableRow key={s.id}>
-                          <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                            {formatDate(s.scheduled_date)}
+                          <TableCell className="text-sm">
+                            <p className="font-medium text-foreground">{s.roundName}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDate(s.scheduled_date)}
+                              {s.scheduled_time ? ` · ${s.scheduled_time.slice(0, 5)} hs` : ""}
+                            </p>
                           </TableCell>
                           <TableCell className="text-sm font-medium text-foreground">
                             {s.home_team?.name ?? s.home_team_id}{" "}
