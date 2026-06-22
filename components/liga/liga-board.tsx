@@ -104,6 +104,10 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
     r.series.map((s) => ({ ...s, roundName: r.name })),
   )
 
+  const regularSeries = activeBundle.rounds
+    .filter((r) => r.phase === "regular")
+    .flatMap((r) => r.series.map((s) => ({ ...s, roundName: r.name })))
+
   const played = allSeries
     .filter((s) => s.status === "completed" || s.status === "walkover")
     .sort((a, b) => (b.scheduled_date ?? "").localeCompare(a.scheduled_date ?? ""))
@@ -322,7 +326,7 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {allSeries.length === 0 ? (
+            {regularSeries.length === 0 ? (
               <p className="text-sm text-muted-foreground">Sin fixture cargado.</p>
             ) : (
               <div className="overflow-x-auto">
@@ -336,7 +340,7 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {allSeries.map((s) => {
+                    {regularSeries.map((s) => {
                       const isDone = s.status === "completed" || s.status === "walkover"
                       return (
                         <TableRow key={s.id}>
@@ -656,7 +660,7 @@ function QFMatchup({ qf }: { qf: ProvisionalBracket["quarterfinals"][0] }) {
       </div>
 
       {/* Info */}
-      <div className="flex w-20 shrink-0 flex-col items-start justify-center gap-0.5 pl-2">
+      <div className="flex w-28 shrink-0 flex-col items-start justify-center gap-0.5 pl-2">
         <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
           Cuartos
         </span>
@@ -665,12 +669,16 @@ function QFMatchup({ qf }: { qf: ProvisionalBracket["quarterfinals"][0] }) {
             <CheckCircle2 className="size-3" /> Jugado
           </span>
         ) : isScheduled ? (
-          <span className="inline-flex items-center gap-1 text-xs text-amber-600">
-            <Clock className="size-3" />
-            {qf.scheduledDate
-              ? qf.scheduledDate.split("-").slice(1).reverse().join("/")
-              : "A confirmar"}
-          </span>
+          <>
+            <span className="inline-flex items-center gap-1 text-xs text-amber-600">
+              <AlertCircle className="size-3" /> Programado
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {qf.scheduledDate
+                ? `${qf.scheduledDate.split("-").slice(1).reverse().join("/")}${qf.scheduledTime ? ` · ${qf.scheduledTime.slice(0, 5)} hs` : ""}`
+                : "Fecha a confirmar"}
+            </span>
+          </>
         ) : (
           <span className="text-xs italic text-muted-foreground">Por definir</span>
         )}

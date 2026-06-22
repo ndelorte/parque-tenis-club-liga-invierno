@@ -44,9 +44,9 @@ export default async function CategoriaPage({ params }: Props) {
     getPlayoffSeries(category.id),
   ])
 
-  const series = rounds.flatMap((r) =>
-    r.series.map((s) => ({ ...s, round: r })),
-  )
+  const series = rounds
+    .filter((r) => r.phase === "regular")
+    .flatMap((r) => r.series.map((s) => ({ ...s, round: r })))
 
   const effectiveStandings =
     standings.length > 0

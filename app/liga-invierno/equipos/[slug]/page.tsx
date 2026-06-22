@@ -85,7 +85,7 @@ export default async function EquipoPage({ params }: Props) {
             : "loss",
         courts,
       })
-    } else if (s.status === "scheduled" || s.status === "rescheduled") {
+    } else if ((s.status === "scheduled" || s.status === "rescheduled") && s.round?.phase === "regular") {
       pending.push({
         round: roundName,
         date: s.scheduled_date ?? "",
