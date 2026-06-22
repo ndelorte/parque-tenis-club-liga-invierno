@@ -49,18 +49,18 @@
 
 
 @keyframes sponsors-marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-33.333%, 0, 0); }
 }
 
-.animate-sponsors-marquee {
-  animation: sponsors-marquee 28s linear infinite;
+.sponsors-marquee-track {
+  animation: sponsors-marquee 18s linear infinite;
+  will-change: transform;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .animate-sponsors-marquee {
-    animation-duration: 0.001ms;
-    animation-iteration-count: 1;
+@media (hover: hover) and (pointer: fine) {
+  .group:hover .sponsors-marquee-track {
+    animation-play-state: paused;
   }
 }
 @keyframes snow-fall {

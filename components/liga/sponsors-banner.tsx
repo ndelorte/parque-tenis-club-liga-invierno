@@ -2,7 +2,7 @@
 import { sponsors } from "@/content/sponsors"
 import { cn } from "@/lib/utils"
 
-const sponsorLoop = [...sponsors, ...sponsors]
+const sponsorLoop = [...sponsors, ...sponsors, ...sponsors]
 
 export function SponsorsBanner() {
   return (
@@ -32,7 +32,7 @@ export function SponsorsBanner() {
             className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-surface to-transparent"
           />
 
-          <div className="flex w-max animate-sponsors-marquee items-center gap-4 px-4 md:group-hover:[animation-play-state:paused] sm:gap-5">
+          <div className="sponsors-marquee-track flex w-max items-center gap-4 px-4 sm:gap-5">
             {sponsorLoop.map((sponsor, index) => (
               <SponsorLogo
                 key={`${sponsor.name}-${index}`}

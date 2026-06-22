@@ -81,9 +81,9 @@ export default async function LigaInviernoPage({ searchParams }: Props) {
   return (
     <main className="min-h-dvh bg-background">
       <LigaHeader />
-      <SponsorsBanner />
       <LigaBoard bundles={bundles} initialCategory={categoria} />
       <LigaReglamento />
+      <SponsorsBanner />
       <WhatsappFab />
     </main>
   )
