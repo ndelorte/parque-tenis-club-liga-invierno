@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { isAdminUser } from "@/lib/auth/admin"
 
 export default function PanelLoginPage() {
   const [email, setEmail] = useState("")
@@ -32,7 +33,7 @@ export default function PanelLoginPage() {
       data: { user },
     } = await supabase.auth.getUser()
 
-    if ((user?.user_metadata as { role?: string })?.role !== "admin") {
+    if (!isAdminUser(user)) {
       await supabase.auth.signOut()
       setError("No tenés permisos de administrador.")
       setLoading(false)

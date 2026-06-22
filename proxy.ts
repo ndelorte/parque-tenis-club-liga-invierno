@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
+import { isAdminUser } from "@/lib/auth/admin"
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -28,7 +29,7 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const isAdmin = (user?.user_metadata as { role?: string })?.role === "admin"
+  const isAdmin = isAdminUser(user)
   const isLoginPage = request.nextUrl.pathname === "/panel-parque/login"
 
   if (isLoginPage) {

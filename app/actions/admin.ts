@@ -4,6 +4,7 @@
 import { revalidatePath } from "next/cache"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
+import { isAdminUser } from "@/lib/auth/admin"
 
 // ——— Public types ———
 
@@ -229,7 +230,7 @@ export async function saveTeamPlayers(
   const {
     data: { user },
   } = await authClient.auth.getUser()
-  if (!user || (user.user_metadata as { role?: string })?.role !== "admin") {
+  if (!isAdminUser(user)) {
     return { success: false, error: "No autorizado" }
   }
 
@@ -354,7 +355,7 @@ export async function saveSeriesResult(
   const {
     data: { user },
   } = await authClient.auth.getUser()
-  if (!user || (user.user_metadata as { role?: string })?.role !== "admin") {
+  if (!isAdminUser(user)) {
     return { success: false, error: "No autorizado" }
   }
 
@@ -570,7 +571,7 @@ export async function createQuarterFinalSeries(
   const {
     data: { user },
   } = await authClient.auth.getUser()
-  if (!user || (user.user_metadata as { role?: string })?.role !== "admin") {
+  if (!isAdminUser(user)) {
     return { success: false, error: "No autorizado" }
   }
 
@@ -679,7 +680,7 @@ export async function upsertPlayoffSeries(params: {
   const {
     data: { user },
   } = await authClient.auth.getUser()
-  if (!user || (user.user_metadata as { role?: string })?.role !== "admin") {
+  if (!isAdminUser(user)) {
     return { success: false, error: "No autorizado" }
   }
 
@@ -767,7 +768,7 @@ export async function updateSeriesSchedule(
   const {
     data: { user },
   } = await authClient.auth.getUser()
-  if (!user || (user.user_metadata as { role?: string })?.role !== "admin") {
+  if (!isAdminUser(user)) {
     return { success: false, error: "No autorizado" }
   }
 

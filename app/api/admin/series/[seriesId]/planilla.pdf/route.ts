@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server"
 import { generateMatchSheetPdf } from "@/lib/pdf/generateMatchSheetPdf"
 import { createClient } from "@/lib/supabase/server"
+import { isAdminUser } from "@/lib/auth/admin"
 
 export async function GET(
   _req: Request,
@@ -14,7 +15,7 @@ export async function GET(
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user || (user.user_metadata as { role?: string })?.role !== "admin") {
+  if (!isAdminUser(user)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
