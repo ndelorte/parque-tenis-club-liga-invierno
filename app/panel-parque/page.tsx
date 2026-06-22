@@ -1,6 +1,15 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Snowflake, ArrowLeft, ClipboardList, Trophy, Users, CalendarClock, Swords } from "lucide-react"
+import {
+  Snowflake,
+  ArrowLeft,
+  ClipboardList,
+  Trophy,
+  Users,
+  CalendarClock,
+  Swords,
+  LogOut,
+} from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -9,6 +18,7 @@ import { TeamManager } from "@/components/admin/team-manager"
 import { FixtureManager } from "@/components/admin/fixture-manager"
 import { PlayoffManager } from "@/components/admin/playoff-manager"
 import { getAdminCategories } from "@/app/actions/admin"
+import { signOut } from "@/app/actions/auth"
 
 export const metadata: Metadata = {
   title: "Panel de carga | Liga de Invierno",
@@ -16,7 +26,7 @@ export const metadata: Metadata = {
     "Dashboard interno para cargar resultados de la Liga de Invierno de Parque Tenis Club.",
 }
 
-export default async function AdminPage() {
+export default async function PanelPage() {
   const categories = await getAdminCategories()
 
   return (
@@ -38,6 +48,15 @@ export default async function AdminPage() {
           <Badge className="ml-auto bg-accent text-accent-foreground hover:bg-accent">
             Admin
           </Badge>
+          <form action={signOut}>
+            <button
+              type="submit"
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors"
+            >
+              <LogOut className="size-3.5" />
+              <span className="hidden sm:inline">Cerrar sesión</span>
+            </button>
+          </form>
           <Button
             asChild
             variant="secondary"

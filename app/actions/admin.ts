@@ -225,6 +225,14 @@ export async function saveTeamPlayers(
   categoryId: string,
   teams: TeamInput[],
 ): Promise<{ success: boolean; error?: string }> {
+  const authClient = await createClient()
+  const {
+    data: { user },
+  } = await authClient.auth.getUser()
+  if (!user || (user.user_metadata as { role?: string })?.role !== "admin") {
+    return { success: false, error: "No autorizado" }
+  }
+
   const supabase = createAdminClient()
 
   try {
@@ -311,7 +319,7 @@ export async function saveTeamPlayers(
       }
     }
 
-    revalidatePath("/admin")
+    revalidatePath("/panel-parque")
     revalidatePath("/liga-invierno")
     return { success: true }
   } catch (e) {
@@ -342,6 +350,14 @@ export type SeriesResultInput = {
 export async function saveSeriesResult(
   input: SeriesResultInput,
 ): Promise<{ success: boolean; error?: string }> {
+  const authClient = await createClient()
+  const {
+    data: { user },
+  } = await authClient.auth.getUser()
+  if (!user || (user.user_metadata as { role?: string })?.role !== "admin") {
+    return { success: false, error: "No autorizado" }
+  }
+
   const supabase = createAdminClient()
 
   try {
@@ -359,7 +375,7 @@ export async function saveSeriesResult(
         })
         .eq("id", input.seriesId)
 
-      revalidatePath("/admin")
+      revalidatePath("/panel-parque")
       revalidatePath("/liga-invierno")
       return { success: true }
     }
@@ -411,7 +427,7 @@ export async function saveSeriesResult(
       })
       .eq("id", input.seriesId)
 
-    revalidatePath("/admin")
+    revalidatePath("/panel-parque")
     revalidatePath("/liga-invierno")
     return { success: true }
   } catch (e) {
@@ -550,6 +566,14 @@ export async function createQuarterFinalSeries(
   scheduledDate: string | null,
   scheduledTime: string | null,
 ): Promise<{ success: boolean; seriesId?: string; error?: string }> {
+  const authClient = await createClient()
+  const {
+    data: { user },
+  } = await authClient.auth.getUser()
+  if (!user || (user.user_metadata as { role?: string })?.role !== "admin") {
+    return { success: false, error: "No autorizado" }
+  }
+
   const supabase = createAdminClient()
 
   try {
@@ -604,7 +628,7 @@ export async function createQuarterFinalSeries(
 
       if (updateError) return { success: false, error: updateError.message }
 
-      revalidatePath("/admin")
+      revalidatePath("/panel-parque")
       revalidatePath("/liga-invierno")
       return { success: true, seriesId: (existingSeries as any).id }
     }
@@ -628,7 +652,7 @@ export async function createQuarterFinalSeries(
       return { success: false, error: seriesError?.message ?? "Error al crear la serie" }
     }
 
-    revalidatePath("/admin")
+    revalidatePath("/panel-parque")
     revalidatePath("/liga-invierno")
     return { success: true, seriesId: (newSeries as any).id }
   } catch (e) {
@@ -651,6 +675,14 @@ export async function upsertPlayoffSeries(params: {
   scheduledTime: string | null
   existingSeriesId?: string
 }): Promise<{ success: boolean; seriesId?: string; error?: string }> {
+  const authClient = await createClient()
+  const {
+    data: { user },
+  } = await authClient.auth.getUser()
+  if (!user || (user.user_metadata as { role?: string })?.role !== "admin") {
+    return { success: false, error: "No autorizado" }
+  }
+
   const { categoryId, phase, homeTeamId, awayTeamId, scheduledDate, scheduledTime, existingSeriesId } = params
   const supabase = createAdminClient()
 
@@ -661,7 +693,7 @@ export async function upsertPlayoffSeries(params: {
         .update({ scheduled_date: scheduledDate, scheduled_time: scheduledTime })
         .eq("id", existingSeriesId)
       if (error) return { success: false, error: error.message }
-      revalidatePath("/admin")
+      revalidatePath("/panel-parque")
       revalidatePath("/liga-invierno")
       return { success: true, seriesId: existingSeriesId }
     }
@@ -697,7 +729,7 @@ export async function upsertPlayoffSeries(params: {
 
     if (existingSeries) {
       await supabase.from("series").update({ scheduled_date: scheduledDate, scheduled_time: scheduledTime }).eq("id", (existingSeries as any).id)
-      revalidatePath("/admin")
+      revalidatePath("/panel-parque")
       revalidatePath("/liga-invierno")
       return { success: true, seriesId: (existingSeries as any).id }
     }
@@ -718,7 +750,7 @@ export async function upsertPlayoffSeries(params: {
       .single()
 
     if (seriesError || !newSeries) return { success: false, error: seriesError?.message ?? "Error al crear la serie" }
-    revalidatePath("/admin")
+    revalidatePath("/panel-parque")
     revalidatePath("/liga-invierno")
     return { success: true, seriesId: (newSeries as any).id }
   } catch (e) {
@@ -731,6 +763,14 @@ export async function updateSeriesSchedule(
   date: string,
   time: string,
 ): Promise<{ success: boolean; error?: string }> {
+  const authClient = await createClient()
+  const {
+    data: { user },
+  } = await authClient.auth.getUser()
+  if (!user || (user.user_metadata as { role?: string })?.role !== "admin") {
+    return { success: false, error: "No autorizado" }
+  }
+
   const supabase = createAdminClient()
 
   try {
@@ -764,7 +804,7 @@ export async function updateSeriesSchedule(
       })
       .eq("id", seriesId)
 
-    revalidatePath("/admin")
+    revalidatePath("/panel-parque")
     revalidatePath("/liga-invierno")
     return { success: true }
   } catch (e) {

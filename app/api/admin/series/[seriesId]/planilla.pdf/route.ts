@@ -10,6 +10,14 @@ export async function GET(
   const { seriesId } = await params
   const supabase = await createClient()
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user || (user.user_metadata as { role?: string })?.role !== "admin") {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+  }
+
   const { data: series } = await supabase
     .from("series")
     .select(
