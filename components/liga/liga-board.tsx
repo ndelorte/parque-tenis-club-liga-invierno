@@ -480,55 +480,72 @@ function BracketCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mx-auto max-w-sm space-y-4">
+        <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+          <div className="mx-auto grid min-w-[780px] max-w-5xl grid-cols-[minmax(250px,1fr)_56px_minmax(250px,1fr)_56px_minmax(250px,1fr)] grid-rows-[auto_1fr_1fr] gap-y-5">
+            <div className="col-start-1 row-start-1">
+              <RoundLabel label="Cuartos de Final" />
+            </div>
+            <div className="col-start-3 row-start-1">
+              <RoundLabel label="Semifinales" />
+            </div>
+            <div className="col-start-5 row-start-1">
+              <RoundLabel label="Final" />
+            </div>
 
-          {/* ── CUARTOS DE FINAL ── */}
-          <RoundLabel label="Cuartos de Final" />
-          <div className="space-y-1.5">
-            <ByePill slot={bracket.byes[0]} />
-            <QFMatchup qf={qfTop} />
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex-1 border-t border-dashed border-border/60" />
-            <Snowflake className="size-3 text-muted-foreground/40" />
-            <div className="flex-1 border-t border-dashed border-border/60" />
-          </div>
-          <div className="space-y-1.5">
-            <QFMatchup qf={qfBottom} />
-            <ByePill slot={bracket.byes[1]} />
-          </div>
+            <div className="col-start-1 row-start-2 flex min-h-[176px] flex-col justify-center gap-1.5">
+              <ByePill slot={bracket.byes[0]} />
+              <QFMatchup qf={qfTop} />
+            </div>
+            <BracketConnector className="col-start-2 row-start-2" />
+            <div className="col-start-3 row-start-2 flex min-h-[176px] items-center">
+              <SFMatchup
+                label="SF 1"
+                home={{ name: bracket.byes[0].team.name, seed: 1, known: true }}
+                away={{ name: qfTopWinnerName ?? "Ganador CF 1", known: !!qfTopWinnerName }}
+                series={sf1}
+              />
+            </div>
 
-          {/* ── SEMIFINALES ── */}
-          <RoundLabel label="Semifinales" />
-          <div className="space-y-2">
-            <SFMatchup
-              label="SF 1"
-              home={{ name: bracket.byes[0].team.name, seed: 1, known: true }}
-              away={{ name: qfTopWinnerName ?? "Ganador CF 1", known: !!qfTopWinnerName }}
-              series={sf1}
-            />
-            <SFMatchup
-              label="SF 2"
-              home={{ name: qfBottomWinnerName ?? "Ganador CF 2", known: !!qfBottomWinnerName }}
-              away={{ name: bracket.byes[1].team.name, seed: 2, known: true }}
-              series={sf2}
-            />
-          </div>
+            <div className="col-start-1 row-start-3 flex min-h-[176px] flex-col justify-center gap-1.5">
+              <QFMatchup qf={qfBottom} />
+              <ByePill slot={bracket.byes[1]} />
+            </div>
+            <BracketConnector className="col-start-2 row-start-3" />
+            <div className="col-start-3 row-start-3 flex min-h-[176px] items-center">
+              <SFMatchup
+                label="SF 2"
+                home={{ name: qfBottomWinnerName ?? "Ganador CF 2", known: !!qfBottomWinnerName }}
+                away={{ name: bracket.byes[1].team.name, seed: 2, known: true }}
+                series={sf2}
+              />
+            </div>
 
-          {/* ── FINAL ── */}
-          <RoundLabel label="Final" />
-          <SFMatchup
-            label="Final"
-            home={{ name: sf1WinnerName ?? "Ganador SF 1", known: !!sf1WinnerName }}
-            away={{ name: sf2WinnerName ?? "Ganador SF 2", known: !!sf2WinnerName }}
-            series={finalSeries}
-          />
+            <div className="col-start-4 row-span-2 row-start-2 flex items-center">
+              <div className="h-px w-full border-t-2 border-dashed border-border" />
+            </div>
+            <div className="col-start-5 row-span-2 row-start-2 flex items-center">
+              <SFMatchup
+                label="Final"
+                home={{ name: sf1WinnerName ?? "Ganador SF 1", known: !!sf1WinnerName }}
+                away={{ name: sf2WinnerName ?? "Ganador SF 2", known: !!sf2WinnerName }}
+                series={finalSeries}
+              />
+            </div>
+          </div>
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
           Cuadro provisorio según posiciones actuales. Se actualiza con cada resultado.
         </p>
       </CardContent>
     </Card>
+  )
+}
+
+function BracketConnector({ className }: { className?: string }) {
+  return (
+    <div className={cn("flex items-center", className)}>
+      <div className="h-px w-full border-t-2 border-dashed border-border" />
+    </div>
   )
 }
 
@@ -556,7 +573,7 @@ function SFMatchup({
 
   return (
     <div className={cn(
-      "space-y-2 rounded-xl border px-4 py-3",
+      "w-full space-y-2 rounded-xl border px-4 py-3",
       isCompleted ? "border-l-4 border-l-primary border-border bg-primary/5" : "border-border bg-card",
     )}>
       <div className="flex items-center justify-between gap-2">
@@ -574,9 +591,9 @@ function SFMatchup({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <SFSlot slot={home} winnerId={series?.winner_team_id ?? undefined} isHome />
+        <SFSlot slot={home} />
         <span className="text-xs text-muted-foreground">vs</span>
-        <SFSlot slot={away} winnerId={series?.winner_team_id ?? undefined} />
+        <SFSlot slot={away} />
       </div>
 
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -594,9 +611,7 @@ function SFMatchup({
   )
 }
 
-function SFSlot({ slot, winnerId, isHome }: { slot: SlotInfo; winnerId?: string; isHome?: boolean }) {
-  // For SF/Final we can't always match winner by team name, so just highlight if series is completed
-  // and this slot was the winner (we don't have team IDs here, so show bold if completed and known)
+function SFSlot({ slot }: { slot: SlotInfo }) {
   return (
     <span className={cn(
       "inline-flex items-center gap-1.5 text-sm",

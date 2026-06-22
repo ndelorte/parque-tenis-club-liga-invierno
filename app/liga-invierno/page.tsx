@@ -1,6 +1,7 @@
-import { LigaHeader } from "@/components/liga/liga-header"
+﻿import { LigaHeader } from "@/components/liga/liga-header"
 import { LigaBoard } from "@/components/liga/liga-board"
 import { LigaReglamento } from "@/components/liga/liga-reglamento"
+import { SponsorsBanner } from "@/components/liga/sponsors-banner"
 import { WhatsappFab } from "@/components/whatsapp-fab"
 import { getActiveTournament } from "@/lib/data/tournaments"
 import { getCategoriesForTournament } from "@/lib/data/categories"
@@ -20,7 +21,7 @@ export const dynamic = "force-dynamic"
 export const metadata = {
   title: "Liga de Invierno 2026 | Parque Tenis Club",
   description:
-    "Torneo por equipos de dobles. Posiciones, fixture, resultados y equipos de las categorías Caballeros, Damas y Mixto.",
+    "Torneo por equipos de dobles. Posiciones, fixture, resultados y equipos de las categorÃ­as Caballeros, Damas y Mixto.",
 }
 
 interface Props {
@@ -80,6 +81,7 @@ export default async function LigaInviernoPage({ searchParams }: Props) {
   return (
     <main className="min-h-dvh bg-background">
       <LigaHeader />
+      <SponsorsBanner />
       <LigaBoard bundles={bundles} initialCategory={categoria} />
       <LigaReglamento />
       <WhatsappFab />

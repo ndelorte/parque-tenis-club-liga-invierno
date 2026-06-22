@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 @theme {
   /* Brand */
@@ -47,6 +47,22 @@
   50% { transform: translateY(-5px); }
 }
 
+
+@keyframes sponsors-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.animate-sponsors-marquee {
+  animation: sponsors-marquee 28s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-sponsors-marquee {
+    animation-duration: 0.001ms;
+    animation-iteration-count: 1;
+  }
+}
 @keyframes snow-fall {
   0% { transform: translateY(-24px) translateX(0); opacity: 0; }
   10% { opacity: 1; }

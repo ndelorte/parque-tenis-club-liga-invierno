@@ -1,4 +1,5 @@
-import { Trophy, Layers, Swords, Medal, FileText, Snowflake } from "lucide-react"
+import Image from "next/image"
+import { Layers, Swords, Medal, FileText, Snowflake } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Snowfall } from "@/components/decorations/snowfall"
 
@@ -32,10 +33,14 @@ export function LigaHeader() {
       <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
-            <div className="relative flex size-16 shrink-0 items-center justify-center rounded-3xl bg-accent text-accent-foreground shadow-lg ring-4 ring-primary-foreground/10">
-              <Trophy className="size-8 animate-bob" />
-              <Snowflake className="absolute -right-2 -top-2 size-6 rounded-full bg-winter p-1 text-winter-foreground shadow" />
-            </div>
+            <Image
+              src="/images/logoligadeinvierno.png"
+              alt="Logo Liga de Invierno"
+              width={128}
+              height={128}
+              priority
+              className="size-24 shrink-0 rounded-3xl object-contain shadow-lg ring-4 ring-primary-foreground/10 sm:size-32"
+            />
             <div>
               <p className="inline-flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-winter-foreground">
                 <Snowflake className="size-4 text-winter" />
