@@ -82,8 +82,8 @@ export function FixtureManager({ categories }: { categories: CategoryForAdmin[] 
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (categoryId) loadData(categoryId)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId])
 
   function update(seriesId: string, patch: Partial<FixtureDraft>) {

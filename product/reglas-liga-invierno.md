@@ -225,25 +225,48 @@ Reprogramado por lluvia
 
 ---
 
-## Playoffs (fase futura — no implementar en MVP)
+## Playoffs (Sprint 12)
 
-Brackets base de 8 equipos:
+### Formato del cuadro con 6 equipos
+
+El cuadro base es de 8 lugares. Con 6 equipos reales:
+
+- **1°** → bye directo a semifinal
+- **2°** → bye directo a semifinal
+- **CF1**: 3° vs 6° → ganador juega semifinal contra 1°
+- **CF2**: 4° vs 5° → ganador juega semifinal contra 2°
+
 ```
-1 vs 8
-2 vs 7
-3 vs 6
-4 vs 5
+1° — BYE — Semifinal
+         ↑
+CF1: 3° vs 6°
+
+CF2: 4° vs 5°
+         ↓
+2° — BYE — Semifinal
 ```
 
-Si hay menos de 8 equipos se usan byes. Los byes los reciben los mejor posicionados.
+### Reglas de playoffs
 
-Ejemplo con 6 equipos:
-```
-Bye para 1°
-Bye para 2°
-```
+- Los partidos de cuartos, semifinal y final siguen la misma lógica que la fase regular: **3 canchas, gana 2 de 3**.
+- Los resultados de playoffs **no modifican** la tabla de posiciones de fase regular.
+- Los playoffs usan las mismas tablas `rounds` (phase ≠ "regular"), `series` y `court_matches`.
+- El bracket provisorio se calcula desde los standings actuales de la fase regular.
+- La visualización pública es siempre "provisoria" hasta que la fase regular esté completa.
 
-**En el MVP:**
-- No implementar generación automática de playoffs.
-- No implementar asignación automática de byes.
-- El modelo de datos debe permitir cargar cruces manualmente en el futuro.
+### Vista pública
+
+- Se muestra en cada página de categoría, debajo de la tabla de posiciones.
+- Título: **"Fase Final"**, subtítulo: *"Con las posiciones actuales provisorias"*.
+- Si hay fecha cargada por admin → se muestra.
+- Si no hay fecha → se muestra *"Fecha a confirmar"*.
+
+### Administración
+
+- Desde el panel admin → tab **"Playoffs"**.
+- Por cada categoría con ≥ 6 equipos se puede:
+  - Ver el bracket provisorio.
+  - Crear partidos de cuartos (crea round + series en la DB).
+  - Cargar o editar fecha y hora.
+  - Cargar resultado con detalle de 3 canchas (igual que fase regular).
+- Semifinal y final se crean cuando se conozcan los ganadores de cuartos.

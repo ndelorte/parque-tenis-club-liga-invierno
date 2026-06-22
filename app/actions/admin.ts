@@ -1,4 +1,5 @@
 "use server"
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { revalidatePath } from "next/cache"
 import { createAdminClient } from "@/lib/supabase/admin"
@@ -413,6 +414,223 @@ export async function saveSeriesResult(
     revalidatePath("/admin")
     revalidatePath("/liga-invierno")
     return { success: true }
+  } catch (e) {
+    return { success: false, error: String(e) }
+  }
+}
+
+// ——— Playoff actions ———
+
+export type StandingForAdmin = {
+  teamId: string
+  teamName: string
+  position: number
+}
+
+export type PlayoffSeriesForAdmin = {
+  id: string
+  roundId: string
+  phase: "quarterfinal" | "semifinal" | "final"
+  homeTeam: { id: string; name: string; players: PlayerInfo[] }
+  awayTeam: { id: string; name: string; players: PlayerInfo[] }
+  scheduledDate: string | null
+  scheduledTime: string | null
+  status: string
+  isGeneralWalkover: boolean
+  walkoverWinnerId: string | null
+  winnerTeamId: string | null
+  courts: CourtForAdmin[]
+}
+
+export async function getStandingsForAdmin(
+  categoryId: string
+): Promise<StandingForAdmin[]> {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from("standings_snapshot")
+    .select("team_id, position, teams(id, name)")
+    .eq("category_id", categoryId)
+    .order("position")
+
+  if (!data) return []
+
+  return (data as any[]).map((row) => ({
+    teamId: row.team_id,
+    teamName: row.teams?.name ?? "Equipo",
+    position: row.position,
+  }))
+}
+
+export async function getPlayoffSeriesForAdmin(
+  categoryId: string
+): Promise<PlayoffSeriesForAdmin[]> {
+  const supabase = await createClient()
+
+  const [roundsResult, teamsResult] = await Promise.all([
+    supabase
+      .from("rounds")
+      .select(
+        `id, phase,
+        series(
+          id, status, is_general_walkover, walkover_winner_team_id, winner_team_id,
+          scheduled_date, scheduled_time, home_team_id, away_team_id,
+          court_matches(
+            court_number, home_player_1_id, home_player_2_id,
+            away_player_1_id, away_player_2_id,
+            score, winner_team_id, is_court_walkover
+          )
+        )`,
+      )
+      .eq("category_id", categoryId)
+      .neq("phase", "regular")
+      .order("round_number"),
+    supabase
+      .from("teams")
+      .select("id, name, team_players(id, player_id, active, players(id, display_name))")
+      .eq("category_id", categoryId)
+      .eq("active", true),
+  ])
+
+  if (roundsResult.error || !roundsResult.data) return []
+
+  const teamMap = new Map<string, { id: string; name: string; players: PlayerInfo[] }>()
+  for (const team of (teamsResult.data ?? []) as any[]) {
+    teamMap.set(team.id, {
+      id: team.id,
+      name: team.name,
+      players: (team.team_players as any[])
+        .filter((tp) => tp.active)
+        .map((tp) => ({ id: tp.player_id, displayName: tp.players?.display_name ?? "" })),
+    })
+  }
+
+  const result: PlayoffSeriesForAdmin[] = []
+  for (const round of (roundsResult.data as any[])) {
+    for (const s of round.series ?? []) {
+      const homeTeam = teamMap.get(s.home_team_id) ?? { id: s.home_team_id, name: "Equipo", players: [] }
+      const awayTeam = teamMap.get(s.away_team_id) ?? { id: s.away_team_id, name: "Equipo", players: [] }
+      const courts: CourtForAdmin[] = ([1, 2, 3] as const).map((n) => {
+        const cm = (s.court_matches as any[] ?? []).find((c: any) => c.court_number === n)
+        return {
+          courtNumber: n,
+          homePlayer1Id: cm?.home_player_1_id ?? null,
+          homePlayer2Id: cm?.home_player_2_id ?? null,
+          awayPlayer1Id: cm?.away_player_1_id ?? null,
+          awayPlayer2Id: cm?.away_player_2_id ?? null,
+          score: cm?.score ?? null,
+          winnerTeamId: cm?.winner_team_id ?? null,
+          isWalkover: cm?.is_court_walkover ?? false,
+        }
+      })
+      result.push({
+        id: s.id,
+        roundId: round.id,
+        phase: round.phase as "quarterfinal" | "semifinal" | "final",
+        homeTeam,
+        awayTeam,
+        scheduledDate: s.scheduled_date ?? null,
+        scheduledTime: s.scheduled_time ?? null,
+        status: s.status,
+        isGeneralWalkover: s.is_general_walkover,
+        walkoverWinnerId: s.walkover_winner_team_id ?? null,
+        winnerTeamId: s.winner_team_id ?? null,
+        courts,
+      })
+    }
+  }
+
+  return result
+}
+
+export async function createQuarterFinalSeries(
+  categoryId: string,
+  homeTeamId: string,
+  awayTeamId: string,
+  scheduledDate: string | null,
+  scheduledTime: string | null,
+): Promise<{ success: boolean; seriesId?: string; error?: string }> {
+  const supabase = createAdminClient()
+
+  try {
+    // Check if a QF round already exists for this category
+    const { data: existingRound } = await supabase
+      .from("rounds")
+      .select("id")
+      .eq("category_id", categoryId)
+      .eq("phase", "quarterfinal")
+      .maybeSingle()
+
+    let roundId: string
+
+    if (existingRound) {
+      roundId = (existingRound as any).id
+    } else {
+      const { data: newRound, error: roundError } = await supabase
+        .from("rounds")
+        .insert({
+          category_id: categoryId,
+          phase: "quarterfinal",
+          round_number: 100,
+          name: "Cuartos de Final",
+          status: "scheduled",
+        })
+        .select("id")
+        .single()
+
+      if (roundError || !newRound) {
+        return { success: false, error: roundError?.message ?? "Error al crear la ronda" }
+      }
+      roundId = (newRound as any).id
+    }
+
+    // Check if a series for these two teams already exists in this round
+    const { data: existingSeries } = await supabase
+      .from("series")
+      .select("id")
+      .eq("round_id", roundId)
+      .or(`and(home_team_id.eq.${homeTeamId},away_team_id.eq.${awayTeamId}),and(home_team_id.eq.${awayTeamId},away_team_id.eq.${homeTeamId})`)
+      .maybeSingle()
+
+    if (existingSeries) {
+      // Update schedule only
+      const { error: updateError } = await supabase
+        .from("series")
+        .update({
+          scheduled_date: scheduledDate,
+          scheduled_time: scheduledTime,
+        })
+        .eq("id", (existingSeries as any).id)
+
+      if (updateError) return { success: false, error: updateError.message }
+
+      revalidatePath("/admin")
+      revalidatePath("/liga-invierno")
+      return { success: true, seriesId: (existingSeries as any).id }
+    }
+
+    const { data: newSeries, error: seriesError } = await supabase
+      .from("series")
+      .insert({
+        round_id: roundId,
+        category_id: categoryId,
+        home_team_id: homeTeamId,
+        away_team_id: awayTeamId,
+        scheduled_date: scheduledDate,
+        scheduled_time: scheduledTime,
+        status: "scheduled",
+        is_general_walkover: false,
+      })
+      .select("id")
+      .single()
+
+    if (seriesError || !newSeries) {
+      return { success: false, error: seriesError?.message ?? "Error al crear la serie" }
+    }
+
+    revalidatePath("/admin")
+    revalidatePath("/liga-invierno")
+    return { success: true, seriesId: (newSeries as any).id }
   } catch (e) {
     return { success: false, error: String(e) }
   }

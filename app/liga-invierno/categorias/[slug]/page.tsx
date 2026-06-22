@@ -5,11 +5,14 @@ import { getActiveTournament } from "@/lib/data/tournaments"
 import { getTeamsByCategory } from "@/lib/data/teams"
 import { getStandingsSnapshot } from "@/lib/data/standings"
 import { getRoundsWithSeries } from "@/lib/data/series"
+import { getPlayoffSeries } from "@/lib/data/playoffs"
 import { TournamentHeader } from "@/components/liga/TournamentHeader"
 import { StandingsTable } from "@/components/liga/StandingsTable"
 import { FixtureList } from "@/components/liga/FixtureList"
 import { TeamCard } from "@/components/liga/TeamCard"
 import { CategoryTabs } from "@/components/liga/CategoryTabs"
+import { PlayoffBracket } from "@/components/liga/PlayoffBracket"
+import { generateProvisionalBracket, mergeProvisionalBracketWithScheduledMatches } from "@/lib/playoffs/generateProvisionalBracket"
 
 export const dynamic = "force-dynamic"
 
@@ -32,17 +35,28 @@ export default async function CategoriaPage({ params }: Props) {
   const category = await getCategoryBySlug(slug)
   if (!category) notFound()
 
-  const [tournament, categories, teams, standings, rounds] = await Promise.all([
+  const [tournament, categories, teams, standings, rounds, playoffSeries] = await Promise.all([
     getActiveTournament(),
     getCategoriesForTournament(category.tournament_id),
     getTeamsByCategory(category.id),
     getStandingsSnapshot(category.id),
     getRoundsWithSeries(category.id),
+    getPlayoffSeries(category.id),
   ])
 
   const series = rounds.flatMap((r) =>
     r.series.map((s) => ({ ...s, round: r })),
   )
+
+  let bracket = null
+  try {
+    if (standings.length >= 6) {
+      const generated = generateProvisionalBracket(standings, standings.length)
+      bracket = mergeProvisionalBracketWithScheduledMatches(generated, playoffSeries)
+    }
+  } catch {
+    bracket = null
+  }
 
   return (
     <div>
@@ -56,6 +70,12 @@ export default async function CategoriaPage({ params }: Props) {
           <h3 className="font-semibold text-gray-800 mb-3">Tabla de posiciones</h3>
           <StandingsTable standings={standings} />
         </section>
+
+        {bracket && (
+          <section>
+            <PlayoffBracket bracket={bracket} />
+          </section>
+        )}
 
         <section>
           <FixtureList series={series} />

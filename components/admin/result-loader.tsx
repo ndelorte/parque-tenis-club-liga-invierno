@@ -117,7 +117,6 @@ export function ResultLoader({ categories }: { categories: CategoryForAdmin[] })
 
   useEffect(() => {
     if (categoryId) loadRounds(categoryId)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId])
 
   const activeRound = rounds.find((r) => r.id === activeRoundId)

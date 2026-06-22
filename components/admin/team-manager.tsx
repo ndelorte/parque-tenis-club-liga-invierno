@@ -81,8 +81,8 @@ export function TeamManager({ categories }: { categories: CategoryForAdmin[] }) 
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (categoryId) loadCategory(categoryId)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId])
 
   function update(fn: (prev: TeamDraft[]) => TeamDraft[]) {

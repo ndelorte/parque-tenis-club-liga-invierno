@@ -401,6 +401,7 @@ function MatchSheetDocument({ data }: { data: MatchSheetData }) {
             <Text style={s.headerTitle}>LIGA DE INVIERNO</Text>
             <Text style={s.headerClub}>Parque Tenis Club</Text>
           </View>
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image src={LOGO_PATH} style={s.headerLogo} />
         </View>
 

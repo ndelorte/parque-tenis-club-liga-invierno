@@ -474,12 +474,6 @@ function SeriesCard({ series }: { series: SeriesWithRound }) {
 }
 
 function CourtRow({ court }: { court: CourtMatch }) {
-  const homeWon = court.winner_team_id
-    ? court.winner_team_id === court.home_player_1_id
-      ? true
-      : false
-    : null
-
   return (
     <div className="rounded-xl border border-border bg-card p-3">
       <div className="flex items-center justify-between">

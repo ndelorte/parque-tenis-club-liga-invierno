@@ -249,3 +249,28 @@ La tabla puede calcularse en vivo desde los resultados, pero este snapshot permi
 - Los campos `_diff` en `standings_snapshot` son calculados (`courts_won - courts_lost`, etc.) y pueden mantenerse como columnas computadas o actualizarse en cada recálculo.
 - `standings_snapshot` tiene una entrada por equipo por categoría (no por ronda).
 - El cálculo de desempate por enfrentamiento directo requiere acceder a la tabla `series` en el momento del sort, no se persiste en el snapshot.
+
+---
+
+## Playoffs (Sprint 12)
+
+No se crearon tablas nuevas. Los playoffs reutilizan el modelo existente:
+
+| Tabla | Uso en playoffs |
+|-------|----------------|
+| `rounds` | `phase = "quarterfinal" \| "semifinal" \| "final"`. Los cuartos usan `round_number = 100`. |
+| `series` | Igual que fase regular. `home_team_id` y `away_team_id` son los equipos del cruce. |
+| `court_matches` | Igual que fase regular. 3 canchas por partido. |
+| `standings_snapshot` | **No se modifica** por resultados de playoffs. Solo refleja fase regular. |
+
+### Convenciones para rounds de playoffs
+
+| phase | round_number | name |
+|-------|-------------|------|
+| `quarterfinal` | 100 | "Cuartos de Final" |
+| `semifinal` | 101 | "Semifinal" |
+| `final` | 102 | "Final" |
+
+### Bracket provisorio
+
+Se calcula en runtime desde `standings_snapshot` (no se persiste). La lógica está en `lib/playoffs/generateProvisionalBracket.ts`.

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server"
 import { generateMatchSheetPdf } from "@/lib/pdf/generateMatchSheetPdf"
 import { createClient } from "@/lib/supabase/server"

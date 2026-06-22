@@ -1,12 +1,13 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Snowflake, ArrowLeft, ClipboardList, Trophy, Users, CalendarClock } from "lucide-react"
+import { Snowflake, ArrowLeft, ClipboardList, Trophy, Users, CalendarClock, Swords } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ResultLoader } from "@/components/admin/result-loader"
 import { TeamManager } from "@/components/admin/team-manager"
 import { FixtureManager } from "@/components/admin/fixture-manager"
+import { PlayoffManager } from "@/components/admin/playoff-manager"
 import { getAdminCategories } from "@/app/actions/admin"
 
 export const metadata: Metadata = {
@@ -75,6 +76,10 @@ export default async function AdminPage() {
               <CalendarClock className="size-4" />
               Fixture
             </TabsTrigger>
+            <TabsTrigger value="playoffs" className="h-9 gap-1.5 px-3">
+              <Swords className="size-4" />
+              Playoffs
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="resultados" className="mt-5">
@@ -85,6 +90,9 @@ export default async function AdminPage() {
           </TabsContent>
           <TabsContent value="fixture" className="mt-5">
             <FixtureManager categories={categories} />
+          </TabsContent>
+          <TabsContent value="playoffs" className="mt-5">
+            <PlayoffManager categories={categories} />
           </TabsContent>
         </Tabs>
       </main>
