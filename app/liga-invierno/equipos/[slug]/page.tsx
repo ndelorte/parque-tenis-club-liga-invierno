@@ -105,6 +105,7 @@ export default async function EquipoPage({ params }: Props) {
     slug: team.slug,
     name: team.name,
     categoryId: "cab-a" as TeamDetail["categoryId"],
+    categorySlug: category?.slug ?? "",
     categoryLabel,
     captain: captainName,
     roster,

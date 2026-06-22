@@ -54,6 +54,7 @@ export type TeamDetail = {
   slug: string
   name: string
   categoryId: CategoryId
+  categorySlug: string
   categoryLabel: string
   captain: string
   roster: string[]
@@ -189,6 +190,7 @@ export function getTeamDetail(slug: string): TeamDetail | null {
       slug,
       name: team.name,
       categoryId: cat.id,
+      categorySlug: cat.id,
       categoryLabel: cat.label,
       captain: team.players[0],
       roster,
