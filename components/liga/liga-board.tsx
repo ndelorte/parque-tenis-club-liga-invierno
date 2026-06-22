@@ -12,9 +12,13 @@ import {
   ChevronRight,
   ChevronDown,
   MapPin,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react"
 import type { Category, Team, StandingsRow, CourtMatch } from "@/lib/tournament/types"
 import type { RoundWithSeries } from "@/lib/data/series"
+import type { ProvisionalBracket } from "@/lib/playoffs/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -32,6 +36,7 @@ type CategoryBundle = {
   standings: StandingsRow[]
   rounds: RoundWithSeries[]
   teams: Team[]
+  bracket: ProvisionalBracket | null
 }
 
 type LigaBoardProps = {
@@ -271,6 +276,11 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
           </Card>
         </div>
 
+        {/* Playoff bracket */}
+        {activeBundle.bracket && (
+          <BracketCard bracket={activeBundle.bracket} />
+        )}
+
         {/* All results */}
         <Card className="mt-6 overflow-hidden border-t-4 border-t-primary">
           <CardHeader>
@@ -398,6 +408,127 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
         </Card>
       </div>
     </section>
+  )
+}
+
+function BracketCard({ bracket }: { bracket: ProvisionalBracket }) {
+  return (
+    <Card className="mt-6 overflow-hidden border-t-4 border-t-accent">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 font-heading">
+          <span className="flex size-8 items-center justify-center rounded-xl bg-accent/15 text-accent">
+            <Trophy className="size-5" />
+          </span>
+          Fase Final — Cuadro provisorio
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <ByeRow slot={bracket.byes[0]} />
+        <QFRow qf={bracket.quarterfinals[0]} />
+        <QFRow qf={bracket.quarterfinals[1]} />
+        <ByeRow slot={bracket.byes[1]} />
+        <p className="pt-1 text-xs text-muted-foreground">
+          Basado en las posiciones actuales. Se actualiza automáticamente con cada resultado.
+        </p>
+      </CardContent>
+    </Card>
+  )
+}
+
+function ByeRow({ slot }: { slot: ProvisionalBracket["byes"][0] }) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-secondary/30 px-4 py-3">
+      <SeedBadge seed={slot.seed} />
+      <span className="min-w-0 flex-1 truncate font-heading text-sm font-semibold text-foreground">
+        {slot.team.name}
+      </span>
+      <Badge className="shrink-0 bg-primary/10 text-primary hover:bg-primary/10">
+        BYE → Semifinal
+      </Badge>
+    </div>
+  )
+}
+
+function QFRow({ qf }: { qf: ProvisionalBracket["quarterfinals"][0] }) {
+  const isCompleted = qf.status === "completed" || qf.status === "walkover"
+  const isScheduled = qf.status === "scheduled"
+
+  return (
+    <div
+      className={cn(
+        "space-y-2 rounded-xl border px-4 py-3",
+        isCompleted ? "border-l-4 border-l-primary border-border bg-primary/5" : "border-border bg-card",
+      )}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Cuartos de Final
+        </span>
+        {isCompleted && (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+            <CheckCircle2 className="size-3.5" /> Jugado
+          </span>
+        )}
+        {isScheduled && (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
+            <AlertCircle className="size-3.5" /> Programado
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <TeamSlot slot={qf.home} winnerId={qf.winnerTeamId} />
+        <span className="text-sm text-muted-foreground">vs</span>
+        <TeamSlot slot={qf.away} winnerId={qf.winnerTeamId} />
+      </div>
+
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Clock className="size-3.5 shrink-0" />
+        {qf.scheduledDate ? (
+          <span>
+            {qf.scheduledDate.split("-").reverse().join("/")}
+            {qf.scheduledTime ? ` — ${qf.scheduledTime.slice(0, 5)} hs` : ""}
+          </span>
+        ) : (
+          <span className="italic">Fecha a confirmar</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function TeamSlot({
+  slot,
+  winnerId,
+}: {
+  slot: ProvisionalBracket["quarterfinals"][0]["home"]
+  winnerId?: string
+}) {
+  const isWinner = winnerId === slot.team.id
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5",
+        isWinner ? "font-bold text-primary" : "font-medium text-foreground",
+      )}
+    >
+      <SeedBadge seed={slot.seed} small />
+      <span className="max-w-[120px] truncate sm:max-w-none">{slot.team.name}</span>
+      {isWinner && <Trophy className="size-3.5 shrink-0 text-primary" />}
+    </span>
+  )
+}
+
+function SeedBadge({ seed, small }: { seed: number; small?: boolean }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center justify-center rounded-full bg-muted font-bold text-muted-foreground",
+        small ? "size-5 text-[10px]" : "size-6 text-xs",
+      )}
+    >
+      {seed}°
+    </span>
   )
 }
 
