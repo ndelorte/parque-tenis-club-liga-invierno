@@ -171,13 +171,11 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
                     <TableRow>
                       <TableHead className="w-10">#</TableHead>
                       <TableHead>Equipo</TableHead>
-                      <TableHead className="text-center">PJ</TableHead>
-                      <TableHead className="text-center">G</TableHead>
-                      <TableHead className="text-center">P</TableHead>
-                      <TableHead className="text-center">
-                        <span title="Canchas a favor / en contra">Canchas</span>
-                      </TableHead>
-                      <TableHead className="text-center">Pts</TableHead>
+                      <TableHead className="text-center" title="Partidos Jugados">PJ</TableHead>
+                      <TableHead className="text-center" title="Partidos Ganados">PG</TableHead>
+                      <TableHead className="text-center" title="Diferencia de Parciales (canchas)">DP</TableHead>
+                      <TableHead className="text-center" title="Diferencia de Sets">DS</TableHead>
+                      <TableHead className="text-center" title="Diferencia de Games">DG</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -213,16 +211,14 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
                         <TableCell className="text-center text-muted-foreground">
                           {r.won}
                         </TableCell>
-                        <TableCell className="text-center text-muted-foreground">
-                          {r.lost}
+                        <TableCell className={cn("text-center font-medium", r.courts_diff > 0 ? "text-primary" : r.courts_diff < 0 ? "text-destructive" : "text-muted-foreground")}>
+                          {r.courts_diff > 0 ? `+${r.courts_diff}` : r.courts_diff}
                         </TableCell>
-                        <TableCell className="text-center text-muted-foreground">
-                          {r.courts_won}:{r.courts_lost}
+                        <TableCell className={cn("text-center font-medium", r.sets_diff > 0 ? "text-primary" : r.sets_diff < 0 ? "text-destructive" : "text-muted-foreground")}>
+                          {r.sets_diff > 0 ? `+${r.sets_diff}` : r.sets_diff}
                         </TableCell>
-                        <TableCell className="text-center">
-                          <span className="inline-flex min-w-7 justify-center rounded-md bg-primary/10 px-1.5 py-0.5 font-bold text-primary">
-                            {r.points}
-                          </span>
+                        <TableCell className={cn("text-center font-medium", r.games_diff > 0 ? "text-primary" : r.games_diff < 0 ? "text-destructive" : "text-muted-foreground")}>
+                          {r.games_diff > 0 ? `+${r.games_diff}` : r.games_diff}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -230,7 +226,7 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
                 </Table>
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                PJ: jugados · G: ganados · P: perdidos · Canchas: a favor:en contra · Pts: 2 por serie ganada.
+                PJ: partidos jugados · PG: ganados · DP: dif. de parciales · DS: dif. de sets · DG: dif. de games
               </p>
             </CardContent>
           </Card>
