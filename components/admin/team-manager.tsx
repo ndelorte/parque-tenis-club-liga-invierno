@@ -1,8 +1,20 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { Users, UserPlus, Trash2, Plus, Save, Check, X, Pencil } from "lucide-react"
+import { useState, useTransition, useEffect } from "react"
+import {
+  Users,
+  UserPlus,
+  Trash2,
+  Plus,
+  Save,
+  Check,
+  X,
+  Pencil,
+  Loader2,
+  Crown,
+} from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -14,79 +26,120 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { CATEGORIES, LEAGUE, type CategoryId } from "@/lib/liga"
+import {
+  type CategoryForAdmin,
+  type TeamInput,
+  getTeamsForAdmin,
+  saveTeamPlayers,
+} from "@/app/actions/admin"
+
+type PlayerDraft = {
+  teamPlayerId: string | null
+  playerId: string | null
+  displayName: string
+  isCaptain: boolean
+}
 
 type TeamDraft = {
-  id: string
+  dbId: string | null
+  localId: string
   name: string
-  players: string[]
+  players: PlayerDraft[]
 }
 
-let teamSeq = 0
+let seq = 0
 function uid() {
-  teamSeq += 1
-  return `t${teamSeq}-${Math.random().toString(36).slice(2, 7)}`
+  return `local-${++seq}`
 }
 
-function buildDraft(categoryId: CategoryId): TeamDraft[] {
-  return LEAGUE[categoryId].teams.map((t) => ({
-    id: uid(),
-    name: t.name,
-    players: [...t.players],
-  }))
-}
-
-export function TeamManager() {
-  const [active, setActive] = useState<CategoryId>("cab-a")
-  const [drafts, setDrafts] = useState<Record<string, TeamDraft[]>>(() => ({
-    "cab-a": buildDraft("cab-a"),
-  }))
+export function TeamManager({ categories }: { categories: CategoryForAdmin[] }) {
+  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "")
+  const [drafts, setDrafts] = useState<TeamDraft[]>([])
+  const [isPending, startTransition] = useTransition()
   const [savedAt, setSavedAt] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const teams = useMemo(() => {
-    if (!drafts[active]) {
-      const next = buildDraft(active)
-      setDrafts((d) => ({ ...d, [active]: next }))
-      return next
-    }
-    return drafts[active]
-  }, [drafts, active])
+  function loadCategory(catId: string) {
+    setSavedAt(null)
+    setError(null)
+    startTransition(async () => {
+      const teams = await getTeamsForAdmin(catId)
+      setDrafts(
+        teams.map((t) => ({
+          dbId: t.id,
+          localId: uid(),
+          name: t.name,
+          players: t.players.map((p) => ({
+            teamPlayerId: p.teamPlayerId,
+            playerId: p.playerId,
+            displayName: p.displayName,
+            isCaptain: p.isCaptain,
+          })),
+        })),
+      )
+    })
+  }
 
-  function update(updater: (teams: TeamDraft[]) => TeamDraft[]) {
-    setDrafts((d) => ({
-      ...d,
-      [active]: updater(d[active] ?? buildDraft(active)),
-    }))
+  useEffect(() => {
+    if (categoryId) loadCategory(categoryId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryId])
+
+  function update(fn: (prev: TeamDraft[]) => TeamDraft[]) {
+    setDrafts(fn)
     setSavedAt(null)
   }
 
-  function setTeamName(id: string, name: string) {
-    update((ts) => ts.map((t) => (t.id === id ? { ...t, name } : t)))
+  function setTeamName(localId: string, name: string) {
+    update((ts) => ts.map((t) => (t.localId === localId ? { ...t, name } : t)))
   }
 
-  function setPlayer(teamId: string, index: number, value: string) {
+  function setPlayer(localId: string, idx: number, val: string) {
     update((ts) =>
       ts.map((t) =>
-        t.id === teamId
-          ? { ...t, players: t.players.map((p, i) => (i === index ? value : p)) }
+        t.localId === localId
+          ? {
+              ...t,
+              players: t.players.map((p, i) =>
+                i === idx ? { ...p, displayName: val } : p,
+              ),
+            }
           : t,
       ),
     )
   }
 
-  function addPlayer(teamId: string) {
+  function addPlayer(localId: string) {
     update((ts) =>
       ts.map((t) =>
-        t.id === teamId ? { ...t, players: [...t.players, ""] } : t,
+        t.localId === localId
+          ? {
+              ...t,
+              players: [
+                ...t.players,
+                { teamPlayerId: null, playerId: null, displayName: "", isCaptain: false },
+              ],
+            }
+          : t,
       ),
     )
   }
 
-  function removePlayer(teamId: string, index: number) {
+  function setCaptain(localId: string, idx: number) {
     update((ts) =>
       ts.map((t) =>
-        t.id === teamId
-          ? { ...t, players: t.players.filter((_, i) => i !== index) }
+        t.localId === localId
+          ? { ...t, players: t.players.map((p, i) => ({ ...p, isCaptain: i === idx })) }
+          : t,
+      ),
+    )
+  }
+
+  function removePlayer(localId: string, idx: number) {
+    update((ts) =>
+      ts.map((t) =>
+        t.localId === localId
+          ? { ...t, players: t.players.filter((_, i) => i !== idx) }
           : t,
       ),
     )
@@ -95,18 +148,48 @@ export function TeamManager() {
   function addTeam() {
     update((ts) => [
       ...ts,
-      { id: uid(), name: "Nuevo equipo", players: ["", ""] },
+      {
+        dbId: null,
+        localId: uid(),
+        name: "Nuevo equipo",
+        players: [
+          { teamPlayerId: null, playerId: null, displayName: "", isCaptain: false },
+          { teamPlayerId: null, playerId: null, displayName: "", isCaptain: false },
+        ],
+      },
     ])
   }
 
-  function removeTeam(id: string) {
-    update((ts) => ts.filter((t) => t.id !== id))
+  function removeTeam(localId: string) {
+    update((ts) => ts.filter((t) => t.localId !== localId))
   }
 
   function save() {
-    setSavedAt(
-      new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }),
-    )
+    setError(null)
+    startTransition(async () => {
+      const input: TeamInput[] = drafts.map((t) => ({
+        id: t.dbId,
+        name: t.name,
+        players: t.players.map((p) => ({
+          teamPlayerId: p.teamPlayerId,
+          playerId: p.playerId,
+          displayName: p.displayName,
+          isCaptain: p.isCaptain,
+        })),
+      }))
+      const result = await saveTeamPlayers(categoryId, input)
+      if (result.success) {
+        setSavedAt(
+          new Date().toLocaleTimeString("es-AR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        )
+        loadCategory(categoryId)
+      } else {
+        setError(result.error ?? "Error al guardar")
+      }
+    })
   }
 
   return (
@@ -117,14 +200,20 @@ export function TeamManager() {
             <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Categoría
             </Label>
-            <Select value={active} onValueChange={(v) => setActive(v as CategoryId)}>
+            <Select
+              value={categoryId}
+              onValueChange={(v) => {
+                if (v) setCategoryId(v)
+                setSavedAt(null)
+              }}
+            >
               <SelectTrigger className="h-11 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {CATEGORIES.map((c) => (
+                {categories.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
-                    {c.label}
+                    {c.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -132,6 +221,7 @@ export function TeamManager() {
           </div>
           <Button
             onClick={addTeam}
+            disabled={isPending}
             className="h-11 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Plus className="size-4" />
@@ -140,74 +230,97 @@ export function TeamManager() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {teams.map((team) => (
-          <Card key={team.id} className="overflow-hidden border-t-4 border-t-primary">
-            <CardHeader className="gap-3">
-              <div className="flex items-center gap-2">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 font-heading text-sm font-bold text-primary">
-                  {team.name.charAt(0) || "?"}
-                </span>
-                <Input
-                  value={team.name}
-                  onChange={(e) => setTeamName(team.id, e.target.value)}
-                  aria-label="Nombre del equipo"
-                  className="h-10 font-heading text-base font-bold"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeTeam(team.id)}
-                  aria-label={`Eliminar ${team.name}`}
-                  className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-                  <Users className="size-4" />
-                  Jugadores ({team.players.length})
-                </CardTitle>
-              </div>
-              {team.players.map((p, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
-                    {i + 1}
+      {isPending ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {drafts.map((team) => (
+            <Card key={team.localId} className="overflow-hidden border-t-4 border-t-primary">
+              <CardHeader className="gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 font-heading text-sm font-bold text-primary">
+                    {team.name.charAt(0) || "?"}
                   </span>
                   <Input
-                    value={p}
-                    onChange={(e) => setPlayer(team.id, i, e.target.value)}
-                    placeholder={`Jugador ${i + 1}`}
-                    aria-label={`Jugador ${i + 1} de ${team.name}`}
-                    className="h-10"
+                    value={team.name}
+                    onChange={(e) => setTeamName(team.localId, e.target.value)}
+                    aria-label="Nombre del equipo"
+                    className="h-10 font-heading text-base font-bold"
                   />
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => removePlayer(team.id, i)}
-                    disabled={team.players.length <= 1}
-                    aria-label={`Quitar jugador ${i + 1}`}
-                    className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+                    onClick={() => removeTeam(team.localId)}
+                    aria-label={`Eliminar ${team.name}`}
+                    className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
                   >
-                    <X className="size-4" />
+                    <Trash2 className="size-4" />
                   </Button>
                 </div>
-              ))}
-              <Button
-                variant="outline"
-                onClick={() => addPlayer(team.id)}
-                className="mt-1 h-10 w-full border-dashed"
-              >
-                <UserPlus className="size-4" />
-                Agregar jugador
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <CardTitle className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+                  <Users className="size-4" />
+                  Jugadores ({team.players.length})
+                </CardTitle>
+                {team.players.map((p, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setCaptain(team.localId, i)}
+                      aria-label={p.isCaptain ? "Capitán" : "Hacer capitán"}
+                      title={p.isCaptain ? "Capitán" : "Hacer capitán"}
+                      className={cn(
+                        "shrink-0",
+                        p.isCaptain
+                          ? "text-accent hover:text-accent"
+                          : "text-muted-foreground/30 hover:text-accent/60",
+                      )}
+                    >
+                      <Crown className="size-4" />
+                    </Button>
+                    <Input
+                      value={p.displayName}
+                      onChange={(e) => setPlayer(team.localId, i, e.target.value)}
+                      placeholder={`Jugador ${i + 1}`}
+                      aria-label={`Jugador ${i + 1} de ${team.name}`}
+                      className="h-10"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removePlayer(team.localId, i)}
+                      disabled={team.players.length <= 1}
+                      aria-label={`Quitar jugador ${i + 1}`}
+                      className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  onClick={() => addPlayer(team.localId)}
+                  className="mt-1 h-10 w-full border-dashed"
+                >
+                  <UserPlus className="size-4" />
+                  Agregar jugador
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+          {drafts.length === 0 && (
+            <p className="col-span-2 text-sm text-muted-foreground">
+              No hay equipos en esta categoría.
+            </p>
+          )}
+        </div>
+      )}
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="sticky bottom-4 z-10 flex items-center justify-between gap-3 rounded-2xl border border-border bg-card/95 p-3 shadow-lg backdrop-blur">
         <div className="flex items-center gap-2 text-sm">
@@ -223,14 +336,19 @@ export function TeamManager() {
             </Badge>
           )}
           <span className="hidden text-muted-foreground sm:inline">
-            {teams.length} equipos en la categoría
+            {drafts.length} equipo{drafts.length !== 1 ? "s" : ""}
           </span>
         </div>
         <Button
           onClick={save}
+          disabled={isPending}
           className="h-11 bg-primary text-primary-foreground hover:bg-primary/90"
         >
-          <Save className="size-4" />
+          {isPending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Save className="size-4" />
+          )}
           Guardar cambios
         </Button>
       </div>

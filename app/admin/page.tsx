@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ResultLoader } from "@/components/admin/result-loader"
 import { TeamManager } from "@/components/admin/team-manager"
 import { FixtureManager } from "@/components/admin/fixture-manager"
+import { getAdminCategories } from "@/app/actions/admin"
 
 export const metadata: Metadata = {
   title: "Panel de carga | Liga de Invierno",
@@ -14,7 +15,9 @@ export const metadata: Metadata = {
     "Dashboard interno para cargar resultados de la Liga de Invierno de Parque Tenis Club.",
 }
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const categories = await getAdminCategories()
+
   return (
     <div className="min-h-dvh bg-background">
       <header className="sticky top-0 z-30 border-b border-border bg-primary text-primary-foreground">
@@ -75,13 +78,13 @@ export default function AdminPage() {
           </TabsList>
 
           <TabsContent value="resultados" className="mt-5">
-            <ResultLoader />
+            <ResultLoader categories={categories} />
           </TabsContent>
           <TabsContent value="jugadores" className="mt-5">
-            <TeamManager />
+            <TeamManager categories={categories} />
           </TabsContent>
           <TabsContent value="fixture" className="mt-5">
-            <FixtureManager />
+            <FixtureManager categories={categories} />
           </TabsContent>
         </Tabs>
       </main>

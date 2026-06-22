@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState, useTransition, useEffect } from "react"
 import {
   Trophy,
   CalendarDays,
@@ -9,6 +9,7 @@ import {
   CircleDot,
   ShieldAlert,
   MapPin,
+  Loader2,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -24,101 +25,146 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { CATEGORIES, LEAGUE, formatDate, type CategoryId } from "@/lib/liga"
 import { cn } from "@/lib/utils"
-
-type Side = "home" | "away"
+import {
+  type CategoryForAdmin,
+  type RoundForAdmin,
+  type SeriesForAdmin,
+  type CourtInput,
+  type PlayerInfo,
+  getRoundsForAdmin,
+  saveSeriesResult,
+} from "@/app/actions/admin"
 
 type CourtForm = {
-  homePlayers: [string, string]
-  awayPlayers: [string, string]
+  homePlayer1Id: string | null
+  homePlayer2Id: string | null
+  awayPlayer1Id: string | null
+  awayPlayer2Id: string | null
   score: string
-  winner: Side | null
+  winnerTeamId: string | null
   wo: boolean
 }
 
 type SeriesForm = {
+  isGeneralWalkover: boolean
+  walkoverWinnerId: string | null
   courts: [CourtForm, CourtForm, CourtForm]
-  generalWo: Side | null
   saved: boolean
 }
 
-const RESERVES = ["Suplente A", "Suplente B"]
-
-function rosterOf(categoryId: CategoryId, teamName: string): string[] {
-  const team = LEAGUE[categoryId].teams.find((t) => t.name === teamName)
-  if (!team) return [...RESERVES]
-  return [...team.players, ...RESERVES]
-}
-
-function buildInitialSeries(
-  categoryId: CategoryId,
-  home: string,
-  away: string,
-  courts: (boolean | null)[],
-): SeriesForm {
-  const homeRoster = rosterOf(categoryId, home)
-  const awayRoster = rosterOf(categoryId, away)
-  const mk = (i: number): CourtForm => ({
-    homePlayers: [
-      homeRoster[i % homeRoster.length],
-      homeRoster[(i + 1) % homeRoster.length],
-    ],
-    awayPlayers: [
-      awayRoster[i % awayRoster.length],
-      awayRoster[(i + 1) % awayRoster.length],
-    ],
+function blankCourt(): CourtForm {
+  return {
+    homePlayer1Id: null,
+    homePlayer2Id: null,
+    awayPlayer1Id: null,
+    awayPlayer2Id: null,
     score: "",
-    winner: courts[i] === true ? "home" : courts[i] === false ? "away" : null,
+    winnerTeamId: null,
     wo: false,
-  })
-  return { courts: [mk(0), mk(1), mk(2)], generalWo: null, saved: false }
+  }
 }
 
-export function ResultLoader() {
-  const [categoryId, setCategoryId] = useState<CategoryId>("cab-a")
-
-  const rounds = useMemo(() => {
-    const seen = new Map<string, { round: string; date: string }>()
-    for (const m of LEAGUE[categoryId].matches) {
-      if (!seen.has(m.round)) seen.set(m.round, { round: m.round, date: m.date })
+function seriesToForm(s: SeriesForAdmin): SeriesForm {
+  const courts = ([1, 2, 3] as const).map((n) => {
+    const c = s.courts.find((x) => x.courtNumber === n)
+    if (!c) return blankCourt()
+    return {
+      homePlayer1Id: c.homePlayer1Id,
+      homePlayer2Id: c.homePlayer2Id,
+      awayPlayer1Id: c.awayPlayer1Id,
+      awayPlayer2Id: c.awayPlayer2Id,
+      score: c.score ?? "",
+      winnerTeamId: c.winnerTeamId,
+      wo: c.isWalkover,
     }
-    return Array.from(seen.values())
+  }) as [CourtForm, CourtForm, CourtForm]
+
+  return {
+    isGeneralWalkover: s.isGeneralWalkover,
+    walkoverWinnerId: s.walkoverWinnerId,
+    courts,
+    saved: s.status === "completed" || s.status === "walkover",
+  }
+}
+
+export function ResultLoader({ categories }: { categories: CategoryForAdmin[] }) {
+  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "")
+  const [rounds, setRounds] = useState<RoundForAdmin[]>([])
+  const [activeRoundId, setActiveRoundId] = useState<string>("")
+  const [forms, setForms] = useState<Record<string, SeriesForm>>({})
+  const [isPending, startTransition] = useTransition()
+  const [savingId, setSavingId] = useState<string | null>(null)
+
+  function loadRounds(catId: string) {
+    startTransition(async () => {
+      const data = await getRoundsForAdmin(catId)
+      setRounds(data)
+      const defaultRound =
+        data.find((r) =>
+          r.series.some((s) => s.status !== "completed" && s.status !== "walkover"),
+        ) ?? data[data.length - 1]
+      setActiveRoundId(defaultRound?.id ?? "")
+      const newForms: Record<string, SeriesForm> = {}
+      for (const round of data) {
+        for (const s of round.series) {
+          newForms[s.id] = seriesToForm(s)
+        }
+      }
+      setForms(newForms)
+    })
+  }
+
+  useEffect(() => {
+    if (categoryId) loadRounds(categoryId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId])
 
-  const [round, setRound] = useState<string>(rounds[0]?.round ?? "")
+  const activeRound = rounds.find((r) => r.id === activeRoundId)
 
-  const activeRound = rounds.some((r) => r.round === round)
-    ? round
-    : rounds[0]?.round ?? ""
-
-  const series = useMemo(
-    () => LEAGUE[categoryId].matches.filter((m) => m.round === activeRound),
-    [categoryId, activeRound],
-  )
-
-  const [forms, setForms] = useState<Record<string, SeriesForm>>({})
-
-  function keyOf(home: string, away: string) {
-    return `${categoryId}|${activeRound}|${home}|${away}`
+  function updateForm(seriesId: string, updater: (prev: SeriesForm) => SeriesForm) {
+    setForms((prev) => ({
+      ...prev,
+      [seriesId]: updater(
+        prev[seriesId] ?? {
+          isGeneralWalkover: false,
+          walkoverWinnerId: null,
+          courts: [blankCourt(), blankCourt(), blankCourt()],
+          saved: false,
+        },
+      ),
+    }))
   }
 
-  function getForm(home: string, away: string, courts: (boolean | null)[]) {
-    const k = keyOf(home, away)
-    return forms[k] ?? buildInitialSeries(categoryId, home, away, courts)
-  }
+  async function handleSaveSeries(series: SeriesForAdmin) {
+    const form = forms[series.id]
+    if (!form) return
+    setSavingId(series.id)
 
-  function updateForm(
-    home: string,
-    away: string,
-    courts: (boolean | null)[],
-    updater: (prev: SeriesForm) => SeriesForm,
-  ) {
-    const k = keyOf(home, away)
-    setForms((prev) => {
-      const base = prev[k] ?? buildInitialSeries(categoryId, home, away, courts)
-      return { ...prev, [k]: updater(base) }
+    const courts: CourtInput[] = form.courts.map((c, i) => ({
+      courtNumber: (i + 1) as 1 | 2 | 3,
+      homePlayer1Id: c.homePlayer1Id,
+      homePlayer2Id: c.homePlayer2Id,
+      awayPlayer1Id: c.awayPlayer1Id,
+      awayPlayer2Id: c.awayPlayer2Id,
+      score: c.score,
+      winnerTeamId: c.winnerTeamId,
+      isWalkover: c.wo,
+    }))
+
+    const result = await saveSeriesResult({
+      seriesId: series.id,
+      homeTeamId: series.homeTeam.id,
+      awayTeamId: series.awayTeam.id,
+      isGeneralWalkover: form.isGeneralWalkover,
+      walkoverWinnerId: form.walkoverWinnerId,
+      courts,
     })
+
+    setSavingId(null)
+    if (result.success) {
+      updateForm(series.id, (prev) => ({ ...prev, saved: true }))
+    }
   }
 
   return (
@@ -130,17 +176,14 @@ export function ResultLoader() {
               <Trophy className="size-3.5 text-accent" />
               Categoría
             </Label>
-            <Select
-              value={categoryId}
-              onValueChange={(v) => setCategoryId(v as CategoryId)}
-            >
+            <Select value={categoryId} onValueChange={(v) => { if (v) setCategoryId(v) }}>
               <SelectTrigger className="h-11 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {CATEGORIES.map((c) => (
+                {categories.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
-                    {c.label}
+                    {c.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -152,14 +195,18 @@ export function ResultLoader() {
               <CalendarDays className="size-3.5 text-winter" />
               Fecha
             </Label>
-            <Select value={activeRound} onValueChange={(v) => setRound(v ?? "")}>
+            <Select
+              value={activeRoundId}
+              onValueChange={(v) => { if (v) setActiveRoundId(v) }}
+              disabled={rounds.length === 0}
+            >
               <SelectTrigger className="h-11 w-full">
-                <SelectValue />
+                <SelectValue placeholder="Seleccioná una fecha" />
               </SelectTrigger>
               <SelectContent>
                 {rounds.map((r) => (
-                  <SelectItem key={r.round} value={r.round}>
-                    {r.round} · {formatDate(r.date)}
+                  <SelectItem key={r.id} value={r.id}>
+                    {r.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -168,52 +215,64 @@ export function ResultLoader() {
         </CardContent>
       </Card>
 
-      {series.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          No hay series para esta fecha.
-        </p>
+      {isPending ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <>
+          {activeRound?.series.map((series) => {
+            const form = forms[series.id] ?? seriesToForm(series)
+            return (
+              <SeriesEditor
+                key={series.id}
+                series={series}
+                form={form}
+                saving={savingId === series.id}
+                onChange={(updater) => updateForm(series.id, updater)}
+                onSave={() => handleSaveSeries(series)}
+              />
+            )
+          })}
+          {activeRound?.series.length === 0 && (
+            <p className="text-sm text-muted-foreground">No hay series para esta fecha.</p>
+          )}
+          {!activeRound && rounds.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No hay datos disponibles para esta categoría.
+            </p>
+          )}
+        </>
       )}
-
-      {series.map((m) => (
-        <SeriesEditor
-          key={`${m.home}-${m.away}`}
-          categoryId={categoryId}
-          home={m.home}
-          away={m.away}
-          form={getForm(m.home, m.away, m.courts)}
-          onChange={(updater) => updateForm(m.home, m.away, m.courts, updater)}
-        />
-      ))}
     </div>
   )
 }
 
-function previewScore(form: SeriesForm) {
-  const home = form.courts.filter((c) => c.winner === "home").length
-  const away = form.courts.filter((c) => c.winner === "away").length
-  return { home, away }
-}
-
 function SeriesEditor({
-  categoryId,
-  home,
-  away,
+  series,
   form,
+  saving,
   onChange,
+  onSave,
 }: {
-  categoryId: CategoryId
-  home: string
-  away: string
+  series: SeriesForAdmin
   form: SeriesForm
+  saving: boolean
   onChange: (updater: (prev: SeriesForm) => SeriesForm) => void
+  onSave: () => void
 }) {
-  const homeRoster = rosterOf(categoryId, home)
-  const awayRoster = rosterOf(categoryId, away)
-  const { home: homeScore, away: awayScore } = previewScore(form)
-  const decided = homeScore >= 2 || awayScore >= 2
-  const allSet = form.courts.every((c) => c.winner !== null)
+  const homeCourts = form.courts.filter((c) => c.winnerTeamId === series.homeTeam.id).length
+  const awayCourts = form.courts.filter((c) => c.winnerTeamId === series.awayTeam.id).length
+  const decided = homeCourts >= 2 || awayCourts >= 2
+  const allSet = form.isGeneralWalkover
+    ? !!form.walkoverWinnerId
+    : form.courts.every((c) => c.winnerTeamId !== null)
   const winner =
-    homeScore > awayScore ? home : awayScore > homeScore ? away : null
+    homeCourts > awayCourts
+      ? series.homeTeam.name
+      : awayCourts > homeCourts
+        ? series.awayTeam.name
+        : null
 
   function setCourt(i: number, patch: Partial<CourtForm>) {
     onChange((prev) => {
@@ -223,18 +282,24 @@ function SeriesEditor({
     })
   }
 
-  function setGeneralWo(side: Side | null) {
+  function setGeneralWo(teamId: string | null) {
     onChange((prev) => {
-      if (side === null) {
-        return { ...prev, generalWo: null, saved: false }
+      if (!teamId) {
+        return { ...prev, isGeneralWalkover: false, walkoverWinnerId: null, saved: false }
       }
       const courts = prev.courts.map((c) => ({
         ...c,
-        winner: side,
+        winnerTeamId: teamId,
         wo: true,
         score: "W.O.",
       })) as SeriesForm["courts"]
-      return { ...prev, generalWo: side, courts, saved: false }
+      return {
+        ...prev,
+        isGeneralWalkover: true,
+        walkoverWinnerId: teamId,
+        courts,
+        saved: false,
+      }
     })
   }
 
@@ -243,9 +308,13 @@ function SeriesEditor({
       <CardHeader className="gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <CardTitle className="font-heading text-lg">
-            <span className={cn(winner === home && "text-primary")}>{home}</span>
+            <span className={cn(winner === series.homeTeam.name && "text-primary")}>
+              {series.homeTeam.name}
+            </span>
             <span className="px-2 text-muted-foreground">vs</span>
-            <span className={cn(winner === away && "text-primary")}>{away}</span>
+            <span className={cn(winner === series.awayTeam.name && "text-primary")}>
+              {series.awayTeam.name}
+            </span>
           </CardTitle>
           {form.saved ? (
             <Badge className="gap-1 bg-primary text-primary-foreground hover:bg-primary">
@@ -258,32 +327,45 @@ function SeriesEditor({
               Lista para guardar
             </Badge>
           ) : (
-            <Badge
-              variant="outline"
-              className="gap-1 border-border text-muted-foreground"
-            >
+            <Badge variant="outline" className="gap-1 border-border text-muted-foreground">
               <CircleDot className="size-3" />
               En carga
             </Badge>
           )}
         </div>
 
-        <div className="flex items-center gap-3 rounded-xl bg-secondary/50 px-4 py-2.5">
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Resultado general
-          </span>
-          <span className="font-heading text-xl font-extrabold text-foreground">
-            {homeScore}
-            <span className="px-1 text-muted-foreground">–</span>
-            {awayScore}
-          </span>
-          {decided && winner && (
-            <Badge className="ml-auto gap-1 bg-primary/10 text-primary hover:bg-primary/10">
+        {!form.isGeneralWalkover && (
+          <div className="flex items-center gap-3 rounded-xl bg-secondary/50 px-4 py-2.5">
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Resultado general
+            </span>
+            <span className="font-heading text-xl font-extrabold text-foreground">
+              {homeCourts}
+              <span className="px-1 text-muted-foreground">–</span>
+              {awayCourts}
+            </span>
+            {decided && winner && (
+              <Badge className="ml-auto gap-1 bg-primary/10 text-primary hover:bg-primary/10">
+                <Trophy className="size-3" />
+                Gana {winner}
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {form.isGeneralWalkover && form.walkoverWinnerId && (
+          <div className="flex items-center gap-3 rounded-xl bg-secondary/50 px-4 py-2.5">
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              W.O. General
+            </span>
+            <Badge className="gap-1 bg-primary/10 text-primary">
               <Trophy className="size-3" />
-              Gana {winner}
+              {form.walkoverWinnerId === series.homeTeam.id
+                ? series.homeTeam.name
+                : series.awayTeam.name}
             </Badge>
-          )}
-        </div>
+          </div>
+        )}
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -296,18 +378,26 @@ function SeriesEditor({
             <Button
               type="button"
               size="sm"
-              variant={form.generalWo === "home" ? "default" : "outline"}
-              onClick={() => setGeneralWo(form.generalWo === "home" ? null : "home")}
+              variant={form.walkoverWinnerId === series.homeTeam.id ? "default" : "outline"}
+              onClick={() =>
+                setGeneralWo(
+                  form.walkoverWinnerId === series.homeTeam.id ? null : series.homeTeam.id,
+                )
+              }
             >
-              {home}
+              {series.homeTeam.name}
             </Button>
             <Button
               type="button"
               size="sm"
-              variant={form.generalWo === "away" ? "default" : "outline"}
-              onClick={() => setGeneralWo(form.generalWo === "away" ? null : "away")}
+              variant={form.walkoverWinnerId === series.awayTeam.id ? "default" : "outline"}
+              onClick={() =>
+                setGeneralWo(
+                  form.walkoverWinnerId === series.awayTeam.id ? null : series.awayTeam.id,
+                )
+              }
             >
-              {away}
+              {series.awayTeam.name}
             </Button>
           </div>
         </div>
@@ -323,14 +413,11 @@ function SeriesEditor({
                   <MapPin className="size-3.5 text-winter" />
                   Cancha {i + 1}
                 </span>
-                <label className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-foreground">
                   <Checkbox
                     checked={court.wo}
                     onCheckedChange={(v) =>
-                      setCourt(i, {
-                        wo: v === true,
-                        score: v === true ? "W.O." : "",
-                      })
+                      setCourt(i, { wo: v === true, score: v === true ? "W.O." : "" })
                     }
                   />
                   W.O.
@@ -338,18 +425,18 @@ function SeriesEditor({
               </div>
 
               <PlayerPair
-                label={home}
+                label={series.homeTeam.name}
                 tone="primary"
-                roster={homeRoster}
-                value={court.homePlayers}
-                onChange={(p) => setCourt(i, { homePlayers: p })}
+                players={series.homeTeam.players}
+                value={[court.homePlayer1Id, court.homePlayer2Id]}
+                onChange={([p1, p2]) => setCourt(i, { homePlayer1Id: p1, homePlayer2Id: p2 })}
               />
               <PlayerPair
-                label={away}
+                label={series.awayTeam.name}
                 tone="accent"
-                roster={awayRoster}
-                value={court.awayPlayers}
-                onChange={(p) => setCourt(i, { awayPlayers: p })}
+                players={series.awayTeam.players}
+                value={[court.awayPlayer1Id, court.awayPlayer2Id]}
+                onChange={([p1, p2]) => setCourt(i, { awayPlayer1Id: p1, awayPlayer2Id: p2 })}
               />
 
               <div className="space-y-1.5">
@@ -367,20 +454,20 @@ function SeriesEditor({
                 <Button
                   type="button"
                   size="sm"
-                  variant={court.winner === "home" ? "default" : "outline"}
-                  onClick={() => setCourt(i, { winner: "home" })}
+                  variant={court.winnerTeamId === series.homeTeam.id ? "default" : "outline"}
+                  onClick={() => setCourt(i, { winnerTeamId: series.homeTeam.id })}
                   className="text-xs"
                 >
-                  Gana {home}
+                  Gana {series.homeTeam.name}
                 </Button>
                 <Button
                   type="button"
                   size="sm"
-                  variant={court.winner === "away" ? "default" : "outline"}
-                  onClick={() => setCourt(i, { winner: "away" })}
+                  variant={court.winnerTeamId === series.awayTeam.id ? "default" : "outline"}
+                  onClick={() => setCourt(i, { winnerTeamId: series.awayTeam.id })}
                   className="text-xs"
                 >
-                  Gana {away}
+                  Gana {series.awayTeam.name}
                 </Button>
               </div>
             </div>
@@ -392,16 +479,22 @@ function SeriesEditor({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
             {allSet
-              ? "Las 3 canchas tienen ganador."
-              : `Faltan ${form.courts.filter((c) => c.winner === null).length} cancha(s) por definir.`}
+              ? form.isGeneralWalkover
+                ? "W.O. general marcado."
+                : "Las 3 canchas tienen ganador."
+              : `Faltan ${form.courts.filter((c) => c.winnerTeamId === null).length} cancha(s) por definir.`}
           </p>
           <Button
             type="button"
-            disabled={!allSet}
-            onClick={() => onChange((prev) => ({ ...prev, saved: true }))}
+            disabled={!allSet || saving}
+            onClick={onSave}
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            <Save className="size-4" />
+            {saving ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Save className="size-4" />
+            )}
             Guardar serie
           </Button>
         </div>
@@ -410,18 +503,20 @@ function SeriesEditor({
   )
 }
 
+const NULL_VALUE = "__null__"
+
 function PlayerPair({
   label,
   tone,
-  roster,
+  players,
   value,
   onChange,
 }: {
   label: string
   tone: "primary" | "accent"
-  roster: string[]
-  value: [string, string]
-  onChange: (v: [string, string]) => void
+  players: PlayerInfo[]
+  value: [string | null, string | null]
+  onChange: (v: [string | null, string | null]) => void
 }) {
   return (
     <div className="space-y-1.5">
@@ -436,23 +531,27 @@ function PlayerPair({
         {label}
       </span>
       <div className="grid grid-cols-2 gap-2">
-        {[0, 1].map((idx) => (
+        {([0, 1] as const).map((idx) => (
           <Select
             key={idx}
-            value={value[idx]}
+            value={value[idx] ?? NULL_VALUE}
             onValueChange={(v) => {
-              const next: [string, string] = [...value] as [string, string]
-              next[idx] = v ?? value[idx]
+              const next: [string | null, string | null] = [...value] as [
+                string | null,
+                string | null,
+              ]
+              next[idx] = v === NULL_VALUE ? null : v
               onChange(next)
             }}
           >
             <SelectTrigger className="h-9 w-full">
-              <SelectValue />
+              <SelectValue placeholder="Jugador" />
             </SelectTrigger>
             <SelectContent>
-              {roster.map((p) => (
-                <SelectItem key={p} value={p}>
-                  {p}
+              <SelectItem value={NULL_VALUE}>Sin asignar</SelectItem>
+              {players.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.displayName}
                 </SelectItem>
               ))}
             </SelectContent>

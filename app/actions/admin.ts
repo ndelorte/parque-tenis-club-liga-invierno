@@ -1,0 +1,465 @@
+"use server"
+
+import { revalidatePath } from "next/cache"
+import { createAdminClient } from "@/lib/supabase/admin"
+import { createClient } from "@/lib/supabase/server"
+
+// ——— Public types ———
+
+export type CategoryForAdmin = {
+  id: string
+  name: string
+  slug: string
+}
+
+export type PlayerInfo = {
+  id: string
+  displayName: string
+}
+
+export type TeamForAdmin = {
+  id: string
+  name: string
+  slug: string
+  players: { teamPlayerId: string; playerId: string; displayName: string; isCaptain: boolean }[]
+}
+
+export type CourtForAdmin = {
+  courtNumber: 1 | 2 | 3
+  homePlayer1Id: string | null
+  homePlayer2Id: string | null
+  awayPlayer1Id: string | null
+  awayPlayer2Id: string | null
+  score: string | null
+  winnerTeamId: string | null
+  isWalkover: boolean
+}
+
+export type SeriesForAdmin = {
+  id: string
+  homeTeam: { id: string; name: string; players: PlayerInfo[] }
+  awayTeam: { id: string; name: string; players: PlayerInfo[] }
+  scheduledDate: string | null
+  scheduledTime: string | null
+  originalScheduledDate: string | null
+  originalScheduledTime: string | null
+  status: string
+  isGeneralWalkover: boolean
+  walkoverWinnerId: string | null
+  courts: CourtForAdmin[]
+}
+
+export type RoundForAdmin = {
+  id: string
+  name: string
+  roundNumber: number
+  series: SeriesForAdmin[]
+}
+
+// ——— Read actions ———
+
+export async function getAdminCategories(): Promise<CategoryForAdmin[]> {
+  const supabase = await createClient()
+
+  const { data: tournament } = await supabase
+    .from("tournaments")
+    .select("id")
+    .eq("status", "active")
+    .limit(1)
+    .single()
+
+  if (!tournament) return []
+
+  const { data } = await supabase
+    .from("categories")
+    .select("id, name, slug")
+    .eq("tournament_id", (tournament as any).id)
+    .order("sort_order")
+
+  return (data ?? []) as CategoryForAdmin[]
+}
+
+export async function getTeamsForAdmin(categoryId: string): Promise<TeamForAdmin[]> {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from("teams")
+    .select(
+      "id, name, slug, team_players(id, player_id, active, players(id, display_name))",
+    )
+    .eq("category_id", categoryId)
+    .eq("active", true)
+    .order("name")
+
+  if (!data) return []
+
+  return (data as any[]).map((team) => ({
+    id: team.id,
+    name: team.name,
+    slug: team.slug,
+    players: (team.team_players as any[])
+      .filter((tp) => tp.active)
+      .map((tp) => ({
+        teamPlayerId: tp.id,
+        playerId: tp.player_id,
+        displayName: tp.players?.display_name ?? "",
+        isCaptain: tp.is_captain ?? false,
+      })),
+  }))
+}
+
+export async function getRoundsForAdmin(categoryId: string): Promise<RoundForAdmin[]> {
+  const supabase = await createClient()
+
+  const [roundsResult, teamsResult] = await Promise.all([
+    supabase
+      .from("rounds")
+      .select(
+        `id, name, round_number,
+        series(
+          id, status, is_general_walkover, walkover_winner_team_id,
+          scheduled_date, scheduled_time,
+          original_scheduled_date, original_scheduled_time,
+          home_team_id, away_team_id,
+          court_matches(
+            court_number, home_player_1_id, home_player_2_id,
+            away_player_1_id, away_player_2_id,
+            score, winner_team_id, is_court_walkover
+          )
+        )`,
+      )
+      .eq("category_id", categoryId)
+      .order("round_number"),
+    supabase
+      .from("teams")
+      .select("id, name, team_players(id, player_id, active, players(id, display_name))")
+      .eq("category_id", categoryId)
+      .eq("active", true),
+  ])
+
+  if (roundsResult.error || !roundsResult.data) return []
+
+  const teamMap = new Map<string, { id: string; name: string; players: PlayerInfo[] }>()
+  for (const team of (teamsResult.data ?? []) as any[]) {
+    teamMap.set(team.id, {
+      id: team.id,
+      name: team.name,
+      players: (team.team_players as any[])
+        .filter((tp) => tp.active)
+        .map((tp) => ({ id: tp.player_id, displayName: tp.players?.display_name ?? "" })),
+    })
+  }
+
+  return (roundsResult.data as any[]).map((round) => ({
+    id: round.id,
+    name: round.name,
+    roundNumber: round.round_number,
+    series: (round.series as any[] ?? []).map((s) => {
+      const homeTeam = teamMap.get(s.home_team_id) ?? {
+        id: s.home_team_id,
+        name: "Equipo desconocido",
+        players: [],
+      }
+      const awayTeam = teamMap.get(s.away_team_id) ?? {
+        id: s.away_team_id,
+        name: "Equipo desconocido",
+        players: [],
+      }
+      const courts: CourtForAdmin[] = ([1, 2, 3] as const).map((n) => {
+        const cm = (s.court_matches as any[] ?? []).find((c: any) => c.court_number === n)
+        return {
+          courtNumber: n,
+          homePlayer1Id: cm?.home_player_1_id ?? null,
+          homePlayer2Id: cm?.home_player_2_id ?? null,
+          awayPlayer1Id: cm?.away_player_1_id ?? null,
+          awayPlayer2Id: cm?.away_player_2_id ?? null,
+          score: cm?.score ?? null,
+          winnerTeamId: cm?.winner_team_id ?? null,
+          isWalkover: cm?.is_court_walkover ?? false,
+        }
+      })
+      return {
+        id: s.id,
+        homeTeam,
+        awayTeam,
+        scheduledDate: s.scheduled_date ?? null,
+        scheduledTime: s.scheduled_time ?? null,
+        originalScheduledDate: s.original_scheduled_date ?? null,
+        originalScheduledTime: s.original_scheduled_time ?? null,
+        status: s.status,
+        isGeneralWalkover: s.is_general_walkover,
+        walkoverWinnerId: s.walkover_winner_team_id ?? null,
+        courts,
+      }
+    }),
+  }))
+}
+
+// ——— Mutation actions ———
+
+function slugify(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+}
+
+export type PlayerInput = {
+  teamPlayerId: string | null
+  playerId: string | null
+  displayName: string
+  isCaptain: boolean
+}
+
+export type TeamInput = {
+  id: string | null
+  name: string
+  players: PlayerInput[]
+}
+
+export async function saveTeamPlayers(
+  categoryId: string,
+  teams: TeamInput[],
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = createAdminClient()
+
+  try {
+    const { data: currentTeams } = await supabase
+      .from("teams")
+      .select("id")
+      .eq("category_id", categoryId)
+      .eq("active", true)
+
+    const inputIds = new Set(teams.filter((t) => t.id).map((t) => t.id!))
+
+    for (const { id } of (currentTeams ?? []) as any[]) {
+      if (!inputIds.has(id)) {
+        await supabase.from("team_players").update({ active: false }).eq("team_id", id)
+        await supabase.from("teams").update({ active: false }).eq("id", id)
+      }
+    }
+
+    for (const team of teams) {
+      let teamId = team.id
+
+      if (!teamId) {
+        const slug = `${slugify(team.name)}-${Date.now()}`
+        const { data: newTeam } = await supabase
+          .from("teams")
+          .insert({ category_id: categoryId, name: team.name, slug, active: true })
+          .select("id")
+          .single()
+        if (!newTeam) continue
+        teamId = (newTeam as any).id
+      } else {
+        await supabase.from("teams").update({ name: team.name }).eq("id", teamId)
+      }
+
+      const { data: currentTPs } = await supabase
+        .from("team_players")
+        .select("id, player_id")
+        .eq("team_id", teamId)
+        .eq("active", true)
+
+      const inputTPIds = new Set(
+        team.players.filter((p) => p.teamPlayerId).map((p) => p.teamPlayerId!),
+      )
+
+      for (const tp of (currentTPs ?? []) as any[]) {
+        if (!inputTPIds.has(tp.id)) {
+          await supabase.from("team_players").update({ active: false }).eq("id", tp.id)
+        }
+      }
+
+      for (const player of team.players) {
+        if (!player.displayName.trim()) continue
+
+        if (!player.playerId) {
+          const { data: newPlayer } = await supabase
+            .from("players")
+            .insert({
+              display_name: player.displayName.trim(),
+              first_name: player.displayName.trim(),
+              last_name: "",
+              active: true,
+            })
+            .select("id")
+            .single()
+          if (!newPlayer) continue
+          await supabase.from("team_players").insert({
+            team_id: teamId,
+            player_id: (newPlayer as any).id,
+            active: true,
+            is_captain: player.isCaptain ?? false,
+          })
+        } else {
+          await supabase
+            .from("players")
+            .update({ display_name: player.displayName.trim() })
+            .eq("id", player.playerId)
+          if (player.teamPlayerId) {
+            await supabase
+              .from("team_players")
+              .update({ is_captain: player.isCaptain ?? false })
+              .eq("id", player.teamPlayerId)
+          }
+        }
+      }
+    }
+
+    revalidatePath("/admin")
+    revalidatePath("/liga-invierno")
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: String(e) }
+  }
+}
+
+export type CourtInput = {
+  courtNumber: 1 | 2 | 3
+  homePlayer1Id: string | null
+  homePlayer2Id: string | null
+  awayPlayer1Id: string | null
+  awayPlayer2Id: string | null
+  score: string
+  winnerTeamId: string | null
+  isWalkover: boolean
+}
+
+export type SeriesResultInput = {
+  seriesId: string
+  homeTeamId: string
+  awayTeamId: string
+  isGeneralWalkover: boolean
+  walkoverWinnerId: string | null
+  courts: CourtInput[]
+}
+
+export async function saveSeriesResult(
+  input: SeriesResultInput,
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = createAdminClient()
+
+  try {
+    if (input.isGeneralWalkover && input.walkoverWinnerId) {
+      const isHome = input.walkoverWinnerId === input.homeTeamId
+      await supabase
+        .from("series")
+        .update({
+          is_general_walkover: true,
+          walkover_winner_team_id: input.walkoverWinnerId,
+          winner_team_id: input.walkoverWinnerId,
+          home_courts_won: isHome ? 3 : 0,
+          away_courts_won: isHome ? 0 : 3,
+          status: "walkover",
+        })
+        .eq("id", input.seriesId)
+
+      revalidatePath("/admin")
+      revalidatePath("/liga-invierno")
+      return { success: true }
+    }
+
+    let homeCourts = 0
+    let awayCourts = 0
+
+    for (const court of input.courts) {
+      if (court.winnerTeamId === input.homeTeamId) homeCourts++
+      if (court.winnerTeamId === input.awayTeamId) awayCourts++
+
+      const { data: existing } = await supabase
+        .from("court_matches")
+        .select("id")
+        .eq("series_id", input.seriesId)
+        .eq("court_number", court.courtNumber)
+        .maybeSingle()
+
+      const matchData = {
+        series_id: input.seriesId,
+        court_number: court.courtNumber,
+        home_player_1_id: court.homePlayer1Id,
+        home_player_2_id: court.homePlayer2Id,
+        away_player_1_id: court.awayPlayer1Id,
+        away_player_2_id: court.awayPlayer2Id,
+        score: court.score || null,
+        winner_team_id: court.winnerTeamId,
+        is_court_walkover: court.isWalkover,
+      }
+
+      if (existing) {
+        await supabase.from("court_matches").update(matchData).eq("id", (existing as any).id)
+      } else {
+        await supabase.from("court_matches").insert(matchData)
+      }
+    }
+
+    const winnerId =
+      homeCourts >= 2 ? input.homeTeamId : awayCourts >= 2 ? input.awayTeamId : null
+
+    await supabase
+      .from("series")
+      .update({
+        is_general_walkover: false,
+        home_courts_won: homeCourts,
+        away_courts_won: awayCourts,
+        winner_team_id: winnerId,
+        status: winnerId ? "completed" : "in_progress",
+      })
+      .eq("id", input.seriesId)
+
+    revalidatePath("/admin")
+    revalidatePath("/liga-invierno")
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: String(e) }
+  }
+}
+
+export async function updateSeriesSchedule(
+  seriesId: string,
+  date: string,
+  time: string,
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = createAdminClient()
+
+  try {
+    const { data: current } = await supabase
+      .from("series")
+      .select(
+        "scheduled_date, scheduled_time, original_scheduled_date, original_scheduled_time, status",
+      )
+      .eq("id", seriesId)
+      .single()
+
+    if (!current) return { success: false, error: "Serie no encontrada" }
+
+    const c = current as any
+    const originalDate = c.original_scheduled_date ?? c.scheduled_date
+    const originalTime = c.original_scheduled_time ?? c.scheduled_time
+    const isRescheduled = date !== originalDate || time !== (originalTime ?? "")
+    const isCompleted = c.status === "completed" || c.status === "walkover"
+    const statusUpdate = isCompleted
+      ? {}
+      : { status: isRescheduled ? "rescheduled" : "scheduled" }
+
+    await supabase
+      .from("series")
+      .update({
+        scheduled_date: date || null,
+        scheduled_time: time || null,
+        original_scheduled_date: originalDate,
+        original_scheduled_time: originalTime,
+        ...statusUpdate,
+      })
+      .eq("id", seriesId)
+
+    revalidatePath("/admin")
+    revalidatePath("/liga-invierno")
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: String(e) }
+  }
+}
