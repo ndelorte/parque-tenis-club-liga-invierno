@@ -179,6 +179,7 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
                     <TableRow>
                       <TableHead className="w-10">#</TableHead>
                       <TableHead>Equipo</TableHead>
+                      <TableHead className="text-center" title="Puntos">P</TableHead>
                       <TableHead className="text-center" title="Partidos Jugados">PJ</TableHead>
                       <TableHead className="text-center" title="Partidos Ganados">PG</TableHead>
                       <TableHead className="text-center" title="Diferencia de Parciales (canchas)">DP</TableHead>
@@ -213,6 +214,11 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
                             {r.team.name}
                           </span>
                         </TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex min-w-7 justify-center rounded-md bg-primary/10 px-1.5 py-0.5 font-bold text-primary">
+                            {r.points}
+                          </span>
+                        </TableCell>
                         <TableCell className="text-center text-muted-foreground">
                           {r.played}
                         </TableCell>
@@ -234,7 +240,7 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
                 </Table>
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                PJ: partidos jugados · PG: ganados · DP: dif. de parciales · DS: dif. de sets · DG: dif. de games
+                P: puntos · PJ: partidos jugados · PG: ganados · DP: dif. de parciales · DS: dif. de sets · DG: dif. de games
               </p>
             </CardContent>
           </Card>
