@@ -447,7 +447,7 @@ export type StandingForAdmin = {
 export type PlayoffSeriesForAdmin = {
   id: string
   roundId: string
-  phase: "quarterfinal" | "semifinal" | "final"
+  phase: "quarterfinal" | "semifinal" | "final" | "third_place"
   homeTeam: { id: string; name: string; players: PlayerInfo[] }
   awayTeam: { id: string; name: string; players: PlayerInfo[] }
   scheduledDate: string | null
@@ -543,7 +543,7 @@ export async function getPlayoffSeriesForAdmin(
       result.push({
         id: s.id,
         roundId: round.id,
-        phase: round.phase as "quarterfinal" | "semifinal" | "final",
+        phase: round.phase as "quarterfinal" | "semifinal" | "final" | "third_place",
         homeTeam,
         awayTeam,
         scheduledDate: s.scheduled_date ?? null,
@@ -661,15 +661,16 @@ export async function createQuarterFinalSeries(
   }
 }
 
-// phase_round_numbers: semifinal=101, final=102
-const PHASE_CONFIG: Record<"semifinal" | "final", { roundNumber: number; name: string }> = {
+// phase_round_numbers: semifinal=101, final=102, third_place=103
+const PHASE_CONFIG: Record<"semifinal" | "final" | "third_place", { roundNumber: number; name: string }> = {
   semifinal: { roundNumber: 101, name: "Semifinal" },
   final: { roundNumber: 102, name: "Final" },
+  third_place: { roundNumber: 103, name: "Tercer y Cuarto Puesto" },
 }
 
 export async function upsertPlayoffSeries(params: {
   categoryId: string
-  phase: "semifinal" | "final"
+  phase: "semifinal" | "final" | "third_place"
   homeTeamId: string
   awayTeamId: string
   scheduledDate: string | null

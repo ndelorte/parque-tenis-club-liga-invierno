@@ -1,12 +1,21 @@
-import { Trophy, Clock, CheckCircle2, AlertCircle } from "lucide-react"
+import { Trophy, Clock, CheckCircle2, AlertCircle, Medal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { ProvisionalBracket, QuarterFinalMatchup, PlayoffSlot } from "@/lib/playoffs/types"
 
-interface Props {
-  bracket: ProvisionalBracket
+type ThirdPlace = {
+  homeTeamName?: string
+  awayTeamName?: string
+  scheduledDate?: string
+  scheduledTime?: string
+  status?: string
 }
 
-export function PlayoffBracket({ bracket }: Props) {
+interface Props {
+  bracket: ProvisionalBracket
+  thirdPlace?: ThirdPlace
+}
+
+export function PlayoffBracket({ bracket, thirdPlace }: Props) {
   return (
     <div>
       <div className="mb-4">
@@ -14,11 +23,20 @@ export function PlayoffBracket({ bracket }: Props) {
         <p className="text-sm text-gray-500 mt-0.5">Con las posiciones actuales provisorias</p>
       </div>
 
-      <div className="space-y-3 max-w-xl">
-        <ByeRow slot={bracket.byes[0]} />
-        <QFRow qf={bracket.quarterfinals[0]} />
-        <QFRow qf={bracket.quarterfinals[1]} />
-        <ByeRow slot={bracket.byes[1]} />
+      <div className="flex flex-col lg:flex-row lg:items-end gap-6 lg:gap-10">
+        {/* Bracket principal */}
+        <div className="space-y-3 max-w-xl flex-1">
+          <ByeRow slot={bracket.byes[0]} />
+          <QFRow qf={bracket.quarterfinals[0]} />
+          <QFRow qf={bracket.quarterfinals[1]} />
+          <ByeRow slot={bracket.byes[1]} />
+        </div>
+
+        {/* 3er y 4to puesto — siempre visible, desconectado del bracket principal */}
+        <div className="lg:w-72 lg:shrink-0">
+          <p className="text-xs text-gray-400 mb-2 italic">Partido separado</p>
+          <ThirdPlaceCard thirdPlace={thirdPlace} />
+        </div>
       </div>
     </div>
   )
@@ -81,6 +99,63 @@ function QFRow({ qf }: { qf: QuarterFinalMatchup }) {
           Resultado pendiente
         </p>
       )}
+    </div>
+  )
+}
+
+function ThirdPlaceCard({ thirdPlace }: { thirdPlace?: ThirdPlace }) {
+  const isCompleted = thirdPlace?.status === "completed" || thirdPlace?.status === "walkover"
+  const isScheduled = thirdPlace?.status === "scheduled" || thirdPlace?.status === "rescheduled"
+
+  return (
+    <div
+      className={cn(
+        "rounded-xl border px-4 py-3 space-y-2",
+        isCompleted
+          ? "border-amber-300/60 bg-amber-50/60"
+          : "border-border bg-card",
+      )}
+    >
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <Medal className="size-3.5 text-amber-500" />
+          3er y 4to Puesto
+        </span>
+        {isCompleted && (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
+            <CheckCircle2 className="size-3.5" />
+            Jugado
+          </span>
+        )}
+        {isScheduled && !isCompleted && (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
+            <AlertCircle className="size-3.5" />
+            Programado
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap text-sm font-medium text-gray-800">
+        <span className="truncate max-w-[120px] sm:max-w-none">
+          {thirdPlace?.homeTeamName ?? <span className="italic font-normal text-muted-foreground">A definir</span>}
+        </span>
+        <span className="text-muted-foreground">vs</span>
+        <span className="truncate max-w-[120px] sm:max-w-none">
+          {thirdPlace?.awayTeamName ?? <span className="italic font-normal text-muted-foreground">A definir</span>}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Clock className="size-3.5 shrink-0" />
+        {thirdPlace?.scheduledDate ? (
+          <span>
+            {formatDate(thirdPlace.scheduledDate)}
+            {thirdPlace.scheduledTime ? ` — ${formatTime(thirdPlace.scheduledTime)}` : ""}
+          </span>
+        ) : (
+          <span className="italic">Fecha a confirmar</span>
+        )}
+      </div>
     </div>
   )
 }

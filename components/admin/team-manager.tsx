@@ -208,7 +208,9 @@ export function TeamManager({ categories }: { categories: CategoryForAdmin[] }) 
               }}
             >
               <SelectTrigger className="h-11 w-full">
-                <SelectValue />
+                <SelectValue placeholder="Seleccioná una categoría">
+                  {categories.find((c) => c.id === categoryId)?.name}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {categories.map((c) => (

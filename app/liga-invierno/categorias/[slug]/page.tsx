@@ -70,15 +70,49 @@ export default async function CategoriaPage({ params }: Props) {
           position: i + 1,
         }))
 
+  // Para el bracket usar standings reales si hay 6+, sino equipos como provisional (igual que admin)
+  const bracketStandings =
+    standings.length >= 6
+      ? standings
+      : teams.map((t, i) => ({
+          team_id: t.id,
+          team: t,
+          played: 0,
+          won: 0,
+          lost: 0,
+          points: 0,
+          courts_won: 0,
+          courts_lost: 0,
+          courts_diff: 0,
+          sets_won: 0,
+          sets_lost: 0,
+          sets_diff: 0,
+          games_won: 0,
+          games_lost: 0,
+          games_diff: 0,
+          position: i + 1,
+        }))
+
   let bracket = null
   try {
-    if (effectiveStandings.length >= 6) {
-      const generated = generateProvisionalBracket(effectiveStandings, effectiveStandings.length)
+    if (bracketStandings.length >= 6) {
+      const generated = generateProvisionalBracket(bracketStandings, bracketStandings.length)
       bracket = mergeProvisionalBracketWithScheduledMatches(generated, playoffSeries)
     }
   } catch {
     bracket = null
   }
+
+  const thirdPlaceSeries = playoffSeries.find((s) => s.phase === "third_place")
+  const thirdPlace = thirdPlaceSeries
+    ? {
+        homeTeamName: teams.find((t) => t.id === thirdPlaceSeries.home_team_id)?.name ?? "Equipo",
+        awayTeamName: teams.find((t) => t.id === thirdPlaceSeries.away_team_id)?.name ?? "Equipo",
+        scheduledDate: thirdPlaceSeries.scheduled_date,
+        scheduledTime: thirdPlaceSeries.scheduled_time,
+        status: thirdPlaceSeries.status,
+      }
+    : undefined
 
   return (
     <div>
@@ -95,7 +129,7 @@ export default async function CategoriaPage({ params }: Props) {
 
         {bracket && (
           <section>
-            <PlayoffBracket bracket={bracket} />
+            <PlayoffBracket bracket={bracket} thirdPlace={thirdPlace} />
           </section>
         )}
 

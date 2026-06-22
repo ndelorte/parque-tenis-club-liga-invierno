@@ -461,6 +461,7 @@ function BracketCard({
   // Series SF y Final
   const sfSeries = playoffSeries.filter((s) => s.phase === "semifinal")
   const finalSeries = playoffSeries.find((s) => s.phase === "final")
+  const thirdPlaceSeries = playoffSeries.find((s) => s.phase === "third_place")
 
   // SF1: la serie donde el local es el 1° seed (bye[0])
   const sf1 = sfSeries.find((s) => s.home_team_id === bracket.byes[0].team.id || s.away_team_id === bracket.byes[0].team.id)
@@ -472,6 +473,16 @@ function BracketCard({
   // Ganadores de SF para mostrar en Final
   const sf1WinnerName = sf1?.winner_team_id ? teamName(sf1.winner_team_id) : undefined
   const sf2WinnerName = sf2?.winner_team_id ? teamName(sf2.winner_team_id) : undefined
+
+  // Perdedores de SF para mostrar en 3er puesto
+  const sf1LoserId = sf1?.winner_team_id
+    ? (sf1.home_team_id === sf1.winner_team_id ? sf1.away_team_id : sf1.home_team_id)
+    : undefined
+  const sf2LoserId = sf2?.winner_team_id
+    ? (sf2.home_team_id === sf2.winner_team_id ? sf2.away_team_id : sf2.home_team_id)
+    : undefined
+  const sf1LoserName = sf1LoserId ? teamName(sf1LoserId) : undefined
+  const sf2LoserName = sf2LoserId ? teamName(sf2LoserId) : undefined
 
   return (
     <Card className="mt-6 overflow-hidden border-t-4 border-t-accent">
@@ -485,55 +496,74 @@ function BracketCard({
       </CardHeader>
       <CardContent>
         <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-          <div className="mx-auto grid min-w-[780px] max-w-5xl grid-cols-[minmax(250px,1fr)_56px_minmax(250px,1fr)_56px_minmax(250px,1fr)] grid-rows-[auto_1fr_1fr] gap-y-5">
-            <div className="col-start-1 row-start-1">
-              <RoundLabel label="Cuartos de Final" />
-            </div>
-            <div className="col-start-3 row-start-1">
-              <RoundLabel label="Semifinales" />
-            </div>
-            <div className="col-start-5 row-start-1">
-              <RoundLabel label="Final" />
+          <div className="mx-auto min-w-[780px] max-w-5xl">
+            {/* Bracket principal: QF → SF → Final */}
+            <div className="grid grid-cols-[minmax(250px,1fr)_56px_minmax(250px,1fr)_56px_minmax(250px,1fr)] grid-rows-[auto_1fr_1fr] gap-y-5">
+              <div className="col-start-1 row-start-1">
+                <RoundLabel label="Cuartos de Final" />
+              </div>
+              <div className="col-start-3 row-start-1">
+                <RoundLabel label="Semifinales" />
+              </div>
+              <div className="col-start-5 row-start-1">
+                <RoundLabel label="Final" />
+              </div>
+
+              <div className="col-start-1 row-start-2 flex min-h-[176px] flex-col justify-center gap-1.5">
+                <ByePill slot={bracket.byes[0]} />
+                <QFMatchup qf={qfTop} />
+              </div>
+              <BracketConnector className="col-start-2 row-start-2" />
+              <div className="col-start-3 row-start-2 flex min-h-[176px] items-center">
+                <SFMatchup
+                  label="SF 1"
+                  home={{ name: bracket.byes[0].team.name, seed: 1, known: true }}
+                  away={{ name: qfTopWinnerName ?? "Ganador CF 1", known: !!qfTopWinnerName }}
+                  series={sf1}
+                />
+              </div>
+
+              <div className="col-start-1 row-start-3 flex min-h-[176px] flex-col justify-center gap-1.5">
+                <QFMatchup qf={qfBottom} />
+                <ByePill slot={bracket.byes[1]} />
+              </div>
+              <BracketConnector className="col-start-2 row-start-3" />
+              <div className="col-start-3 row-start-3 flex min-h-[176px] items-center">
+                <SFMatchup
+                  label="SF 2"
+                  home={{ name: qfBottomWinnerName ?? "Ganador CF 2", known: !!qfBottomWinnerName }}
+                  away={{ name: bracket.byes[1].team.name, seed: 2, known: true }}
+                  series={sf2}
+                />
+              </div>
+
+              <div className="col-start-4 row-span-2 row-start-2 flex items-center">
+                <div className="h-px w-full border-t-2 border-dashed border-border" />
+              </div>
+              <div className="col-start-5 row-span-2 row-start-2 flex items-center">
+                <SFMatchup
+                  label="Final"
+                  home={{ name: sf1WinnerName ?? "Ganador SF 1", known: !!sf1WinnerName }}
+                  away={{ name: sf2WinnerName ?? "Ganador SF 2", known: !!sf2WinnerName }}
+                  series={finalSeries}
+                />
+              </div>
             </div>
 
-            <div className="col-start-1 row-start-2 flex min-h-[176px] flex-col justify-center gap-1.5">
-              <ByePill slot={bracket.byes[0]} />
-              <QFMatchup qf={qfTop} />
-            </div>
-            <BracketConnector className="col-start-2 row-start-2" />
-            <div className="col-start-3 row-start-2 flex min-h-[176px] items-center">
-              <SFMatchup
-                label="SF 1"
-                home={{ name: bracket.byes[0].team.name, seed: 1, known: true }}
-                away={{ name: qfTopWinnerName ?? "Ganador CF 1", known: !!qfTopWinnerName }}
-                series={sf1}
-              />
-            </div>
-
-            <div className="col-start-1 row-start-3 flex min-h-[176px] flex-col justify-center gap-1.5">
-              <QFMatchup qf={qfBottom} />
-              <ByePill slot={bracket.byes[1]} />
-            </div>
-            <BracketConnector className="col-start-2 row-start-3" />
-            <div className="col-start-3 row-start-3 flex min-h-[176px] items-center">
-              <SFMatchup
-                label="SF 2"
-                home={{ name: qfBottomWinnerName ?? "Ganador CF 2", known: !!qfBottomWinnerName }}
-                away={{ name: bracket.byes[1].team.name, seed: 2, known: true }}
-                series={sf2}
-              />
-            </div>
-
-            <div className="col-start-4 row-span-2 row-start-2 flex items-center">
-              <div className="h-px w-full border-t-2 border-dashed border-border" />
-            </div>
-            <div className="col-start-5 row-span-2 row-start-2 flex items-center">
-              <SFMatchup
-                label="Final"
-                home={{ name: sf1WinnerName ?? "Ganador SF 1", known: !!sf1WinnerName }}
-                away={{ name: sf2WinnerName ?? "Ganador SF 2", known: !!sf2WinnerName }}
-                series={finalSeries}
-              />
+            {/* 3er y 4to puesto — desconectado, alineado a la derecha */}
+            <div className="mt-6 flex justify-end">
+              <div className="w-[minmax(250px,1fr)] min-w-[250px] max-w-[calc(100%/3-38px)]">
+                <div className="mb-2 flex items-center gap-2">
+                  <Medal className="size-3.5 text-amber-500" />
+                  <RoundLabel label="3er y 4to Puesto" />
+                </div>
+                <SFMatchup
+                  label="3° / 4°"
+                  home={{ name: sf1LoserName ?? "Perdedor SF 1", known: !!sf1LoserName }}
+                  away={{ name: sf2LoserName ?? "Perdedor SF 2", known: !!sf2LoserName }}
+                  series={thirdPlaceSeries}
+                />
+              </div>
             </div>
           </div>
         </div>

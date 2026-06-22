@@ -196,7 +196,9 @@ export function PlayoffManager({ categories }: { categories: CategoryForAdmin[] 
             </Label>
             <Select value={categoryId} onValueChange={(v) => { if (v) setCategoryId(v) }}>
               <SelectTrigger className="h-11 max-w-xs">
-                <SelectValue />
+                <SelectValue placeholder="Seleccioná una categoría">
+                  {categories.find((c) => c.id === categoryId)?.name}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {categories.map((c) => (
@@ -557,6 +559,30 @@ function SemiFinalAndFinalSection({
   ) ?? playoffSeries.find((s) => s.phase === "semifinal" && s.id !== sf1Existing?.id)
 
   const finalExisting = playoffSeries.find((s) => s.phase === "final")
+  const thirdPlaceExisting = playoffSeries.find((s) => s.phase === "third_place")
+
+  // Perdedores de las semifinales (disponibles una vez que hay resultado)
+  const sf1LoserId = sf1Existing?.winnerTeamId
+    ? (sf1Existing.homeTeam.id === sf1Existing.winnerTeamId
+        ? sf1Existing.awayTeam.id
+        : sf1Existing.homeTeam.id)
+    : null
+  const sf1LoserName = sf1LoserId
+    ? (sf1Existing?.homeTeam.id === sf1LoserId
+        ? sf1Existing?.homeTeam.name
+        : sf1Existing?.awayTeam.name) ?? "?"
+    : null
+
+  const sf2LoserId = sf2Existing?.winnerTeamId
+    ? (sf2Existing.homeTeam.id === sf2Existing.winnerTeamId
+        ? sf2Existing.awayTeam.id
+        : sf2Existing.homeTeam.id)
+    : null
+  const sf2LoserName = sf2LoserId
+    ? (sf2Existing?.homeTeam.id === sf2LoserId
+        ? sf2Existing?.homeTeam.name
+        : sf2Existing?.awayTeam.name) ?? "?"
+    : null
 
   return (
     <div className="space-y-4">
@@ -599,24 +625,53 @@ function SemiFinalAndFinalSection({
         />
       </div>
       <Separator />
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Final</p>
-      <PlayoffScheduleCard
-        label="Final"
-        description="Ganador SF 1 vs Ganador SF 2"
-        existing={finalExisting}
-        onSave={async (date, time) => {
-          await upsertPlayoffSeries({
-            categoryId,
-            phase: "final",
-            homeTeamId: bracket.byes[0].team.id,
-            awayTeamId: bracket.byes[1].team.id,
-            scheduledDate: date,
-            scheduledTime: time,
-            existingSeriesId: finalExisting?.id,
-          })
-          onRefresh()
-        }}
-      />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Final</p>
+          <PlayoffScheduleCard
+            label="Final"
+            description="Ganador SF 1 vs Ganador SF 2"
+            existing={finalExisting}
+            onSave={async (date, time) => {
+              await upsertPlayoffSeries({
+                categoryId,
+                phase: "final",
+                homeTeamId: bracket.byes[0].team.id,
+                awayTeamId: bracket.byes[1].team.id,
+                scheduledDate: date,
+                scheduledTime: time,
+                existingSeriesId: finalExisting?.id,
+              })
+              onRefresh()
+            }}
+          />
+        </div>
+        <div className="space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">3er y 4to Puesto</p>
+          <PlayoffScheduleCard
+            label="3° / 4°"
+            description={
+              sf1LoserName && sf2LoserName
+                ? `${sf1LoserName} vs ${sf2LoserName}`
+                : "Perdedor SF 1 vs Perdedor SF 2"
+            }
+            existing={thirdPlaceExisting}
+            onSave={async (date, time) => {
+              await upsertPlayoffSeries({
+                categoryId,
+                phase: "third_place",
+                // Usar los perdedores reales si se conocen; sino placeholder (1° y 2°)
+                homeTeamId: sf1LoserId ?? bracket.byes[0].team.id,
+                awayTeamId: sf2LoserId ?? bracket.byes[1].team.id,
+                scheduledDate: date,
+                scheduledTime: time,
+                existingSeriesId: thirdPlaceExisting?.id,
+              })
+              onRefresh()
+            }}
+          />
+        </div>
+      </div>
     </div>
   )
 }
@@ -886,7 +941,11 @@ function PlayerPairSelector({
             }}
           >
             <SelectTrigger className="h-9 w-full">
-              <SelectValue placeholder="Jugador" />
+              <SelectValue placeholder="Sin asignar">
+                {value[idx] != null
+                  ? players.find((p) => p.id === value[idx])?.displayName
+                  : undefined}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={NULL_VALUE}>Sin asignar</SelectItem>
