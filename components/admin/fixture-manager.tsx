@@ -30,6 +30,7 @@ import {
   updateSeriesSchedule,
 } from "@/app/actions/admin"
 import { formatDate } from "@/lib/liga"
+import { MatchSheetButton } from "@/components/admin/fixture/MatchSheetButton"
 
 type FixtureDraft = {
   seriesId: string
@@ -254,6 +255,7 @@ export function FixtureManager({ categories }: { categories: CategoryForAdmin[] 
                     >
                       <RotateCcw className="size-4" />
                     </Button>
+                    <MatchSheetButton seriesId={m.seriesId} />
                   </div>
                 </CardContent>
               </Card>
