@@ -26,12 +26,12 @@ export function Activities() {
               key={act.id}
               className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md"
             >
-              <div className={`relative overflow-hidden ${"imageAspect" in act ? act.imageAspect : "aspect-[16/10]"}`}>
+              <div className="relative aspect-[16/10] overflow-hidden">
                 <Image
                   src={act.image || "/placeholder.svg"}
                   alt={act.title}
                   fill
-                  className={`object-cover transition-transform duration-500 group-hover:scale-105 ${"imagePosition" in act ? act.imagePosition : "object-center"}`}
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               </div>
               <div className="flex flex-1 flex-col p-6">
