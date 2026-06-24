@@ -87,7 +87,7 @@ export async function getTeamsForAdmin(categoryId: string): Promise<TeamForAdmin
   const { data } = await supabase
     .from("teams")
     .select(
-      "id, name, slug, team_players(id, player_id, active, players(id, display_name))",
+      "id, name, slug, team_players(id, player_id, is_captain, active, players(id, display_name))",
     )
     .eq("category_id", categoryId)
     .eq("active", true)
@@ -318,6 +318,9 @@ export async function saveTeamPlayers(
           }
         }
       }
+
+      const captainName = team.players.find((p) => p.isCaptain)?.displayName.trim() ?? null
+      await supabase.from("teams").update({ captain_name: captainName }).eq("id", teamId)
     }
 
     revalidatePath("/panel-parque")
