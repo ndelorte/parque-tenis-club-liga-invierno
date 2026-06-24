@@ -22,7 +22,8 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { formatDate, type TeamDetail } from "@/lib/equipos"
+import { formatDate } from "@/lib/utils"
+import type { TeamDetail } from "@/lib/team-detail-types"
 
 export function TeamDetailView({ team }: { team: TeamDetail }) {
   const [open, setOpen] = useState<number | null>(0)

@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { isAdminUser } from "@/lib/auth/admin"
+import { resolveSeriesWinner } from "@/lib/tournament/calculateSeriesResult"
+import { recalculateAndPersistStandings } from "@/lib/data/standings"
 
 // ——— Public types ———
 
@@ -62,6 +64,8 @@ export type RoundForAdmin = {
 
 export async function getAdminCategories(): Promise<CategoryForAdmin[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) return []
 
   const { data: tournament } = await supabase
     .from("tournaments")
@@ -83,6 +87,8 @@ export async function getAdminCategories(): Promise<CategoryForAdmin[]> {
 
 export async function getTeamsForAdmin(categoryId: string): Promise<TeamForAdmin[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) return []
 
   const { data } = await supabase
     .from("teams")
@@ -112,6 +118,8 @@ export async function getTeamsForAdmin(categoryId: string): Promise<TeamForAdmin
 
 export async function getRoundsForAdmin(categoryId: string): Promise<RoundForAdmin[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) return []
 
   const [roundsResult, teamsResult] = await Promise.all([
     supabase
@@ -365,6 +373,14 @@ export async function saveSeriesResult(
   const supabase = createAdminClient()
 
   try {
+    const { data: seriesRow } = await supabase
+      .from("series")
+      .select("category_id, round_id, rounds!inner(phase)")
+      .eq("id", input.seriesId)
+      .single()
+    const categoryId: string | undefined = (seriesRow as any)?.category_id
+    const isRegularPhase = (seriesRow as any)?.rounds?.phase === "regular"
+
     if (input.isGeneralWalkover && input.walkoverWinnerId) {
       const isHome = input.walkoverWinnerId === input.homeTeamId
       await supabase
@@ -379,18 +395,13 @@ export async function saveSeriesResult(
         })
         .eq("id", input.seriesId)
 
+      if (categoryId && isRegularPhase) await recalculateAndPersistStandings(categoryId)
       revalidatePath("/panel-parque")
       revalidatePath("/liga-invierno")
       return { success: true }
     }
 
-    let homeCourts = 0
-    let awayCourts = 0
-
     for (const court of input.courts) {
-      if (court.winnerTeamId === input.homeTeamId) homeCourts++
-      if (court.winnerTeamId === input.awayTeamId) awayCourts++
-
       const { data: existing } = await supabase
         .from("court_matches")
         .select("id")
@@ -417,20 +428,24 @@ export async function saveSeriesResult(
       }
     }
 
-    const winnerId =
-      homeCourts >= 2 ? input.homeTeamId : awayCourts >= 2 ? input.awayTeamId : null
+    const { winnerId, homeCourtsWon, awayCourtsWon } = resolveSeriesWinner(
+      input.courts.map((c) => ({ winnerTeamId: c.winnerTeamId })),
+      input.homeTeamId,
+      input.awayTeamId,
+    )
 
     await supabase
       .from("series")
       .update({
         is_general_walkover: false,
-        home_courts_won: homeCourts,
-        away_courts_won: awayCourts,
+        home_courts_won: homeCourtsWon,
+        away_courts_won: awayCourtsWon,
         winner_team_id: winnerId,
         status: winnerId ? "completed" : "in_progress",
       })
       .eq("id", input.seriesId)
 
+    if (categoryId && isRegularPhase) await recalculateAndPersistStandings(categoryId)
     revalidatePath("/panel-parque")
     revalidatePath("/liga-invierno")
     return { success: true }
@@ -466,6 +481,8 @@ export async function getStandingsForAdmin(
   categoryId: string
 ): Promise<StandingForAdmin[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) return []
 
   const { data } = await supabase
     .from("standings_snapshot")
@@ -486,6 +503,8 @@ export async function getPlayoffSeriesForAdmin(
   categoryId: string
 ): Promise<PlayoffSeriesForAdmin[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) return []
 
   const [roundsResult, teamsResult] = await Promise.all([
     supabase

@@ -29,7 +29,7 @@ import {
   getRoundsForAdmin,
   updateSeriesSchedule,
 } from "@/app/actions/admin"
-import { formatDate } from "@/lib/liga"
+import { formatDate } from "@/lib/utils"
 import { MatchSheetButton } from "@/components/admin/fixture/MatchSheetButton"
 
 type FixtureDraft = {

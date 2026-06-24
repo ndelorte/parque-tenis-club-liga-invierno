@@ -5,7 +5,7 @@ import { getCategoryById } from "@/lib/data/categories"
 import { getSeriesForTeam } from "@/lib/data/series"
 import { getStandingsSnapshot } from "@/lib/data/standings"
 import { TeamDetailView } from "@/components/liga/team-detail"
-import type { TeamDetail, PlayedDate, PendingDate, CourtDetail } from "@/lib/equipos"
+import type { TeamDetail, PlayedDate, PendingDate, CourtDetail } from "@/lib/team-detail-types"
 import type { CourtMatch } from "@/lib/tournament/types"
 
 export const dynamic = "force-dynamic"
@@ -104,7 +104,6 @@ export default async function EquipoPage({ params }: Props) {
   const teamDetail: TeamDetail = {
     slug: team.slug,
     name: team.name,
-    categoryId: "cab-a" as TeamDetail["categoryId"],
     categorySlug: category?.slug ?? "",
     categoryLabel,
     captain: captainName,

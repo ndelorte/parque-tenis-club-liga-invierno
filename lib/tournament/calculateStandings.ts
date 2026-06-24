@@ -1,5 +1,5 @@
 import { CourtMatch, Series, StandingsRow, Team, TournamentRules, DEFAULT_RULES } from "./types";
-import { calculateCourtMatchResult } from "./calculateCourtMatchResult";
+import { aggregateSeriesMatches } from "./calculateCourtMatchResult";
 
 export function calculateStandings(
   teams: Team[],
@@ -65,26 +65,8 @@ export function calculateStandings(
       const seriesMatches = matchesBySeries.get(s.id) ?? [];
       if (seriesMatches.length === 0) continue;
 
-      let home_courts = 0;
-      let away_courts = 0;
-      let home_sets = 0;
-      let away_sets = 0;
-      let home_games = 0;
-      let away_games = 0;
-
-      for (const match of seriesMatches) {
-        if (!match.score) continue;
-        const result = calculateCourtMatchResult({
-          score: match.score,
-          is_court_walkover: match.is_court_walkover,
-        });
-        if (result.winner_side === "home") home_courts++;
-        else away_courts++;
-        home_sets += result.home_sets_won;
-        away_sets += result.away_sets_won;
-        home_games += result.home_games_won;
-        away_games += result.away_games_won;
-      }
+      const { home_courts, away_courts, home_sets, away_sets, home_games, away_games } =
+        aggregateSeriesMatches(seriesMatches);
 
       homeRow.played++;
       awayRow.played++;
