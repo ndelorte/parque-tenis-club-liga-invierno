@@ -31,7 +31,7 @@ export function Activities() {
                   src={act.image || "/placeholder.svg"}
                   alt={act.title}
                   fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  className={`object-cover transition-transform duration-500 group-hover:scale-105 ${"imagePosition" in act ? act.imagePosition : "object-center"}`}
                 />
               </div>
               <div className="flex flex-1 flex-col p-6">
