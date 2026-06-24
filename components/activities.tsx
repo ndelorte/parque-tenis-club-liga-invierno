@@ -26,7 +26,7 @@ export function Activities() {
               key={act.id}
               className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md"
             >
-              <div className="relative aspect-[16/10] overflow-hidden">
+              <div className={`relative overflow-hidden ${"imageAspect" in act ? act.imageAspect : "aspect-[16/10]"}`}>
                 <Image
                   src={act.image || "/placeholder.svg"}
                   alt={act.title}

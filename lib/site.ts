@@ -60,7 +60,8 @@ export const ACTIVITIES = [
     description:
       "Competí todo el año en torneos por categorías. Ranking, premios y mucho tenis.",
     image: "/images/torneosCDP.jpeg",
-    imagePosition: "object-bottom",
+    imagePosition: "object-[20%]",
+    imageAspect: "aspect-[4/5]",
     points: ["Por categorías", "Ranking del club", "Premios"],
     waNumber: "+5491134359489",
     waMessage:
