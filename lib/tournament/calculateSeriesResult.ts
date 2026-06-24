@@ -6,6 +6,27 @@ export interface SeriesResult {
   away_courts_won: number;
 }
 
+export interface SeriesWinnerResult {
+  winnerId: string | null;
+  homeCourtsWon: number;
+  awayCourtsWon: number;
+}
+
+export function resolveSeriesWinner(
+  courts: Array<{ winnerTeamId: string | null }>,
+  homeTeamId: string,
+  awayTeamId: string,
+): SeriesWinnerResult {
+  let homeCourtsWon = 0;
+  let awayCourtsWon = 0;
+  for (const court of courts) {
+    if (court.winnerTeamId === homeTeamId) homeCourtsWon++;
+    else if (court.winnerTeamId === awayTeamId) awayCourtsWon++;
+  }
+  const winnerId = homeCourtsWon >= 2 ? homeTeamId : awayCourtsWon >= 2 ? awayTeamId : null;
+  return { winnerId, homeCourtsWon, awayCourtsWon };
+}
+
 export function calculateSeriesResult(series: {
   home_team_id: string;
   away_team_id: string;
