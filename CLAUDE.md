@@ -10,7 +10,7 @@ Web real para **Parque Tenis Club** (Argentina). Dos secciones:
 
 1. **Landing institucional pública** (`/`) — vitrina del club con CTA a WhatsApp.
 2. **Liga de Invierno** (`/liga-invierno`) — torneo por equipos con fixture, tabla y resultados.
-3. **Panel admin privado** (`/admin`) — solo para organizadores autenticados.
+3. **Panel admin privado** (`/panel-parque`) — solo para organizadores autenticados.
 
 ---
 
@@ -55,7 +55,7 @@ Web real para **Parque Tenis Club** (Argentina). Dos secciones:
 │   │   ├── categorias/[slug]/page.tsx
 │   │   ├── equipos/[slug]/page.tsx
 │   │   └── reglamento/page.tsx
-│   └── admin/                    # Panel admin (protegido desde Sprint 7)
+│   └── panel-parque/             # Panel admin (protegido por middleware)
 │       ├── login/page.tsx
 │       ├── page.tsx
 │       └── liga-invierno/
@@ -65,16 +65,32 @@ Web real para **Parque Tenis Club** (Argentina). Dos secciones:
 │   └── liga/                     # Componentes del torneo
 ├── content/
 │   └── site.ts                   # Textos y datos editables del club
+├── middleware.ts                  # Protección de rutas /panel-parque/*
 ├── lib/
-│   └── tournament/               # Lógica pura del torneo (sin UI)
-│       ├── types.ts
-│       ├── parseScore.ts
-│       ├── calculateCourtMatchResult.ts
-│       ├── calculateSeriesResult.ts
-│       ├── calculateWalkoverSeriesResult.ts
-│       ├── calculateStandings.ts
-│       ├── sortStandings.ts
-│       └── getTeamSchedule.ts
+│   ├── tournament/               # Lógica pura del torneo (sin UI)
+│   │   ├── types.ts
+│   │   ├── parseScore.ts
+│   │   ├── calculateCourtMatchResult.ts
+│   │   ├── calculateSeriesResult.ts
+│   │   ├── calculateWalkoverSeriesResult.ts
+│   │   ├── calculateStandings.ts
+│   │   ├── sortStandings.ts
+│   │   └── getTeamSchedule.ts
+│   ├── playoffs/                 # Lógica de bracket de playoffs
+│   │   └── generateProvisionalBracket.ts
+│   ├── data/                     # Acceso a Supabase (server-only)
+│   │   ├── tournaments.ts
+│   │   ├── categories.ts
+│   │   ├── teams.ts
+│   │   ├── series.ts
+│   │   ├── standings.ts
+│   │   └── playoffs.ts
+│   ├── supabase/                 # Clientes Supabase tipados
+│   │   ├── client.ts             # Browser (anon key)
+│   │   ├── server.ts             # Server components (anon key + RLS)
+│   │   └── admin.ts              # Server actions (service role — nunca al cliente)
+│   └── auth/
+│       └── admin.ts              # isAdminUser() — validación de rol
 ├── mock/
 │   └── data.ts                   # Datos mockeados para desarrollo (Sprints 2-5)
 ├── scripts/
@@ -98,7 +114,7 @@ Nunca editar puntos manualmente en `standings_snapshot`. Siempre recalcular desd
 
 ### Admin invisible
 
-`/admin` no está linkeado desde ninguna página pública. Nunca en navbar ni footer.
+`/panel-parque` no está linkeado desde ninguna página pública. Nunca en navbar ni footer.
 
 ### Datos sensibles
 
@@ -120,13 +136,13 @@ No mostrar teléfonos en vistas públicas. No commitear `.env`. No exponer `SUPA
 
 | Ruta | Descripción |
 |------|-------------|
-| `/admin/login` | Login con Supabase Auth |
-| `/admin` | Dashboard |
-| `/admin/liga-invierno/equipos` | CRUD equipos |
-| `/admin/liga-invierno/jugadores` | CRUD jugadores |
-| `/admin/liga-invierno/fixture` | Cargar y editar fixture |
-| `/admin/liga-invierno/resultados` | Cargar y editar resultados |
-| `/admin/liga-invierno/reprogramaciones` | Reprogramar series |
+| `/panel-parque/login` | Login con Supabase Auth |
+| `/panel-parque` | Dashboard |
+| `/panel-parque/liga-invierno/equipos` | CRUD equipos |
+| `/panel-parque/liga-invierno/jugadores` | CRUD jugadores |
+| `/panel-parque/liga-invierno/fixture` | Cargar y editar fixture |
+| `/panel-parque/liga-invierno/resultados` | Cargar y editar resultados |
+| `/panel-parque/liga-invierno/reprogramaciones` | Reprogramar series |
 
 ---
 
