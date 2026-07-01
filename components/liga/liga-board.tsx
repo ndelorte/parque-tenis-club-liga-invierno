@@ -439,24 +439,21 @@ function BracketCard({
   bracket: ProvisionalBracket
   playoffSeries: PlayoffSeriesSimple[]
 }) {
-  // QF[1] = 4° vs 5° → vence al 1° en SF1
-  // QF[0] = 3° vs 6° → vence al 2° en SF2
-  const qfTop = bracket.quarterfinals[1]
-  const qfBottom = bracket.quarterfinals[0]
+  const isFiveTeam = bracket.format === "five_team"
 
-  // Resolución de ganadores QF para mostrar en SF
+  // 6 equipos: qfTop = QF[1] (4°vs5°) feed SF1, qfBottom = QF[0] (3°vs6°) feed SF2
+  // 5 equipos: qfTop = QF[0] (4°vs5°) feed SF1, no hay qfBottom (SF2 = bye[1] vs bye[2])
+  const qfTop = isFiveTeam ? bracket.quarterfinals[0] : bracket.quarterfinals[1]
+  const qfBottom = isFiveTeam ? null : bracket.quarterfinals[0]
+
   const allTeams = [
-    bracket.byes[0].team,
-    bracket.byes[1].team,
-    bracket.quarterfinals[0].home.team,
-    bracket.quarterfinals[0].away.team,
-    bracket.quarterfinals[1].home.team,
-    bracket.quarterfinals[1].away.team,
+    ...bracket.byes.map((b) => b.team),
+    ...bracket.quarterfinals.flatMap((qf) => [qf.home.team, qf.away.team]),
   ]
   const teamName = (id?: string) => allTeams.find((t) => t.id === id)?.name
 
   const qfTopWinnerName = qfTop.winnerTeamId ? teamName(qfTop.winnerTeamId) : undefined
-  const qfBottomWinnerName = qfBottom.winnerTeamId ? teamName(qfBottom.winnerTeamId) : undefined
+  const qfBottomWinnerName = qfBottom?.winnerTeamId ? teamName(qfBottom.winnerTeamId) : undefined
 
   // Series SF y Final
   const sfSeries = playoffSeries.filter((s) => s.phase === "semifinal")
@@ -524,15 +521,32 @@ function BracketCard({
               </div>
 
               <div className="col-start-1 row-start-3 flex min-h-[176px] flex-col justify-center gap-1.5">
-                <QFMatchup qf={qfBottom} />
-                <ByePill slot={bracket.byes[1]} />
+                {isFiveTeam ? (
+                  <>
+                    <ByePill slot={bracket.byes[1]} />
+                    <ByePill slot={bracket.byes[2]} />
+                  </>
+                ) : (
+                  <>
+                    <QFMatchup qf={qfBottom!} />
+                    <ByePill slot={bracket.byes[1]} />
+                  </>
+                )}
               </div>
               <BracketConnector className="col-start-2 row-start-3" />
               <div className="col-start-3 row-start-3 flex min-h-[176px] items-center">
                 <SFMatchup
                   label="SF 2"
-                  home={{ name: qfBottomWinnerName ?? "Ganador CF 2", known: !!qfBottomWinnerName }}
-                  away={{ name: bracket.byes[1].team.name, seed: 2, known: true }}
+                  home={
+                    isFiveTeam
+                      ? { name: bracket.byes[1].team.name, seed: 2, known: true }
+                      : { name: qfBottomWinnerName ?? "Ganador CF 2", known: !!qfBottomWinnerName }
+                  }
+                  away={
+                    isFiveTeam
+                      ? { name: bracket.byes[2].team.name, seed: 3, known: true }
+                      : { name: bracket.byes[1].team.name, seed: 2, known: true }
+                  }
                   series={sf2}
                 />
               </div>
