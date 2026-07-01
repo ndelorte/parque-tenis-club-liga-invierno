@@ -65,7 +65,7 @@ Web real para **Parque Tenis Club** (Argentina). Dos secciones:
 │   └── liga/                     # Componentes del torneo
 ├── content/
 │   └── site.ts                   # Textos y datos editables del club
-├── middleware.ts                  # Protección de rutas /panel-parque/*
+├── proxy.ts                       # Protección de rutas /panel-parque/* (Next.js 16)
 ├── lib/
 │   ├── tournament/               # Lógica pura del torneo (sin UI)
 │   │   ├── types.ts
