@@ -43,6 +43,7 @@ import {
 } from "@/app/actions/admin"
 import {
   generateSixTeamQuarterfinals,
+  generateFiveTeamQuarterfinals,
   mergeProvisionalBracketWithScheduledMatches,
 } from "@/lib/playoffs/generateProvisionalBracket"
 import type { ProvisionalBracket, QuarterFinalMatchup } from "@/lib/playoffs/types"
@@ -151,15 +152,18 @@ export function PlayoffManager({ categories }: { categories: CategoryForAdmin[] 
       ])
       setPlayoffSeries(ps)
 
-      // Usar standings reales si hay 6+, sino usar los equipos en orden como provisional
+      // Usar standings reales si hay tantos como equipos, sino usar equipos en orden como provisional
+      const teamCount = teams.length
       const effectiveStandings: StandingForAdmin[] =
-        s.length >= 6
+        s.length >= teamCount
           ? s
-          : teams.slice(0, 6).map((t, i) => ({ teamId: t.id, teamName: t.name, position: i + 1 }))
+          : teams.map((t, i) => ({ teamId: t.id, teamName: t.name, position: i + 1 }))
 
       try {
         const rows = standingsToRows(effectiveStandings)
-        const generated = generateSixTeamQuarterfinals(rows)
+        const generated = teamCount === 5
+          ? generateFiveTeamQuarterfinals(rows)
+          : generateSixTeamQuarterfinals(rows)
         const merged = mergeProvisionalBracketWithScheduledMatches(
           generated,
           ps.map((p) => ({
@@ -304,47 +308,29 @@ function BracketSection({
         <Badge variant="outline" className="text-muted-foreground text-xs">Provisorio</Badge>
       </div>
 
-      {/* Bye 1° */}
-      <ByeCard seed={1} teamName={bracket.byes[0].team.name} />
+      {bracket.byes.map((bye) => (
+        <ByeCard key={bye.seed} seed={bye.seed} teamName={bye.team.name} />
+      ))}
 
-      {/* QF 1 */}
-      <QFCard
-        qf={bracket.quarterfinals[0]}
-        categoryId={categoryId}
-        existingSeries={playoffSeries.find(
-          (s) =>
-            (s.homeTeam.id === bracket.quarterfinals[0].home.team.id && s.awayTeam.id === bracket.quarterfinals[0].away.team.id) ||
-            (s.homeTeam.id === bracket.quarterfinals[0].away.team.id && s.awayTeam.id === bracket.quarterfinals[0].home.team.id)
-        )}
-        form={forms[bracket.quarterfinals[0].seriesId ?? ""] ?? null}
-        saving={savingId === bracket.quarterfinals[0].seriesId}
-        onFormChange={(updater) => {
-          if (bracket.quarterfinals[0].seriesId) updateForm(bracket.quarterfinals[0].seriesId, updater)
-        }}
-        onSaveSeries={(id, hId, aId) => handleSaveSeries(id, hId, aId)}
-        onRefresh={onRefresh}
-      />
-
-      {/* QF 2 */}
-      <QFCard
-        qf={bracket.quarterfinals[1]}
-        categoryId={categoryId}
-        existingSeries={playoffSeries.find(
-          (s) =>
-            (s.homeTeam.id === bracket.quarterfinals[1].home.team.id && s.awayTeam.id === bracket.quarterfinals[1].away.team.id) ||
-            (s.homeTeam.id === bracket.quarterfinals[1].away.team.id && s.awayTeam.id === bracket.quarterfinals[1].home.team.id)
-        )}
-        form={forms[bracket.quarterfinals[1].seriesId ?? ""] ?? null}
-        saving={savingId === bracket.quarterfinals[1].seriesId}
-        onFormChange={(updater) => {
-          if (bracket.quarterfinals[1].seriesId) updateForm(bracket.quarterfinals[1].seriesId, updater)
-        }}
-        onSaveSeries={(id, hId, aId) => handleSaveSeries(id, hId, aId)}
-        onRefresh={onRefresh}
-      />
-
-      {/* Bye 2° */}
-      <ByeCard seed={2} teamName={bracket.byes[1].team.name} />
+      {bracket.quarterfinals.map((qf) => (
+        <QFCard
+          key={qf.matchNumber}
+          qf={qf}
+          categoryId={categoryId}
+          existingSeries={playoffSeries.find(
+            (s) =>
+              (s.homeTeam.id === qf.home.team.id && s.awayTeam.id === qf.away.team.id) ||
+              (s.homeTeam.id === qf.away.team.id && s.awayTeam.id === qf.home.team.id)
+          )}
+          form={forms[qf.seriesId ?? ""] ?? null}
+          saving={savingId === qf.seriesId}
+          onFormChange={(updater) => {
+            if (qf.seriesId) updateForm(qf.seriesId, updater)
+          }}
+          onSaveSeries={(id, hId, aId) => handleSaveSeries(id, hId, aId)}
+          onRefresh={onRefresh}
+        />
+      ))}
 
       {/* Semifinales y final */}
       <SemiFinalAndFinalSection
@@ -547,16 +533,23 @@ function SemiFinalAndFinalSection({
   playoffSeries: PlayoffSeriesForAdmin[]
   onRefresh: () => void
 }) {
-  // SF1: 1° vs ganador CF1 (4°vs5°)
+  const isFiveTeam = bracket.format === "five_team"
+
+  // SF1: siempre involucra al 1° (byes[0])
   const sf1Existing = playoffSeries.find(
     (s) => s.phase === "semifinal" &&
       (s.homeTeam.id === bracket.byes[0].team.id || s.awayTeam.id === bracket.byes[0].team.id),
   )
-  // SF2: ganador CF2 (3°vs6°) vs 2°
+  // SF2: involucra al 2° (byes[1]) en ambos formatos
   const sf2Existing = playoffSeries.find(
     (s) => s.phase === "semifinal" && s.id !== sf1Existing?.id &&
       (s.homeTeam.id === bracket.byes[1].team.id || s.awayTeam.id === bracket.byes[1].team.id),
   ) ?? playoffSeries.find((s) => s.phase === "semifinal" && s.id !== sf1Existing?.id)
+
+  // QF que alimenta SF1: para 5 equipos es quarterfinals[0]; para 6 equipos es quarterfinals[1] (4°vs5°)
+  const qfForSF1 = isFiveTeam ? bracket.quarterfinals[0] : bracket.quarterfinals[1]
+  // QF que alimenta SF2: solo existe en formato 6 equipos (quarterfinals[0] = 3°vs6°)
+  const qfForSF2 = isFiveTeam ? null : bracket.quarterfinals[0]
 
   const finalExisting = playoffSeries.find((s) => s.phase === "final")
   const thirdPlaceExisting = playoffSeries.find((s) => s.phase === "third_place")
@@ -591,14 +584,14 @@ function SemiFinalAndFinalSection({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <PlayoffScheduleCard
           label="SF 1"
-          description={`${bracket.byes[0].team.name} vs Ganador CF 1`}
+          description={`${bracket.byes[0].team.name} vs Ganador CF`}
           existing={sf1Existing}
           onSave={async (date, time) => {
             await upsertPlayoffSeries({
               categoryId,
               phase: "semifinal",
               homeTeamId: bracket.byes[0].team.id,
-              awayTeamId: bracket.quarterfinals[1].home.team.id,
+              awayTeamId: qfForSF1?.home.team.id ?? bracket.byes[0].team.id,
               scheduledDate: date,
               scheduledTime: time,
               existingSeriesId: sf1Existing?.id,
@@ -608,14 +601,18 @@ function SemiFinalAndFinalSection({
         />
         <PlayoffScheduleCard
           label="SF 2"
-          description={`Ganador CF 2 vs ${bracket.byes[1].team.name}`}
+          description={
+            isFiveTeam
+              ? `${bracket.byes[1].team.name} vs ${bracket.byes[2]?.team.name ?? "A definir"}`
+              : `Ganador CF 2 vs ${bracket.byes[1].team.name}`
+          }
           existing={sf2Existing}
           onSave={async (date, time) => {
             await upsertPlayoffSeries({
               categoryId,
               phase: "semifinal",
-              homeTeamId: bracket.quarterfinals[0].home.team.id,
-              awayTeamId: bracket.byes[1].team.id,
+              homeTeamId: isFiveTeam ? bracket.byes[1].team.id : (qfForSF2?.home.team.id ?? bracket.byes[1].team.id),
+              awayTeamId: isFiveTeam ? (bracket.byes[2]?.team.id ?? bracket.byes[1].team.id) : bracket.byes[1].team.id,
               scheduledDate: date,
               scheduledTime: time,
               existingSeriesId: sf2Existing?.id,

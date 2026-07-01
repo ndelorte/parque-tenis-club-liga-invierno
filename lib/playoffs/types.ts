@@ -1,5 +1,7 @@
 import type { Team } from "@/lib/tournament/types"
 
+export type BracketFormat = "five_team" | "six_team"
+
 export type PlayoffSlot = {
   seed: number
   team: Team
@@ -17,6 +19,7 @@ export type QuarterFinalMatchup = {
 }
 
 export type ProvisionalBracket = {
-  byes: [PlayoffSlot, PlayoffSlot]
-  quarterfinals: [QuarterFinalMatchup, QuarterFinalMatchup]
+  format: BracketFormat
+  byes: PlayoffSlot[]
+  quarterfinals: QuarterFinalMatchup[]
 }

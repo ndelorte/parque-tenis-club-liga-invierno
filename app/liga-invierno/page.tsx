@@ -66,7 +66,7 @@ export default async function LigaInviernoPage({ searchParams }: Props) {
 
       let bracket: ProvisionalBracket | null = null
       try {
-        if (effectiveStandings.length >= 6) {
+        if (effectiveStandings.length >= 5) {
           const generated = generateProvisionalBracket(effectiveStandings, effectiveStandings.length)
           bracket = mergeProvisionalBracketWithScheduledMatches(generated, playoffSeries)
         }

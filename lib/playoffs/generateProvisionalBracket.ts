@@ -15,6 +15,7 @@ export function generateSixTeamQuarterfinals(
   }
 
   return {
+    format: "six_team",
     byes: [
       { seed: 1, team: sorted[0].team },
       { seed: 2, team: sorted[1].team },
@@ -36,14 +37,48 @@ export function generateSixTeamQuarterfinals(
   }
 }
 
+export function generateFiveTeamQuarterfinals(
+  standings: StandingsRow[]
+): ProvisionalBracket {
+  const sorted = [...standings]
+    .sort((a, b) => a.position - b.position)
+    .slice(0, 5)
+
+  if (sorted.length < 5) {
+    throw new Error(
+      `Se necesitan 5 equipos para generar el cuadro, hay ${sorted.length}`
+    )
+  }
+
+  return {
+    format: "five_team",
+    byes: [
+      { seed: 1, team: sorted[0].team },
+      { seed: 2, team: sorted[1].team },
+      { seed: 3, team: sorted[2].team },
+    ],
+    quarterfinals: [
+      {
+        matchNumber: 1,
+        home: { seed: 4, team: sorted[3].team },
+        away: { seed: 5, team: sorted[4].team },
+        status: "pending",
+      },
+    ],
+  }
+}
+
 export function generateProvisionalBracket(
   standings: StandingsRow[],
   teamsCount: number
 ): ProvisionalBracket {
+  if (teamsCount === 5 && standings.length >= 5) {
+    return generateFiveTeamQuarterfinals(standings)
+  }
   if (teamsCount >= 6 && standings.length >= 6) {
     return generateSixTeamQuarterfinals(standings)
   }
-  throw new Error(`No se puede generar el cuadro: se necesitan 6 equipos (hay ${standings.length})`)
+  throw new Error(`No se puede generar el cuadro: se necesitan al menos 5 equipos (hay ${standings.length})`)
 }
 
 type ScheduledSeriesStub = {
@@ -85,7 +120,7 @@ export function mergeProvisionalBracketWithScheduledMatches(
       status,
       winnerTeamId: match.winner_team_id ?? undefined,
     }
-  }) as [QuarterFinalMatchup, QuarterFinalMatchup]
+  })
 
   return { ...bracket, quarterfinals: enrichedQFs }
 }

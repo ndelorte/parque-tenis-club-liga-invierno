@@ -72,7 +72,7 @@ export default async function CategoriaPage({ params }: Props) {
 
   // Para el bracket usar standings reales si hay 6+, sino equipos como provisional (igual que admin)
   const bracketStandings =
-    standings.length >= 6
+    standings.length >= 5
       ? standings
       : teams.map((t, i) => ({
           team_id: t.id,
@@ -95,7 +95,7 @@ export default async function CategoriaPage({ params }: Props) {
 
   let bracket = null
   try {
-    if (bracketStandings.length >= 6) {
+    if (bracketStandings.length >= 5) {
       const generated = generateProvisionalBracket(bracketStandings, bracketStandings.length)
       bracket = mergeProvisionalBracketWithScheduledMatches(generated, playoffSeries)
     }

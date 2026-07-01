@@ -26,10 +26,12 @@ export function PlayoffBracket({ bracket, thirdPlace }: Props) {
       <div className="flex flex-col lg:flex-row lg:items-end gap-6 lg:gap-10">
         {/* Bracket principal */}
         <div className="space-y-3 max-w-xl flex-1">
-          <ByeRow slot={bracket.byes[0]} />
-          <QFRow qf={bracket.quarterfinals[0]} />
-          <QFRow qf={bracket.quarterfinals[1]} />
-          <ByeRow slot={bracket.byes[1]} />
+          {bracket.byes.map((slot) => (
+            <ByeRow key={slot.seed} slot={slot} />
+          ))}
+          {bracket.quarterfinals.map((qf) => (
+            <QFRow key={qf.matchNumber} qf={qf} />
+          ))}
         </div>
 
         {/* 3er y 4to puesto — siempre visible, desconectado del bracket principal */}

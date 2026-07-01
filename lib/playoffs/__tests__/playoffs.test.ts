@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import {
   generateSixTeamQuarterfinals,
+  generateFiveTeamQuarterfinals,
   generateProvisionalBracket,
   mergeProvisionalBracketWithScheduledMatches,
 } from "../generateProvisionalBracket"
@@ -120,11 +121,84 @@ describe("generateSixTeamQuarterfinals", () => {
   })
 })
 
+describe("generateFiveTeamQuarterfinals", () => {
+  const standings5: StandingsRow[] = [
+    makeRow(1, teams.t1, 20),
+    makeRow(2, teams.t2, 18),
+    makeRow(3, teams.t3, 14),
+    makeRow(4, teams.t4, 12),
+    makeRow(5, teams.t5, 10),
+  ]
+
+  it("genera 3 byes (1°, 2°, 3°) y 1 cuartos de final (4° vs 5°)", () => {
+    const bracket = generateFiveTeamQuarterfinals(standings5)
+    expect(bracket.byes).toHaveLength(3)
+    expect(bracket.quarterfinals).toHaveLength(1)
+    expect(bracket.format).toBe("five_team")
+  })
+
+  it("byes son seed 1, 2, 3 en orden", () => {
+    const bracket = generateFiveTeamQuarterfinals(standings5)
+    expect(bracket.byes[0].seed).toBe(1)
+    expect(bracket.byes[0].team.id).toBe("t1")
+    expect(bracket.byes[1].seed).toBe(2)
+    expect(bracket.byes[1].team.id).toBe("t2")
+    expect(bracket.byes[2].seed).toBe(3)
+    expect(bracket.byes[2].team.id).toBe("t3")
+  })
+
+  it("cuarto de final es 4° vs 5°", () => {
+    const bracket = generateFiveTeamQuarterfinals(standings5)
+    const qf = bracket.quarterfinals[0]
+    expect(qf.home.seed).toBe(4)
+    expect(qf.home.team.id).toBe("t4")
+    expect(qf.away.seed).toBe(5)
+    expect(qf.away.team.id).toBe("t5")
+    expect(qf.status).toBe("pending")
+  })
+
+  it("lanza error si hay menos de 5 equipos", () => {
+    const short = standings5.slice(0, 4)
+    expect(() => generateFiveTeamQuarterfinals(short)).toThrow()
+  })
+
+  it("si cambia la tabla, cambian los cruces provisorios", () => {
+    const altStandings: StandingsRow[] = [
+      makeRow(1, teams.t5, 20),
+      makeRow(2, teams.t4, 18),
+      makeRow(3, teams.t3, 14),
+      makeRow(4, teams.t2, 12),
+      makeRow(5, teams.t1, 10),
+    ]
+    const bracket = generateFiveTeamQuarterfinals(altStandings)
+    expect(bracket.byes[0].team.id).toBe("t5")
+    expect(bracket.byes[2].team.id).toBe("t3")
+    expect(bracket.quarterfinals[0].home.team.id).toBe("t2")
+    expect(bracket.quarterfinals[0].away.team.id).toBe("t1")
+  })
+})
+
 describe("generateProvisionalBracket", () => {
+  const standings5: StandingsRow[] = [
+    makeRow(1, teams.t1, 20),
+    makeRow(2, teams.t2, 18),
+    makeRow(3, teams.t3, 14),
+    makeRow(4, teams.t4, 12),
+    makeRow(5, teams.t5, 10),
+  ]
+
+  it("genera bracket para 5 equipos", () => {
+    const bracket = generateProvisionalBracket(standings5, 5)
+    expect(bracket.quarterfinals).toHaveLength(1)
+    expect(bracket.byes).toHaveLength(3)
+    expect(bracket.format).toBe("five_team")
+  })
+
   it("genera bracket para 6 equipos", () => {
     const bracket = generateProvisionalBracket(standings6, 6)
     expect(bracket.quarterfinals).toHaveLength(2)
     expect(bracket.byes).toHaveLength(2)
+    expect(bracket.format).toBe("six_team")
   })
 
   it("lanza error para cantidad no soportada", () => {
