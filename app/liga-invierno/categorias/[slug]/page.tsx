@@ -70,7 +70,7 @@ export default async function CategoriaPage({ params }: Props) {
           position: i + 1,
         }))
 
-  // Para el bracket usar standings reales si hay 6+, sino equipos como provisional (igual que admin)
+  // Para el bracket usar standings reales si hay 5+, sino equipos como provisional (igual que admin)
   const bracketStandings =
     standings.length >= 5
       ? standings
