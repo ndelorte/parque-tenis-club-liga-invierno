@@ -378,8 +378,15 @@ function QFCard({
 }) {
   const [scheduleDate, setScheduleDate] = useState(existingSeries?.scheduledDate ?? "")
   const [scheduleTime, setScheduleTime] = useState(existingSeries?.scheduledTime ?? "")
+  const [scheduleError, setScheduleError] = useState<string | null>(null)
   const [isScheduling, startScheduling] = useTransition()
   const [showResult, setShowResult] = useState(false)
+
+  // Sync inputs cuando existingSeries llega o cambia después de un refresh
+  useEffect(() => {
+    if (existingSeries?.scheduledDate) setScheduleDate(existingSeries.scheduledDate)
+    if (existingSeries?.scheduledTime !== undefined) setScheduleTime(existingSeries.scheduledTime ?? "")
+  }, [existingSeries?.scheduledDate, existingSeries?.scheduledTime])
 
   // If series already exists (from DB), use its home/away — otherwise use bracket order
   const homeTeamId = existingSeries?.homeTeam.id ?? qf.home.team.id
@@ -391,11 +398,17 @@ function QFCard({
 
   async function handleSchedule() {
     if (!scheduleDate) return
+    setScheduleError(null)
     startScheduling(async () => {
+      let result: { success: boolean; error?: string }
       if (existingSeries) {
-        await updateSeriesSchedule(existingSeries.id, scheduleDate, scheduleTime)
+        result = await updateSeriesSchedule(existingSeries.id, scheduleDate, scheduleTime)
       } else {
-        await createQuarterFinalSeries(categoryId, qf.home.team.id, qf.away.team.id, scheduleDate, scheduleTime)
+        result = await createQuarterFinalSeries(categoryId, qf.home.team.id, qf.away.team.id, scheduleDate, scheduleTime)
+      }
+      if (!result.success) {
+        setScheduleError(result.error ?? "Error al guardar la fecha")
+        return
       }
       onRefresh()
     })
@@ -477,6 +490,9 @@ function QFCard({
             )}
             {existingSeries ? "Actualizar fecha" : "Crear partido y programar fecha"}
           </Button>
+          {scheduleError && (
+            <p className="text-xs text-destructive font-medium">{scheduleError}</p>
+          )}
           {existingSeries?.scheduledDate && (
             <p className="text-xs text-muted-foreground">
               <Clock className="size-3 inline mr-1" />
