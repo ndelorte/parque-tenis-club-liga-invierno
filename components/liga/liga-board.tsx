@@ -398,7 +398,7 @@ export function LigaBoard({ bundles, initialCategory }: LigaBoardProps) {
             {activeBundle.teams.map((t, i) => (
               <Link
                 key={t.id}
-                href={`/liga-invierno/equipos/${t.slug}`}
+                href={`/liga-invierno/equipos/${activeBundle.category.slug}/${t.slug}`}
                 className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-winter/50 hover:shadow-md"
               >
                 <span

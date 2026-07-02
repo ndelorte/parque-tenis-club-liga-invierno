@@ -91,6 +91,56 @@ export async function getTeamBySlug(
     `)
     .eq("slug", slug)
     .eq("active", true)
+    .limit(1)
+    .maybeSingle()
+
+  if (error || !data) return null
+
+  const row = data as unknown as TeamWithPlayersRow
+
+  const players: (TeamPlayer & { player: Player })[] = row.team_players
+    .filter((tp) => tp.active)
+    .map((tp) => ({
+      id: tp.id,
+      team_id: row.id,
+      player_id: tp.player_id,
+      is_captain: tp.is_captain,
+      active: tp.active,
+      player: tp.players as Player,
+    }))
+
+  return {
+    id: row.id,
+    category_id: row.category_id,
+    name: row.name,
+    slug: row.slug,
+    captain_name: row.captain_name ?? undefined,
+    active: row.active,
+    players,
+  }
+}
+
+export async function getTeamBySlugAndCategory(
+  teamSlug: string,
+  categoryId: string,
+): Promise<(Team & { players: (TeamPlayer & { player: Player })[] }) | null> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("teams")
+    .select(`
+      *,
+      team_players(
+        id,
+        player_id,
+        is_captain,
+        active,
+        players(id, first_name, last_name, display_name, active)
+      )
+    `)
+    .eq("slug", teamSlug)
+    .eq("category_id", categoryId)
+    .eq("active", true)
     .single()
 
   if (error || !data) return null

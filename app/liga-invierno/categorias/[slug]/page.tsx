@@ -142,7 +142,7 @@ export default async function CategoriaPage({ params }: Props) {
             <h3 className="font-semibold text-gray-800 mb-3">Equipos</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               {teams.map((team) => (
-                <TeamCard key={team.id} team={team} />
+                <TeamCard key={team.id} team={team} categorySlug={slug} />
               ))}
             </div>
           </section>
