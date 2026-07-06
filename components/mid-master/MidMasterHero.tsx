@@ -20,9 +20,9 @@ export function MidMasterHero({ year = 2026 }: Props) {
           <Image
             src="/images/logopngcdp.png"
             alt="Circuito de Parque"
-            width={96}
-            height={96}
-            className="size-20 object-contain sm:size-24"
+            width={240}
+            height={240}
+            className="size-40 object-contain sm:size-56"
             priority
           />
         </div>
