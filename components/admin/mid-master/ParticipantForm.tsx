@@ -59,7 +59,7 @@ export function ParticipantForm({ participant }: Props) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") handleCancel() }}
-          className="flex-1 rounded border border-border px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-mm-gold/30"
+          className="flex-1 rounded border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-mm-gold/40"
           placeholder="Nombre del participante"
         />
         <button

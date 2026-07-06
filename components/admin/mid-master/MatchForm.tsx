@@ -125,13 +125,13 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
 
       {/* Expandable form */}
       {open && (
-        <div className="border-t border-border bg-surface px-4 py-4">
+        <div className="border-t border-mm-border bg-white px-4 py-4">
           {/* Tabs */}
-          <div className="mb-4 flex gap-1 rounded-lg bg-muted p-1">
+          <div className="mb-4 flex gap-1 rounded-lg bg-gray-100 p-1">
             <button
               onClick={() => setActiveTab("schedule")}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors ${
-                activeTab === "schedule" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                activeTab === "schedule" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-800"
               }`}
             >
               <Calendar className="size-3.5" />
@@ -140,7 +140,7 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
             <button
               onClick={() => setActiveTab("result")}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors ${
-                activeTab === "result" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                activeTab === "result" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-800"
               }`}
             >
               <Trophy className="size-3.5" />
@@ -152,28 +152,28 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Fecha</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Fecha</label>
                   <input
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full rounded border border-border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-mm-gold/30"
+                    className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-mm-gold/40"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Hora</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Hora</label>
                   <input
                     type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    className="w-full rounded border border-border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-mm-gold/30"
+                    className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-mm-gold/40"
                   />
                 </div>
               </div>
               <button
                 onClick={handleSchedule}
                 disabled={loading}
-                className="w-full rounded bg-foreground py-2 text-xs font-medium text-background hover:bg-foreground/90 disabled:opacity-50"
+                className="w-full rounded bg-gray-900 py-2 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50"
               >
                 {loading ? "Guardando..." : "Guardar fecha"}
               </button>
@@ -183,7 +183,7 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
           {activeTab === "result" && (
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                <label className="mb-1 block text-xs font-medium text-gray-500">
                   Score — ej: 6-4 6-2 · 6-4 3-6 {isFinal ? "6-4" : "7-6"}
                 </label>
                 <input
@@ -191,10 +191,10 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
                   value={score}
                   onChange={(e) => setScore(e.target.value)}
                   placeholder={isFinal ? "6-4 6-2 (o 6-4 3-6 6-4)" : "6-4 6-2 (o 6-4 3-6 7-6)"}
-                  className="w-full rounded border border-border px-2 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-mm-gold/30"
+                  className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 font-mono text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-mm-gold/40"
                 />
                 {!isFinal && (
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-1 text-xs text-gray-400">
                     Tercer set: siempre 7-6 (supertiebreak). Final: set completo.
                   </p>
                 )}
