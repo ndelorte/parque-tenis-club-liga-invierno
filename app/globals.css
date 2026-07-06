@@ -34,8 +34,22 @@
   --color-winter: #4d90c4;
   --color-winter-foreground: #ffffff;
 
+  /* Mid Master — dark premium theme */
+  --color-mm-bg: #0d0f0d;
+  --color-mm-surface: #161a15;
+  --color-mm-surface-2: #1e2520;
+  --color-mm-border: #2a2f29;
+  --color-mm-gold: #c9a84c;
+  --color-mm-gold-light: #e5c97a;
+  --color-mm-gold-muted: #6b5520;
+  --color-mm-text: #f0ebe0;
+  --color-mm-text-muted: #8a8679;
+  --color-mm-text-faint: #4a4740;
+  --color-mm-green-deep: #1a2e1f;
+
   /* Fonts */
   --font-heading: var(--font-geist-sans);
+  --font-mm-display: var(--font-playfair), Georgia, serif;
 
   /* Animations */
   --animate-bob: bob 3s ease-in-out infinite;

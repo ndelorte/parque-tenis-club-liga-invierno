@@ -1,5 +1,6 @@
 import Image from "next/image"
-import { Check, MessageCircle } from "lucide-react"
+import Link from "next/link"
+import { Check, MessageCircle, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ACTIVITIES, waLink } from "@/lib/site"
 
@@ -53,16 +54,26 @@ export function Activities() {
                   ))}
                 </ul>
                 <div className="mt-6 flex-1" />
-                <Button asChild variant="secondary" className="w-fit">
-                  <a
-                    href={waLink(act.waMessage, "waNumber" in act ? act.waNumber : undefined)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <MessageCircle className="size-4 text-primary" />
-                    Consultar
-                  </a>
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild variant="secondary" className="w-fit">
+                    <a
+                      href={waLink(act.waMessage, "waNumber" in act ? act.waNumber : undefined)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <MessageCircle className="size-4 text-primary" />
+                      Consultar
+                    </a>
+                  </Button>
+                  {"links" in act && act.links?.map((link) => (
+                    <Button key={link.href} asChild variant="outline" className="w-fit">
+                      <Link href={link.href}>
+                        {link.label}
+                        <ArrowRight className="size-4" />
+                      </Link>
+                    </Button>
+                  ))}
+                </div>
               </div>
             </article>
           ))}

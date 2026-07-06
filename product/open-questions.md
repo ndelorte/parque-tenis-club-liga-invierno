@@ -114,6 +114,44 @@
 
 ---
 
+## Resueltas — Mid Master
+
+### ~~MM-01~~: ¿Cuántos sets gana un partido?
+
+**Respuesta**: Al mejor de 3 sets. El tercero es supertiebreak, salvo en la **final** que se juega a 3 sets completos.
+
+---
+
+### ~~MM-02~~: ¿Cómo se anota el tercer set?
+
+**Respuesta**: Siempre como `7-6`, igual que Liga de Invierno.
+
+---
+
+### ~~MM-03~~: ¿Cuáles son los criterios de desempate dentro de una zona?
+
+**Respuesta**:
+```
+1. Partidos ganados (wins)
+2. Diferencia de sets (sets_diff)
+3. Diferencia de games (games_diff)
+4. Enfrentamiento directo H2H
+```
+
+---
+
+### ~~MM-04~~: ¿Hay walkover?
+
+**Respuesta**: No. El Mid Master no contempla walkover.
+
+---
+
+### ~~MM-05~~: ¿Se necesita página pública de jugador individual?
+
+**Respuesta**: No. Solo existe la página de categoría con zonas y bracket.
+
+---
+
 ## Resueltas
 
 ### ~~OQ-01~~: ¿Cuál categoría tiene 5 equipos?

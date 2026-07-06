@@ -30,12 +30,15 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const isAdmin = isAdminUser(user)
-  const isLoginPage = request.nextUrl.pathname === "/panel-parque/login"
+  const path = request.nextUrl.pathname
+  const isMasterPanel = path.startsWith("/panel-master")
+  const isLoginPage =
+    path === "/panel-parque/login" || path === "/panel-master/login"
 
   if (isLoginPage) {
     if (user && isAdmin) {
       const url = request.nextUrl.clone()
-      url.pathname = "/panel-parque"
+      url.pathname = isMasterPanel ? "/panel-master" : "/panel-parque"
       return NextResponse.redirect(url)
     }
     return supabaseResponse
@@ -43,7 +46,7 @@ export async function proxy(request: NextRequest) {
 
   if (!user || !isAdmin) {
     const url = request.nextUrl.clone()
-    url.pathname = "/panel-parque/login"
+    url.pathname = isMasterPanel ? "/panel-master/login" : "/panel-parque/login"
     return NextResponse.redirect(url)
   }
 
@@ -51,5 +54,10 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/panel-parque", "/panel-parque/:path*"],
+  matcher: [
+    "/panel-parque",
+    "/panel-parque/:path*",
+    "/panel-master",
+    "/panel-master/:path*",
+  ],
 }
