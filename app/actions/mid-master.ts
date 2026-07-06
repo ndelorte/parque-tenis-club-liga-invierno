@@ -34,7 +34,6 @@ export async function updateMmMatchSchedule(
       scheduled_date: scheduledDate || null,
       scheduled_time: scheduledTime || null,
       status,
-      updated_at: new Date().toISOString(),
     })
     .eq("id", matchId)
 
@@ -51,11 +50,10 @@ export async function updateMmMatchResult(
   score: string,
   isFinal: boolean,
 ): Promise<ActionResult> {
-  let setsA: number, setsB: number, gamesA: number, gamesB: number
+  let setsA: number, setsB: number
   try {
     const parsed = parseMmScore(score, isFinal)
     setsA = parsed.setsA; setsB = parsed.setsB
-    gamesA = parsed.gamesA; gamesB = parsed.gamesB
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Score inválido." }
   }
@@ -67,37 +65,23 @@ export async function updateMmMatchResult(
     .maybeSingle()
 
   if (fetchError || !match) return { ok: false, error: "Partido no encontrado." }
-  if (!match.participant_a_id || !match.participant_b_id) {
+  if (!match.participant_1_id || !match.participant_2_id) {
     return { ok: false, error: "El partido no tiene participantes asignados." }
   }
 
   let winnerId: string
   try {
-    winnerId = determineWinner(setsA, setsB, match.participant_a_id, match.participant_b_id)
+    winnerId = determineWinner(setsA, setsB, match.participant_1_id, match.participant_2_id)
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Error al determinar ganador." }
   }
 
-  // Intentar con todos los campos; si falla por columnas inexistentes, usar solo los básicos
   const { error } = await db()
     .from("mid_master_matches")
-    .update({
-      score,
-      winner_id: winnerId,
-      sets_a: setsA, sets_b: setsB,
-      games_a: gamesA, games_b: gamesB,
-      status: "completed",
-    })
+    .update({ score, winner_participant_id: winnerId, status: "completed" })
     .eq("id", matchId)
 
-  if (error) {
-    // Retry sin columnas opcionales
-    const { error: e2 } = await db()
-      .from("mid_master_matches")
-      .update({ score, winner_id: winnerId, status: "completed" })
-      .eq("id", matchId)
-    if (e2) return { ok: false, error: `Error al guardar el resultado: ${e2.message}` }
-  }
+  if (error) return { ok: false, error: `Error al guardar el resultado: ${error.message}` }
 
   revalidatePath("/panel-master")
   revalidatePath("/mid-master")
@@ -109,16 +93,10 @@ export async function updateMmMatchResult(
 export async function clearMmMatchResult(matchId: string): Promise<ActionResult> {
   const { error } = await db()
     .from("mid_master_matches")
-    .update({ score: null, winner_id: null, sets_a: 0, sets_b: 0, games_a: 0, games_b: 0, status: "pending" })
+    .update({ score: null, winner_participant_id: null, status: "pending" })
     .eq("id", matchId)
 
-  if (error) {
-    const { error: e2 } = await db()
-      .from("mid_master_matches")
-      .update({ score: null, winner_id: null, status: "pending" })
-      .eq("id", matchId)
-    if (e2) return { ok: false, error: "Error al borrar el resultado." }
-  }
+  if (error) return { ok: false, error: "Error al borrar el resultado." }
   revalidatePath("/panel-master")
   revalidatePath("/mid-master")
   return { ok: true }
@@ -133,30 +111,12 @@ export async function updateMmParticipant(
   const name = displayName.trim()
   if (!name) return { ok: false, error: "El nombre no puede estar vacío." }
 
-  // Detectar la columna real intentando primero con "name" (patrón del usuario)
-  // y haciendo fallback a "display_name" (patrón del migration)
-  const candidateCols = ["name", "display_name", "full_name", "player_name"]
-  let updated = false
-  for (const col of candidateCols) {
-    const { error } = await db()
-      .from("mid_master_participants")
-      .update({ [col]: name })
-      .eq("id", participantId)
-    if (!error) { updated = true; break }
-  }
-  if (!updated) return { ok: false, error: "Error al actualizar el nombre." }
+  const { error } = await db()
+    .from("mid_master_participants")
+    .update({ name })
+    .eq("id", participantId)
 
-  // Actualizar etiquetas en partidos pendientes (ignorar errores si esas columnas no existen)
-  await Promise.allSettled([
-    db().from("mid_master_matches")
-      .update({ participant_a_label: name })
-      .eq("participant_a_id", participantId)
-      .in("status", ["pending", "scheduled"]),
-    db().from("mid_master_matches")
-      .update({ participant_b_label: name })
-      .eq("participant_b_id", participantId)
-      .in("status", ["pending", "scheduled"]),
-  ])
+  if (error) return { ok: false, error: "Error al actualizar el nombre." }
 
   revalidatePath("/panel-master")
   revalidatePath("/mid-master")
@@ -193,12 +153,14 @@ export async function resolveKnockoutParticipants(
   const { data: partsA } = await supabase
     .from("mid_master_participants")
     .select("*")
-    .eq("group_id", groupA.id)
+    .eq("category_id", categoryId)
+    .eq("group_name", groupA.name)
 
   const { data: partsB } = await supabase
     .from("mid_master_participants")
     .select("*")
-    .eq("group_id", groupB.id)
+    .eq("category_id", categoryId)
+    .eq("group_name", groupB.name)
 
   if (!matches || !partsA || !partsB) {
     return { ok: false, error: "Error al obtener datos." }
@@ -247,17 +209,13 @@ export async function resolveKnockoutParticipants(
 
   await Promise.all([
     supabase.from("mid_master_matches").update({
-      participant_a_id: first_A.id,
-      participant_b_id: second_B.id,
-      participant_a_label: first_A.display_name,
-      participant_b_label: second_B.display_name,
+      participant_1_id: first_A.id,
+      participant_2_id: second_B.id,
     }).eq("id", sfMatches[0].id),
 
     supabase.from("mid_master_matches").update({
-      participant_a_id: first_B.id,
-      participant_b_id: second_A.id,
-      participant_a_label: first_B.display_name,
-      participant_b_label: second_A.display_name,
+      participant_1_id: first_B.id,
+      participant_2_id: second_A.id,
     }).eq("id", sfMatches[1].id),
   ])
 

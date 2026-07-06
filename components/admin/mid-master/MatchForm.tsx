@@ -15,9 +15,9 @@ interface Props {
   isFinal?: boolean
 }
 
-function participantName(participants: DbMmParticipant[], id: string | null, label: string) {
-  if (!id) return label || "Por definir"
-  return participants.find((p) => p.id === id)?.display_name ?? label
+function participantName(participants: DbMmParticipant[], id: string | null) {
+  if (!id) return "Por definir"
+  return participants.find((p) => p.id === id)?.name ?? "Por definir"
 }
 
 const DAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
@@ -38,8 +38,8 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
 
-  const nameA = participantName(participants, match.participant_a_id, match.participant_a_label)
-  const nameB = participantName(participants, match.participant_b_id, match.participant_b_label)
+  const nameA = participantName(participants, match.participant_1_id)
+  const nameB = participantName(participants, match.participant_2_id)
   const isCompleted = match.status === "completed"
 
   async function handleSchedule() {
@@ -80,7 +80,7 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
         {/* Names + score */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 text-sm">
-            <span className={`truncate ${isCompleted && match.winner_id === match.participant_a_id ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
+            <span className={`truncate ${isCompleted && match.winner_participant_id === match.participant_1_id ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
               {nameA}
             </span>
             {isCompleted ? (
@@ -90,7 +90,7 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
             ) : (
               <span className="shrink-0 text-xs text-muted-foreground">vs</span>
             )}
-            <span className={`truncate text-right ${isCompleted && match.winner_id === match.participant_b_id ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
+            <span className={`truncate text-right ${isCompleted && match.winner_participant_id === match.participant_2_id ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
               {nameB}
             </span>
           </div>
@@ -201,13 +201,13 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
               </div>
               <button
                 onClick={handleResult}
-                disabled={loading || !match.participant_a_id || !match.participant_b_id}
+                disabled={loading || !match.participant_1_id || !match.participant_2_id}
                 className="w-full rounded bg-mm-gold py-2 text-xs font-semibold text-mm-bg hover:bg-mm-gold-light disabled:opacity-50"
-                title={!match.participant_a_id ? "Asigná los participantes primero" : ""}
+                title={!match.participant_1_id ? "Asigná los participantes primero" : ""}
               >
                 {loading ? "Guardando..." : "Cargar resultado"}
               </button>
-              {(!match.participant_a_id || !match.participant_b_id) && (
+              {(!match.participant_1_id || !match.participant_2_id) && (
                 <p className="text-xs text-muted-foreground">
                   Primero asigná los participantes a este partido.
                 </p>

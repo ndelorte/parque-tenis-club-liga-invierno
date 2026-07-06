@@ -11,9 +11,9 @@ interface Props {
 export function KnockoutAdmin({ knockoutMatches, participants, categoryId }: Props) {
   const sfMatches = knockoutMatches.filter((m) => m.phase === "semifinal")
   const finalMatches = knockoutMatches.filter((m) => m.phase === "final")
-  const championMatch = finalMatches.find((m) => m.status === "completed" && m.winner_id)
+  const championMatch = finalMatches.find((m) => m.status === "completed" && m.winner_participant_id)
 
-  const hasSfParticipants = sfMatches.some((m) => m.participant_a_id && m.participant_b_id)
+  const hasSfParticipants = sfMatches.some((m) => m.participant_1_id && m.participant_2_id)
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -68,16 +68,13 @@ export function KnockoutAdmin({ knockoutMatches, participants, categoryId }: Pro
       )}
 
       {/* Champion */}
-      {championMatch?.winner_id && (
+      {championMatch?.winner_participant_id && (
         <div className="border-t border-mm-gold/30 bg-mm-green-deep px-4 py-4 text-center">
           <p className="text-[10px] font-medium uppercase tracking-widest text-mm-gold">
             Campeón
           </p>
           <p className="mt-1 font-mm-display text-lg font-bold text-mm-gold-light">
-            {participants.find((p) => p.id === championMatch.winner_id)?.display_name ??
-              (championMatch.winner_id === championMatch.participant_a_id
-                ? championMatch.participant_a_label
-                : championMatch.participant_b_label)}
+            {participants.find((p) => p.id === championMatch.winner_participant_id)?.name ?? "Campeón"}
           </p>
         </div>
       )}

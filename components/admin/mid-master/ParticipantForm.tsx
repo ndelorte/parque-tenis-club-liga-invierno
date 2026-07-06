@@ -11,8 +11,7 @@ interface Props {
 
 export function ParticipantForm({ participant }: Props) {
   const [editing, setEditing] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const currentName = participant.display_name ?? (participant as any).name ?? (participant as any).full_name ?? ""
+  const currentName = participant.name ?? ""
   const [name, setName] = useState(currentName)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -31,7 +30,7 @@ export function ParticipantForm({ participant }: Props) {
   }
 
   function handleCancel() {
-    setName(participant.display_name)
+    setName(participant.name)
     setEditing(false)
     setError("")
   }
