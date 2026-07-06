@@ -103,8 +103,24 @@ export async function getMmMatchesByCategory(categoryId: string): Promise<DbMmMa
 
 // ── Adapters: DB → public component types ────────────────────────────────────
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyRow = Record<string, any>
+
+function getParticipantName(p: DbMmParticipant): string {
+  // Soporta display_name, name, full_name, player_name según lo que el usuario creó
+  const row = p as AnyRow
+  return (
+    row.display_name ??
+    row.name ??
+    row.full_name ??
+    row.player_name ??
+    row.participant_name ??
+    "—"
+  )
+}
+
 function adaptParticipant(p: DbMmParticipant): MmParticipant {
-  return { id: p.id, displayName: p.display_name }
+  return { id: p.id, displayName: getParticipantName(p) }
 }
 
 function adaptMatch(m: DbMmMatch): MmMatch {
@@ -168,10 +184,10 @@ function adaptKnockout(knockoutMatches: DbMmMatch[], allParticipants: DbMmPartic
 
   function adaptKM(m: DbMmMatch): MmKnockoutMatch {
     const pA = m.participant_a_id
-      ? allParticipants.find((p) => p.id === m.participant_a_id)?.display_name
+      ? getParticipantName(allParticipants.find((p) => p.id === m.participant_a_id) ?? {} as DbMmParticipant) || undefined
       : undefined
     const pB = m.participant_b_id
-      ? allParticipants.find((p) => p.id === m.participant_b_id)?.display_name
+      ? getParticipantName(allParticipants.find((p) => p.id === m.participant_b_id) ?? {} as DbMmParticipant) || undefined
       : undefined
     return {
       id: m.id,

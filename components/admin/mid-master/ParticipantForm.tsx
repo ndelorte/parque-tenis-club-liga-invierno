@@ -11,7 +11,9 @@ interface Props {
 
 export function ParticipantForm({ participant }: Props) {
   const [editing, setEditing] = useState(false)
-  const [name, setName] = useState(participant.display_name)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const currentName = participant.display_name ?? (participant as any).name ?? (participant as any).full_name ?? ""
+  const [name, setName] = useState(currentName)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -37,7 +39,7 @@ export function ParticipantForm({ participant }: Props) {
   if (!editing) {
     return (
       <div className="flex items-center gap-2">
-        <span className="flex-1 text-sm text-foreground">{participant.display_name}</span>
+        <span className="flex-1 text-sm text-foreground">{currentName || "—"}</span>
         <button
           onClick={() => setEditing(true)}
           className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"

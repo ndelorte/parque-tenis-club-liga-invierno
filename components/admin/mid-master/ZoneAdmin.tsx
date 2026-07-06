@@ -59,7 +59,9 @@ export function ZoneAdmin({ data }: Props) {
             </thead>
             <tbody>
               {standings.map((row) => {
-                const name = participants.find((p) => p.id === row.participantId)?.display_name ?? "—"
+                const found = participants.find((p) => p.id === row.participantId)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const name = (found as any)?.display_name ?? (found as any)?.name ?? (found as any)?.full_name ?? "—"
                 return (
                   <tr key={row.participantId} className="border-t border-border/50">
                     <td className="py-1.5">
