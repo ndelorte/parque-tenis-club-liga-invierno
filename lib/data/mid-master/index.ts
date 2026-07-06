@@ -33,30 +33,14 @@ function logError(fn: string, error: unknown) {
   console.error(`[mid-master] ${fn}:`, JSON.stringify(error))
 }
 
-// ── Schema helpers: extraen valores de columnas con nombre desconocido ────────
+// ── Schema helpers ────────────────────────────────────────────────────────────
 
-/** Lee el nombre del participante desde cualquier columna posible */
 function getParticipantName(row: AnyRow): string {
-  return (
-    row.display_name ?? row.name ?? row.full_name ??
-    row.player_name ?? row.participant_name ?? "—"
-  )
+  return row.name ?? "—"
 }
 
-/** Lee el group_id desde cualquier columna FK posible */
-function getMatchGroupId(row: AnyRow): string | null {
-  const v = row.group_id ?? row.zone_id ?? row.round_id ?? row.group ?? null
-  return v ?? null
-}
-
-/** Lee la fase del partido desde cualquier columna posible */
-function getMatchPhase(row: AnyRow): string {
-  return row.phase ?? row.stage ?? row.round ?? row.type ?? ""
-}
-
-/** Lee el status del partido desde cualquier columna posible */
 function getMatchStatus(row: AnyRow): string {
-  return row.status ?? row.state ?? "pending"
+  return row.status ?? "pending"
 }
 
 // ── Raw DB queries ────────────────────────────────────────────────────────────
@@ -89,38 +73,14 @@ export async function getMmGroupsByCategory(categoryId: string): Promise<DbMmGro
   )
 }
 
-/** Busca participantes probando múltiples nombres de columna FK.
- *  Primero valida la columna con limit=0, luego hace el query real. */
-export async function getMmParticipantsByGroup(groupId: string): Promise<DbMmParticipant[]> {
+export async function getMmParticipantsByCategory(categoryId: string): Promise<DbMmParticipant[]> {
   const sb = await supabase()
-  const fkCols = ["group_id", "zone_id", "group", "mid_master_group_id"]
-
-  // 1. Encontrar la columna FK válida
-  let validCol: string | null = null
-  for (const col of fkCols) {
-    const { error } = await sb
-      .from("mid_master_participants")
-      .select(col)
-      .limit(0)
-    if (!error) { validCol = col; break }
-    const isColError = error.message?.includes("schema cache") ||
-      error.message?.includes("Could not find") ||
-      error.message?.includes("does not exist")
-    if (!isColError) { logError(`getMmParticipantsByGroup probe [${col}]`, error); break }
-  }
-
-  if (!validCol) {
-    logError("getMmParticipantsByGroup", `No se encontró columna FK. Probado: ${fkCols.join(", ")}`)
-    return []
-  }
-
-  // 2. Query real con la columna confirmada
   const { data, error } = await sb
     .from("mid_master_participants")
     .select("*")
-    .eq(validCol, groupId)
-
-  if (error) { logError(`getMmParticipantsByGroup [${validCol}]`, error); return [] }
+    .eq("category_id", categoryId)
+    .order("display_order", { ascending: true })
+  if (error) { logError("getMmParticipantsByCategory", error); return [] }
   return (data as DbMmParticipant[]) ?? []
 }
 
@@ -140,13 +100,13 @@ function adaptParticipant(p: AnyRow): MmParticipant {
 function adaptMatch(m: AnyRow): MmMatch {
   return {
     id: m.id,
-    participantAId: m.participant_a_id ?? m.player_a_id ?? "",
-    participantBId: m.participant_b_id ?? m.player_b_id ?? "",
+    participantAId: m.participant_1_id ?? "",
+    participantBId: m.participant_2_id ?? "",
     status: getMatchStatus(m) as MatchStatus,
     scheduledDate: m.scheduled_date ?? undefined,
     scheduledTime: m.scheduled_time ?? undefined,
     score: m.score ?? undefined,
-    winnerId: m.winner_id ?? undefined,
+    winnerId: m.winner_participant_id ?? undefined,
   }
 }
 
@@ -195,28 +155,28 @@ function adaptGroup(
 }
 
 function adaptKnockout(knockoutMatches: AnyRow[], allParticipants: AnyRow[]): MmKnockout {
-  const semis = knockoutMatches.filter((m) => getMatchPhase(m) === "semifinal")
-  const finals = knockoutMatches.filter((m) => getMatchPhase(m) === "final")
+  const semis = knockoutMatches.filter((m) => m.phase === "semifinal")
+  const finals = knockoutMatches.filter((m) => m.phase === "final")
 
   function adaptKM(m: AnyRow): MmKnockoutMatch {
-    const aId = m.participant_a_id ?? m.player_a_id
-    const bId = m.participant_b_id ?? m.player_b_id
+    const aId = m.participant_1_id ?? undefined
+    const bId = m.participant_2_id ?? undefined
     const pA = aId ? getParticipantName(allParticipants.find((p) => p.id === aId) ?? {}) : undefined
     const pB = bId ? getParticipantName(allParticipants.find((p) => p.id === bId) ?? {}) : undefined
-    const phase = getMatchPhase(m) as "semifinal" | "final"
+    const phase = (m.phase ?? "semifinal") as "semifinal" | "final"
     return {
       id: m.id,
       phase,
       label: phase === "final" ? "Final" : "Semifinal",
-      participantAId: aId ?? undefined,
-      participantBId: bId ?? undefined,
-      participantALabel: (pA && pA !== "—" ? pA : null) ?? m.participant_a_label ?? "Por definir",
-      participantBLabel: (pB && pB !== "—" ? pB : null) ?? m.participant_b_label ?? "Por definir",
+      participantAId: aId,
+      participantBId: bId,
+      participantALabel: (pA && pA !== "—" ? pA : null) ?? "Por definir",
+      participantBLabel: (pB && pB !== "—" ? pB : null) ?? "Por definir",
       status: getMatchStatus(m) as MatchStatus,
       scheduledDate: m.scheduled_date ?? undefined,
       scheduledTime: m.scheduled_time ?? undefined,
       score: m.score ?? undefined,
-      winnerId: m.winner_id ?? undefined,
+      winnerId: m.winner_participant_id ?? undefined,
     }
   }
 
@@ -234,8 +194,9 @@ function adaptKnockout(knockoutMatches: AnyRow[], allParticipants: AnyRow[]): Mm
 // ── Construcción de categoría (común a público y admin) ───────────────────────
 
 async function buildCategory(cat: DbMmCategory): Promise<MmCategory | null> {
-  const [groups, allMatches] = await Promise.all([
+  const [groups, allParticipants, allMatches] = await Promise.all([
     getMmGroupsByCategory(cat.id),
+    getMmParticipantsByCategory(cat.id),
     getMmMatchesByCategory(cat.id),
   ])
 
@@ -246,27 +207,20 @@ async function buildCategory(cat: DbMmCategory): Promise<MmCategory | null> {
     return null
   }
 
-  const [participantsA, participantsB] = await Promise.all([
-    getMmParticipantsByGroup(groupA.id),
-    getMmParticipantsByGroup(groupB.id),
-  ])
+  // Participants are linked by group_name string ("A" / "B"), not by group_id FK
+  const participantsA = allParticipants.filter((p) => p.group_name?.toUpperCase().trim() === groupA.name.toUpperCase().trim())
+  const participantsB = allParticipants.filter((p) => p.group_name?.toUpperCase().trim() === groupB.name.toUpperCase().trim())
 
-  // Separar partidos de zona y knockout usando el FK de grupo detectado dinámicamente
-  const matchesA = allMatches.filter((m) => getMatchGroupId(m) === groupA.id)
-  const matchesB = allMatches.filter((m) => getMatchGroupId(m) === groupB.id)
-  // Knockout: partidos donde el grupo FK es null o no tiene ninguno de los grupos conocidos
-  const knockoutMatches = allMatches.filter((m) => {
-    const gid = getMatchGroupId(m)
-    return gid === null || (gid !== groupA.id && gid !== groupB.id)
-  })
-
-  const allParticipants = [...participantsA, ...participantsB]
+  // Matches are linked by group_id FK
+  const matchesA = allMatches.filter((m) => m.group_id === groupA.id)
+  const matchesB = allMatches.filter((m) => m.group_id === groupB.id)
+  const knockoutMatches = allMatches.filter((m) => !m.group_id)
 
   return {
     id: cat.id,
     slug: cat.slug,
     name: cat.name,
-    shortName: cat.short_name ?? cat.name,
+    shortName: cat.name,
     type: normalizeType(cat.type),
     zoneSize: getZoneSize(cat),
     zones: [
@@ -298,8 +252,9 @@ export async function getMmCategoryAdminData(slug: string): Promise<MmCategoryAd
   const cat = await getMmCategoryBySlug(slug)
   if (!cat) return null
 
-  const [groups, matches] = await Promise.all([
+  const [groups, allParticipants, matches] = await Promise.all([
     getMmGroupsByCategory(cat.id),
+    getMmParticipantsByCategory(cat.id),
     getMmMatchesByCategory(cat.id),
   ])
 
@@ -307,29 +262,22 @@ export async function getMmCategoryAdminData(slug: string): Promise<MmCategoryAd
   const groupB = groups.find((g) => !isGroupA(g)) ?? groups[1]
   if (!groupA || !groupB) return null
 
-  const [participantsA, participantsB] = await Promise.all([
-    getMmParticipantsByGroup(groupA.id),
-    getMmParticipantsByGroup(groupB.id),
-  ])
-
-  const knockoutMatches = matches.filter((m: AnyRow) => {
-    const gid = getMatchGroupId(m)
-    return gid === null || (gid !== groupA.id && gid !== groupB.id)
-  }) as DbMmMatch[]
+  const participantsA = allParticipants.filter((p) => p.group_name?.toUpperCase().trim() === groupA.name.toUpperCase().trim())
+  const participantsB = allParticipants.filter((p) => p.group_name?.toUpperCase().trim() === groupB.name.toUpperCase().trim())
 
   return {
     category: cat,
     groupA: {
       group: groupA,
-      participants: participantsA as DbMmParticipant[],
-      matches: matches.filter((m: AnyRow) => getMatchGroupId(m) === groupA.id) as DbMmMatch[],
+      participants: participantsA,
+      matches: matches.filter((m: AnyRow) => m.group_id === groupA.id) as DbMmMatch[],
     },
     groupB: {
       group: groupB,
-      participants: participantsB as DbMmParticipant[],
-      matches: matches.filter((m: AnyRow) => getMatchGroupId(m) === groupB.id) as DbMmMatch[],
+      participants: participantsB,
+      matches: matches.filter((m: AnyRow) => m.group_id === groupB.id) as DbMmMatch[],
     },
-    knockoutMatches,
-    allParticipants: [...participantsA, ...participantsB] as DbMmParticipant[],
+    knockoutMatches: matches.filter((m: AnyRow) => !m.group_id) as DbMmMatch[],
+    allParticipants,
   }
 }

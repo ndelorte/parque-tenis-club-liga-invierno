@@ -45,22 +45,22 @@ export function calculateZoneStandings(
   const completedMatches = groupMatches.filter(
     (m) =>
       m.status === "completed" &&
-      m.participant_a_id &&
-      m.participant_b_id &&
-      m.winner_id,
+      m.participant_1_id &&
+      m.participant_2_id &&
+      m.winner_participant_id,
   )
 
   for (const match of completedMatches) {
-    const aId = match.participant_a_id!
-    const bId = match.participant_b_id!
+    const aId = match.participant_1_id!
+    const bId = match.participant_2_id!
     const a = statsMap.get(aId)
     const b = statsMap.get(bId)
     if (!a || !b) continue
 
-    let sA = match.sets_a ?? 0
-    let sB = match.sets_b ?? 0
-    let gA = match.games_a ?? 0
-    let gB = match.games_b ?? 0
+    let sA = 0
+    let sB = 0
+    let gA = 0
+    let gB = 0
 
     if (match.score) {
       try {
@@ -72,7 +72,7 @@ export function calculateZoneStandings(
       }
     }
 
-    const aWon = match.winner_id === aId
+    const aWon = match.winner_participant_id === aId
 
     a.played++; b.played++
     a.setsWon += sA; a.setsLost += sB
@@ -119,11 +119,11 @@ function sortWithH2H(rows: ZoneStandingRow[], matches: DbMmMatch[]): ZoneStandin
 
     const h2h = matches.find(
       (m) =>
-        (m.participant_a_id === a.participantId && m.participant_b_id === b.participantId) ||
-        (m.participant_a_id === b.participantId && m.participant_b_id === a.participantId),
+        (m.participant_1_id === a.participantId && m.participant_2_id === b.participantId) ||
+        (m.participant_1_id === b.participantId && m.participant_2_id === a.participantId),
     )
-    if (h2h?.winner_id === a.participantId) return -1
-    if (h2h?.winner_id === b.participantId) return 1
+    if (h2h?.winner_participant_id === a.participantId) return -1
+    if (h2h?.winner_participant_id === b.participantId) return 1
     return 0
   })
 }
