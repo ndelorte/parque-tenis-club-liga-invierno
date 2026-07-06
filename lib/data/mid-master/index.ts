@@ -8,7 +8,7 @@ import type {
   MmCategoryAdminData,
   MmGroupWithData,
 } from "./types"
-import { getZoneSize } from "./types"
+import { getZoneSize, getDisplayOrder, normalizeType } from "./types"
 import type {
   MmCategory,
   MmKnockout,
@@ -41,10 +41,10 @@ export async function getMmCategories(): Promise<DbMmCategory[]> {
   if (error) { logError("getMmCategories", error); return [] }
   if (!data?.length) return []
 
-  // Ordenar client-side por sort_order si existe, sino por name
+  // Ordenar client-side por display_order (nombre real de columna), fallback a name
   return (data as DbMmCategory[]).sort((a, b) => {
-    const ao = a.sort_order ?? 999
-    const bo = b.sort_order ?? 999
+    const ao = getDisplayOrder(a)
+    const bo = getDisplayOrder(b)
     if (ao !== bo) return ao - bo
     return a.name.localeCompare(b.name)
   })
@@ -70,8 +70,13 @@ export async function getMmGroupsByCategory(categoryId: string): Promise<DbMmGro
     .eq("category_id", categoryId)
 
   if (error) { logError("getMmGroupsByCategory", error); return [] }
-  // Ordenar: Zona A antes que Zona B
-  return ((data as DbMmGroup[]) ?? []).sort((a, b) => a.name.localeCompare(b.name))
+  // Ordenar: A antes que B (el usuario cargó "A" / "B", no "Zona A" / "Zona B")
+  return ((data as DbMmGroup[]) ?? []).sort((a, b) => {
+    if (a.display_order !== undefined && b.display_order !== undefined) {
+      return (a.display_order ?? 999) - (b.display_order ?? 999)
+    }
+    return a.name.localeCompare(b.name)
+  })
 }
 
 export async function getMmParticipantsByGroup(groupId: string): Promise<DbMmParticipant[]> {
@@ -116,7 +121,15 @@ function adaptMatch(m: DbMmMatch): MmMatch {
 }
 
 function normalizeGroupName(raw: string): "Zona A" | "Zona B" {
-  return raw.toUpperCase().includes("A") ? "Zona A" : "Zona B"
+  // Soporta "A", "Zona A", "zona a", "Group A", etc.
+  const upper = raw.toUpperCase().trim()
+  if (upper === "A" || upper.endsWith(" A") || upper.startsWith("A")) return "Zona A"
+  return "Zona B"
+}
+
+function isGroupA(group: DbMmGroup): boolean {
+  const upper = group.name.toUpperCase().trim()
+  return upper === "A" || upper.endsWith(" A") || upper.startsWith("A") || (group.display_order ?? 999) < 2
 }
 
 function adaptGroup(
@@ -200,8 +213,8 @@ export async function getMmCategoriesForPublic(): Promise<MmCategory[]> {
         getMmMatchesByCategory(cat.id),
       ])
 
-      const groupA = groups.find((g) => g.name.toUpperCase().includes("A")) ?? groups[0]
-      const groupB = groups.find((g) => g.name.toUpperCase().includes("B")) ?? groups[1]
+      const groupA = groups.find(isGroupA) ?? groups[0]
+      const groupB = groups.find((g) => !isGroupA(g)) ?? groups[1]
       if (!groupA || !groupB) {
         console.warn(`[mid-master] Categoría ${cat.slug} no tiene 2 grupos`)
         return null
@@ -220,7 +233,7 @@ export async function getMmCategoriesForPublic(): Promise<MmCategory[]> {
         slug: cat.slug,
         name: cat.name,
         shortName: cat.short_name ?? cat.name,
-        type: cat.type,
+        type: normalizeType(cat.type),
         zoneSize: getZoneSize(cat),
         zones: [
           adaptGroup(groupA, participantsA, matches.filter((m) => m.group_id === groupA.id)),
@@ -260,7 +273,7 @@ export async function getMmCategoryForPublic(slug: string): Promise<MmCategory |
     slug: cat.slug,
     name: cat.name,
     shortName: cat.short_name ?? cat.name,
-    type: cat.type,
+    type: normalizeType(cat.type),
     zoneSize: getZoneSize(cat),
     zones: [
       adaptGroup(groupA, participantsA, matches.filter((m) => m.group_id === groupA.id)),

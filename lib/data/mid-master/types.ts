@@ -4,12 +4,16 @@ export interface DbMmCategory {
   id: string
   name: string
   slug: string
-  type: "singles" | "doubles"
-  // El usuario puede haber usado zone_size o group_size; ambos se soportan.
-  zone_size?: number | null
-  group_size?: number | null
-  short_name?: string | null
+  // El usuario cargó "single" / "double" (sin la s)
+  type: string
+  // Columnas de orden: el usuario usa display_order
+  display_order?: number | null
   sort_order?: number | null
+  // Tamaño de zona: el usuario usa group_size
+  group_size?: number | null
+  zone_size?: number | null
+  short_name?: string | null
+  is_active?: boolean | null
   status?: string | null
   created_at?: string
   updated_at?: string
@@ -18,7 +22,9 @@ export interface DbMmCategory {
 export interface DbMmGroup {
   id: string
   category_id: string
-  name: string  // "Zona A" | "Zona B" (o "A" | "B")
+  // El usuario cargó "A" / "B" (sin el prefijo "Zona ")
+  name: string
+  display_order?: number | null
   created_at?: string
 }
 
@@ -70,8 +76,19 @@ export interface MmCategoryAdminData {
   allParticipants: DbMmParticipant[]
 }
 
-// Helper: effective zone_size fallback
+// Helper: normaliza el campo type a "singles" | "doubles"
+export function normalizeType(raw: string): "singles" | "doubles" {
+  if (raw === "single" || raw === "singles") return "singles"
+  return "doubles"
+}
+
+// Helper: devuelve el tamaño de zona (3 o 4)
 export function getZoneSize(cat: DbMmCategory): 3 | 4 {
-  const n = cat.zone_size ?? cat.group_size ?? 4
+  const n = cat.group_size ?? cat.zone_size ?? 4
   return n === 3 ? 3 : 4
+}
+
+// Helper: devuelve el orden de visualización
+export function getDisplayOrder(cat: DbMmCategory): number {
+  return cat.display_order ?? cat.sort_order ?? 999
 }
