@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import type { MmCategory } from "@/lib/mid-master/types"
+import { MmReveal } from "./MmReveal"
 
 interface Props {
   categories: MmCategory[]
@@ -26,10 +27,10 @@ export function CategoryGrid({ categories }: Props) {
     <section id="categorias" className="bg-mm-bg px-4 pb-20 pt-4 sm:px-6">
       <div className="mx-auto max-w-4xl">
         {singles.length > 0 && (
-          <CategoryGroup label="Singles" categories={singles} />
+          <CategoryGroup label="Singles" categories={singles} baseDelay={0} />
         )}
         {doubles.length > 0 && (
-          <CategoryGroup label="Dobles" categories={doubles} className="mt-12" />
+          <CategoryGroup label="Dobles" categories={doubles} className="mt-12" baseDelay={singles.length} />
         )}
       </div>
     </section>
@@ -40,19 +41,25 @@ function CategoryGroup({
   label,
   categories,
   className,
+  baseDelay,
 }: {
   label: string
   categories: MmCategory[]
   className?: string
+  baseDelay: number
 }) {
   return (
     <div className={className}>
-      <p className="mb-4 text-[10px] font-medium uppercase tracking-[0.22em] text-mm-text-faint">
-        {label}
-      </p>
-      <div className="grid gap-px border border-mm-border sm:grid-cols-2">
-        {categories.map((cat) => (
-          <CategoryCard key={cat.id} category={cat} />
+      <MmReveal>
+        <p className="mb-5 text-[10px] font-medium uppercase tracking-[0.22em] text-mm-text-faint">
+          {label}
+        </p>
+      </MmReveal>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {categories.map((cat, i) => (
+          <MmReveal key={cat.id} delay={(baseDelay + i) * 80}>
+            <CategoryCard category={cat} />
+          </MmReveal>
         ))}
       </div>
     </div>
@@ -68,16 +75,23 @@ function CategoryCard({ category }: { category: MmCategory }) {
   return (
     <Link
       href={`/mid-master/categorias/${category.slug}`}
-      className="group flex items-center justify-between border-l-2 border-l-mm-gold/40 bg-mm-surface px-5 py-5 transition-colors hover:border-l-mm-gold hover:bg-mm-surface-2"
+      className="group relative flex flex-col overflow-hidden border border-mm-border bg-mm-surface px-6 py-6 transition-colors hover:border-mm-gold/40 hover:bg-mm-surface-2"
     >
-      <div>
-        <p className="text-[10px] uppercase tracking-[0.15em] text-mm-text-faint">
+      {/* Gold gradient top border */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-mm-gold via-mm-gold/50 to-transparent opacity-50 transition-opacity duration-300 group-hover:opacity-100" />
+
+      <div className="flex-1">
+        <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-mm-text-faint">
           {category.type === "singles" ? "Singles" : "Dobles"}
         </p>
-        <p className="mt-0.5 text-sm font-medium text-mm-text">{category.name}</p>
-        <p className="mt-1 text-xs text-mm-text-muted">{formatLabel}</p>
+        <p className="mt-2 text-lg font-semibold text-mm-text">{category.name}</p>
+        <p className="mt-1.5 text-xs text-mm-text-muted">{formatLabel}</p>
       </div>
-      <ArrowRight className="size-4 shrink-0 text-mm-text-faint transition-colors group-hover:text-mm-gold" />
+
+      <div className="mt-6 flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.12em] text-mm-text-faint transition-colors group-hover:text-mm-gold">
+        Ver zona
+        <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+      </div>
     </Link>
   )
 }

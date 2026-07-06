@@ -4,6 +4,7 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { ZoneSection } from "@/components/mid-master/ZoneSection"
 import { KnockoutBracket } from "@/components/mid-master/KnockoutBracket"
+import { MmReveal } from "@/components/mid-master/MmReveal"
 import { getMmCategoryForPublic, getMmCategories } from "@/lib/data/mid-master"
 
 export const dynamic = "force-dynamic"
@@ -69,12 +70,16 @@ export default async function CategoryPage({ params }: Props) {
       ) : (
         <>
           <div className="grid gap-6 md:grid-cols-2">
-            <ZoneSection zone={cat.zones[0]} />
-            <ZoneSection zone={cat.zones[1]} />
+            <MmReveal delay={0}>
+              <ZoneSection zone={cat.zones[0]} />
+            </MmReveal>
+            <MmReveal delay={100}>
+              <ZoneSection zone={cat.zones[1]} />
+            </MmReveal>
           </div>
-          <div className="mt-8">
+          <MmReveal delay={0} className="mt-8">
             <KnockoutBracket knockout={cat.knockout} />
-          </div>
+          </MmReveal>
         </>
       )}
     </div>
