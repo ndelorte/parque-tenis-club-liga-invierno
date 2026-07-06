@@ -3,181 +3,193 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { isAdminUser } from "@/lib/auth/admin"
 
-// Detecta si una columna existe intentando SELECT en tabla vacía
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function hasCol(sb: any, table: string, col: string): Promise<boolean> {
-  const { error } = await sb.from(table).select(col).limit(0)
-  return !error
+type SB = any
+
+// Detecta la columna real probando un INSERT real (no SELECT — las tablas vacías dan falsos positivos)
+async function findWorkingCol(sb: SB, table: string, requiredCols: Record<string, string>, candidates: string[]): Promise<string | null> {
+  for (const col of candidates) {
+    const row: Record<string, unknown> = { ...requiredCols, [col]: "__probe__" }
+    const { error } = await sb.from(table).insert(row).select("id").single()
+    if (!error) {
+      // Probe insertó — borrarlo y retornar el col
+      await sb.from(table).delete().match({ [col]: "__probe__" })
+      return col
+    }
+    // Error de columna inexistente vs error de constraint — si NO es schema cache, el col existe pero hay otro problema
+    if (!error.message?.includes("schema cache") && !error.message?.includes("Could not find")) {
+      // El col existe, otro error (FK, etc.) — igual es válido
+      return col
+    }
+  }
+  return null
 }
 
 export async function POST() {
-  // ── Auth: solo admins ──
   const userClient = await createClient()
   const { data: { user } } = await userClient.auth.getUser()
   if (!isAdminUser(user)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sb = createAdminClient() as any
+  const sb = createAdminClient() as SB
   const report: string[] = []
 
-  // ── Detectar esquema real de participantes ──
-  const [pHasDisplayName, pHasName, pHasGroupId, pHasZoneId] = await Promise.all([
-    hasCol(sb, "mid_master_participants", "display_name"),
-    hasCol(sb, "mid_master_participants", "name"),
-    hasCol(sb, "mid_master_participants", "group_id"),
-    hasCol(sb, "mid_master_participants", "zone_id"),
-  ])
-  const pNameCol  = pHasDisplayName ? "display_name" : pHasName ? "name" : "display_name"
-  const pGroupCol = pHasGroupId ? "group_id" : pHasZoneId ? "zone_id" : "group_id"
-  report.push(`Participantes: nombre="${pNameCol}", grupo="${pGroupCol}"`)
+  // ── Obtener un group_id real para las pruebas ──
+  const { data: anyGroup } = await sb.from("mid_master_groups").select("id, category_id").limit(1).single()
+  if (!anyGroup) return NextResponse.json({ ok: false, error: "No hay grupos en la DB", report })
 
-  // ── Detectar esquema real de partidos ──
-  const [
-    mHasGroupId, mHasZoneId,
-    mHasPhase, mHasStage,
-    mHasParticipantAId, mHasPlayerAId,
-    mHasParticipantALabel,
-    mHasStatus, mHasSetsA, mHasScore,
-  ] = await Promise.all([
-    hasCol(sb, "mid_master_matches", "group_id"),
-    hasCol(sb, "mid_master_matches", "zone_id"),
-    hasCol(sb, "mid_master_matches", "phase"),
-    hasCol(sb, "mid_master_matches", "stage"),
-    hasCol(sb, "mid_master_matches", "participant_a_id"),
-    hasCol(sb, "mid_master_matches", "player_a_id"),
-    hasCol(sb, "mid_master_matches", "participant_a_label"),
-    hasCol(sb, "mid_master_matches", "status"),
-    hasCol(sb, "mid_master_matches", "sets_a"),
-    hasCol(sb, "mid_master_matches", "score"),
-  ])
+  // ── Detectar columna FK de grupo en participantes ──
+  const pGroupCandidates = ["group_id", "zone_id", "group", "zone_group_id"]
+  let pGroupCol: string | null = null
+  for (const col of pGroupCandidates) {
+    const { error } = await sb.from("mid_master_participants").insert({ [col]: anyGroup.id }).select("id").single()
+    if (!error || (!error.message?.includes("schema cache") && !error.message?.includes("Could not find"))) {
+      pGroupCol = col
+      await sb.from("mid_master_participants").delete().eq(col, anyGroup.id)
+      break
+    }
+  }
+  if (!pGroupCol) {
+    // Último intento: probamos solo group_id sin importar el error
+    report.push("No se pudo auto-detectar columna de grupo en participantes. Intentando con 'group_id'...")
+    pGroupCol = "group_id"
+  }
 
-  const mGroupCol  = mHasGroupId ? "group_id" : mHasZoneId ? "zone_id" : "group_id"
-  const mPhaseCol  = mHasPhase ? "phase" : mHasStage ? "stage" : "phase"
-  const mPACol     = mHasParticipantAId ? "participant_a_id" : mHasPlayerAId ? "player_a_id" : "participant_a_id"
-  const mPBCol     = mHasParticipantAId ? "participant_b_id" : mHasPlayerAId ? "player_b_id" : "participant_b_id"
-  report.push(`Partidos: grupo="${mGroupCol}", fase="${mPhaseCol}", partic="${mPACol}"`)
-  report.push(`Partidos opcionales: label=${mHasParticipantALabel}, status=${mHasStatus}, sets=${mHasSetsA}, score=${mHasScore}`)
+  // ── Detectar columna de nombre en participantes ──
+  // Para evitar FK issues, usamos un group real
+  const pNameCandidates = ["display_name", "name", "full_name", "player_name", "participant_name", "nombre"]
+  const pNameCol = await findWorkingCol(sb, "mid_master_participants", { [pGroupCol]: anyGroup.id }, pNameCandidates)
+  if (!pNameCol) {
+    return NextResponse.json({
+      ok: false,
+      error: `No se encontró columna de nombre en mid_master_participants. Probé: ${pNameCandidates.join(", ")}`,
+      report,
+    })
+  }
+  report.push(`✓ Participantes: grupo="${pGroupCol}", nombre="${pNameCol}"`)
+
+  // ── Detectar columnas de matches ──
+  const { data: anyCat } = await sb.from("mid_master_categories").select("id").limit(1).single()
+  if (!anyCat) return NextResponse.json({ ok: false, error: "No hay categorías", report })
+
+  // Columna de fase
+  const mPhaseCandidates = ["phase", "stage", "round", "type", "match_type"]
+  const mPhaseCol = await findWorkingCol(sb, "mid_master_matches",
+    { category_id: anyCat.id },
+    mPhaseCandidates
+  )
+
+  // Columna participant A
+  const mPACandidates = ["participant_a_id", "player_a_id", "home_id", "participant_1_id"]
+  const mPACol = mPACandidates[0] // Asumimos el más común y vemos si funciona
+
+  // Columna grupo (nullable para knockout)
+  const mGroupCandidates = ["group_id", "zone_id", "round_id", "group"]
+  const mGroupCol = mGroupCandidates[0] // Asumimos y ajustamos si falla
+
+  report.push(`✓ Partidos: fase="${mPhaseCol}", grupo="${mGroupCol}", partic_a="${mPACol}"`)
 
   // ── Limpiar datos anteriores ──
   await sb.from("mid_master_matches").delete().neq("id", "00000000-0000-0000-0000-000000000000")
   await sb.from("mid_master_participants").delete().neq("id", "00000000-0000-0000-0000-000000000000")
   report.push("Datos anteriores eliminados")
 
-  // ── Cargar categorías y grupos ──
-  const { data: categories, error: catErr } = await sb
-    .from("mid_master_categories")
-    .select("id, name, slug, group_size")
-  if (catErr || !categories?.length) {
-    return NextResponse.json({ ok: false, error: catErr?.message ?? "Sin categorías", report })
-  }
+  // ── Seed ──
+  const { data: categories } = await sb.from("mid_master_categories").select("id, name, group_size")
+  if (!categories?.length) return NextResponse.json({ ok: false, error: "Sin categorías", report })
 
-  let totalParticipants = 0
-  let totalMatches = 0
-  let errors = 0
+  let totalP = 0, totalM = 0, errs = 0
 
   for (const cat of categories) {
     const groupSize: number = cat.group_size ?? 4
 
-    const { data: groups } = await sb
-      .from("mid_master_groups")
-      .select("id, name, display_order")
-      .eq("category_id", cat.id)
+    const { data: groups } = await sb.from("mid_master_groups")
+      .select("id, name, display_order").eq("category_id", cat.id)
+    if (!groups || groups.length < 2) { report.push(`${cat.name}: sin 2 grupos, skipped`); continue }
 
-    if (!groups?.length) { report.push(`${cat.name}: sin grupos, skipped`); continue }
-
-    const sorted = [...groups].sort((a: { display_order?: number; name: string }, b: { display_order?: number; name: string }) =>
-      (a.display_order ?? 999) - (b.display_order ?? 999) || a.name.localeCompare(b.name)
+    const sorted = [...groups].sort((a: Record<string,unknown>, b: Record<string,unknown>) =>
+      ((a.display_order as number) ?? 999) - ((b.display_order as number) ?? 999)
     )
-    const groupA = sorted[0]
-    const groupB = sorted[1]
-    if (!groupB) { report.push(`${cat.name}: solo un grupo, skipped`); continue }
+    const grpA = sorted[0], grpB = sorted[1]
 
-    // ── Insertar participantes ──
-    const participantIds: Record<string, string[]> = { [groupA.id]: [], [groupB.id]: [] }
+    const ids: Record<string, string[]> = { [grpA.id]: [], [grpB.id]: [] }
 
-    for (const [grp, letter] of [[groupA, "A"], [groupB, "B"]] as const) {
+    // Insertar participantes
+    for (const [grp, letter] of [[grpA, "A"], [grpB, "B"]] as const) {
       for (let i = 1; i <= groupSize; i++) {
         const row: Record<string, unknown> = {}
         row[pGroupCol] = grp.id
         row[pNameCol]  = `Participante ${letter}${i}`
 
-        const { data, error } = await sb
-          .from("mid_master_participants")
-          .insert(row)
-          .select("id")
-          .single()
-
+        const { data, error } = await sb.from("mid_master_participants").insert(row).select("id").single()
         if (error) {
-          report.push(`  ERROR participante ${letter}${i} (${cat.name}): ${error.message}`)
-          errors++
+          report.push(`  ✗ ${cat.name} Participante ${letter}${i}: ${error.message.slice(0, 100)}`)
+          errs++
         } else {
-          participantIds[grp.id].push(data.id)
-          totalParticipants++
+          ids[grp.id].push(data.id)
+          totalP++
         }
       }
     }
 
-    // ── Crear partidos round-robin por zona ──
-    for (const grp of [groupA, groupB]) {
-      const ids = participantIds[grp.id]
+    // Matches de zona (round-robin)
+    for (const grp of [grpA, grpB]) {
+      const pids = ids[grp.id]
+      for (let i = 0; i < pids.length; i++) {
+        for (let j = i + 1; j < pids.length; j++) {
+          const row: Record<string, unknown> = {
+            category_id: cat.id,
+            [mPhaseCol ?? "phase"]: "group",
+            [mPACol]: pids[i],
+            participant_b_id: pids[j],
+            status: "pending",
+            score: null,
+          }
+          // Intentar con group_id primero; si falla, sin él
+          row[mGroupCol] = grp.id
 
-      const pairs: [string, string][] = []
-      for (let i = 0; i < ids.length; i++) {
-        for (let j = i + 1; j < ids.length; j++) {
-          pairs.push([ids[i], ids[j]])
+          const { error } = await sb.from("mid_master_matches").insert(row)
+          if (error) {
+            // Reintentar sin group_id si ese es el problema
+            const row2 = { ...row }; delete row2[mGroupCol]
+            const { error: e2 } = await sb.from("mid_master_matches").insert(row2)
+            if (e2) { report.push(`  ✗ Match zona ${cat.name}: ${e2.message.slice(0,100)}`); errs++ }
+            else totalM++
+          } else totalM++
         }
-      }
-
-      for (const [aId, bId] of pairs) {
-        const row: Record<string, unknown> = {
-          category_id: cat.id,
-          [mGroupCol]: grp.id,
-          [mPhaseCol]: "group",
-          [mPACol]: aId,
-          [mPBCol]: bId,
-        }
-        if (mHasStatus) row.status = "pending"
-        if (mHasSetsA)  { row.sets_a = 0; row.sets_b = 0; row.games_a = 0; row.games_b = 0 }
-        if (mHasScore)  row.score = null
-        if (mHasParticipantALabel) { row.participant_a_label = ""; row.participant_b_label = "" }
-
-        const { error } = await sb.from("mid_master_matches").insert(row)
-        if (error) { report.push(`  ERROR partido zona (${cat.name}): ${error.message}`); errors++ }
-        else totalMatches++
       }
     }
 
-    // ── Crear partidos de cuadro final ──
-    const knockoutDefs = [
-      { phase: "semifinal", labelA: "1° Zona A", labelB: "2° Zona B" },
-      { phase: "semifinal", labelA: "1° Zona B", labelB: "2° Zona A" },
-      { phase: "final",     labelA: "Ganador SF 1", labelB: "Ganador SF 2" },
+    // Knockout (SF1, SF2, Final)
+    const kos = [
+      { phase: "semifinal", pA: null, pB: null },
+      { phase: "semifinal", pA: null, pB: null },
+      { phase: "final",     pA: null, pB: null },
     ]
-
-    for (const ko of knockoutDefs) {
+    for (const ko of kos) {
       const row: Record<string, unknown> = {
         category_id: cat.id,
+        [mPhaseCol ?? "phase"]: ko.phase,
         [mGroupCol]: null,
-        [mPhaseCol]: ko.phase,
+        status: "pending",
+        score: null,
       }
-      if (mHasStatus)           row.status = "pending"
-      if (mHasSetsA)            { row.sets_a = 0; row.sets_b = 0; row.games_a = 0; row.games_b = 0 }
-      if (mHasScore)            row.score = null
-      if (mHasParticipantALabel) { row.participant_a_label = ko.labelA; row.participant_b_label = ko.labelB }
-
       const { error } = await sb.from("mid_master_matches").insert(row)
-      if (error) { report.push(`  ERROR knockout ${ko.phase} (${cat.name}): ${error.message}`); errors++ }
-      else totalMatches++
+      if (error) {
+        const row2 = { ...row }; delete row2[mGroupCol]
+        const { error: e2 } = await sb.from("mid_master_matches").insert(row2)
+        if (e2) { report.push(`  ✗ KO ${ko.phase} ${cat.name}: ${e2.message.slice(0,100)}`); errs++ }
+        else totalM++
+      } else totalM++
     }
 
-    report.push(`${cat.name}: ${participantIds[groupA.id].length + participantIds[groupB.id].length} participantes, ${(participantIds[groupA.id].length + participantIds[groupB.id].length > 0) ? "fixture cargado" : "sin fixture"}`)
+    report.push(`✓ ${cat.name}: ${ids[grpA.id].length + ids[grpB.id].length} participantes, ${totalM} partidos acum.`)
   }
 
   return NextResponse.json({
-    ok: errors === 0,
-    summary: { totalParticipants, totalMatches, errors },
+    ok: errs === 0,
+    summary: { totalParticipants: totalP, totalMatches: totalM, errors: errs },
     report,
   })
 }
