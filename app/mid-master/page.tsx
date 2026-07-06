@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { MidMasterHero } from "@/components/mid-master/MidMasterHero"
 import { CategoryGrid } from "@/components/mid-master/CategoryGrid"
+import { MmSponsorsBanner } from "@/components/mid-master/MmSponsorsBanner"
 import { getMmCategoriesForPublic } from "@/lib/data/mid-master"
 
 export const dynamic = "force-dynamic"
@@ -18,6 +19,7 @@ export default async function MidMasterPage() {
     <>
       <MidMasterHero year={2026} />
       <CategoryGrid categories={categories} />
+      <MmSponsorsBanner />
     </>
   )
 }
