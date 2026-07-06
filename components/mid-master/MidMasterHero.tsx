@@ -1,3 +1,4 @@
+import Image from "next/image"
 import Link from "next/link"
 import { ArrowDown } from "lucide-react"
 
@@ -15,9 +16,15 @@ export function MidMasterHero({ year = 2026 }: Props) {
       }}
     >
       <div className="relative mx-auto flex min-h-[88vh] max-w-4xl flex-col items-center justify-center px-6 py-24 text-center sm:py-32">
-        {/* Logo placeholder — reemplazar con <Image> cuando exista /public/images/mid-master/logo.png */}
-        <div className="mb-8 flex size-20 items-center justify-center border border-mm-gold/20 bg-mm-surface sm:size-24">
-          <span className="font-mm-display text-2xl font-bold text-mm-gold">MM</span>
+        <div className="mb-8">
+          <Image
+            src="/images/logopngcdp.png"
+            alt="Circuito de Parque"
+            width={96}
+            height={96}
+            className="size-20 object-contain sm:size-24"
+            priority
+          />
         </div>
 
         <p className="mb-6 text-[11px] font-medium uppercase tracking-[0.22em] text-mm-text-muted">
