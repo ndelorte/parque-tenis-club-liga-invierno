@@ -16,13 +16,13 @@ export function MidMasterHero({ year = 2026 }: Props) {
       }}
     >
       <div className="relative mx-auto flex min-h-[88vh] max-w-4xl flex-col items-center justify-center px-6 py-24 text-center sm:py-32">
-        <div className="mb-8">
+        <div className="mb-4">
           <Image
             src="/images/logopngcdp.png"
             alt="Circuito de Parque"
-            width={240}
-            height={240}
-            className="size-40 object-contain sm:size-56"
+            width={400}
+            height={400}
+            className="size-64 object-contain sm:size-80"
             priority
           />
         </div>
