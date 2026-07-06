@@ -13,7 +13,7 @@ export function ZoneAdmin({ data }: Props) {
   // Compute standings on-the-fly
   const standings = calculateZoneStandings(participants, matches)
 
-  const completedCount = matches.filter((m) => m.status === "completed").length
+  const completedCount = matches.filter((m) => m.status === "played").length
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">

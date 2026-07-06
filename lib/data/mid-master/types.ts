@@ -43,7 +43,7 @@ export interface DbMmMatch {
   scheduled_date: string | null
   scheduled_time: string | null
   score: string | null
-  status: string             // "pending" | "scheduled" | "completed"
+  status: string             // "pending" | "scheduled" | "played" | "walkover"
   observations?: string | null
   created_at?: string
   updated_at?: string

@@ -1,6 +1,6 @@
-import type { MmCategory, MmEdition, MmZone } from "@/lib/mid-master/types"
+﻿import type { MmCategory, MmEdition, MmZone } from "@/lib/mid-master/types"
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function pending(
   a: string,
@@ -30,13 +30,13 @@ function played(
     id,
     participantAId: a,
     participantBId: b,
-    status: "completed" as const,
+    status: "played" as const,
     score,
     winnerId,
   }
 }
 
-// ─── Single Caballeros Primera ────────────────────────────────────────────────
+// â”€â”€â”€ Single Caballeros Primera â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const cabPrimera: MmCategory = {
   id: "cab-primera",
@@ -50,9 +50,9 @@ const cabPrimera: MmCategory = {
       id: "cab-primera-za",
       name: "Zona A",
       participants: [
-        { id: "cp-a1", displayName: "Martín Agüero" },
+        { id: "cp-a1", displayName: "MartÃ­n AgÃ¼ero" },
         { id: "cp-a2", displayName: "Diego Ferreyra" },
-        { id: "cp-a3", displayName: "Pablo Guzmán" },
+        { id: "cp-a3", displayName: "Pablo GuzmÃ¡n" },
         { id: "cp-a4", displayName: "Lucas Herrera" },
       ],
       matches: [
@@ -75,8 +75,8 @@ const cabPrimera: MmCategory = {
       name: "Zona B",
       participants: [
         { id: "cp-b1", displayName: "Roberto Silva" },
-        { id: "cp-b2", displayName: "Carlos Méndez" },
-        { id: "cp-b3", displayName: "Sebastián Torres" },
+        { id: "cp-b2", displayName: "Carlos MÃ©ndez" },
+        { id: "cp-b3", displayName: "SebastiÃ¡n Torres" },
         { id: "cp-b4", displayName: "Federico Ramos" },
       ],
       matches: [
@@ -96,13 +96,13 @@ const cabPrimera: MmCategory = {
     },
   ],
   knockout: {
-    semifinal1: { id: "cp-sf1", phase: "semifinal", label: "Semifinal 1", participantALabel: "1° Zona A", participantBLabel: "2° Zona B", status: "pending" },
-    semifinal2: { id: "cp-sf2", phase: "semifinal", label: "Semifinal 2", participantALabel: "1° Zona B", participantBLabel: "2° Zona A", status: "pending" },
+    semifinal1: { id: "cp-sf1", phase: "semifinal", label: "Semifinal 1", participantALabel: "1Â° Zona A", participantBLabel: "2Â° Zona B", status: "pending" },
+    semifinal2: { id: "cp-sf2", phase: "semifinal", label: "Semifinal 2", participantALabel: "1Â° Zona B", participantBLabel: "2Â° Zona A", status: "pending" },
     final: { id: "cp-f", phase: "final", label: "Final", participantALabel: "Ganador SF 1", participantBLabel: "Ganador SF 2", status: "pending" },
   },
 }
 
-// ─── Single Caballeros Intermedia ─────────────────────────────────────────────
+// â”€â”€â”€ Single Caballeros Intermedia â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const cabIntermedia: MmCategory = {
   id: "cab-intermedia",
@@ -116,10 +116,10 @@ const cabIntermedia: MmCategory = {
       id: "ci-za",
       name: "Zona A",
       participants: [
-        { id: "ci-a1", displayName: "Nicolás Paredes" },
-        { id: "ci-a2", displayName: "Tomás Acosta" },
+        { id: "ci-a1", displayName: "NicolÃ¡s Paredes" },
+        { id: "ci-a2", displayName: "TomÃ¡s Acosta" },
         { id: "ci-a3", displayName: "Leandro Vargas" },
-        { id: "ci-a4", displayName: "Matías Soria" },
+        { id: "ci-a4", displayName: "MatÃ­as Soria" },
       ],
       matches: [
         pending("ci-a1", "ci-a2", "ci-za-m1", "2026-07-12", "20:00"),
@@ -140,9 +140,9 @@ const cabIntermedia: MmCategory = {
       id: "ci-zb",
       name: "Zona B",
       participants: [
-        { id: "ci-b1", displayName: "Ramiro Díaz" },
+        { id: "ci-b1", displayName: "Ramiro DÃ­az" },
         { id: "ci-b2", displayName: "Facundo Romero" },
-        { id: "ci-b3", displayName: "Ignacio Suárez" },
+        { id: "ci-b3", displayName: "Ignacio SuÃ¡rez" },
         { id: "ci-b4", displayName: "Ezequiel Castro" },
       ],
       matches: [
@@ -162,13 +162,13 @@ const cabIntermedia: MmCategory = {
     },
   ],
   knockout: {
-    semifinal1: { id: "ci-sf1", phase: "semifinal", label: "Semifinal 1", participantALabel: "1° Zona A", participantBLabel: "2° Zona B", status: "pending" },
-    semifinal2: { id: "ci-sf2", phase: "semifinal", label: "Semifinal 2", participantALabel: "1° Zona B", participantBLabel: "2° Zona A", status: "pending" },
+    semifinal1: { id: "ci-sf1", phase: "semifinal", label: "Semifinal 1", participantALabel: "1Â° Zona A", participantBLabel: "2Â° Zona B", status: "pending" },
+    semifinal2: { id: "ci-sf2", phase: "semifinal", label: "Semifinal 2", participantALabel: "1Â° Zona B", participantBLabel: "2Â° Zona A", status: "pending" },
     final: { id: "ci-f", phase: "final", label: "Final", participantALabel: "Ganador SF 1", participantBLabel: "Ganador SF 2", status: "pending" },
   },
 }
 
-// ─── Single Caballeros Segunda ────────────────────────────────────────────────
+// â”€â”€â”€ Single Caballeros Segunda â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function emptyZone(
   id: string,
@@ -210,8 +210,8 @@ function emptyZone(
 
 function emptyKnockout(prefix: string): MmCategory["knockout"] {
   return {
-    semifinal1: { id: `${prefix}-sf1`, phase: "semifinal", label: "Semifinal 1", participantALabel: "1° Zona A", participantBLabel: "2° Zona B", status: "pending" },
-    semifinal2: { id: `${prefix}-sf2`, phase: "semifinal", label: "Semifinal 2", participantALabel: "1° Zona B", participantBLabel: "2° Zona A", status: "pending" },
+    semifinal1: { id: `${prefix}-sf1`, phase: "semifinal", label: "Semifinal 1", participantALabel: "1Â° Zona A", participantBLabel: "2Â° Zona B", status: "pending" },
+    semifinal2: { id: `${prefix}-sf2`, phase: "semifinal", label: "Semifinal 2", participantALabel: "1Â° Zona B", participantBLabel: "2Â° Zona A", status: "pending" },
     final: { id: `${prefix}-f`, phase: "final", label: "Final", participantALabel: "Ganador SF 1", participantBLabel: "Ganador SF 2", status: "pending" },
   }
 }
@@ -234,22 +234,22 @@ const cabSegunda: MmCategory = {
   zoneSize: 4,
   zones: [
     emptyZone("cs-za", "Zona A", [
-      { id: "cs-a1", displayName: "Juan Álvarez" },
-      { id: "cs-a2", displayName: "Marcos Benítez" },
+      { id: "cs-a1", displayName: "Juan Ãlvarez" },
+      { id: "cs-a2", displayName: "Marcos BenÃ­tez" },
       { id: "cs-a3", displayName: "Santiago Delgado" },
       { id: "cs-a4", displayName: "Rodrigo Espinoza" },
     ], DATES_A),
     emptyZone("cs-zb", "Zona B", [
-      { id: "cs-b1", displayName: "Damián Fuentes" },
+      { id: "cs-b1", displayName: "DamiÃ¡n Fuentes" },
       { id: "cs-b2", displayName: "Pablo Godoy" },
-      { id: "cs-b3", displayName: "Mateo Ibáñez" },
-      { id: "cs-b4", displayName: "Agustín Jiménez" },
+      { id: "cs-b3", displayName: "Mateo IbÃ¡Ã±ez" },
+      { id: "cs-b4", displayName: "AgustÃ­n JimÃ©nez" },
     ], DATES_A),
   ],
   knockout: emptyKnockout("cs"),
 }
 
-// ─── Single Caballeros Tercera ────────────────────────────────────────────────
+// â”€â”€â”€ Single Caballeros Tercera â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const cabTercera: MmCategory = {
   id: "cab-tercera",
@@ -261,7 +261,7 @@ const cabTercera: MmCategory = {
   zones: [
     emptyZone("ct-za", "Zona A", [
       { id: "ct-a1", displayName: "Esteban Leal" },
-      { id: "ct-a2", displayName: "Rubén Molina" },
+      { id: "ct-a2", displayName: "RubÃ©n Molina" },
       { id: "ct-a3", displayName: "Claudio Navarro" },
       { id: "ct-a4", displayName: "Horacio Ojeda" },
     ], DATES_A),
@@ -269,13 +269,13 @@ const cabTercera: MmCategory = {
       { id: "ct-b1", displayName: "Marcelo Ponce" },
       { id: "ct-b2", displayName: "Osvaldo Quiroga" },
       { id: "ct-b3", displayName: "Bernardo Reyes" },
-      { id: "ct-b4", displayName: "Adrián Serrano" },
+      { id: "ct-b4", displayName: "AdriÃ¡n Serrano" },
     ], DATES_A),
   ],
   knockout: emptyKnockout("ct"),
 }
 
-// ─── Single Caballeros +50 (con resultados completos) ─────────────────────────
+// â”€â”€â”€ Single Caballeros +50 (con resultados completos) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const cab50: MmCategory = {
   id: "cab-50",
@@ -290,7 +290,7 @@ const cab50: MmCategory = {
       name: "Zona A",
       participants: [
         { id: "c50-a1", displayName: "Gustavo Pereyra" },
-        { id: "c50-a2", displayName: "Hernán Contreras" },
+        { id: "c50-a2", displayName: "HernÃ¡n Contreras" },
         { id: "c50-a3", displayName: "Miguel Castillo" },
         { id: "c50-a4", displayName: "Jorge Flores" },
       ],
@@ -313,10 +313,10 @@ const cab50: MmCategory = {
       id: "c50-zb",
       name: "Zona B",
       participants: [
-        { id: "c50-b1", displayName: "Daniel Muñoz" },
+        { id: "c50-b1", displayName: "Daniel MuÃ±oz" },
         { id: "c50-b2", displayName: "Cristian Ortiz" },
-        { id: "c50-b3", displayName: "Eduardo Ríos" },
-        { id: "c50-b4", displayName: "Andrés Vega" },
+        { id: "c50-b3", displayName: "Eduardo RÃ­os" },
+        { id: "c50-b4", displayName: "AndrÃ©s Vega" },
       ],
       matches: [
         played("c50-b1", "c50-b2", "c50-zb-m1", "7-5 6-3", "c50-b1"),
@@ -353,8 +353,8 @@ const cab50: MmCategory = {
       label: "Semifinal 2",
       participantAId: "c50-b1",
       participantBId: "c50-a2",
-      participantALabel: "Daniel Muñoz",
-      participantBLabel: "Hernán Contreras",
+      participantALabel: "Daniel MuÃ±oz",
+      participantBLabel: "HernÃ¡n Contreras",
       status: "scheduled",
       scheduledDate: "2026-07-26",
       scheduledTime: "16:00",
@@ -370,7 +370,7 @@ const cab50: MmCategory = {
   },
 }
 
-// ─── Single Damas Segunda ─────────────────────────────────────────────────────
+// â”€â”€â”€ Single Damas Segunda â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const DATES_DAMAS = [
   { date: "2026-07-13", time: "10:00" },
@@ -390,9 +390,9 @@ const damasSegunda: MmCategory = {
       id: "ds-za",
       name: "Zona A",
       participants: [
-        { id: "ds-a1", displayName: "Laura Fernández" },
+        { id: "ds-a1", displayName: "Laura FernÃ¡ndez" },
         { id: "ds-a2", displayName: "Ana Bergara" },
-        { id: "ds-a3", displayName: "Sofía Peralta" },
+        { id: "ds-a3", displayName: "SofÃ­a Peralta" },
       ],
       matches: [
         played("ds-a1", "ds-a2", "ds-za-m1", "6-4 6-3", "ds-a1"),
@@ -407,14 +407,14 @@ const damasSegunda: MmCategory = {
     },
     emptyZone("ds-zb", "Zona B", [
       { id: "ds-b1", displayName: "Valeria Sosa" },
-      { id: "ds-b2", displayName: "Marina Gómez" },
+      { id: "ds-b2", displayName: "Marina GÃ³mez" },
       { id: "ds-b3", displayName: "Luciana Paz" },
     ], DATES_DAMAS),
   ],
   knockout: emptyKnockout("ds"),
 }
 
-// ─── Doble Caballeros Segunda ─────────────────────────────────────────────────
+// â”€â”€â”€ Doble Caballeros Segunda â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const dobleCabSegunda: MmCategory = {
   id: "doble-cab-segunda",
@@ -425,22 +425,22 @@ const dobleCabSegunda: MmCategory = {
   zoneSize: 4,
   zones: [
     emptyZone("dcs-za", "Zona A", [
-      { id: "dcs-a1", displayName: "Agüero / Ferreyra" },
-      { id: "dcs-a2", displayName: "Silva / Méndez" },
+      { id: "dcs-a1", displayName: "AgÃ¼ero / Ferreyra" },
+      { id: "dcs-a2", displayName: "Silva / MÃ©ndez" },
       { id: "dcs-a3", displayName: "Torres / Ramos" },
-      { id: "dcs-a4", displayName: "Guzmán / Herrera" },
+      { id: "dcs-a4", displayName: "GuzmÃ¡n / Herrera" },
     ], DATES_A),
     emptyZone("dcs-zb", "Zona B", [
       { id: "dcs-b1", displayName: "Pereyra / Contreras" },
       { id: "dcs-b2", displayName: "Castillo / Flores" },
-      { id: "dcs-b3", displayName: "Muñoz / Ortiz" },
-      { id: "dcs-b4", displayName: "Ríos / Vega" },
+      { id: "dcs-b3", displayName: "MuÃ±oz / Ortiz" },
+      { id: "dcs-b4", displayName: "RÃ­os / Vega" },
     ], DATES_A),
   ],
   knockout: emptyKnockout("dcs"),
 }
 
-// ─── Doble Mixto Segunda ──────────────────────────────────────────────────────
+// â”€â”€â”€ Doble Mixto Segunda â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const dobleMixtoSegunda: MmCategory = {
   id: "doble-mixto-segunda",
@@ -451,14 +451,14 @@ const dobleMixtoSegunda: MmCategory = {
   zoneSize: 4,
   zones: [
     emptyZone("dms-za", "Zona A", [
-      { id: "dms-a1", displayName: "Agüero / Fernández" },
+      { id: "dms-a1", displayName: "AgÃ¼ero / FernÃ¡ndez" },
       { id: "dms-a2", displayName: "Ferreyra / Bergara" },
-      { id: "dms-a3", displayName: "Guzmán / Peralta" },
+      { id: "dms-a3", displayName: "GuzmÃ¡n / Peralta" },
       { id: "dms-a4", displayName: "Herrera / Sosa" },
     ], DATES_A),
     emptyZone("dms-zb", "Zona B", [
-      { id: "dms-b1", displayName: "Silva / Gómez" },
-      { id: "dms-b2", displayName: "Méndez / Paz" },
+      { id: "dms-b1", displayName: "Silva / GÃ³mez" },
+      { id: "dms-b2", displayName: "MÃ©ndez / Paz" },
       { id: "dms-b3", displayName: "Torres / Vargas" },
       { id: "dms-b4", displayName: "Ramos / Acosta" },
     ], DATES_A),
@@ -466,7 +466,7 @@ const dobleMixtoSegunda: MmCategory = {
   knockout: emptyKnockout("dms"),
 }
 
-// ─── Edition export ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Edition export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const MID_MASTER_EDITION: MmEdition = {
   id: "mm-2026",

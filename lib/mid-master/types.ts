@@ -1,4 +1,4 @@
-export type MatchStatus = "pending" | "scheduled" | "completed"
+export type MatchStatus = "pending" | "scheduled" | "played" | "walkover"
 export type CategoryType = "singles" | "doubles"
 
 export interface MmParticipant {

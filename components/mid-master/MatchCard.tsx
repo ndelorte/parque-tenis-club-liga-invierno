@@ -18,7 +18,7 @@ function getParticipant(participants: MmParticipant[], id: string): string {
 }
 
 function StatusBadge({ status }: { status: MmMatch["status"] }) {
-  if (status === "completed") {
+  if (status === "played" || status === "walkover") {
     return (
       <span className="rounded-none bg-mm-green-deep px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-mm-gold-light">
         Jugado
@@ -42,7 +42,7 @@ function StatusBadge({ status }: { status: MmMatch["status"] }) {
 export function MatchCard({ match, participants }: Props) {
   const nameA = getParticipant(participants, match.participantAId)
   const nameB = getParticipant(participants, match.participantBId)
-  const isCompleted = match.status === "completed"
+  const isCompleted = match.status === "played"
   const winnerA = isCompleted && match.winnerId === match.participantAId
   const winnerB = isCompleted && match.winnerId === match.participantBId
 

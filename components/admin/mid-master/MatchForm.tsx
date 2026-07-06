@@ -40,7 +40,7 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
 
   const nameA = participantName(participants, match.participant_1_id)
   const nameB = participantName(participants, match.participant_2_id)
-  const isCompleted = match.status === "completed"
+  const isCompleted = match.status === "played"
 
   async function handleSchedule() {
     setLoading(true); setError(""); setSuccess("")

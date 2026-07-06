@@ -11,7 +11,7 @@ interface Props {
 export function KnockoutAdmin({ knockoutMatches, participants, categoryId }: Props) {
   const sfMatches = knockoutMatches.filter((m) => m.phase === "semifinal")
   const finalMatches = knockoutMatches.filter((m) => m.phase === "final")
-  const championMatch = finalMatches.find((m) => m.status === "completed" && m.winner_participant_id)
+  const championMatch = finalMatches.find((m) => m.status === "played" && m.winner_participant_id)
 
   const hasSfParticipants = sfMatches.some((m) => m.participant_1_id && m.participant_2_id)
 

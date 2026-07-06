@@ -44,7 +44,7 @@ export function calculateZoneStandings(
 
   const completedMatches = groupMatches.filter(
     (m) =>
-      m.status === "completed" &&
+      m.status === "played" &&
       m.participant_1_id &&
       m.participant_2_id &&
       m.winner_participant_id,

@@ -78,7 +78,7 @@ export async function updateMmMatchResult(
 
   const { error } = await db()
     .from("mid_master_matches")
-    .update({ score, winner_participant_id: winnerId, status: "completed" })
+    .update({ score, winner_participant_id: winnerId, status: "played" })
     .eq("id", matchId)
 
   if (error) return { ok: false, error: `Error al guardar el resultado: ${error.message}` }

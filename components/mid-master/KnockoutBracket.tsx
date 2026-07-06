@@ -47,8 +47,8 @@ function BracketColumn({
   match: MmKnockoutMatch
   center?: boolean
 }) {
-  const winnerA = match.status === "completed" && match.winnerId === match.participantAId
-  const winnerB = match.status === "completed" && match.winnerId === match.participantBId
+  const winnerA = match.status === "played" && match.winnerId === match.participantAId
+  const winnerB = match.status === "played" && match.winnerId === match.participantBId
   const isFinal = match.phase === "final"
 
   return (
@@ -96,7 +96,7 @@ function BracketColumn({
       )}
 
       {/* Status badge */}
-      {!match.scheduledDate && match.status !== "completed" && (
+      {!match.scheduledDate && match.status !== "played" && match.status !== "walkover" && (
         <p className="mt-3 text-[11px] text-mm-text-faint">
           {isFinal ? "Se define al final de las semifinales" : "Por definir"}
         </p>
