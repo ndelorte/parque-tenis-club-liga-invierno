@@ -4,7 +4,7 @@ import { ArrowRight, LogOut, Trophy, ExternalLink } from "lucide-react"
 import { signOutMaster } from "@/app/actions/mid-master"
 import { getMmCategories } from "@/lib/data/mid-master"
 import type { DbMmCategory } from "@/lib/data/mid-master/types"
-import { getZoneSize } from "@/lib/data/mid-master/types"
+import { getZoneSize, normalizeType } from "@/lib/data/mid-master/types"
 
 export const metadata: Metadata = {
   title: "Panel Mid Master | Parque Tenis Club",
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic"
 
 function CategoryCard({ cat }: { cat: DbMmCategory }) {
-  const typeLabel = cat.type === "singles" ? "Singles" : "Dobles"
+  const typeLabel = normalizeType(cat.type) === "singles" ? "Singles" : "Dobles"
   const zoneSize = getZoneSize(cat)
   return (
     <Link
@@ -33,8 +33,8 @@ function CategoryCard({ cat }: { cat: DbMmCategory }) {
 
 export default async function PanelMasterPage() {
   const categories = await getMmCategories()
-  const singles = categories.filter((c) => c.type === "singles")
-  const doubles = categories.filter((c) => c.type === "doubles")
+  const singles = categories.filter((c) => normalizeType(c.type) === "singles")
+  const doubles = categories.filter((c) => normalizeType(c.type) === "doubles")
 
   return (
     <div className="min-h-dvh bg-mm-bg text-mm-text">

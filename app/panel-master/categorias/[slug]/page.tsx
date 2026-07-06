@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowLeft, RefreshCw } from "lucide-react"
 import { getMmCategoryAdminData } from "@/lib/data/mid-master"
+import { normalizeType } from "@/lib/data/mid-master/types"
 import { ZoneAdmin } from "@/components/admin/mid-master/ZoneAdmin"
 import { KnockoutAdmin } from "@/components/admin/mid-master/KnockoutAdmin"
 import { revalidateMmCategory } from "@/app/actions/mid-master"
@@ -57,7 +58,7 @@ export default async function PanelMasterCategoryPage({ params }: Props) {
           </Link>
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-medium uppercase tracking-widest text-mm-text-faint">
-              {category.type === "singles" ? "Singles" : "Dobles"}
+              {normalizeType(category.type) === "singles" ? "Singles" : "Dobles"}
             </p>
             <p className="truncate font-semibold text-mm-text">{category.name}</p>
           </div>
