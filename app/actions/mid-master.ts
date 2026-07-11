@@ -125,9 +125,21 @@ export async function addMmParticipant(
 
   const displayOrder = (existing?.length ?? 0) + 1
 
+  const accentMap: Record<string, string> = {
+    a: 'a', e: 'e', i: 'i', o: 'o', u: 'u', n: 'n',
+    A: 'a', E: 'e', I: 'i', O: 'o', U: 'u', N: 'n',
+  }
+  const slug = Array.from(name)
+    .map((c) => accentMap[c.normalize('NFD')[0]] ?? c)
+    .join('')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    + '-' + Date.now()
+
   const { data: newP, error: insertError } = await supabase
     .from("mid_master_participants")
-    .insert({ category_id: categoryId, name, group_name: groupName, display_order: displayOrder })
+    .insert({ category_id: categoryId, name, slug, group_name: groupName, display_order: displayOrder })
     .select("id")
     .single()
 
