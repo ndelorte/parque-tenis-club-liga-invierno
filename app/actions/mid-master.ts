@@ -131,7 +131,7 @@ export async function addMmParticipant(
     .select("id")
     .single()
 
-  if (insertError || !newP) return { ok: false, error: "Error al agregar la jugadora." }
+  if (insertError || !newP) return { ok: false, error: `Error al agregar la jugadora: ${insertError?.message ?? "sin datos"}` }
 
   if (existing?.length > 0) {
     const matchInserts = (existing as { id: string }[]).map((p) => ({
@@ -144,7 +144,7 @@ export async function addMmParticipant(
     }))
 
     const { error: matchError } = await supabase.from("mid_master_matches").insert(matchInserts)
-    if (matchError) return { ok: false, error: "Jugadora agregada pero error al crear partidos." }
+    if (matchError) return { ok: false, error: `Error al crear partidos: ${matchError.message}` }
   }
 
   revalidatePath("/panel-master")
