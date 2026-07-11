@@ -104,7 +104,7 @@ function adaptMatch(m: AnyRow): MmMatch {
     participantBId: m.participant_2_id ?? "",
     status: getMatchStatus(m) as MatchStatus,
     scheduledDate: m.scheduled_date ?? undefined,
-    scheduledTime: m.scheduled_time ?? undefined,
+    scheduledTime: m.scheduled_time ? m.scheduled_time.slice(0, 5) : undefined,
     score: m.score ?? undefined,
     winnerId: m.winner_participant_id ?? undefined,
   }
@@ -174,7 +174,7 @@ function adaptKnockout(knockoutMatches: AnyRow[], allParticipants: AnyRow[]): Mm
       participantBLabel: (pB && pB !== "—" ? pB : null) ?? "Por definir",
       status: getMatchStatus(m) as MatchStatus,
       scheduledDate: m.scheduled_date ?? undefined,
-      scheduledTime: m.scheduled_time ?? undefined,
+      scheduledTime: m.scheduled_time ? m.scheduled_time.slice(0, 5) : undefined,
       score: m.score ?? undefined,
       winnerId: m.winner_participant_id ?? undefined,
     }
