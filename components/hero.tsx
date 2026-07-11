@@ -1,5 +1,5 @@
 import Image from "next/image"
-import { MessageCircle, Trophy, ArrowRight } from "lucide-react"
+import { MessageCircle, Trophy, Star, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CLUB, waLink } from "@/lib/site"
 
@@ -55,6 +55,18 @@ export function Hero() {
             <a href="/liga-invierno">
               <Trophy className="size-5" />
               Liga de Invierno
+              <ArrowRight className="size-4" />
+            </a>
+          </Button>
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
+            className="h-13 border-background/40 bg-background/10 px-7 text-base text-background backdrop-blur-sm hover:bg-background/20 hover:text-background"
+          >
+            <a href="/mid-master">
+              <Star className="size-5" />
+              Mid Master
               <ArrowRight className="size-4" />
             </a>
           </Button>
