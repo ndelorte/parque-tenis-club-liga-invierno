@@ -102,6 +102,56 @@ export async function clearMmMatchResult(matchId: string): Promise<ActionResult>
   return { ok: true }
 }
 
+// ── Participant: add new ──────────────────────────────────────
+
+export async function addMmParticipant(
+  categoryId: string,
+  groupId: string,
+  groupName: string,
+  displayName: string,
+): Promise<ActionResult> {
+  const name = displayName.trim()
+  if (!name) return { ok: false, error: "El nombre no puede estar vacío." }
+
+  const supabase = db()
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("mid_master_participants")
+    .select("id")
+    .eq("category_id", categoryId)
+    .eq("group_name", groupName)
+
+  if (fetchError) return { ok: false, error: "Error al obtener participantes." }
+
+  const displayOrder = (existing?.length ?? 0) + 1
+
+  const { data: newP, error: insertError } = await supabase
+    .from("mid_master_participants")
+    .insert({ category_id: categoryId, name, group_name: groupName, display_order: displayOrder })
+    .select("id")
+    .single()
+
+  if (insertError || !newP) return { ok: false, error: "Error al agregar la jugadora." }
+
+  if (existing?.length > 0) {
+    const matchInserts = (existing as { id: string }[]).map((p) => ({
+      category_id: categoryId,
+      group_id: groupId,
+      phase: "group",
+      participant_1_id: p.id,
+      participant_2_id: newP.id,
+      status: "pending",
+    }))
+
+    const { error: matchError } = await supabase.from("mid_master_matches").insert(matchInserts)
+    if (matchError) return { ok: false, error: "Jugadora agregada pero error al crear partidos." }
+  }
+
+  revalidatePath("/panel-master")
+  revalidatePath("/mid-master")
+  return { ok: true }
+}
+
 // ── Participant: update name ──────────────────────────────────
 
 export async function updateMmParticipant(

@@ -2,6 +2,7 @@ import type { MmGroupWithData } from "@/lib/data/mid-master/types"
 import { calculateZoneStandings } from "@/lib/mid-master/calculateZoneStandings"
 import { ParticipantForm } from "./ParticipantForm"
 import { MatchForm } from "./MatchForm"
+import { AddParticipantButton } from "./AddParticipantButton"
 
 interface Props {
   data: MmGroupWithData
@@ -37,6 +38,15 @@ export function ZoneAdmin({ data }: Props) {
             {participants.map((p) => (
               <ParticipantForm key={p.id} participant={p} />
             ))}
+          </div>
+        )}
+        {participants.length < 4 && (
+          <div className="mt-3">
+            <AddParticipantButton
+              categoryId={group.category_id}
+              groupId={group.id}
+              groupName={group.name}
+            />
           </div>
         )}
       </div>
