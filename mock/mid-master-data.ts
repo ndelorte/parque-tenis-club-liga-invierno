@@ -376,6 +376,9 @@ const DATES_DAMAS = [
   { date: "2026-07-13", time: "10:00" },
   { date: "2026-07-13", time: "11:30" },
   { date: "2026-07-20", time: "10:00" },
+  { date: "2026-07-20", time: "11:30" },
+  { date: "2026-07-27", time: "10:00" },
+  { date: "2026-07-27", time: "11:30" },
 ]
 
 const damasSegunda: MmCategory = {
@@ -384,7 +387,7 @@ const damasSegunda: MmCategory = {
   name: "Single Damas Segunda",
   shortName: "Damas Segunda",
   type: "singles",
-  zoneSize: 3,
+  zoneSize: 4,
   zones: [
     {
       id: "ds-za",
@@ -393,22 +396,28 @@ const damasSegunda: MmCategory = {
         { id: "ds-a1", displayName: "Laura FernÃ¡ndez" },
         { id: "ds-a2", displayName: "Ana Bergara" },
         { id: "ds-a3", displayName: "SofÃ­a Peralta" },
+        { id: "ds-a4", displayName: "Por definir" },
       ],
       matches: [
         played("ds-a1", "ds-a2", "ds-za-m1", "6-4 6-3", "ds-a1"),
         pending("ds-a1", "ds-a3", "ds-za-m2", "2026-07-20", "10:00"),
         pending("ds-a2", "ds-a3", "ds-za-m3", "2026-07-20", "11:30"),
+        pending("ds-a1", "ds-a4", "ds-za-m4"),
+        pending("ds-a2", "ds-a4", "ds-za-m5"),
+        pending("ds-a3", "ds-a4", "ds-za-m6"),
       ],
       standings: [
         { participantId: "ds-a1", position: 1, played: 1, won: 1, lost: 0, setsWon: 2, setsLost: 0, setsDiff: 2, gamesWon: 12, gamesLost: 7, gamesDiff: 5, advances: true },
         { participantId: "ds-a3", position: 2, played: 0, won: 0, lost: 0, setsWon: 0, setsLost: 0, setsDiff: 0, gamesWon: 0, gamesLost: 0, gamesDiff: 0, advances: true },
         { participantId: "ds-a2", position: 3, played: 1, won: 0, lost: 1, setsWon: 0, setsLost: 2, setsDiff: -2, gamesWon: 7, gamesLost: 12, gamesDiff: -5, advances: false },
+        { participantId: "ds-a4", position: 4, played: 0, won: 0, lost: 0, setsWon: 0, setsLost: 0, setsDiff: 0, gamesWon: 0, gamesLost: 0, gamesDiff: 0, advances: false },
       ],
     },
     emptyZone("ds-zb", "Zona B", [
       { id: "ds-b1", displayName: "Valeria Sosa" },
       { id: "ds-b2", displayName: "Marina GÃ³mez" },
       { id: "ds-b3", displayName: "Luciana Paz" },
+      { id: "ds-b4", displayName: "Por definir" },
     ], DATES_DAMAS),
   ],
   knockout: emptyKnockout("ds"),
