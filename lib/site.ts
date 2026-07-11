@@ -66,7 +66,6 @@ export const ACTIVITIES = [
     waMessage:
       "Hola! Quiero info sobre los torneos y la competencia en Parque Tenis Club.",
     links: [
-      { label: "Liga de Invierno", href: "/liga-invierno" },
       { label: "Mid Master", href: "/mid-master" },
     ],
   },
