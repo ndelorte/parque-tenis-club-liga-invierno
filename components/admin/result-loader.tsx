@@ -10,6 +10,7 @@ import {
   ShieldAlert,
   MapPin,
   Loader2,
+  RefreshCw,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -34,6 +35,7 @@ import {
   type PlayerInfo,
   getRoundsForAdmin,
   saveSeriesResult,
+  recalculateStandingsForCategory,
 } from "@/app/actions/admin"
 
 type CourtForm = {
@@ -95,6 +97,8 @@ export function ResultLoader({ categories }: { categories: CategoryForAdmin[] })
   const [forms, setForms] = useState<Record<string, SeriesForm>>({})
   const [isPending, startTransition] = useTransition()
   const [savingId, setSavingId] = useState<string | null>(null)
+  const [recalculating, setRecalculating] = useState(false)
+  const [recalcMsg, setRecalcMsg] = useState<string | null>(null)
 
   function loadRounds(catId: string) {
     startTransition(async () => {
@@ -166,6 +170,16 @@ export function ResultLoader({ categories }: { categories: CategoryForAdmin[] })
     }
   }
 
+  async function handleRecalculate() {
+    if (!categoryId) return
+    setRecalculating(true)
+    setRecalcMsg(null)
+    const result = await recalculateStandingsForCategory(categoryId)
+    setRecalculating(false)
+    setRecalcMsg(result.success ? "Tabla recalculada correctamente." : `Error: ${result.error}`)
+    setTimeout(() => setRecalcMsg(null), 4000)
+  }
+
   return (
     <div className="space-y-6">
       <Card className="border-t-4 border-t-primary">
@@ -217,6 +231,29 @@ export function ResultLoader({ categories }: { categories: CategoryForAdmin[] })
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex items-center gap-3">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={!categoryId || recalculating}
+          onClick={handleRecalculate}
+          className="gap-1.5"
+        >
+          {recalculating ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <RefreshCw className="size-3.5" />
+          )}
+          Recalcular tabla
+        </Button>
+        {recalcMsg && (
+          <span className={cn("text-sm", recalcMsg.startsWith("Error") ? "text-red-600" : "text-green-700")}>
+            {recalcMsg}
+          </span>
+        )}
+      </div>
 
       {isPending ? (
         <div className="flex items-center justify-center py-8">

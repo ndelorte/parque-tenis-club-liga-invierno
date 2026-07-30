@@ -409,6 +409,16 @@ export async function saveSeriesResult(
         .eq("court_number", court.courtNumber)
         .maybeSingle()
 
+      // Normalizar el score del WO de cancha: si es placeholder "W.O." o vacío,
+      // guardarlo como score real según quién gana (desde perspectiva del local).
+      const normalizedScore = court.isWalkover
+        ? court.winnerTeamId === input.homeTeamId
+          ? "6-0 6-0"
+          : court.winnerTeamId === input.awayTeamId
+            ? "0-6 0-6"
+            : court.score || null
+        : court.score || null
+
       const matchData = {
         series_id: input.seriesId,
         court_number: court.courtNumber,
@@ -416,7 +426,7 @@ export async function saveSeriesResult(
         home_player_2_id: court.homePlayer2Id,
         away_player_1_id: court.awayPlayer1Id,
         away_player_2_id: court.awayPlayer2Id,
-        score: court.score || null,
+        score: normalizedScore,
         winner_team_id: court.winnerTeamId,
         is_court_walkover: court.isWalkover,
       }
@@ -777,6 +787,27 @@ export async function upsertPlayoffSeries(params: {
     revalidatePath("/panel-parque")
     revalidatePath("/liga-invierno")
     return { success: true, seriesId: (newSeries as any).id }
+  } catch (e) {
+    return { success: false, error: String(e) }
+  }
+}
+
+export async function recalculateStandingsForCategory(
+  categoryId: string,
+): Promise<{ success: boolean; error?: string }> {
+  const authClient = await createClient()
+  const {
+    data: { user },
+  } = await authClient.auth.getUser()
+  if (!isAdminUser(user)) {
+    return { success: false, error: "No autorizado" }
+  }
+
+  try {
+    await recalculateAndPersistStandings(categoryId)
+    revalidatePath("/panel-parque")
+    revalidatePath("/liga-invierno")
+    return { success: true }
   } catch (e) {
     return { success: false, error: String(e) }
   }

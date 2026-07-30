@@ -102,7 +102,7 @@ function sortByH2H(
     } else if (s.status === "completed") {
       const matches = matchesBySeries.get(s.id) ?? [];
       const { home_courts, away_courts, home_sets, away_sets, home_games, away_games } =
-        aggregateSeriesMatches(matches);
+        aggregateSeriesMatches(matches, s.home_team_id);
 
       if (home_courts > away_courts) {
         homeStats.points += rules.pointsForWin;
