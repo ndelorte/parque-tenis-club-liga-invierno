@@ -174,6 +174,51 @@ describe("calculateCourtMatchResult", () => {
   });
 });
 
+// ─── aggregateSeriesMatches ──────────────────────────────────────────────────
+
+import { aggregateSeriesMatches } from "../calculateCourtMatchResult";
+
+describe("aggregateSeriesMatches", () => {
+  it("maneja score 'W.O.' usando winner_team_id para la cancha local", () => {
+    // Cancha 1: "6-4 6-2" → home gana (+12 games home, +6 away)
+    // Cancha 2: "W.O." home gana → +2 sets home, +12 games home
+    // Cancha 3: "3-6 4-6" → away gana (+7 games home, +12 away)
+    const matches = [
+      { score: "6-4 6-2", is_court_walkover: false, winner_team_id: "A" },
+      { score: "W.O.", is_court_walkover: true, winner_team_id: "A" },
+      { score: "3-6 4-6", is_court_walkover: false, winner_team_id: "B" },
+    ];
+    const result = aggregateSeriesMatches(matches, "A");
+    expect(result.home_courts).toBe(2);
+    expect(result.away_courts).toBe(1);
+    expect(result.home_sets).toBe(4); // 2 del c1 + 2 del WO
+    expect(result.home_games).toBe(31); // 12 (c1) + 12 (WO) + 7 (c3)
+  });
+
+  it("maneja score 'W.O.' usando winner_team_id para la cancha visitante", () => {
+    // Cancha 1: "6-4 6-2" → home gana
+    // Cancha 2: "W.O." away gana → +2 sets away, +12 games away
+    // Cancha 3: "6-3 6-1" → home gana
+    const matches = [
+      { score: "6-4 6-2", is_court_walkover: false, winner_team_id: "A" },
+      { score: "W.O.", is_court_walkover: true, winner_team_id: "B" },
+      { score: "6-3 6-1", is_court_walkover: false, winner_team_id: "A" },
+    ];
+    const result = aggregateSeriesMatches(matches, "A");
+    expect(result.home_courts).toBe(2);
+    expect(result.away_courts).toBe(1);
+    expect(result.away_sets).toBe(2); // solo del WO
+    expect(result.away_games).toBe(22); // 6+4 (c1) + 12 (WO) + 3+1 (c3)
+  });
+
+  it("no crashea sin homeTeamId cuando el score es inválido (skip silencioso)", () => {
+    const matches = [
+      { score: "W.O.", is_court_walkover: true, winner_team_id: "A" },
+    ];
+    expect(() => aggregateSeriesMatches(matches)).not.toThrow();
+  });
+});
+
 // ─── calculateSeriesResult ───────────────────────────────────────────────────
 
 describe("calculateSeriesResult", () => {
@@ -355,6 +400,24 @@ describe("calculateStandings", () => {
     expect(rowB.courts_lost).toBe(3);
     expect(rowB.sets_lost).toBe(6);
     expect(rowB.games_lost).toBe(36);
+  });
+
+  it("no crashea y calcula correctamente con WO de cancha guardado como 'W.O.'", () => {
+    const teamA = makeTeam("A");
+    const teamB = makeTeam("B");
+    const s1 = makeSeries("s1", "A", "B");
+    // Cancha 2 tiene score "W.O." (bug en datos existentes)
+    const matches = [
+      makeCourtMatch("m1", "s1", 1, "6-4 6-2"),
+      { id: "m2", series_id: "s1", court_number: 2 as const, score: "W.O.", is_court_walkover: true, winner_team_id: "A" },
+      makeCourtMatch("m3", "s1", 3, "6-3 6-4"),
+    ];
+
+    expect(() => calculateStandings([teamA, teamB], [s1], matches, DEFAULT_RULES)).not.toThrow();
+    const rows = calculateStandings([teamA, teamB], [s1], matches, DEFAULT_RULES);
+    const rowA = rows.find((r) => r.team_id === "A")!;
+    expect(rowA.won).toBe(1);
+    expect(rowA.courts_won).toBe(3);
   });
 
   it("ignora series no jugadas (scheduled)", () => {

@@ -34,14 +34,34 @@ export interface SeriesAggregation {
 }
 
 export function aggregateSeriesMatches(
-  matches: Array<{ score?: string; is_court_walkover: boolean }>,
+  matches: Array<{ score?: string; is_court_walkover: boolean; winner_team_id?: string }>,
+  homeTeamId?: string,
 ): SeriesAggregation {
   let home_courts = 0, away_courts = 0;
   let home_sets = 0, away_sets = 0;
   let home_games = 0, away_games = 0;
   for (const match of matches) {
     if (!match.score) continue;
-    const result = calculateCourtMatchResult({ score: match.score, is_court_walkover: match.is_court_walkover });
+
+    let result: CourtMatchResult | null = null;
+    try {
+      result = calculateCourtMatchResult({ score: match.score, is_court_walkover: match.is_court_walkover });
+    } catch {
+      // Score inválido (e.g. "W.O." guardado como placeholder). Usar winner_team_id como fallback.
+      if (match.winner_team_id && homeTeamId) {
+        if (match.winner_team_id === homeTeamId) {
+          home_courts++;
+          home_sets += 2;
+          home_games += 12;
+        } else {
+          away_courts++;
+          away_sets += 2;
+          away_games += 12;
+        }
+      }
+      continue;
+    }
+
     if (result.winner_side === "home") home_courts++;
     else away_courts++;
     home_sets += result.home_sets_won;

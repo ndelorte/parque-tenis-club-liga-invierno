@@ -66,7 +66,7 @@ export function calculateStandings(
       if (seriesMatches.length === 0) continue;
 
       const { home_courts, away_courts, home_sets, away_sets, home_games, away_games } =
-        aggregateSeriesMatches(seriesMatches);
+        aggregateSeriesMatches(seriesMatches, s.home_team_id);
 
       homeRow.played++;
       awayRow.played++;
