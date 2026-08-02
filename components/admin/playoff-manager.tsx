@@ -166,15 +166,17 @@ export function PlayoffManager({ categories }: { categories: CategoryForAdmin[] 
           : generateSixTeamQuarterfinals(rows)
         const merged = mergeProvisionalBracketWithScheduledMatches(
           generated,
-          ps.map((p) => ({
-            id: p.id,
-            home_team_id: p.homeTeam.id,
-            away_team_id: p.awayTeam.id,
-            scheduled_date: p.scheduledDate ?? undefined,
-            scheduled_time: p.scheduledTime ?? undefined,
-            status: p.status,
-            winner_team_id: p.winnerTeamId,
-          }))
+          ps
+            .filter((p) => p.phase === "quarterfinal")
+            .map((p) => ({
+              id: p.id,
+              home_team_id: p.homeTeam.id,
+              away_team_id: p.awayTeam.id,
+              scheduled_date: p.scheduledDate ?? undefined,
+              scheduled_time: p.scheduledTime ?? undefined,
+              status: p.status,
+              winner_team_id: p.winnerTeamId,
+            }))
         )
         setBracket(merged)
         setBracketError(null)
@@ -258,6 +260,19 @@ function BracketSection({
   })
   const [savingId, setSavingId] = useState<string | null>(null)
 
+  // Re-populate forms for QF series that appear after a refresh (e.g., newly created series)
+  useEffect(() => {
+    setForms((prev) => {
+      const next = { ...prev }
+      for (const s of playoffSeries) {
+        if (s.phase === "quarterfinal" && !next[s.id]) {
+          next[s.id] = playoffSeriesToForm(s)
+        }
+      }
+      return next
+    })
+  }, [playoffSeries])
+
   function updateForm(seriesId: string, updater: (prev: SeriesForm) => SeriesForm) {
     setForms((prev) => ({
       ...prev,
@@ -317,11 +332,16 @@ function BracketSection({
           key={qf.matchNumber}
           qf={qf}
           categoryId={categoryId}
-          existingSeries={playoffSeries.find(
-            (s) =>
-              (s.homeTeam.id === qf.home.team.id && s.awayTeam.id === qf.away.team.id) ||
-              (s.homeTeam.id === qf.away.team.id && s.awayTeam.id === qf.home.team.id)
-          )}
+          existingSeries={
+            qf.seriesId
+              ? playoffSeries.find((s) => s.id === qf.seriesId && s.phase === "quarterfinal")
+              : playoffSeries.find(
+                  (s) =>
+                    s.phase === "quarterfinal" &&
+                    ((s.homeTeam.id === qf.home.team.id && s.awayTeam.id === qf.away.team.id) ||
+                      (s.homeTeam.id === qf.away.team.id && s.awayTeam.id === qf.home.team.id)),
+                )
+          }
           form={forms[qf.seriesId ?? ""] ?? null}
           saving={savingId === qf.seriesId}
           onFormChange={(updater) => {
@@ -703,6 +723,11 @@ function PlayoffScheduleCard({
   const [date, setDate] = useState(existing?.scheduledDate ?? "")
   const [time, setTime] = useState(existing?.scheduledTime ?? "")
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (existing?.scheduledDate) setDate(existing.scheduledDate)
+    setTime(existing?.scheduledTime ?? "")
+  }, [existing?.scheduledDate, existing?.scheduledTime])
 
   async function handleSave() {
     if (!date) return
