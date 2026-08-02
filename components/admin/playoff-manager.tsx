@@ -42,8 +42,7 @@ import {
   upsertPlayoffSeries,
 } from "@/app/actions/admin"
 import {
-  generateSixTeamQuarterfinals,
-  generateFiveTeamQuarterfinals,
+  generateProvisionalBracket,
   mergeProvisionalBracketWithScheduledMatches,
 } from "@/lib/playoffs/generateProvisionalBracket"
 import type { ProvisionalBracket, QuarterFinalMatchup } from "@/lib/playoffs/types"
@@ -161,9 +160,7 @@ export function PlayoffManager({ categories }: { categories: CategoryForAdmin[] 
 
       try {
         const rows = standingsToRows(effectiveStandings)
-        const generated = teamCount === 5
-          ? generateFiveTeamQuarterfinals(rows)
-          : generateSixTeamQuarterfinals(rows)
+        const generated = generateProvisionalBracket(rows, rows.length)
         const merged = mergeProvisionalBracketWithScheduledMatches(
           generated,
           ps

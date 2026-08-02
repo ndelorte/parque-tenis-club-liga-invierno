@@ -139,6 +139,7 @@ export async function getRoundsForAdmin(categoryId: string): Promise<RoundForAdm
         )`,
       )
       .eq("category_id", categoryId)
+      .eq("phase", "regular")
       .order("round_number"),
     supabase
       .from("teams")
