@@ -70,9 +70,10 @@ export default async function CategoriaPage({ params }: Props) {
           position: i + 1,
         }))
 
-  // Para el bracket usar standings reales si hay 5+, sino equipos como provisional (igual que admin)
+  // Usar standings solo si hay tantos como equipos activos (igual que el panel admin).
+  // Si hay menos entradas que equipos activos, usar equipos en orden alfabético como provisional.
   const bracketStandings =
-    standings.length >= 5
+    standings.length >= teams.length
       ? standings
       : teams.map((t, i) => ({
           team_id: t.id,
