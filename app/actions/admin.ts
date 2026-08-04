@@ -645,15 +645,26 @@ export async function createQuarterFinalSeries(
       roundId = (newRound as any).id
     }
 
-    // Check if a series for these two teams already exists in this round (use limit(1) to handle duplicates)
-    const { data: existingSeriesRows } = await supabase
-      .from("series")
+    // Buscar si ya existe una serie con este par de equipos en CUALQUIER round de cuartos
+    // (no solo el round actual) para evitar crear duplicados si había rondas anteriores
+    const { data: allQFRounds } = await supabase
+      .from("rounds")
       .select("id")
-      .eq("round_id", roundId)
-      .or(`and(home_team_id.eq.${homeTeamId},away_team_id.eq.${awayTeamId}),and(home_team_id.eq.${awayTeamId},away_team_id.eq.${homeTeamId})`)
-      .limit(1)
+      .eq("category_id", categoryId)
+      .eq("phase", "quarterfinal")
 
-    const existingSeries = existingSeriesRows?.[0] ?? null
+    const allQFRoundIds = (allQFRounds ?? []).map((r: any) => r.id)
+
+    let existingSeries: { id: string } | null = null
+    if (allQFRoundIds.length > 0) {
+      const { data: existingSeriesRows } = await supabase
+        .from("series")
+        .select("id")
+        .in("round_id", allQFRoundIds)
+        .or(`and(home_team_id.eq.${homeTeamId},away_team_id.eq.${awayTeamId}),and(home_team_id.eq.${awayTeamId},away_team_id.eq.${homeTeamId})`)
+        .limit(1)
+      existingSeries = (existingSeriesRows?.[0] as { id: string }) ?? null
+    }
 
     if (existingSeries) {
       // Update schedule only

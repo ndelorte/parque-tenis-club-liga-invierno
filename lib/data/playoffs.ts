@@ -42,6 +42,7 @@ export async function getPlayoffSeries(
     )
     .eq("category_id", categoryId)
     .neq("phase", "regular")
+    .order("round_number")
 
   if (error || !data) return []
 
