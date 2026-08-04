@@ -227,6 +227,7 @@ export function PlayoffManager({ categories }: { categories: CategoryForAdmin[] 
         </Card>
       ) : bracket ? (
         <BracketSection
+          key={categoryId}
           bracket={bracket}
           categoryId={categoryId}
           playoffSeries={playoffSeries}
@@ -401,8 +402,8 @@ function QFCard({
 
   // Sync inputs cuando existingSeries llega o cambia después de un refresh
   useEffect(() => {
-    if (existingSeries?.scheduledDate) setScheduleDate(existingSeries.scheduledDate)
-    if (existingSeries?.scheduledTime !== undefined) setScheduleTime(existingSeries.scheduledTime ?? "")
+    setScheduleDate(existingSeries?.scheduledDate ?? "")
+    setScheduleTime(existingSeries?.scheduledTime ?? "")
   }, [existingSeries?.scheduledDate, existingSeries?.scheduledTime])
 
   // If series already exists (from DB), use its home/away — otherwise use bracket order
@@ -722,7 +723,7 @@ function PlayoffScheduleCard({
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (existing?.scheduledDate) setDate(existing.scheduledDate)
+    setDate(existing?.scheduledDate ?? "")
     setTime(existing?.scheduledTime ?? "")
   }, [existing?.scheduledDate, existing?.scheduledTime])
 

@@ -611,13 +611,16 @@ export async function createQuarterFinalSeries(
   const supabase = createAdminClient()
 
   try {
-    // Check if a QF round already exists for this category
-    const { data: existingRound } = await supabase
+    // Check if a QF round already exists for this category (use limit(1) to handle duplicates)
+    const { data: existingRounds } = await supabase
       .from("rounds")
       .select("id")
       .eq("category_id", categoryId)
       .eq("phase", "quarterfinal")
-      .maybeSingle()
+      .order("round_number")
+      .limit(1)
+
+    const existingRound = existingRounds?.[0] ?? null
 
     let roundId: string
 
@@ -642,13 +645,15 @@ export async function createQuarterFinalSeries(
       roundId = (newRound as any).id
     }
 
-    // Check if a series for these two teams already exists in this round
-    const { data: existingSeries } = await supabase
+    // Check if a series for these two teams already exists in this round (use limit(1) to handle duplicates)
+    const { data: existingSeriesRows } = await supabase
       .from("series")
       .select("id")
       .eq("round_id", roundId)
       .or(`and(home_team_id.eq.${homeTeamId},away_team_id.eq.${awayTeamId}),and(home_team_id.eq.${awayTeamId},away_team_id.eq.${homeTeamId})`)
-      .maybeSingle()
+      .limit(1)
+
+    const existingSeries = existingSeriesRows?.[0] ?? null
 
     if (existingSeries) {
       // Update schedule only
@@ -723,10 +728,28 @@ export async function upsertPlayoffSeries(params: {
 
   try {
     if (existingSeriesId) {
+      // Validate that the series actually belongs to this category AND this phase
+      const { data: seriesCheck } = await supabase
+        .from("series")
+        .select("category_id, rounds!inner(phase)")
+        .eq("id", existingSeriesId)
+        .maybeSingle()
+
+      if (!seriesCheck) {
+        return { success: false, error: "Serie no encontrada" }
+      }
+      if ((seriesCheck as any).category_id !== categoryId) {
+        return { success: false, error: "La serie no pertenece a esta categoría" }
+      }
+      if ((seriesCheck as any).rounds?.phase !== phase) {
+        return { success: false, error: `Error de datos: la serie pertenece a la fase "${(seriesCheck as any).rounds?.phase}", no a "${phase}". Revisá los datos en Supabase.` }
+      }
+
       const { error } = await supabase
         .from("series")
         .update({ scheduled_date: scheduledDate, scheduled_time: scheduledTime })
         .eq("id", existingSeriesId)
+        .eq("category_id", categoryId)
       if (error) return { success: false, error: error.message }
       revalidatePath("/panel-parque")
       revalidatePath("/liga-invierno")
@@ -734,12 +757,16 @@ export async function upsertPlayoffSeries(params: {
     }
 
     const cfg = PHASE_CONFIG[phase]
-    const { data: existingRound } = await supabase
+    // Use limit(1) instead of maybeSingle() to handle duplicate rounds gracefully
+    const { data: existingRounds } = await supabase
       .from("rounds")
       .select("id")
       .eq("category_id", categoryId)
       .eq("phase", phase)
-      .maybeSingle()
+      .order("round_number")
+      .limit(1)
+
+    const existingRound = existingRounds?.[0] ?? null
 
     let roundId: string
     if (existingRound) {
@@ -755,12 +782,14 @@ export async function upsertPlayoffSeries(params: {
     }
 
     // Check if a series for this pair already exists
-    const { data: existingSeries } = await supabase
+    const { data: existingSeriesRows } = await supabase
       .from("series")
       .select("id")
       .eq("round_id", roundId)
       .or(`and(home_team_id.eq.${homeTeamId},away_team_id.eq.${awayTeamId}),and(home_team_id.eq.${awayTeamId},away_team_id.eq.${homeTeamId})`)
-      .maybeSingle()
+      .limit(1)
+
+    const existingSeries = existingSeriesRows?.[0] ?? null
 
     if (existingSeries) {
       await supabase.from("series").update({ scheduled_date: scheduledDate, scheduled_time: scheduledTime }).eq("id", (existingSeries as any).id)
