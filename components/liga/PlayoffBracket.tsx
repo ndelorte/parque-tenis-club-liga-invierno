@@ -10,12 +10,22 @@ type ThirdPlace = {
   status?: string
 }
 
+export type ScheduledMatch = {
+  homeTeamName: string
+  awayTeamName: string
+  scheduledDate?: string | null
+  scheduledTime?: string | null
+  status: string
+}
+
 interface Props {
   bracket: ProvisionalBracket
+  semifinals?: ScheduledMatch[]
+  final?: ScheduledMatch
   thirdPlace?: ThirdPlace
 }
 
-export function PlayoffBracket({ bracket, thirdPlace }: Props) {
+export function PlayoffBracket({ bracket, semifinals, final, thirdPlace }: Props) {
   return (
     <div>
       <div className="mb-4">
@@ -23,7 +33,7 @@ export function PlayoffBracket({ bracket, thirdPlace }: Props) {
         <p className="text-sm text-gray-500 mt-0.5">Con las posiciones actuales provisorias</p>
       </div>
 
-      <div className="flex flex-col lg:flex-row lg:items-end gap-6 lg:gap-10">
+      <div className="flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-10">
         {/* Bracket principal */}
         <div className="space-y-3 max-w-xl flex-1">
           {bracket.byes.map((slot) => (
@@ -32,9 +42,31 @@ export function PlayoffBracket({ bracket, thirdPlace }: Props) {
           {bracket.quarterfinals.map((qf) => (
             <QFRow key={qf.matchNumber} qf={qf} />
           ))}
+
+          {/* Semifinales */}
+          {semifinals && semifinals.length > 0 && (
+            <>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-2">
+                Semifinales
+              </p>
+              {semifinals.map((sf, i) => (
+                <MatchRow key={i} label={`SF ${i + 1}`} match={sf} />
+              ))}
+            </>
+          )}
+
+          {/* Final */}
+          {final && (
+            <>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-2">
+                Final
+              </p>
+              <MatchRow label="Final" match={final} highlight />
+            </>
+          )}
         </div>
 
-        {/* 3er y 4to puesto — siempre visible, desconectado del bracket principal */}
+        {/* 3er y 4to puesto — desconectado del bracket principal */}
         <div className="lg:w-72 lg:shrink-0">
           <p className="text-xs text-gray-400 mb-2 italic">Partido separado</p>
           <ThirdPlaceCard thirdPlace={thirdPlace} />
@@ -101,6 +133,71 @@ function QFRow({ qf }: { qf: QuarterFinalMatchup }) {
           Resultado pendiente
         </p>
       )}
+    </div>
+  )
+}
+
+function MatchRow({
+  label,
+  match,
+  highlight,
+}: {
+  label: string
+  match: ScheduledMatch
+  highlight?: boolean
+}) {
+  const isCompleted = match.status === "completed" || match.status === "walkover"
+  const isScheduled = match.status === "scheduled" || match.status === "rescheduled"
+
+  return (
+    <div
+      className={cn(
+        "rounded-xl border px-4 py-3 space-y-2",
+        isCompleted
+          ? "border-primary/30 bg-primary/5"
+          : highlight
+          ? "border-accent/40 bg-card"
+          : "border-border bg-card",
+      )}
+    >
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <span
+          className={cn(
+            "text-xs font-semibold uppercase tracking-wide",
+            highlight ? "text-accent" : "text-muted-foreground",
+          )}
+        >
+          {label}
+        </span>
+        {isCompleted && (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+            <CheckCircle2 className="size-3.5" />
+            Jugado
+          </span>
+        )}
+        {isScheduled && !isCompleted && (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
+            <AlertCircle className="size-3.5" />
+            Programado
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-2 flex-wrap text-sm font-medium text-gray-800">
+        <span className="truncate max-w-[120px] sm:max-w-none">{match.homeTeamName}</span>
+        <span className="text-muted-foreground">vs</span>
+        <span className="truncate max-w-[120px] sm:max-w-none">{match.awayTeamName}</span>
+      </div>
+      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Clock className="size-3.5 shrink-0" />
+        {match.scheduledDate ? (
+          <span>
+            {formatDate(match.scheduledDate)}
+            {match.scheduledTime ? ` — ${formatTime(match.scheduledTime)}` : ""}
+          </span>
+        ) : (
+          <span className="italic">Fecha a confirmar</span>
+        )}
+      </div>
     </div>
   )
 }

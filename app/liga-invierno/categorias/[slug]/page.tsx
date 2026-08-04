@@ -97,7 +97,10 @@ export default async function CategoriaPage({ params }: Props) {
   try {
     if (bracketStandings.length >= 5) {
       const generated = generateProvisionalBracket(bracketStandings, bracketStandings.length)
-      bracket = mergeProvisionalBracketWithScheduledMatches(generated, playoffSeries)
+      bracket = mergeProvisionalBracketWithScheduledMatches(
+        generated,
+        playoffSeries.filter((s) => s.phase === "quarterfinal"),
+      )
     }
   } catch {
     bracket = null
@@ -111,6 +114,27 @@ export default async function CategoriaPage({ params }: Props) {
         scheduledDate: thirdPlaceSeries.scheduled_date,
         scheduledTime: thirdPlaceSeries.scheduled_time,
         status: thirdPlaceSeries.status,
+      }
+    : undefined
+
+  const semifinalMatches = playoffSeries
+    .filter((s) => s.phase === "semifinal")
+    .map((s) => ({
+      homeTeamName: teams.find((t) => t.id === s.home_team_id)?.name ?? "A definir",
+      awayTeamName: teams.find((t) => t.id === s.away_team_id)?.name ?? "A definir",
+      scheduledDate: s.scheduled_date ?? null,
+      scheduledTime: s.scheduled_time ?? null,
+      status: s.status,
+    }))
+
+  const finalSeries = playoffSeries.find((s) => s.phase === "final")
+  const finalMatch = finalSeries
+    ? {
+        homeTeamName: teams.find((t) => t.id === finalSeries.home_team_id)?.name ?? "A definir",
+        awayTeamName: teams.find((t) => t.id === finalSeries.away_team_id)?.name ?? "A definir",
+        scheduledDate: finalSeries.scheduled_date ?? null,
+        scheduledTime: finalSeries.scheduled_time ?? null,
+        status: finalSeries.status,
       }
     : undefined
 
@@ -129,7 +153,12 @@ export default async function CategoriaPage({ params }: Props) {
 
         {bracket && (
           <section>
-            <PlayoffBracket bracket={bracket} thirdPlace={thirdPlace} />
+            <PlayoffBracket
+            bracket={bracket}
+            semifinals={semifinalMatches.length > 0 ? semifinalMatches : undefined}
+            final={finalMatch}
+            thirdPlace={thirdPlace}
+          />
           </section>
         )}
 

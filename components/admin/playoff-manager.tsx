@@ -42,8 +42,7 @@ import {
   upsertPlayoffSeries,
 } from "@/app/actions/admin"
 import {
-  generateSixTeamQuarterfinals,
-  generateFiveTeamQuarterfinals,
+  generateProvisionalBracket,
   mergeProvisionalBracketWithScheduledMatches,
 } from "@/lib/playoffs/generateProvisionalBracket"
 import type { ProvisionalBracket, QuarterFinalMatchup } from "@/lib/playoffs/types"
@@ -161,20 +160,20 @@ export function PlayoffManager({ categories }: { categories: CategoryForAdmin[] 
 
       try {
         const rows = standingsToRows(effectiveStandings)
-        const generated = teamCount === 5
-          ? generateFiveTeamQuarterfinals(rows)
-          : generateSixTeamQuarterfinals(rows)
+        const generated = generateProvisionalBracket(rows, rows.length)
         const merged = mergeProvisionalBracketWithScheduledMatches(
           generated,
-          ps.map((p) => ({
-            id: p.id,
-            home_team_id: p.homeTeam.id,
-            away_team_id: p.awayTeam.id,
-            scheduled_date: p.scheduledDate ?? undefined,
-            scheduled_time: p.scheduledTime ?? undefined,
-            status: p.status,
-            winner_team_id: p.winnerTeamId,
-          }))
+          ps
+            .filter((p) => p.phase === "quarterfinal")
+            .map((p) => ({
+              id: p.id,
+              home_team_id: p.homeTeam.id,
+              away_team_id: p.awayTeam.id,
+              scheduled_date: p.scheduledDate ?? undefined,
+              scheduled_time: p.scheduledTime ?? undefined,
+              status: p.status,
+              winner_team_id: p.winnerTeamId,
+            }))
         )
         setBracket(merged)
         setBracketError(null)
@@ -228,6 +227,7 @@ export function PlayoffManager({ categories }: { categories: CategoryForAdmin[] 
         </Card>
       ) : bracket ? (
         <BracketSection
+          key={categoryId}
           bracket={bracket}
           categoryId={categoryId}
           playoffSeries={playoffSeries}
@@ -257,6 +257,19 @@ function BracketSection({
     return init
   })
   const [savingId, setSavingId] = useState<string | null>(null)
+
+  // Re-populate forms for QF series that appear after a refresh (e.g., newly created series)
+  useEffect(() => {
+    setForms((prev) => {
+      const next = { ...prev }
+      for (const s of playoffSeries) {
+        if (s.phase === "quarterfinal" && !next[s.id]) {
+          next[s.id] = playoffSeriesToForm(s)
+        }
+      }
+      return next
+    })
+  }, [playoffSeries])
 
   function updateForm(seriesId: string, updater: (prev: SeriesForm) => SeriesForm) {
     setForms((prev) => ({
@@ -317,11 +330,16 @@ function BracketSection({
           key={qf.matchNumber}
           qf={qf}
           categoryId={categoryId}
-          existingSeries={playoffSeries.find(
-            (s) =>
-              (s.homeTeam.id === qf.home.team.id && s.awayTeam.id === qf.away.team.id) ||
-              (s.homeTeam.id === qf.away.team.id && s.awayTeam.id === qf.home.team.id)
-          )}
+          existingSeries={
+            qf.seriesId
+              ? playoffSeries.find((s) => s.id === qf.seriesId && s.phase === "quarterfinal")
+              : playoffSeries.find(
+                  (s) =>
+                    s.phase === "quarterfinal" &&
+                    ((s.homeTeam.id === qf.home.team.id && s.awayTeam.id === qf.away.team.id) ||
+                      (s.homeTeam.id === qf.away.team.id && s.awayTeam.id === qf.home.team.id)),
+                )
+          }
           form={forms[qf.seriesId ?? ""] ?? null}
           saving={savingId === qf.seriesId}
           onFormChange={(updater) => {
@@ -384,8 +402,8 @@ function QFCard({
 
   // Sync inputs cuando existingSeries llega o cambia después de un refresh
   useEffect(() => {
-    if (existingSeries?.scheduledDate) setScheduleDate(existingSeries.scheduledDate)
-    if (existingSeries?.scheduledTime !== undefined) setScheduleTime(existingSeries.scheduledTime ?? "")
+    setScheduleDate(existingSeries?.scheduledDate ?? "")
+    setScheduleTime(existingSeries?.scheduledTime ?? "")
   }, [existingSeries?.scheduledDate, existingSeries?.scheduledTime])
 
   // If series already exists (from DB), use its home/away — otherwise use bracket order
@@ -703,6 +721,11 @@ function PlayoffScheduleCard({
   const [date, setDate] = useState(existing?.scheduledDate ?? "")
   const [time, setTime] = useState(existing?.scheduledTime ?? "")
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setDate(existing?.scheduledDate ?? "")
+    setTime(existing?.scheduledTime ?? "")
+  }, [existing?.scheduledDate, existing?.scheduledTime])
 
   async function handleSave() {
     if (!date) return

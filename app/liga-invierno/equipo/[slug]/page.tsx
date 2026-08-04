@@ -1,4 +1,6 @@
-import { redirect } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
+import { getTeamBySlug } from "@/lib/data/teams"
+import { getCategoryById } from "@/lib/data/categories"
 
 export default async function EquipoRedirectPage({
   params,
@@ -6,5 +8,9 @@ export default async function EquipoRedirectPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  redirect(`/liga-invierno/equipos/${slug}`)
+  const team = await getTeamBySlug(slug)
+  if (!team) notFound()
+  const category = await getCategoryById(team.category_id)
+  if (!category) notFound()
+  redirect(`/liga-invierno/equipos/${category.slug}/${team.slug}`)
 }
