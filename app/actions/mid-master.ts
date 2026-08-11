@@ -83,6 +83,35 @@ export async function updateMmMatchResult(
 
   if (error) return { ok: false, error: `Error al guardar el resultado: ${error.message}` }
 
+  // Si es semifinal, propagar ganadores a la final cuando ambas estén jugadas
+  if (match.phase === "semifinal") {
+    const { data: koMatches } = await db()
+      .from("mid_master_matches")
+      .select("id, phase, winner_participant_id")
+      .eq("category_id", match.category_id)
+      .is("group_id", null)
+      .order("created_at", { ascending: true })
+
+    if (koMatches) {
+      type KoRow = { id: string; phase: string; winner_participant_id: string | null }
+      const sfAll = (koMatches as KoRow[]).filter((m) => m.phase === "semifinal")
+      const finalMatch = (koMatches as KoRow[]).find((m) => m.phase === "final")
+      // Merge el ganador que acabamos de guardar
+      const updatedSfs = sfAll.map((m) =>
+        m.id === matchId ? { ...m, winner_participant_id: winnerId } : m
+      )
+      if (finalMatch && updatedSfs.length === 2 && updatedSfs.every((m) => m.winner_participant_id)) {
+        await db()
+          .from("mid_master_matches")
+          .update({
+            participant_1_id: updatedSfs[0].winner_participant_id,
+            participant_2_id: updatedSfs[1].winner_participant_id,
+          })
+          .eq("id", finalMatch.id)
+      }
+    }
+  }
+
   revalidatePath("/panel-master")
   revalidatePath("/mid-master")
   return { ok: true }
