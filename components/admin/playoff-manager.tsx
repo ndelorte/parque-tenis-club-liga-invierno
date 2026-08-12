@@ -597,6 +597,14 @@ function SemiFinalAndFinalSection({
   // QF que alimenta SF2: solo existe en formato 6 equipos (quarterfinals[0] = 3°vs6°)
   const qfForSF2 = isFiveTeam ? null : bracket.quarterfinals[0]
 
+  // Ganadores reales de cuartos (derivados de winnerTeamId, no del equipo local)
+  const qfForSF1WinnerTeam = qfForSF1?.winnerTeamId
+    ? (qfForSF1.home.team.id === qfForSF1.winnerTeamId ? qfForSF1.home.team : qfForSF1.away.team)
+    : null
+  const qfForSF2WinnerTeam = qfForSF2?.winnerTeamId
+    ? (qfForSF2.home.team.id === qfForSF2.winnerTeamId ? qfForSF2.home.team : qfForSF2.away.team)
+    : null
+
   const finalExisting = playoffSeries.find((s) => s.phase === "final")
   const thirdPlaceExisting = playoffSeries.find((s) => s.phase === "third_place")
 
@@ -658,9 +666,9 @@ function SemiFinalAndFinalSection({
           }
           existing={sf1Existing}
           homeTeamId={sf1Existing?.homeTeam.id ?? bracket.byes[0].team.id}
-          awayTeamId={sf1Existing?.awayTeam.id ?? (qfForSF1?.home.team.id ?? bracket.byes[0].team.id)}
+          awayTeamId={sf1Existing?.awayTeam.id ?? (qfForSF1WinnerTeam?.id ?? "")}
           homeTeamName={sf1Existing?.homeTeam.name ?? bracket.byes[0].team.name}
-          awayTeamName={sf1Existing?.awayTeam.name ?? "Ganador CF"}
+          awayTeamName={sf1Existing?.awayTeam.name ?? (qfForSF1WinnerTeam?.name ?? "Ganador CF")}
           homePlayers={sf1Existing?.homeTeam.players ?? []}
           awayPlayers={sf1Existing?.awayTeam.players ?? []}
           form={forms[sf1Existing?.id ?? ""] ?? blankForm}
@@ -671,7 +679,7 @@ function SemiFinalAndFinalSection({
               categoryId,
               phase: "semifinal",
               homeTeamId: bracket.byes[0].team.id,
-              awayTeamId: qfForSF1?.home.team.id ?? bracket.byes[0].team.id,
+              awayTeamId: qfForSF1WinnerTeam?.id ?? "",
               scheduledDate: date,
               scheduledTime: time,
               existingSeriesId: sf1Existing?.id,
@@ -691,9 +699,9 @@ function SemiFinalAndFinalSection({
               : `Ganador CF 2 vs ${bracket.byes[1].team.name}`
           }
           existing={sf2Existing}
-          homeTeamId={sf2Existing?.homeTeam.id ?? (isFiveTeam ? bracket.byes[1].team.id : (qfForSF2?.home.team.id ?? bracket.byes[1].team.id))}
+          homeTeamId={sf2Existing?.homeTeam.id ?? (isFiveTeam ? bracket.byes[1].team.id : (qfForSF2WinnerTeam?.id ?? ""))}
           awayTeamId={sf2Existing?.awayTeam.id ?? (isFiveTeam ? (bracket.byes[2]?.team.id ?? bracket.byes[1].team.id) : bracket.byes[1].team.id)}
-          homeTeamName={sf2Existing?.homeTeam.name ?? (isFiveTeam ? bracket.byes[1].team.name : "Ganador CF 2")}
+          homeTeamName={sf2Existing?.homeTeam.name ?? (isFiveTeam ? bracket.byes[1].team.name : (qfForSF2WinnerTeam?.name ?? "Ganador CF 2"))}
           awayTeamName={sf2Existing?.awayTeam.name ?? (isFiveTeam ? (bracket.byes[2]?.team.name ?? "A definir") : bracket.byes[1].team.name)}
           homePlayers={sf2Existing?.homeTeam.players ?? []}
           awayPlayers={sf2Existing?.awayTeam.players ?? []}
@@ -704,7 +712,7 @@ function SemiFinalAndFinalSection({
             await upsertPlayoffSeries({
               categoryId,
               phase: "semifinal",
-              homeTeamId: isFiveTeam ? bracket.byes[1].team.id : (qfForSF2?.home.team.id ?? bracket.byes[1].team.id),
+              homeTeamId: isFiveTeam ? bracket.byes[1].team.id : (qfForSF2WinnerTeam?.id ?? ""),
               awayTeamId: isFiveTeam ? (bracket.byes[2]?.team.id ?? bracket.byes[1].team.id) : bracket.byes[1].team.id,
               scheduledDate: date,
               scheduledTime: time,
