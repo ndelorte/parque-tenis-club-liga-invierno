@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Calendar, Trophy, Trash2, ChevronDown, ChevronUp } from "lucide-react"
+import { Calendar, Trophy, Trash2, ChevronDown, ChevronUp, Users } from "lucide-react"
 import {
   updateMmMatchSchedule,
   updateMmMatchResult,
   clearMmMatchResult,
+  assignMmMatchParticipants,
 } from "@/app/actions/mid-master"
 import type { DbMmMatch, DbMmParticipant } from "@/lib/data/mid-master/types"
 
@@ -29,11 +30,18 @@ function fmtDate(d: string) {
 }
 
 export function MatchForm({ match, participants, isFinal = false }: Props) {
+  const isKnockout = match.group_id === null
+  const needsParticipants = isKnockout && (!match.participant_1_id || !match.participant_2_id)
+
   const [open, setOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<"schedule" | "result">("schedule")
+  const [activeTab, setActiveTab] = useState<"schedule" | "result" | "players">(
+    needsParticipants ? "players" : "schedule"
+  )
   const [date, setDate] = useState(match.scheduled_date ?? "")
   const [time, setTime] = useState(match.scheduled_time ?? "")
   const [score, setScore] = useState(match.score ?? "")
+  const [p1Id, setP1Id] = useState(match.participant_1_id ?? "")
+  const [p2Id, setP2Id] = useState(match.participant_2_id ?? "")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
@@ -64,6 +72,14 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
     setLoading(true); setError("")
     await clearMmMatchResult(match.id)
     setLoading(false)
+  }
+
+  async function handleAssignPlayers() {
+    setLoading(true); setError(""); setSuccess("")
+    const result = await assignMmMatchParticipants(match.id, p1Id, p2Id)
+    setLoading(false)
+    if (result.ok) { setSuccess("Participantes asignados."); setActiveTab("schedule") }
+    else setError(result.error)
   }
 
   return (
@@ -128,6 +144,17 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
         <div className="border-t border-mm-border bg-white px-4 py-4">
           {/* Tabs */}
           <div className="mb-4 flex gap-1 rounded-lg bg-gray-100 p-1">
+            {isKnockout && (
+              <button
+                onClick={() => setActiveTab("players")}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors ${
+                  activeTab === "players" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-800"
+                }`}
+              >
+                <Users className="size-3.5" />
+                Jugadores
+              </button>
+            )}
             <button
               onClick={() => setActiveTab("schedule")}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors ${
@@ -147,6 +174,48 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
               Resultado
             </button>
           </div>
+
+          {activeTab === "players" && isKnockout && (
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-500">Jugador / Pareja 1</label>
+                <select
+                  value={p1Id}
+                  onChange={(e) => setP1Id(e.target.value)}
+                  className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-mm-gold/40"
+                >
+                  <option value="">— Sin asignar —</option>
+                  {participants.map((p) => (
+                    <option key={p.id} value={p.id} disabled={p.id === p2Id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-500">Jugador / Pareja 2</label>
+                <select
+                  value={p2Id}
+                  onChange={(e) => setP2Id(e.target.value)}
+                  className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-mm-gold/40"
+                >
+                  <option value="">— Sin asignar —</option>
+                  {participants.map((p) => (
+                    <option key={p.id} value={p.id} disabled={p.id === p1Id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={handleAssignPlayers}
+                disabled={loading || !p1Id || !p2Id || p1Id === p2Id}
+                className="w-full rounded bg-mm-gold py-2 text-xs font-semibold text-mm-bg hover:bg-mm-gold-light disabled:opacity-50"
+              >
+                {loading ? "Guardando..." : "Asignar participantes"}
+              </button>
+            </div>
+          )}
 
           {activeTab === "schedule" && (
             <div className="space-y-3">

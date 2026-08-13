@@ -31,6 +31,7 @@ import {
   type CategoryForAdmin,
   type PlayoffSeriesForAdmin,
   type StandingForAdmin,
+  type TeamForAdmin,
   type CourtInput,
   type PlayerInfo,
   getStandingsForAdmin,
@@ -138,6 +139,7 @@ function playoffSeriesToForm(s: PlayoffSeriesForAdmin): SeriesForm {
 export function PlayoffManager({ categories }: { categories: CategoryForAdmin[] }) {
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "")
   const [playoffSeries, setPlayoffSeries] = useState<PlayoffSeriesForAdmin[]>([])
+  const [teams, setTeams] = useState<TeamForAdmin[]>([])
   const [isPending, startTransition] = useTransition()
   const [bracket, setBracket] = useState<ProvisionalBracket | null>(null)
   const [bracketError, setBracketError] = useState<string | null>(null)
@@ -150,6 +152,7 @@ export function PlayoffManager({ categories }: { categories: CategoryForAdmin[] 
         getTeamsForAdmin(catId),
       ])
       setPlayoffSeries(ps)
+      setTeams(teams)
 
       // Usar standings reales si hay tantos como equipos, sino usar equipos en orden como provisional
       const teamCount = teams.length
@@ -231,6 +234,7 @@ export function PlayoffManager({ categories }: { categories: CategoryForAdmin[] 
           bracket={bracket}
           categoryId={categoryId}
           playoffSeries={playoffSeries}
+          teams={teams}
           onRefresh={() => loadData(categoryId)}
         />
       ) : null}
@@ -244,11 +248,13 @@ function BracketSection({
   bracket,
   categoryId,
   playoffSeries,
+  teams,
   onRefresh,
 }: {
   bracket: ProvisionalBracket
   categoryId: string
   playoffSeries: PlayoffSeriesForAdmin[]
+  teams: TeamForAdmin[]
   onRefresh: () => void
 }) {
   const [forms, setForms] = useState<Record<string, SeriesForm>>(() => {
@@ -355,6 +361,7 @@ function BracketSection({
         bracket={bracket}
         categoryId={categoryId}
         playoffSeries={playoffSeries}
+        teams={teams}
         onRefresh={onRefresh}
         forms={forms}
         savingId={savingId}
@@ -564,6 +571,7 @@ function SemiFinalAndFinalSection({
   bracket,
   categoryId,
   playoffSeries,
+  teams,
   onRefresh,
   forms,
   savingId,
@@ -573,6 +581,7 @@ function SemiFinalAndFinalSection({
   bracket: ProvisionalBracket
   categoryId: string
   playoffSeries: PlayoffSeriesForAdmin[]
+  teams: TeamForAdmin[]
   onRefresh: () => void
   forms: Record<string, SeriesForm>
   savingId: string | null
@@ -665,21 +674,20 @@ function SemiFinalAndFinalSection({
             : `${bracket.byes[0].team.name} vs Ganador CF`
           }
           existing={sf1Existing}
-          homeTeamId={sf1Existing?.homeTeam.id ?? bracket.byes[0].team.id}
-          awayTeamId={sf1Existing?.awayTeam.id ?? (qfForSF1WinnerTeam?.id ?? "")}
-          homeTeamName={sf1Existing?.homeTeam.name ?? bracket.byes[0].team.name}
-          awayTeamName={sf1Existing?.awayTeam.name ?? (qfForSF1WinnerTeam?.name ?? "Ganador CF")}
+          defaultHomeTeamId={sf1Existing?.homeTeam.id ?? bracket.byes[0].team.id}
+          defaultAwayTeamId={sf1Existing?.awayTeam.id ?? (qfForSF1WinnerTeam?.id ?? "")}
           homePlayers={sf1Existing?.homeTeam.players ?? []}
           awayPlayers={sf1Existing?.awayTeam.players ?? []}
+          teams={teams}
           form={forms[sf1Existing?.id ?? ""] ?? blankForm}
           saving={savingId === sf1Existing?.id}
           onFormChange={(updater) => { if (sf1Existing) onFormChange(sf1Existing.id, updater) }}
-          onScheduleSave={async (date, time) => {
+          onScheduleSave={async (date, time, homeId, awayId) => {
             await upsertPlayoffSeries({
               categoryId,
               phase: "semifinal",
-              homeTeamId: bracket.byes[0].team.id,
-              awayTeamId: qfForSF1WinnerTeam?.id ?? "",
+              homeTeamId: homeId,
+              awayTeamId: awayId,
               scheduledDate: date,
               scheduledTime: time,
               existingSeriesId: sf1Existing?.id,
@@ -699,21 +707,20 @@ function SemiFinalAndFinalSection({
               : `Ganador CF 2 vs ${bracket.byes[1].team.name}`
           }
           existing={sf2Existing}
-          homeTeamId={sf2Existing?.homeTeam.id ?? (isFiveTeam ? bracket.byes[1].team.id : (qfForSF2WinnerTeam?.id ?? ""))}
-          awayTeamId={sf2Existing?.awayTeam.id ?? (isFiveTeam ? (bracket.byes[2]?.team.id ?? bracket.byes[1].team.id) : bracket.byes[1].team.id)}
-          homeTeamName={sf2Existing?.homeTeam.name ?? (isFiveTeam ? bracket.byes[1].team.name : (qfForSF2WinnerTeam?.name ?? "Ganador CF 2"))}
-          awayTeamName={sf2Existing?.awayTeam.name ?? (isFiveTeam ? (bracket.byes[2]?.team.name ?? "A definir") : bracket.byes[1].team.name)}
+          defaultHomeTeamId={sf2Existing?.homeTeam.id ?? (isFiveTeam ? bracket.byes[1].team.id : (qfForSF2WinnerTeam?.id ?? ""))}
+          defaultAwayTeamId={sf2Existing?.awayTeam.id ?? (isFiveTeam ? (bracket.byes[2]?.team.id ?? "") : bracket.byes[1].team.id)}
           homePlayers={sf2Existing?.homeTeam.players ?? []}
           awayPlayers={sf2Existing?.awayTeam.players ?? []}
+          teams={teams}
           form={forms[sf2Existing?.id ?? ""] ?? blankForm}
           saving={savingId === sf2Existing?.id}
           onFormChange={(updater) => { if (sf2Existing) onFormChange(sf2Existing.id, updater) }}
-          onScheduleSave={async (date, time) => {
+          onScheduleSave={async (date, time, homeId, awayId) => {
             await upsertPlayoffSeries({
               categoryId,
               phase: "semifinal",
-              homeTeamId: isFiveTeam ? bracket.byes[1].team.id : (qfForSF2WinnerTeam?.id ?? ""),
-              awayTeamId: isFiveTeam ? (bracket.byes[2]?.team.id ?? bracket.byes[1].team.id) : bracket.byes[1].team.id,
+              homeTeamId: homeId,
+              awayTeamId: awayId,
               scheduledDate: date,
               scheduledTime: time,
               existingSeriesId: sf2Existing?.id,
@@ -736,21 +743,20 @@ function SemiFinalAndFinalSection({
               : "Ganador SF 1 vs Ganador SF 2"
             }
             existing={finalExisting}
-            homeTeamId={finalExisting?.homeTeam.id ?? sf1WinnerId ?? bracket.byes[0].team.id}
-            awayTeamId={finalExisting?.awayTeam.id ?? sf2WinnerId ?? bracket.byes[1].team.id}
-            homeTeamName={finalExisting?.homeTeam.name ?? sf1WinnerName ?? bracket.byes[0].team.name}
-            awayTeamName={finalExisting?.awayTeam.name ?? sf2WinnerName ?? bracket.byes[1].team.name}
+            defaultHomeTeamId={finalExisting?.homeTeam.id ?? sf1WinnerId ?? ""}
+            defaultAwayTeamId={finalExisting?.awayTeam.id ?? sf2WinnerId ?? ""}
             homePlayers={finalExisting?.homeTeam.players ?? sf1WinnerPlayers}
             awayPlayers={finalExisting?.awayTeam.players ?? sf2WinnerPlayers}
+            teams={teams}
             form={forms[finalExisting?.id ?? ""] ?? blankForm}
             saving={savingId === finalExisting?.id}
             onFormChange={(updater) => { if (finalExisting) onFormChange(finalExisting.id, updater) }}
-            onScheduleSave={async (date, time) => {
+            onScheduleSave={async (date, time, homeId, awayId) => {
               await upsertPlayoffSeries({
                 categoryId,
                 phase: "final",
-                homeTeamId: sf1WinnerId ?? bracket.byes[0].team.id,
-                awayTeamId: sf2WinnerId ?? bracket.byes[1].team.id,
+                homeTeamId: homeId,
+                awayTeamId: awayId,
                 scheduledDate: date,
                 scheduledTime: time,
                 existingSeriesId: finalExisting?.id,
@@ -771,21 +777,20 @@ function SemiFinalAndFinalSection({
               : "Perdedor SF 1 vs Perdedor SF 2"
             }
             existing={thirdPlaceExisting}
-            homeTeamId={thirdPlaceExisting?.homeTeam.id ?? sf1LoserId ?? bracket.byes[0].team.id}
-            awayTeamId={thirdPlaceExisting?.awayTeam.id ?? sf2LoserId ?? bracket.byes[1].team.id}
-            homeTeamName={thirdPlaceExisting?.homeTeam.name ?? sf1LoserName ?? bracket.byes[0].team.name}
-            awayTeamName={thirdPlaceExisting?.awayTeam.name ?? sf2LoserName ?? bracket.byes[1].team.name}
+            defaultHomeTeamId={thirdPlaceExisting?.homeTeam.id ?? sf1LoserId ?? ""}
+            defaultAwayTeamId={thirdPlaceExisting?.awayTeam.id ?? sf2LoserId ?? ""}
             homePlayers={thirdPlaceExisting?.homeTeam.players ?? sf1LoserPlayers}
             awayPlayers={thirdPlaceExisting?.awayTeam.players ?? sf2LoserPlayers}
+            teams={teams}
             form={forms[thirdPlaceExisting?.id ?? ""] ?? blankForm}
             saving={savingId === thirdPlaceExisting?.id}
             onFormChange={(updater) => { if (thirdPlaceExisting) onFormChange(thirdPlaceExisting.id, updater) }}
-            onScheduleSave={async (date, time) => {
+            onScheduleSave={async (date, time, homeId, awayId) => {
               await upsertPlayoffSeries({
                 categoryId,
                 phase: "third_place",
-                homeTeamId: sf1LoserId ?? bracket.byes[0].team.id,
-                awayTeamId: sf2LoserId ?? bracket.byes[1].team.id,
+                homeTeamId: homeId,
+                awayTeamId: awayId,
                 scheduledDate: date,
                 scheduledTime: time,
                 existingSeriesId: thirdPlaceExisting?.id,
@@ -876,12 +881,11 @@ function SFOrFinalCard({
   label,
   description,
   existing,
-  homeTeamId,
-  awayTeamId,
-  homeTeamName,
-  awayTeamName,
+  defaultHomeTeamId,
+  defaultAwayTeamId,
   homePlayers,
   awayPlayers,
+  teams,
   form,
   saving,
   onFormChange,
@@ -891,20 +895,21 @@ function SFOrFinalCard({
   label: string
   description: string
   existing?: PlayoffSeriesForAdmin
-  homeTeamId: string
-  awayTeamId: string
-  homeTeamName: string
-  awayTeamName: string
+  defaultHomeTeamId: string
+  defaultAwayTeamId: string
   homePlayers: PlayerInfo[]
   awayPlayers: PlayerInfo[]
+  teams: { id: string; name: string }[]
   form: SeriesForm
   saving: boolean
   onFormChange: (updater: (prev: SeriesForm) => SeriesForm) => void
-  onScheduleSave: (date: string, time: string) => Promise<void>
+  onScheduleSave: (date: string, time: string, homeTeamId: string, awayTeamId: string) => Promise<void>
   onResultSave: () => void
 }) {
   const [date, setDate] = useState(existing?.scheduledDate ?? "")
   const [time, setTime] = useState(existing?.scheduledTime ?? "")
+  const [selectedHomeId, setSelectedHomeId] = useState(defaultHomeTeamId)
+  const [selectedAwayId, setSelectedAwayId] = useState(defaultAwayTeamId)
   const [scheduleSaving, setScheduleSaving] = useState(false)
   const [showResult, setShowResult] = useState(false)
 
@@ -913,10 +918,30 @@ function SFOrFinalCard({
     setTime(existing?.scheduledTime ?? "")
   }, [existing?.scheduledDate, existing?.scheduledTime])
 
+  // When series is created, sync selected IDs from DB data
+  useEffect(() => {
+    if (existing) {
+      setSelectedHomeId(existing.homeTeam.id)
+      setSelectedAwayId(existing.awayTeam.id)
+    }
+  }, [existing?.id])
+
+  const effectiveHomeId = existing ? existing.homeTeam.id : selectedHomeId
+  const effectiveAwayId = existing ? existing.awayTeam.id : selectedAwayId
+  const effectiveHomeName = existing
+    ? existing.homeTeam.name
+    : (teams.find((t) => t.id === selectedHomeId)?.name ?? "")
+  const effectiveAwayName = existing
+    ? existing.awayTeam.name
+    : (teams.find((t) => t.id === selectedAwayId)?.name ?? "")
+
+  const canCreate = !existing && !!selectedHomeId && !!selectedAwayId && selectedHomeId !== selectedAwayId
+  const canSchedule = !!date && (existing ? true : canCreate)
+
   async function handleScheduleSave() {
-    if (!date) return
+    if (!canSchedule) return
     setScheduleSaving(true)
-    await onScheduleSave(date, time)
+    await onScheduleSave(date, time, effectiveHomeId, effectiveAwayId)
     setScheduleSaving(false)
   }
 
@@ -931,7 +956,62 @@ function SFOrFinalCard({
           <Badge className="text-xs bg-primary/10 text-primary hover:bg-primary/10">Programado</Badge>
         )}
       </div>
-      <p className="text-sm text-muted-foreground">{description}</p>
+
+      {existing ? (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+            <Trophy className="size-3.5 text-accent" />
+            Asignar participantes
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Local</Label>
+              <Select
+                value={selectedHomeId || NULL_VALUE}
+                onValueChange={(v: string | null) => setSelectedHomeId(!v || v === NULL_VALUE ? "" : v)}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Seleccionar equipo">
+                    {selectedHomeId ? teams.find((t) => t.id === selectedHomeId)?.name : undefined}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NULL_VALUE}>Sin asignar</SelectItem>
+                  {teams.map((t) => (
+                    <SelectItem key={t.id} value={t.id} disabled={t.id === selectedAwayId}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Visitante</Label>
+              <Select
+                value={selectedAwayId || NULL_VALUE}
+                onValueChange={(v: string | null) => setSelectedAwayId(!v || v === NULL_VALUE ? "" : v)}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Seleccionar equipo">
+                    {selectedAwayId ? teams.find((t) => t.id === selectedAwayId)?.name : undefined}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NULL_VALUE}>Sin asignar</SelectItem>
+                  {teams.map((t) => (
+                    <SelectItem key={t.id} value={t.id} disabled={t.id === selectedHomeId}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Fecha</Label>
@@ -947,12 +1027,15 @@ function SFOrFinalCard({
         size="sm"
         variant="outline"
         className="w-full"
-        disabled={!date || scheduleSaving}
+        disabled={!canSchedule || scheduleSaving}
         onClick={handleScheduleSave}
       >
         {scheduleSaving ? <Loader2 className="size-4 animate-spin" /> : existing ? <Save className="size-4" /> : <Plus className="size-4" />}
-        {existing ? "Actualizar fecha" : "Programar"}
+        {existing ? "Actualizar fecha" : "Crear partido"}
       </Button>
+      {!existing && !canCreate && (
+        <p className="text-xs text-muted-foreground">Seleccioná dos equipos distintos para crear el partido.</p>
+      )}
       {existing?.scheduledDate && (
         <p className="text-xs text-muted-foreground">
           <Clock className="size-3 inline mr-1" />
@@ -975,10 +1058,10 @@ function SFOrFinalCard({
 
           {showResult && (
             <PlayoffSeriesEditor
-              homeTeamId={homeTeamId}
-              awayTeamId={awayTeamId}
-              homeTeamName={homeTeamName}
-              awayTeamName={awayTeamName}
+              homeTeamId={effectiveHomeId}
+              awayTeamId={effectiveAwayId}
+              homeTeamName={effectiveHomeName}
+              awayTeamName={effectiveAwayName}
               homePlayers={homePlayers}
               awayPlayers={awayPlayers}
               form={form}

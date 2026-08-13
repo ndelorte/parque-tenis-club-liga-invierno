@@ -315,6 +315,29 @@ export async function resolveKnockoutParticipants(
   return { ok: true }
 }
 
+// ── Knockout: asignar participantes manualmente ───────────────
+
+export async function assignMmMatchParticipants(
+  matchId: string,
+  participant1Id: string,
+  participant2Id: string,
+): Promise<ActionResult> {
+  if (!participant1Id || !participant2Id) {
+    return { ok: false, error: "Seleccioná los dos participantes." }
+  }
+  if (participant1Id === participant2Id) {
+    return { ok: false, error: "Los participantes deben ser distintos." }
+  }
+  const { error } = await db()
+    .from("mid_master_matches")
+    .update({ participant_1_id: participant1Id, participant_2_id: participant2Id })
+    .eq("id", matchId)
+  if (error) return { ok: false, error: "Error al asignar participantes." }
+  revalidatePath("/panel-master")
+  revalidatePath("/mid-master")
+  return { ok: true }
+}
+
 // ── Trigger revalidation (standings computed on-the-fly) ──────
 
 export async function revalidateMmCategory(slug: string): Promise<void> {
