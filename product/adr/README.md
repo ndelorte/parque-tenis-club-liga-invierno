@@ -1,0 +1,47 @@
+# ADR — Architecture Decision Records
+
+Decisiones estructurales del proyecto que ya se implementaron y que, si se
+pierden en el historial de chat o de commits, alguien terminaría
+"redescubriéndolas" o revirtiéndolas por error.
+
+No es para reglas deportivas (eso vive en `reglas-liga-invierno.md` /
+`reglas-mid-master.md`) ni para tareas de sprint (eso vive en `sprintN.md`).
+Es específicamente para decisiones de **arquitectura o estructura** con
+consecuencias que no son obvias mirando solo el código.
+
+## Cuándo agregar un ADR nuevo
+
+Cuando se tome una decisión que:
+
+- sea difícil de revertir sin repetir la investigación, o
+- alguien (humano o agente) podría "corregir" por error si no conoce el motivo, o
+- afecte a más de un módulo/ruta y no esté documentada en otro lado.
+
+No crear un ADR por cada cambio — solo cuando el "por qué" no es obvio desde
+el diff.
+
+## Formato
+
+Cada ADR es un archivo `ADR-XXX-titulo-corto.md` con:
+
+```md
+# ADR-XXX: Título
+
+Status: Proposed | Accepted | Rejected | Deprecated
+
+## Contexto
+Qué problema había, qué se pidió, qué restricciones existían.
+
+## Decisión
+Qué se decidió hacer, concretamente.
+
+## Consecuencias
+Qué implica para el código a futuro. Qué NO hay que hacer por error.
+```
+
+## Índice
+
+| ADR | Título | Status |
+|---|---|---|
+| [ADR-001](./ADR-001-rename-admin-a-panel-parque.md) | Renombrar panel admin de `/admin` a `/panel-parque` + auth vía `proxy.ts` | Accepted |
+| [ADR-002](./ADR-002-mid-master-modulo-aislado.md) | Mid Master como módulo aislado (prefijo `mm_`, sin reuso de `lib/tournament/`) | Accepted |

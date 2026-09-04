@@ -16,13 +16,19 @@ Web real para **Parque Tenis Club** (Argentina). Dos secciones:
 
 ## Documentación del producto
 
+**Si no sabés qué archivo leer para una tarea puntual, empezá por
+`/product/context-index.md`.**
+
 | Archivo | Contenido |
 |---------|-----------|
+| `/product/context-index.md` | Mapa "tarea → qué documento leer" |
 | `/product/PRD_PARQUE_TENIS_LIGA_INVIERNO.md` | Fuente de verdad. Leer primero. |
 | `/product/vision.md` | Objetivos, usuarios, alcance del MVP |
-| `/product/reglas-liga-invierno.md` | Reglas deportivas del torneo (canónico) |
+| `/product/reglas-liga-invierno.md` | Reglas deportivas de Liga de Invierno (canónico) |
+| `/product/reglas-mid-master.md` | Reglas deportivas de Mid Master (canónico) |
 | `/product/reglas.md` | Principios y restricciones de desarrollo |
 | `/product/modelo-datos.md` | Esquema de tablas Supabase |
+| `/product/adr/` | Decisiones de arquitectura aceptadas (por qué, no qué) |
 | `/product/backlog.md` | Tareas organizadas por sprint |
 | `/product/open-questions.md` | Gaps sin resolver — no implementar sin respuesta |
 
@@ -109,6 +115,7 @@ Si falta una regla deportiva, **no inventarla**. Agregar a `/product/open-questi
 ### La tabla se calcula desde resultados
 
 Nunca editar puntos manualmente en `standings_snapshot`. Siempre recalcular desde `series` y `court_matches`.
+Esta regla está reforzada por un test (`lib/data/__tests__/standings-write-boundary.test.ts`): solo `lib/data/standings.ts` puede escribir esa tabla.
 
 ### Lógica en `/lib/tournament/`, nunca en componentes
 
