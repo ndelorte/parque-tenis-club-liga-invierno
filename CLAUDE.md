@@ -10,7 +10,7 @@ Web real para **Parque Tenis Club** (Argentina). Secciones:
 
 1. **Landing institucional pública** (`/`) — vitrina del club con CTA a WhatsApp.
 2. **Liga Invierno/Verano** (`/ligas-invierno-verano`) — selector de ediciones (Invierno/Verano, pasada/activa/próxima), torneo por equipos con fixture, tabla y resultados.
-3. **Circuito del Parque** (`/mid-master`, en migración a `/circuito-del-parque`) — torneos individuales, incluye Mid Master como torneo especial.
+3. **Circuito del Parque** (`/circuito-del-parque/especiales/[edition]`) — torneos individuales; Mid Master y Final Master son "torneos especiales" (ediciones) dentro de esta sección.
 4. **Interparque** (`/interparque`) — modalidad de partidos de single exclusiva para alumnos del club: reglas, tabla de posiciones y partidos jugados.
 5. **Paneles admin privados** (`/panel-liga`, `/panel-circuito`, `/panel-interparque`) — solo para organizadores autenticados.
 
@@ -159,9 +159,10 @@ No mostrar teléfonos en vistas públicas. No commitear `.env`. No exponer `SUPA
 | `/ligas-invierno-verano/[season]/equipos/[catSlug]/[teamSlug]` | Página de equipo con historial en esa edición |
 | `/ligas-invierno-verano/reglamento` | Reglamento resumido |
 | `/interparque` | Nueva area de partidos entre alumnos |
-| `/mid-master` | Torneo especial Mid Master (pasa a `/circuito-del-parque/especiales/...` en Sprint C2) |
+| `/circuito-del-parque/especiales/[edition]` | Torneo especial (Mid Master, Final Master, ...) — zonas + semis + final |
+| `/circuito-del-parque/especiales/[edition]/categorias/[slug]` | Zonas, fixture y cuadro final de una categoría de esa edición |
 
-Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]`, `/liga-invierno/equipos/[catSlug]/[teamSlug]`) quedan como redirects 301 a la nueva base o a la edición activa — no reintroducirlas como rutas reales.
+Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]`, `/liga-invierno/equipos/[catSlug]/[teamSlug]`) y `/mid-master`, `/mid-master/categorias/[slug]` quedan como redirects 301 (ver `next.config.ts`) — no reintroducirlas como rutas reales.
 
 ## Rutas admin (no enlazar públicamente)
 

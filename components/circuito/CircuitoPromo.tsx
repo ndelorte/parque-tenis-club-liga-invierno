@@ -28,7 +28,7 @@ export function CircuitoPromo() {
               estilo grand slam.
             </p>
             <Link
-              href="/mid-master"
+              href="/circuito-del-parque/especiales/mid-master-2026"
               className="mt-8 inline-flex items-center gap-2 border border-mm-gold/50 px-7 py-3 text-sm font-medium uppercase tracking-[0.1em] text-mm-gold transition-colors hover:border-mm-gold hover:bg-mm-gold/5"
             >
               Ver torneo

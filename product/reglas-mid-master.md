@@ -111,8 +111,12 @@ Para H2H entre 3 o más: mini-tabla con los partidos entre el subconjunto empata
 
 | Ruta | Contenido |
 |------|-----------|
-| `/mid-master` | Portal: descripción, lista de categorías |
-| `/mid-master/categorias/[slug]` | Zona A + Zona B (tabla + fixture), bracket semifinal/final |
+| `/circuito-del-parque/especiales/[edition]` | Portal de la edición: descripción, lista de categorías |
+| `/circuito-del-parque/especiales/[edition]/categorias/[slug]` | Zona A + Zona B (tabla + fixture), bracket semifinal/final |
+
+`/mid-master` y `/mid-master/categorias/[slug]` quedan como redirects 301 a la
+edición `mid-master-2026` (Sprint C2 — ver ADR-004). Puede haber más de una
+edición (ej. Final Master) bajo `especiales/[edition]`.
 
 No hay página por jugador ni por pareja.
 

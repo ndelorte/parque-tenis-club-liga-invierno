@@ -5,18 +5,21 @@ import { ArrowLeft } from "lucide-react"
 import { ZoneSection } from "@/components/mid-master/ZoneSection"
 import { KnockoutBracket } from "@/components/mid-master/KnockoutBracket"
 import { MmReveal } from "@/components/mid-master/MmReveal"
-import { getMmCategoryForPublic, getMmCategories } from "@/lib/data/mid-master"
+import { getMmEditionBySlug, getMmCategoryForPublic, getMmCategories } from "@/lib/data/mid-master"
 
 export const dynamic = "force-dynamic"
 
 interface Props {
-  params: Promise<{ slug: string }>
+  params: Promise<{ edition: string; slug: string }>
 }
 
-export async function generateStaticParams() {
+export async function generateStaticParams({ params }: { params: { edition: string } }) {
   // Intenta pre-generar rutas; si falla silenciosamente, se resuelven en runtime
   try {
-    const categories = await getMmCategories()
+    const { edition } = params
+    const ed = await getMmEditionBySlug(edition)
+    if (!ed) return []
+    const categories = await getMmCategories(ed.id)
     return categories.map((c) => ({ slug: c.slug }))
   } catch {
     return []
@@ -24,18 +27,23 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params
-  const cat = await getMmCategoryForPublic(slug)
+  const { edition, slug } = await params
+  const ed = await getMmEditionBySlug(edition)
+  if (!ed) return {}
+  const cat = await getMmCategoryForPublic(ed.id, slug)
   if (!cat) return {}
   return {
-    title: `${cat.name} · Mid Master 2026 | Parque Tenis Club`,
-    description: `Zonas, fixture y cuadro final de ${cat.name} en el Mid Master 2026.`,
+    title: `${cat.name} · ${ed.name} ${ed.year} | Parque Tenis Club`,
+    description: `Zonas, fixture y cuadro final de ${cat.name} en el ${ed.name} ${ed.year}.`,
   }
 }
 
 export default async function CategoryPage({ params }: Props) {
-  const { slug } = await params
-  const cat = await getMmCategoryForPublic(slug)
+  const { edition, slug } = await params
+  const ed = await getMmEditionBySlug(edition)
+  if (!ed) notFound()
+
+  const cat = await getMmCategoryForPublic(ed.id, slug)
   if (!cat) notFound()
 
   const typeLabel = cat.type === "singles" ? "Singles" : "Dobles"
@@ -47,11 +55,11 @@ export default async function CategoryPage({ params }: Props) {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
       <Link
-        href="/mid-master"
+        href={`/circuito-del-parque/especiales/${ed.slug}`}
         className="mb-8 inline-flex items-center gap-1.5 text-xs text-mm-text-faint transition-colors hover:text-mm-gold"
       >
         <ArrowLeft className="size-3.5" />
-        Mid Master
+        {ed.name}
       </Link>
 
       <div className="mb-10 border-b border-mm-border pb-8">

@@ -39,7 +39,7 @@ export async function updateMmMatchSchedule(
 
   if (error) return { ok: false, error: "Error al guardar la fecha." }
   revalidatePath("/panel-circuito")
-  revalidatePath("/mid-master")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -113,7 +113,7 @@ export async function updateMmMatchResult(
   }
 
   revalidatePath("/panel-circuito")
-  revalidatePath("/mid-master")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -127,7 +127,7 @@ export async function clearMmMatchResult(matchId: string): Promise<ActionResult>
 
   if (error) return { ok: false, error: "Error al borrar el resultado." }
   revalidatePath("/panel-circuito")
-  revalidatePath("/mid-master")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -189,7 +189,7 @@ export async function addMmParticipant(
   }
 
   revalidatePath("/panel-circuito")
-  revalidatePath("/mid-master")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -210,7 +210,7 @@ export async function updateMmParticipant(
   if (error) return { ok: false, error: "Error al actualizar el nombre." }
 
   revalidatePath("/panel-circuito")
-  revalidatePath("/mid-master")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -311,7 +311,7 @@ export async function resolveKnockoutParticipants(
   ])
 
   revalidatePath("/panel-circuito")
-  revalidatePath("/mid-master")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -334,7 +334,7 @@ export async function assignMmMatchParticipants(
     .eq("id", matchId)
   if (error) return { ok: false, error: "Error al asignar participantes." }
   revalidatePath("/panel-circuito")
-  revalidatePath("/mid-master")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -342,5 +342,5 @@ export async function assignMmMatchParticipants(
 
 export async function revalidateMmCategory(slug: string): Promise<void> {
   revalidatePath(`/panel-circuito/categorias/${slug}`)
-  revalidatePath(`/mid-master/categorias/${slug}`)
+  revalidatePath(`/circuito-del-parque/especiales/mid-master-2026/categorias/${slug}`)
 }

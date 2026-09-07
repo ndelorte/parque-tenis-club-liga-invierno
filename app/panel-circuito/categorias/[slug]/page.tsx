@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowLeft, RefreshCw } from "lucide-react"
-import { getMmCategoryAdminData } from "@/lib/data/mid-master"
+import { getMmActiveEdition, getMmCategoryAdminData } from "@/lib/data/mid-master"
 import { normalizeType } from "@/lib/data/mid-master/types"
 import { ZoneAdmin } from "@/components/admin/mid-master/ZoneAdmin"
 import { KnockoutAdmin } from "@/components/admin/mid-master/KnockoutAdmin"
@@ -40,7 +40,9 @@ async function RecalcButton({ slug }: { slug: string }) {
 
 export default async function PanelMasterCategoryPage({ params }: Props) {
   const { slug } = await params
-  const data = await getMmCategoryAdminData(slug)
+  const activeEdition = await getMmActiveEdition()
+  if (!activeEdition) notFound()
+  const data = await getMmCategoryAdminData(activeEdition.id, slug)
   if (!data) notFound()
 
   const { category, groupA, groupB, knockoutMatches, allParticipants } = data

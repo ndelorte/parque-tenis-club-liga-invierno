@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowRight, LogOut, Trophy, ExternalLink } from "lucide-react"
 import { signOutMaster } from "@/app/actions/mid-master"
-import { getMmCategories } from "@/lib/data/mid-master"
+import { getMmActiveEdition, getMmCategories } from "@/lib/data/mid-master"
 import type { DbMmCategory } from "@/lib/data/mid-master/types"
 import { getZoneSize, normalizeType } from "@/lib/data/mid-master/types"
 
@@ -32,7 +32,8 @@ function CategoryCard({ cat }: { cat: DbMmCategory }) {
 }
 
 export default async function PanelMasterPage() {
-  const categories = await getMmCategories()
+  const activeEdition = await getMmActiveEdition()
+  const categories = activeEdition ? await getMmCategories(activeEdition.id) : []
   const singles = categories.filter((c) => normalizeType(c.type) === "singles")
   const doubles = categories.filter((c) => normalizeType(c.type) === "doubles")
 
@@ -44,17 +45,21 @@ export default async function PanelMasterPage() {
             <Trophy className="size-4 text-mm-gold" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-mm-text">Panel Mid Master</p>
-            <p className="text-xs text-mm-text-muted">Mid Master 2026</p>
+            <p className="font-semibold text-mm-text">Panel Circuito del Parque</p>
+            <p className="text-xs text-mm-text-muted">
+              {activeEdition ? `${activeEdition.name} ${activeEdition.year}` : "Sin edición activa"}
+            </p>
           </div>
-          <Link
-            href="/mid-master"
-            target="_blank"
-            className="hidden items-center gap-1.5 rounded border border-mm-border px-3 py-1.5 text-xs text-mm-text-muted transition-colors hover:border-mm-gold/40 hover:text-mm-gold sm:flex"
-          >
-            <ExternalLink className="size-3.5" />
-            Ver público
-          </Link>
+          {activeEdition && (
+            <Link
+              href={`/circuito-del-parque/especiales/${activeEdition.slug}`}
+              target="_blank"
+              className="hidden items-center gap-1.5 rounded border border-mm-border px-3 py-1.5 text-xs text-mm-text-muted transition-colors hover:border-mm-gold/40 hover:text-mm-gold sm:flex"
+            >
+              <ExternalLink className="size-3.5" />
+              Ver público
+            </Link>
+          )}
           <form action={signOutMaster}>
             <button
               type="submit"
@@ -68,20 +73,29 @@ export default async function PanelMasterPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-        {categories.length === 0 ? (
+        {!activeEdition ? (
+          <div className="border border-mm-border bg-mm-surface p-8 text-center">
+            <p className="text-mm-text-muted">No hay ninguna edición activa.</p>
+            <p className="mt-2 text-xs text-mm-text-faint">
+              Verificá que la tabla <code>mid_master_editions</code> tenga una fila con status
+              &quot;active&quot;.
+            </p>
+          </div>
+        ) : categories.length === 0 ? (
           <div className="border border-mm-border bg-mm-surface p-8 text-center">
             <p className="text-mm-text-muted">
-              No se encontraron categorías en la base de datos.
+              No se encontraron categorías para esta edición.
             </p>
             <p className="mt-2 text-xs text-mm-text-faint">
-              Verificá que la tabla <code>mid_master_categories</code> tenga datos.
+              Verificá que la tabla <code>mid_master_categories</code> tenga datos con este{" "}
+              <code>edition_id</code>.
             </p>
           </div>
         ) : (
           <>
             <div className="mb-8">
               <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-mm-gold">
-                Mid Master · 2026
+                {activeEdition.name} · {activeEdition.year}
               </p>
               <h1 className="mt-1 font-mm-display text-2xl font-bold text-mm-text sm:text-3xl">
                 Gestión del torneo
