@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
+import { getTeamById } from "@/lib/data/teams"
+import type { Team } from "@/lib/tournament/types"
 
 export type PlayoffSeriesSimple = {
   id: string
@@ -64,4 +66,13 @@ export async function getPlayoffSeries(
   }
 
   return result
+}
+
+// Campeón derivado: gana la serie de fase "final" (no se guarda como campo
+// aparte — CLAUDE.md: no duplicar datos calculados).
+export async function getChampionForCategory(categoryId: string): Promise<Team | null> {
+  const series = await getPlayoffSeries(categoryId)
+  const final = series.find((s) => s.phase === "final")
+  if (!final?.winner_team_id) return null
+  return getTeamById(final.winner_team_id)
 }

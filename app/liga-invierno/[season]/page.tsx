@@ -4,17 +4,15 @@ import { LigaBoard } from "@/components/liga/liga-board"
 import { LigaReglamento } from "@/components/liga/liga-reglamento"
 import { SponsorsBanner } from "@/components/liga/sponsors-banner"
 import { WhatsappFab } from "@/components/whatsapp-fab"
+import { TournamentHeader } from "@/components/liga/TournamentHeader"
+import { ClosedSeasonView } from "@/components/liga/ClosedSeasonView"
 import { getTournamentBySlug } from "@/lib/data/tournaments"
 import { getCategoriesForTournament } from "@/lib/data/categories"
 import { getTeamsByCategory } from "@/lib/data/teams"
 import { getStandingsSnapshot } from "@/lib/data/standings"
 import { getRoundsWithSeries } from "@/lib/data/series"
-import { getPlayoffSeries } from "@/lib/data/playoffs"
-import {
-  generateProvisionalBracket,
-  mergeProvisionalBracketWithScheduledMatches,
-} from "@/lib/playoffs/generateProvisionalBracket"
-import type { ProvisionalBracket } from "@/lib/playoffs/types"
+import { getPlayoffSeries, getChampionForCategory } from "@/lib/data/playoffs"
+import { buildBracketOrNull } from "@/lib/playoffs/generateProvisionalBracket"
 import type { StandingsRow } from "@/lib/tournament/types"
 
 export const dynamic = "force-dynamic"
@@ -59,17 +57,28 @@ export default async function SeasonPage({ params, searchParams }: Props) {
   const categories = await getCategoriesForTournament(tournament.id)
 
   if (tournament.status === "finished") {
+    const closedBundles = await Promise.all(
+      categories.map(async (category) => {
+        const [standings, playoffSeries, champion] = await Promise.all([
+          getStandingsSnapshot(category.id),
+          getPlayoffSeries(category.id),
+          getChampionForCategory(category.id),
+        ])
+
+        return {
+          category,
+          standings,
+          bracket: buildBracketOrNull(standings, playoffSeries),
+          playoffSeries,
+          champion,
+        }
+      }),
+    )
+
     return (
       <main className="min-h-dvh bg-background">
-        <div className="max-w-2xl mx-auto px-4 py-24 text-center">
-          <h1 className="font-heading text-2xl font-bold text-gray-900">
-            {tournament.name} {tournament.season}
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Esta edición ya terminó. Muy pronto vas a poder ver acá la tabla final y el cuadro de
-            campeones.
-          </p>
-        </div>
+        <TournamentHeader tournament={tournament} />
+        <ClosedSeasonView bundles={closedBundles} />
         <WhatsappFab />
       </main>
     )
@@ -106,17 +115,14 @@ export default async function SeasonPage({ params, searchParams }: Props) {
               position: i + 1,
             }))
 
-      let bracket: ProvisionalBracket | null = null
-      try {
-        if (effectiveStandings.length >= 5) {
-          const generated = generateProvisionalBracket(effectiveStandings, effectiveStandings.length)
-          bracket = mergeProvisionalBracketWithScheduledMatches(generated, playoffSeries)
-        }
-      } catch {
-        bracket = null
+      return {
+        category,
+        standings,
+        rounds,
+        teams,
+        bracket: buildBracketOrNull(effectiveStandings, playoffSeries),
+        playoffSeries,
       }
-
-      return { category, standings, rounds, teams, bracket, playoffSeries }
     }),
   )
 

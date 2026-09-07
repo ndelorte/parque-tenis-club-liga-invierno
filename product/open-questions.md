@@ -114,6 +114,23 @@
 
 ---
 
+## Resueltas — Liga Multi-Temporada
+
+### ~~OQ-19~~: Edición cerrada — ¿tabla+cuadro+campeón o sólo cuadro+campeón?
+
+**Respuesta** (2026-09-07): Tabla final + cuadro de playoffs + campeón. Solo se oculta el fixture
+fecha por fecha (partidos de fase regular). Implementado en Sprint L3
+(`components/liga/ClosedSeasonView.tsx`).
+
+---
+
+### ~~OQ-20~~: ¿Cierre por torneo o por categoría?
+
+**Respuesta** (2026-09-07): Por torneo completo — `tournaments.status` (no se agrega
+`categories.status`). Todas las categorías de una edición cierran juntas.
+
+---
+
 ## Resueltas — Circuito del Parque
 
 Relevadas con el organizador el 2026-09-07 (cuestionario C0, `plan-liga-multitemporada-y-circuito.md` §10).
