@@ -131,6 +131,14 @@ fecha por fecha (partidos de fase regular). Implementado en Sprint L3
 
 ---
 
+### ~~OQ-21~~: Vista "Próximamente" — ¿elige categoría o pantalla única?
+
+**Respuesta** (2026-09-07): Pantalla única (logo + "Próximamente" + reloj de arena animado).
+No hay selector de categoría porque todavía no existen categorías/equipos cargados para esa
+edición. Implementado en Sprint L5 (`components/liga/ComingSoonView.tsx`).
+
+---
+
 ## Resueltas — Circuito del Parque
 
 Relevadas con el organizador el 2026-09-07 (cuestionario C0, `plan-liga-multitemporada-y-circuito.md` §10).
