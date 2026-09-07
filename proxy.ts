@@ -29,14 +29,27 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const isAdmin = isAdminUser(user)
   const path = request.nextUrl.pathname
+
+  // Compat: rutas viejas de los paneles (pre-rename) → 301 a las nuevas.
+  if (path === "/panel-parque" || path.startsWith("/panel-parque/")) {
+    const url = request.nextUrl.clone()
+    url.pathname = path.replace("/panel-parque", "/panel-liga")
+    return NextResponse.redirect(url, 301)
+  }
+  if (path === "/panel-master" || path.startsWith("/panel-master/")) {
+    const url = request.nextUrl.clone()
+    url.pathname = path.replace("/panel-master", "/panel-circuito")
+    return NextResponse.redirect(url, 301)
+  }
+
+  const isAdmin = isAdminUser(user)
 
   // Prefijo del panel actual → { home, login }. Se agrega una entrada acá
   // por cada panel nuevo en vez de apilar ternarios binarios a mano.
   const PANELS = [
-    { prefix: "/panel-parque", home: "/panel-parque", login: "/panel-parque/login" },
-    { prefix: "/panel-master", home: "/panel-master", login: "/panel-master/login" },
+    { prefix: "/panel-liga", home: "/panel-liga", login: "/panel-liga/login" },
+    { prefix: "/panel-circuito", home: "/panel-circuito", login: "/panel-circuito/login" },
     { prefix: "/panel-interparque", home: "/panel-interparque", login: "/panel-interparque/login" },
   ] as const
 
@@ -63,6 +76,10 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/panel-liga",
+    "/panel-liga/:path*",
+    "/panel-circuito",
+    "/panel-circuito/:path*",
     "/panel-parque",
     "/panel-parque/:path*",
     "/panel-master",

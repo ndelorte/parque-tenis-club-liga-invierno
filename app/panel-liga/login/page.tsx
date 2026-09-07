@@ -40,7 +40,7 @@ export default function PanelLoginPage() {
       return
     }
 
-    router.push("/panel-parque")
+    router.push("/panel-liga")
     router.refresh()
   }
 

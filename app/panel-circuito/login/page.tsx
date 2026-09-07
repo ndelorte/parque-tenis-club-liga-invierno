@@ -35,7 +35,7 @@ export default function PanelMasterLoginPage() {
       return
     }
 
-    router.push("/panel-master")
+    router.push("/panel-circuito")
     router.refresh()
   }
 

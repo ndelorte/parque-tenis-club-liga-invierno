@@ -122,5 +122,7 @@ No hay página por jugador ni por pareja.
 
 - No reutilizar lógica de `lib/tournament/` salvo `parseScore` (función pura).
 - Toda lógica deportiva propia en `lib/mid-master/`.
-- Tablas Supabase con prefijo `mm_` para aislamiento total.
-- Panel admin en `/panel-master/` — mismo Supabase Auth que `/panel-parque/`.
+- Tablas Supabase con prefijo `mid_master_` para aislamiento total (corregido —
+  el prefijo real en el código es `mid_master_`, no `mm_`; ver ADR-002).
+- Panel admin en `/panel-circuito/` — mismo Supabase Auth que `/panel-liga/`
+  (rename de rutas, Sprint C1 — ver ADR-003).

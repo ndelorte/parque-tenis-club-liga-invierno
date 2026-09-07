@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { ArrowRight, Star } from "lucide-react"
 
-export function MidMasterPromo() {
+export function CircuitoPromo() {
   return (
     <section
       className="relative isolate overflow-hidden bg-mm-bg py-20 sm:py-28"
@@ -16,7 +16,7 @@ export function MidMasterPromo() {
           <div className="max-w-xl">
             <span className="inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.2em] text-mm-gold">
               <Star className="size-3.5" />
-              Torneo especial
+              Circuito del Parque · Torneo especial
             </span>
             <h2 className="mt-4 font-mm-display text-3xl font-bold text-mm-text sm:text-4xl lg:text-5xl">
               Mid Master 2026

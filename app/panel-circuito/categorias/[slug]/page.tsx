@@ -50,7 +50,7 @@ export default async function PanelMasterCategoryPage({ params }: Props) {
       <header className="sticky top-0 z-30 border-b border-mm-border bg-mm-surface">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3 sm:px-6">
           <Link
-            href="/panel-master"
+            href="/panel-circuito"
             className="flex items-center gap-1.5 rounded px-2 py-1.5 text-xs text-mm-text-muted transition-colors hover:text-mm-gold"
           >
             <ArrowLeft className="size-3.5" />

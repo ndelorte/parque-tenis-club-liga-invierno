@@ -9,9 +9,10 @@ Guía de referencia rápida para Claude Code. Leer antes de modificar cualquier 
 Web real para **Parque Tenis Club** (Argentina). Secciones:
 
 1. **Landing institucional pública** (`/`) — vitrina del club con CTA a WhatsApp.
-2. **Liga de Invierno** (`/liga-invierno`) — torneo por equipos con fixture, tabla y resultados.
-3. **Interparque** (`/interparque`) — modalidad de partidos de single exclusiva para alumnos del club: reglas, tabla de posiciones y partidos jugados.
-4. **Paneles admin privados** (`/panel-parque`, `/panel-master`, `/panel-interparque`) — solo para organizadores autenticados.
+2. **Liga Invierno/Verano** (`/ligas-invierno-verano`) — selector de ediciones (Invierno/Verano, pasada/activa/próxima), torneo por equipos con fixture, tabla y resultados.
+3. **Circuito del Parque** (`/mid-master`, en migración a `/circuito-del-parque`) — torneos individuales, incluye Mid Master como torneo especial.
+4. **Interparque** (`/interparque`) — modalidad de partidos de single exclusiva para alumnos del club: reglas, tabla de posiciones y partidos jugados.
+5. **Paneles admin privados** (`/panel-liga`, `/panel-circuito`, `/panel-interparque`) — solo para organizadores autenticados.
 
 ---
 
@@ -66,10 +67,11 @@ Web real para **Parque Tenis Club** (Argentina). Secciones:
 │   │   └── reglamento/page.tsx
 │   ├── interparque/              # Sección Interparque
 │   │   └── page.tsx              # Reglas + tabla + partidos jugados
-│   ├── panel-parque/             # Panel admin Liga Invierno (protegido por proxy.ts)
+│   ├── panel-liga/                # Panel admin de Liga (protegido por proxy.ts)
 │   │   ├── login/page.tsx
 │   │   ├── page.tsx
 │   │   └── liga-invierno/
+│   ├── panel-circuito/            # Panel admin de Circuito del Parque / Mid Master
 │   └── panel-interparque/        # Panel admin Interparque (protegido por proxy.ts)
 │       ├── login/page.tsx
 │       └── page.tsx
@@ -81,7 +83,7 @@ Web real para **Parque Tenis Club** (Argentina). Secciones:
 │   └── admin/interparque/         # Formularios del panel admin de Interparque
 ├── content/
 │   └── site.ts                   # Textos y datos editables del club
-├── proxy.ts                       # Protección de rutas /panel-*/* (Next.js 16)
+├── proxy.ts                       # Protección de rutas /panel-liga/*, /panel-circuito/* y /panel-interparque/* (Next.js 16)
 ├── lib/
 │   ├── tournament/               # Lógica pura del torneo (sin UI)
 │   │   ├── types.ts
@@ -136,9 +138,9 @@ Esta regla está reforzada por un test (`lib/data/__tests__/standings-write-boun
 
 ### Admin invisible
 
-`/panel-parque`, `/panel-master` y `/panel-interparque` no están linkeados desde ninguna página pública. Nunca en navbar ni footer.
+`/panel-liga`, `/panel-circuito` y `/panel-interparque` no están linkeados desde ninguna página pública. Nunca en navbar ni footer.
 
-**Interparque es distinto de sus paneles**: `/interparque` (la sección pública) SÍ va en navbar y footer — la regla de invisibilidad aplica solo a `/panel-interparque`, no a la sección pública del mismo módulo.
+**Interparque es distinto de su panel**: `/interparque` (la sección pública) SÍ va en navbar y footer — la regla de invisibilidad aplica solo a `/panel-interparque`, no a la sección pública del mismo módulo.
 
 ### Datos sensibles
 
@@ -157,7 +159,7 @@ No mostrar teléfonos en vistas públicas. No commitear `.env`. No exponer `SUPA
 | `/ligas-invierno-verano/[season]/equipos/[catSlug]/[teamSlug]` | Página de equipo con historial en esa edición |
 | `/ligas-invierno-verano/reglamento` | Reglamento resumido |
 | `/interparque` | Nueva area de partidos entre alumnos |
-
+| `/mid-master` | Torneo especial Mid Master (pasa a `/circuito-del-parque/especiales/...` en Sprint C2) |
 
 Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]`, `/liga-invierno/equipos/[catSlug]/[teamSlug]`) quedan como redirects 301 a la nueva base o a la edición activa — no reintroducirlas como rutas reales.
 
@@ -165,15 +167,20 @@ Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]
 
 | Ruta | Descripción |
 |------|-------------|
-| `/panel-parque/login` | Login con Supabase Auth |
-| `/panel-parque` | Dashboard |
-| `/panel-parque/liga-invierno/equipos` | CRUD equipos |
-| `/panel-parque/liga-invierno/jugadores` | CRUD jugadores |
-| `/panel-parque/liga-invierno/fixture` | Cargar y editar fixture |
-| `/panel-parque/liga-invierno/resultados` | Cargar y editar resultados |
-| `/panel-parque/liga-invierno/reprogramaciones` | Reprogramar series |
+| `/panel-liga/login` | Login con Supabase Auth |
+| `/panel-liga` | Dashboard de Liga |
+| `/panel-liga/liga-invierno/equipos` | CRUD equipos |
+| `/panel-liga/liga-invierno/jugadores` | CRUD jugadores |
+| `/panel-liga/liga-invierno/fixture` | Cargar y editar fixture |
+| `/panel-liga/liga-invierno/resultados` | Cargar y editar resultados |
+| `/panel-liga/liga-invierno/reprogramaciones` | Reprogramar series |
+| `/panel-circuito/login` | Login con Supabase Auth (Circuito del Parque / Mid Master) |
+| `/panel-circuito` | Dashboard de Circuito del Parque |
+| `/panel-circuito/categorias/[slug]` | Carga de resultados de Mid Master |
 | `/panel-interparque/login` | Login con Supabase Auth (mismo rol admin) |
 | `/panel-interparque` | Dashboard: alta de jugadores, carga y edición de partidos/resultados |
+
+Rutas viejas `/panel-parque/*` y `/panel-master/*` quedan como redirects 301 (ver `proxy.ts`) — no reintroducirlas.
 
 ---
 

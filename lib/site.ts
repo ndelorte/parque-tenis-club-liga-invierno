@@ -20,7 +20,7 @@ export const NAV_LINKS = [
   { label: "Actividades", href: "/#actividades" },
   { label: "Liga Invierno/Verano", href: "/ligas-invierno-verano" },
   { label: "Interparque", href: "/interparque" },
-  { label: "Mid Master", href: "/mid-master" },
+  { label: "Circuito del Parque", href: "/mid-master" },
   { label: "Ubicación", href: "/#ubicacion" },
   { label: "Contacto", href: "/#contacto" },
 ]

@@ -17,7 +17,7 @@ function CategoryCard({ cat }: { cat: DbMmCategory }) {
   const zoneSize = getZoneSize(cat)
   return (
     <Link
-      href={`/panel-master/categorias/${cat.slug}`}
+      href={`/panel-circuito/categorias/${cat.slug}`}
       className="group flex items-center justify-between border border-mm-border bg-mm-surface px-5 py-4 transition-colors hover:border-mm-gold/40 hover:bg-mm-surface-2"
     >
       <div>
