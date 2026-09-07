@@ -54,11 +54,19 @@
   /* Animations */
   --animate-bob: bob 3s ease-in-out infinite;
   --animate-snow: snow-fall 12s linear infinite;
+  --animate-hourglass: hourglass-flip 4s ease-in-out infinite;
 }
 
 @keyframes bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
+}
+
+/* ── "Próximamente" (Sprint L5) ──────────────────────────────────────────── */
+@keyframes hourglass-flip {
+  0%, 40% { transform: rotate(0deg); }
+  50%, 90% { transform: rotate(180deg); }
+  100% { transform: rotate(360deg); }
 }
 
 

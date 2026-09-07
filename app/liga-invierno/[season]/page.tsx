@@ -6,6 +6,7 @@ import { SponsorsBanner } from "@/components/liga/sponsors-banner"
 import { WhatsappFab } from "@/components/whatsapp-fab"
 import { TournamentHeader } from "@/components/liga/TournamentHeader"
 import { ClosedSeasonView } from "@/components/liga/ClosedSeasonView"
+import { ComingSoonView } from "@/components/liga/ComingSoonView"
 import { getTournamentBySlug } from "@/lib/data/tournaments"
 import { getCategoriesForTournament } from "@/lib/data/categories"
 import { getTeamsByCategory } from "@/lib/data/teams"
@@ -43,12 +44,7 @@ export default async function SeasonPage({ params, searchParams }: Props) {
   if (tournament.status === "upcoming") {
     return (
       <main className="min-h-dvh bg-background">
-        <div className="max-w-2xl mx-auto px-4 py-24 text-center">
-          <h1 className="font-heading text-2xl font-bold text-gray-900">
-            {tournament.name} {tournament.season}
-          </h1>
-          <p className="mt-2 text-gray-600">Próximamente. Todavía no arrancó esta edición.</p>
-        </div>
+        <ComingSoonView tournament={tournament} />
         <WhatsappFab />
       </main>
     )
