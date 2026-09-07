@@ -311,6 +311,14 @@ datos importados (no se infiere ahora).
 
 ---
 
+### ~~OQ-25~~: ¿Prefijo `circuito_` nuevo o extender `mid_master_`?
+
+**Respuesta** (2026-09-07): Prefijo nuevo `circuito_`, tablas tipadas en `lib/supabase/types.ts`
+desde que se crean (no repetir el patrón `any` de `mid_master_*`). Decisión técnica, no una regla
+deportiva — documentada en ADR-005 (Sprint C1.5).
+
+---
+
 ## Resueltas — Mid Master
 
 ### ~~MM-01~~: ¿Cuántos sets gana un partido?
