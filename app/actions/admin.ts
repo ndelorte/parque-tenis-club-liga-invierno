@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server"
 import { isAdminUser } from "@/lib/auth/admin"
 import { resolveSeriesWinner } from "@/lib/tournament/calculateSeriesResult"
 import { recalculateAndPersistStandings } from "@/lib/data/standings"
+import { isCategoryReadyToClose } from "@/lib/tournament/isCategoryReadyToClose"
 
 // ——— Public types ———
 
@@ -906,4 +907,96 @@ export async function updateSeriesSchedule(
   } catch (e) {
     return { success: false, error: String(e) }
   }
+}
+
+// ——— Cierre de temporada (Sprint L4) ———
+
+export type AdminTournament = {
+  id: string
+  name: string
+  season: number
+  status: "active" | "finished" | "upcoming"
+}
+
+export async function getAdminActiveTournament(): Promise<AdminTournament | null> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) return null
+
+  const { data } = await supabase
+    .from("tournaments")
+    .select("id, name, season, status")
+    .eq("status", "active")
+    .limit(1)
+    .single()
+
+  return data ? (data as AdminTournament) : null
+}
+
+// Categorías cuya final todavía no tiene resultado cargado — bloquean el
+// cierre. Una categoría cuenta como lista cuando su ronda "final" tiene una
+// serie "completed" o "walkover".
+export async function getMissingFinalsForTournament(tournamentId: string): Promise<string[]> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) return []
+
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("id, name")
+    .eq("tournament_id", tournamentId)
+    .order("sort_order")
+
+  const categoryRows = (categories ?? []) as { id: string; name: string }[]
+  const missing: string[] = []
+
+  for (const category of categoryRows) {
+    const { data: rounds } = await supabase
+      .from("rounds")
+      .select("series(status)")
+      .eq("category_id", category.id)
+      .eq("phase", "final")
+
+    const finalSeriesStatuses = ((rounds ?? []) as { series: { status: string }[] | null }[]).flatMap(
+      (r) => (r.series ?? []).map((s) => s.status),
+    )
+    if (!isCategoryReadyToClose(finalSeriesStatuses)) missing.push(category.name)
+  }
+
+  return missing
+}
+
+export async function closeTournament(
+  tournamentId: string,
+): Promise<{ success: boolean; error?: string }> {
+  const authClient = await createClient()
+  const {
+    data: { user },
+  } = await authClient.auth.getUser()
+  if (!isAdminUser(user)) {
+    return { success: false, error: "No autorizado" }
+  }
+
+  const missing = await getMissingFinalsForTournament(tournamentId)
+  if (missing.length > 0) {
+    return { success: false, error: `Faltan finales por cargar en: ${missing.join(", ")}` }
+  }
+
+  const supabase = createAdminClient()
+  const { error } = await supabase
+    .from("tournaments")
+    .update({ status: "finished" })
+    .eq("id", tournamentId)
+
+  if (error) {
+    return { success: false, error: "No se pudo cerrar la temporada" }
+  }
+
+  revalidatePath("/panel-parque")
+  revalidatePath("/liga-invierno", "layout")
+  return { success: true }
 }

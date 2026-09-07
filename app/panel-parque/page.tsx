@@ -17,7 +17,8 @@ import { ResultLoader } from "@/components/admin/result-loader"
 import { TeamManager } from "@/components/admin/team-manager"
 import { FixtureManager } from "@/components/admin/fixture-manager"
 import { PlayoffManager } from "@/components/admin/playoff-manager"
-import { getAdminCategories } from "@/app/actions/admin"
+import { CloseTournamentButton } from "@/components/admin/close-tournament-button"
+import { getAdminCategories, getAdminActiveTournament, getMissingFinalsForTournament } from "@/app/actions/admin"
 import { signOut } from "@/app/actions/auth"
 
 export const metadata: Metadata = {
@@ -28,6 +29,10 @@ export const metadata: Metadata = {
 
 export default async function PanelPage() {
   const categories = await getAdminCategories()
+  const activeTournament = await getAdminActiveTournament()
+  const missingFinals = activeTournament
+    ? await getMissingFinalsForTournament(activeTournament.id)
+    : []
 
   return (
     <div className="min-h-dvh bg-background">
@@ -80,6 +85,16 @@ export default async function PanelPage() {
             Cargá resultados, administrá los planteles de cada equipo y reprogramá las fechas del fixture.
           </p>
         </div>
+
+        {activeTournament && (
+          <div className="mb-5">
+            <CloseTournamentButton
+              tournamentId={activeTournament.id}
+              tournamentName={`${activeTournament.name} ${activeTournament.season}`}
+              missingCategories={missingFinals}
+            />
+          </div>
+        )}
 
         <Tabs defaultValue="resultados">
           <TabsList className="h-auto w-full flex-wrap gap-1 bg-muted p-1 sm:w-auto">
