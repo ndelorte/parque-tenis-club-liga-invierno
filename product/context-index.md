@@ -11,7 +11,8 @@ tener que abrirlos todos para saber cuál corresponde antes de tocar código.
 |---|---|
 | Liga de Invierno: puntos, WO, desempate, formato de serie | `reglas-liga-invierno.md` |
 | Mid Master: zonas, semifinales, desempate, formato de partido | `reglas-mid-master.md` |
-| Una regla deportiva que no aparece en ninguno de los dos | No inventarla — agregarla a `open-questions.md` |
+| Circuito del Parque: torneos mensuales (formato según inscriptos, seeding, repechaje, puntaje/ranking) | `reglas-circuito-del-parque.md` |
+| Una regla deportiva que no aparece en ninguno de los tres | No inventarla — agregarla a `open-questions.md` |
 
 ## Producto / alcance
 

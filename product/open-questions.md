@@ -114,6 +114,106 @@
 
 ---
 
+## Resueltas — Circuito del Parque
+
+Relevadas con el organizador el 2026-09-07 (cuestionario C0, `plan-liga-multitemporada-y-circuito.md` §10).
+Volcadas en `reglas-circuito-del-parque.md` (canónico).
+
+### ~~OQ-23~~: Lista definitiva de categorías 2026 (+ draw_size/tipo)
+
+**Respuesta**: 14 categorías — Single: Caballeros Primera/Intermedia/Segunda/Tercera/+50, Damas
+Primera/Segunda. Dobles: Caballeros Primera/Intermedia/Segunda, Damas Primera/Segunda, Mixto
+Intermedia/Segunda. `draw_size` no es fijo (varía mes a mes según inscriptos); mínimo 4 inscriptos
+para que la categoría se juegue ese mes.
+
+---
+
+### ~~OQ-27~~: Reparto de byes / formato según cantidad de inscriptos (núcleo del motor)
+
+**Respuesta**: N=4 round robin+final; N=5 round robin puro sin final (campeón=1° de zona);
+N=6-7 dos zonas→semis→final (sin 3er puesto); N≥8 eliminación simple con byes a potencia de 2
+(mejor ranking), perdedores de 1ª ronda a repechaje aparte. Detalle completo en
+`reglas-circuito-del-parque.md`.
+
+---
+
+### ~~OQ-26~~: Seeding
+
+**Respuesta**: Ranking vigente del circuito (año en curso). Si no hay ranking del año en curso
+aún, usa el ranking final del año anterior. Excepción única: primer torneo de 2026 (sin ranking
+formal previo) → lo arma la coordinadora a mano.
+
+---
+
+### ~~OQ-28~~: Repechaje — quiénes entran y formato
+
+**Respuesta**: Solo perdedores de 1ª ronda (solo aplica con eliminación simple, 8+). Eliminación
+directa, byes con mismo criterio que el cuadro principal. Campeón propio, no reingresa al cuadro
+principal.
+
+---
+
+### ~~OQ-29~~: Formato de partido del circuito mensual
+
+**Respuesta**: Mejor de 3 sets. Tercer set = supertiebreak registrado como `7-6` fijo, **excepto
+en la final** de cada categoría, que juega el tercer set completo con score real.
+
+---
+
+### ~~OQ-30~~: ¿Hay walkover en el circuito mensual?
+
+**Respuesta**: Sí. Se registra `6-0 6-0` (igual que Liga/Mid Master). El ganador por WO recibe
+los mismos puntos de ranking que una victoria jugada.
+
+---
+
+### ~~OQ-31~~: ¿Ganar el repechaje da puntos? ¿Qué escala de puntos por instancia?
+
+**Respuesta**: El repechaje **no otorga puntos**. Escala por instancia (dos tablas, ver OQ-anexo
+Grand Slam): Campeón / Subcampeón / Semifinal / Cuartos / Octavos / 16vos o más.
+
+---
+
+### ~~OQ-32~~: Ranking — ¿suma todo o mejores N?
+
+**Respuesta**: Suma **todos** los torneos jugados en el año. No se descartan resultados.
+
+---
+
+### ~~OQ-33~~: ¿Mínimo de torneos para ranking / Final Master?
+
+**Respuesta**: No hay mínimo.
+
+---
+
+### ~~OQ-34~~: Cupos por categoría a Final Master
+
+**Respuesta**: 8 clasificados por categoría (los mejores del ranking anual).
+
+---
+
+### ~~OQ-22~~: ¿Mid Master conserva nombre? ¿Sus resultados puntúan al ranking anual?
+
+**Respuesta**: Conserva el nombre "Mid Master". Ni Mid Master ni Final Master suman puntos al
+ranking anual del circuito mensual — son independientes.
+
+---
+
+### ~~OQ (nueva — meses Grand Slam)~~: ¿Qué torneos del año son "Grand Slam" (escala de puntos mayor)?
+
+**Respuesta**: Enero, Mayo, Julio, Septiembre. El resto de los meses usan la escala "normal".
+Ver tabla completa de puntos en `reglas-circuito-del-parque.md`.
+
+---
+
+### ~~OQ (nueva — Challonge scores_csv)~~: ¿Challonge expone detalle set por set?
+
+**Respuesta**: No verificado aún — se confirma en el Sprint C7 (import) antes de programar el
+import definitivo. Si no expone `scores_csv`, se define ahí un desempate alternativo solo para
+datos importados (no se infiere ahora).
+
+---
+
 ## Resueltas — Mid Master
 
 ### ~~MM-01~~: ¿Cuántos sets gana un partido?
