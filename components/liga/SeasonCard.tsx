@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { seasonHref } from "@/lib/tournament/seasonRoutes";
+import { formatSeasonLabel } from "@/lib/tournament/formatTournamentTitle";
 import type { Tournament } from "@/lib/tournament/types";
 
 const STATUS_LABEL: Record<Tournament["status"], string> = {
@@ -35,7 +36,7 @@ export function SeasonCard({ tournament }: { tournament: Tournament }) {
           </span>
           <div className="flex-1">
             <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              Temporada {tournament.season}
+              Temporada {formatSeasonLabel(tournament)}
             </p>
             <h3 className="font-heading text-lg font-bold text-gray-900 group-hover:text-brand transition-colors">
               {tournament.name}

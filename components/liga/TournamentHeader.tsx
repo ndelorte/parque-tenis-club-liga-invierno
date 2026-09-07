@@ -1,3 +1,4 @@
+import { formatSeasonLabel } from "@/lib/tournament/formatTournamentTitle";
 import type { Tournament } from "@/lib/tournament/types";
 
 interface TournamentHeaderProps {
@@ -9,7 +10,7 @@ export function TournamentHeader({ tournament }: TournamentHeaderProps) {
     <div className="bg-brand text-white py-8 px-4">
       <div className="max-w-6xl mx-auto">
         <p className="text-white/70 text-sm font-medium uppercase tracking-wider mb-1">
-          Temporada {tournament.season}
+          Temporada {formatSeasonLabel(tournament)}
         </p>
         <h1 className="text-3xl font-bold">{tournament.name}</h1>
         {tournament.description && (

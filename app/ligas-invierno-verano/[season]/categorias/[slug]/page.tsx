@@ -14,6 +14,7 @@ import { CategoryTabs } from "@/components/liga/CategoryTabs"
 import { PlayoffBracket } from "@/components/liga/PlayoffBracket"
 import { ChampionBanner } from "@/components/liga/ChampionBanner"
 import { buildBracketOrNull } from "@/lib/playoffs/generateProvisionalBracket"
+import { formatTournamentTitle } from "@/lib/tournament/formatTournamentTitle"
 
 export const dynamic = "force-dynamic"
 
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const category = await getCategoryBySlugForTournament(tournament.id, slug)
   if (!category) return {}
   return {
-    title: `${category.name} | ${tournament.name} ${tournament.season} | Parque Tenis Club`,
+    title: `${category.name} | ${formatTournamentTitle(tournament)} | Parque Tenis Club`,
     description: `Tabla de posiciones, fixture y equipos de la categoría ${category.name}.`,
   }
 }

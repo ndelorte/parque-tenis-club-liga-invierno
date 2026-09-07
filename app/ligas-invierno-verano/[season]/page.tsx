@@ -14,6 +14,7 @@ import { getStandingsSnapshot } from "@/lib/data/standings"
 import { getRoundsWithSeries } from "@/lib/data/series"
 import { getPlayoffSeries, getChampionForCategory } from "@/lib/data/playoffs"
 import { buildBracketOrNull } from "@/lib/playoffs/generateProvisionalBracket"
+import { formatTournamentTitle } from "@/lib/tournament/formatTournamentTitle"
 import type { StandingsRow } from "@/lib/tournament/types"
 
 export const dynamic = "force-dynamic"
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: Props) {
   const tournament = await getTournamentBySlug(season)
   if (!tournament) return {}
   return {
-    title: `${tournament.name} ${tournament.season} | Parque Tenis Club`,
+    title: `${formatTournamentTitle(tournament)} | Parque Tenis Club`,
     description:
       "Torneo por equipos de dobles. Posiciones, fixture, resultados y equipos de las categorías Caballeros, Damas y Mixto.",
   }

@@ -68,7 +68,7 @@ export default async function PanelPage() {
             size="sm"
             className="hidden bg-primary-foreground text-primary hover:bg-primary-foreground/90 sm:inline-flex"
           >
-            <Link href="/liga-invierno">
+            <Link href="/ligas-invierno-verano">
               <ArrowLeft className="size-4" />
               Ver liga
             </Link>

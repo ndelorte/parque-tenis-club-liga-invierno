@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Hourglass } from "lucide-react";
+import { formatTournamentTitle } from "@/lib/tournament/formatTournamentTitle";
 import type { Tournament } from "@/lib/tournament/types";
 
 export function ComingSoonView({ tournament }: { tournament: Tournament }) {
@@ -23,7 +24,7 @@ export function ComingSoonView({ tournament }: { tournament: Tournament }) {
       />
 
       <h1 className="mt-6 font-heading text-2xl font-bold text-gray-900 sm:text-3xl">
-        {tournament.name} {tournament.season}
+        {formatTournamentTitle(tournament)}
       </h1>
       <p className="mt-2 max-w-md text-gray-600">
         Próximamente. Todavía no arrancó esta edición — volvé más adelante para ver categorías,

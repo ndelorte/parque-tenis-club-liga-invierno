@@ -7,6 +7,7 @@ import { getSeriesForTeam } from "@/lib/data/series"
 import { getStandingsSnapshot } from "@/lib/data/standings"
 import { TeamDetailView } from "@/components/liga/team-detail"
 import type { TeamDetail, PlayedDate, PendingDate, CourtDetail } from "@/lib/team-detail-types"
+import { formatTournamentTitle } from "@/lib/tournament/formatTournamentTitle"
 import type { CourtMatch } from "@/lib/tournament/types"
 
 export const dynamic = "force-dynamic"
@@ -24,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const team = await getTeamBySlugAndCategory(teamSlug, category.id)
   if (!team) return {}
   return {
-    title: `${team.name} | ${tournament.name} ${tournament.season} | Parque Tenis Club`,
+    title: `${team.name} | ${formatTournamentTitle(tournament)} | Parque Tenis Club`,
     description: `Historial, jugadores y fixture de ${team.name} en la ${tournament.name}.`,
   }
 }

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 import { getActiveTournament } from "@/lib/data/tournaments"
+import { LIGAS_BASE, categoryHref } from "@/lib/tournament/seasonRoutes"
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -9,5 +10,5 @@ interface Props {
 export default async function CategoriaRedirectPage({ params }: Props) {
   const { slug } = await params
   const tournament = await getActiveTournament()
-  redirect(tournament ? `/liga-invierno/${tournament.slug}/categorias/${slug}` : "/liga-invierno")
+  redirect(tournament ? categoryHref(tournament.slug, slug) : LIGAS_BASE)
 }

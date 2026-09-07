@@ -1,4 +1,5 @@
 import Image from "next/image"
+import Link from "next/link"
 import { Trophy, Calendar, Users, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -39,10 +40,10 @@ export function WinterLeague() {
             size="lg"
             className="mt-9 h-13 bg-accent px-7 text-base text-accent-foreground hover:bg-accent/90"
           >
-            <a href="/liga-invierno">
+            <Link href="/ligas-invierno-verano">
               Más info
               <ArrowRight className="size-5" />
-            </a>
+            </Link>
           </Button>
         </div>
 

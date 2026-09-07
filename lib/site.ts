@@ -18,7 +18,7 @@ export function waLink(message: string, number?: string) {
 
 export const NAV_LINKS = [
   { label: "Actividades", href: "/#actividades" },
-  { label: "Liga de Invierno", href: "/liga-invierno" },
+  { label: "Liga Invierno/Verano", href: "/ligas-invierno-verano" },
   { label: "Mid Master", href: "/mid-master" },
   { label: "Ubicación", href: "/#ubicacion" },
   { label: "Contacto", href: "/#contacto" },
