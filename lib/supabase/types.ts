@@ -9,7 +9,7 @@ export type Database = {
           name: string
           slug: string
           season: number
-          status: "active" | "finished"
+          status: "active" | "finished" | "upcoming"
           description: string | null
           start_date: string | null
           end_date: string | null
@@ -21,7 +21,7 @@ export type Database = {
           name: string
           slug: string
           season: number
-          status?: "active" | "finished"
+          status?: "active" | "finished" | "upcoming"
           description?: string | null
           start_date?: string | null
           end_date?: string | null
@@ -33,7 +33,7 @@ export type Database = {
           name?: string
           slug?: string
           season?: number
-          status?: "active" | "finished"
+          status?: "active" | "finished" | "upcoming"
           description?: string | null
           start_date?: string | null
           end_date?: string | null

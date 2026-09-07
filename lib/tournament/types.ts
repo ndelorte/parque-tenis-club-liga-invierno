@@ -37,7 +37,7 @@ export interface Tournament {
   name: string;
   slug: string;
   season: number;
-  status: "active" | "finished";
+  status: "active" | "finished" | "upcoming";
   description?: string;
   start_date?: string;
   end_date?: string;

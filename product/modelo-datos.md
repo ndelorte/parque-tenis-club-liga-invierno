@@ -26,9 +26,9 @@ tournaments
 |-------|------|-------------|
 | id | uuid PK | |
 | name | text | Ej: "Liga de Invierno" |
-| slug | text unique | Ej: "liga-invierno" |
+| slug | text unique | Ej: "liga-invierno-2026" |
 | season | integer | Ej: 2026 |
-| status | text | `active`, `finished` |
+| status | text | `active`, `finished`, `upcoming` (Sprint L1 — selector multi-temporada) |
 | description | text nullable | |
 | start_date | date nullable | |
 | end_date | date nullable | |
@@ -44,7 +44,7 @@ tournaments
 | id | uuid PK | |
 | tournament_id | uuid FK → tournaments | |
 | name | text | Ej: "Caballeros A" |
-| slug unique| text | Ej: "caballeros-a" |
+| slug | text | Ej: "caballeros-a". Único por torneo — `unique (tournament_id, slug)` (Sprint L1: el mismo slug puede repetirse en 2 ediciones distintas) |
 | phase_format | text | Ej: "round_robin" |
 | regular_phase_type | text | Ej: "home_away" (ida y vuelta) |
 | teams_count | integer | 5 o 6 según categoría |
