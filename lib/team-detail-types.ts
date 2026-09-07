@@ -40,6 +40,7 @@ export type TeamStats = {
 export type TeamDetail = {
   slug: string
   name: string
+  seasonSlug: string
   categorySlug: string
   categoryLabel: string
   captain: string

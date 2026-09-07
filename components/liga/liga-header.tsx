@@ -2,6 +2,7 @@ import Image from "next/image"
 import { Layers, Swords, Medal, FileText, Snowflake } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Snowfall } from "@/components/decorations/snowfall"
+import type { Tournament } from "@/lib/tournament/types"
 
 const FORMAT = [
   {
@@ -21,7 +22,7 @@ const FORMAT = [
   },
 ]
 
-export function LigaHeader() {
+export function LigaHeader({ tournament }: { tournament: Tournament }) {
   return (
     <header className="relative isolate overflow-hidden bg-primary text-primary-foreground">
       <Snowfall />
@@ -47,7 +48,7 @@ export function LigaHeader() {
                 Temporada de invierno
               </p>
               <h1 className="text-balance font-heading text-3xl font-extrabold tracking-tight sm:text-4xl">
-                Liga de Invierno 2026
+                {tournament.name} {tournament.season}
               </h1>
               <p className="mt-1 text-sm text-primary-foreground/70">
                 Parque Tenis Club · ¡el frío no para el tenis!
