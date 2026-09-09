@@ -274,3 +274,25 @@ No se crearon tablas nuevas. Los playoffs reutilizan el modelo existente:
 ### Bracket provisorio
 
 Se calcula en runtime desde `standings_snapshot` (no se persiste). La lógica está en `lib/playoffs/generateProvisionalBracket.ts`.
+
+---
+
+## tournament_photos (Sprint L6)
+
+Galería pública de fotos de premiación por edición/categoría. Storage: bucket `premiaciones` en
+Supabase Storage, **público de solo lectura** (fotos promocionales, no es dato sensible según
+CLAUDE.md — esa regla aplica a teléfonos/contacto).
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | |
+| tournament_id | uuid FK → tournaments | |
+| category_id | uuid FK → categories, nullable | `null` = foto general de la edición |
+| storage_path | text | Path dentro del bucket `premiaciones` (`{tournament_id}/{uuid}.{ext}`) |
+| caption | text nullable | |
+| sort_order | int | Orden dentro del grupo (mismo `tournament_id` + `category_id`) |
+| created_at | timestamptz | |
+
+**Único escritor**: `lib/data/tournament-photos.ts` (`addPhoto`, `deletePhoto`, `reorderPhotos`),
+llamado desde las server actions de `app/actions/admin.ts` (verifican `isAdminUser`). Las subidas
+usan el admin client (service role) para el insert y para `storage.from("premiaciones").upload(...)`.

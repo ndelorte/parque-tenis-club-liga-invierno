@@ -388,6 +388,34 @@ export type Database = {
           updated_at?: string
         }
       }
+      tournament_photos: {
+        Row: {
+          id: string
+          tournament_id: string
+          category_id: string | null
+          storage_path: string
+          caption: string | null
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          tournament_id: string
+          category_id?: string | null
+          storage_path: string
+          caption?: string | null
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          tournament_id?: string
+          category_id?: string | null
+          storage_path?: string
+          caption?: string | null
+          sort_order?: number
+        }
+      }
     }
     Views: { [_ in never]: never }
     Functions: { [_ in never]: never }

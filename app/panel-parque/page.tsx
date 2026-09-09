@@ -8,6 +8,7 @@ import {
   Users,
   CalendarClock,
   Swords,
+  ImagePlus,
   LogOut,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -18,7 +19,13 @@ import { TeamManager } from "@/components/admin/team-manager"
 import { FixtureManager } from "@/components/admin/fixture-manager"
 import { PlayoffManager } from "@/components/admin/playoff-manager"
 import { CloseTournamentButton } from "@/components/admin/close-tournament-button"
-import { getAdminCategories, getAdminActiveTournament, getMissingFinalsForTournament } from "@/app/actions/admin"
+import { PhotoManager } from "@/components/admin/photo-manager"
+import {
+  getAdminCategories,
+  getAdminActiveTournament,
+  getMissingFinalsForTournament,
+  getTournamentsForPhotoAdmin,
+} from "@/app/actions/admin"
 import { signOut } from "@/app/actions/auth"
 
 export const metadata: Metadata = {
@@ -33,6 +40,7 @@ export default async function PanelPage() {
   const missingFinals = activeTournament
     ? await getMissingFinalsForTournament(activeTournament.id)
     : []
+  const photoTournaments = await getTournamentsForPhotoAdmin()
 
   return (
     <div className="min-h-dvh bg-background">
@@ -114,6 +122,10 @@ export default async function PanelPage() {
               <Swords className="size-4" />
               Playoffs
             </TabsTrigger>
+            <TabsTrigger value="fotos" className="h-9 gap-1.5 px-3">
+              <ImagePlus className="size-4" />
+              Fotos
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="resultados" className="mt-5">
@@ -127,6 +139,9 @@ export default async function PanelPage() {
           </TabsContent>
           <TabsContent value="playoffs" className="mt-5">
             <PlayoffManager categories={categories} />
+          </TabsContent>
+          <TabsContent value="fotos" className="mt-5">
+            <PhotoManager tournaments={photoTournaments} />
           </TabsContent>
         </Tabs>
       </main>

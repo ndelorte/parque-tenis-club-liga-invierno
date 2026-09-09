@@ -13,6 +13,7 @@ import { getTeamsByCategory } from "@/lib/data/teams"
 import { getStandingsSnapshot } from "@/lib/data/standings"
 import { getRoundsWithSeries } from "@/lib/data/series"
 import { getPlayoffSeries, getChampionForCategory } from "@/lib/data/playoffs"
+import { getPhotos } from "@/lib/data/tournament-photos"
 import { buildBracketOrNull } from "@/lib/playoffs/generateProvisionalBracket"
 import { formatTournamentTitle } from "@/lib/tournament/formatTournamentTitle"
 import type { StandingsRow } from "@/lib/tournament/types"
@@ -54,28 +55,33 @@ export default async function SeasonPage({ params, searchParams }: Props) {
   const categories = await getCategoriesForTournament(tournament.id)
 
   if (tournament.status === "finished") {
-    const closedBundles = await Promise.all(
-      categories.map(async (category) => {
-        const [standings, playoffSeries, champion] = await Promise.all([
-          getStandingsSnapshot(category.id),
-          getPlayoffSeries(category.id),
-          getChampionForCategory(category.id),
-        ])
+    const [closedBundles, generalPhotos] = await Promise.all([
+      Promise.all(
+        categories.map(async (category) => {
+          const [standings, playoffSeries, champion, photos] = await Promise.all([
+            getStandingsSnapshot(category.id),
+            getPlayoffSeries(category.id),
+            getChampionForCategory(category.id),
+            getPhotos(tournament.id, category.id),
+          ])
 
-        return {
-          category,
-          standings,
-          bracket: buildBracketOrNull(standings, playoffSeries),
-          playoffSeries,
-          champion,
-        }
-      }),
-    )
+          return {
+            category,
+            standings,
+            bracket: buildBracketOrNull(standings, playoffSeries),
+            playoffSeries,
+            champion,
+            photos,
+          }
+        }),
+      ),
+      getPhotos(tournament.id, null),
+    ])
 
     return (
       <main className="min-h-dvh bg-background">
         <TournamentHeader tournament={tournament} />
-        <ClosedSeasonView bundles={closedBundles} />
+        <ClosedSeasonView bundles={closedBundles} generalPhotos={generalPhotos} />
         <WhatsappFab />
       </main>
     )

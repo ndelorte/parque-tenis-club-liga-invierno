@@ -8,6 +8,15 @@ import { isAdminUser } from "@/lib/auth/admin"
 import { resolveSeriesWinner } from "@/lib/tournament/calculateSeriesResult"
 import { recalculateAndPersistStandings } from "@/lib/data/standings"
 import { isCategoryReadyToClose } from "@/lib/tournament/isCategoryReadyToClose"
+import { getAllTournaments } from "@/lib/data/tournaments"
+import { getCategoriesForTournament } from "@/lib/data/categories"
+import {
+  getPhotos,
+  addPhoto,
+  deletePhoto,
+  reorderPhotos,
+  type TournamentPhoto,
+} from "@/lib/data/tournament-photos"
 
 // ——— Public types ———
 
@@ -999,4 +1008,120 @@ export async function closeTournament(
   revalidatePath("/panel-parque")
   revalidatePath("/ligas-invierno-verano", "layout")
   return { success: true }
+}
+
+// ——— Fotos de premiación (Sprint L6) ———
+
+export type AdminTournamentOption = {
+  id: string
+  name: string
+  season: number
+  status: "active" | "finished" | "upcoming"
+}
+
+export type AdminCategoryOption = {
+  id: string
+  name: string
+}
+
+export async function getTournamentsForPhotoAdmin(): Promise<AdminTournamentOption[]> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) return []
+
+  const tournaments = await getAllTournaments()
+  return tournaments.map((t) => ({ id: t.id, name: t.name, season: t.season, status: t.status }))
+}
+
+export async function getCategoriesForPhotoAdmin(tournamentId: string): Promise<AdminCategoryOption[]> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) return []
+
+  const categories = await getCategoriesForTournament(tournamentId)
+  return categories.map((c) => ({ id: c.id, name: c.name }))
+}
+
+export async function getPhotosForAdmin(
+  tournamentId: string,
+  categoryId: string | null,
+): Promise<TournamentPhoto[]> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) return []
+
+  return getPhotos(tournamentId, categoryId)
+}
+
+export async function uploadTournamentPhotos(
+  formData: FormData,
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) {
+    return { success: false, error: "No autorizado" }
+  }
+
+  const tournamentId = formData.get("tournamentId") as string | null
+  if (!tournamentId) return { success: false, error: "Falta la temporada" }
+
+  const categoryIdRaw = formData.get("categoryId") as string | null
+  const categoryId = categoryIdRaw ? categoryIdRaw : null
+  const caption = (formData.get("caption") as string | null) || null
+  const files = formData.getAll("files").filter((f): f is File => f instanceof File && f.size > 0)
+
+  if (files.length === 0) return { success: false, error: "Elegí al menos una foto" }
+
+  for (const file of files) {
+    const result = await addPhoto({ tournamentId, categoryId, file, caption })
+    if (!result.success) return result
+  }
+
+  revalidatePath("/panel-parque")
+  revalidatePath("/ligas-invierno-verano", "layout")
+  return { success: true }
+}
+
+export async function deleteTournamentPhoto(id: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) {
+    return { success: false, error: "No autorizado" }
+  }
+
+  const result = await deletePhoto(id)
+  if (result.success) {
+    revalidatePath("/panel-parque")
+    revalidatePath("/ligas-invierno-verano", "layout")
+  }
+  return result
+}
+
+export async function reorderTournamentPhotos(
+  orderedIds: string[],
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) {
+    return { success: false, error: "No autorizado" }
+  }
+
+  const result = await reorderPhotos(orderedIds)
+  if (result.success) {
+    revalidatePath("/panel-parque")
+    revalidatePath("/ligas-invierno-verano", "layout")
+  }
+  return result
 }
