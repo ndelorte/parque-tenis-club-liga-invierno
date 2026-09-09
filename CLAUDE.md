@@ -6,11 +6,12 @@ Guía de referencia rápida para Claude Code. Leer antes de modificar cualquier 
 
 ## Qué es este proyecto
 
-Web real para **Parque Tenis Club** (Argentina). Dos secciones:
+Web real para **Parque Tenis Club** (Argentina). Secciones:
 
 1. **Landing institucional pública** (`/`) — vitrina del club con CTA a WhatsApp.
 2. **Liga de Invierno** (`/liga-invierno`) — torneo por equipos con fixture, tabla y resultados.
-3. **Panel admin privado** (`/panel-parque`) — solo para organizadores autenticados.
+3. **Interparque** (`/interparque`) — modalidad de partidos de single exclusiva para alumnos del club: reglas, tabla de posiciones y partidos jugados.
+4. **Paneles admin privados** (`/panel-parque`, `/panel-master`, `/panel-interparque`) — solo para organizadores autenticados.
 
 ---
 
@@ -26,6 +27,7 @@ Web real para **Parque Tenis Club** (Argentina). Dos secciones:
 | `/product/vision.md` | Objetivos, usuarios, alcance del MVP |
 | `/product/reglas-liga-invierno.md` | Reglas deportivas de Liga de Invierno (canónico) |
 | `/product/reglas-mid-master.md` | Reglas deportivas de Mid Master (canónico) |
+| `/product/reglas-interparque.md` | Reglas deportivas de Interparque (canónico) |
 | `/product/reglas.md` | Principios y restricciones de desarrollo |
 | `/product/modelo-datos.md` | Esquema de tablas Supabase |
 | `/product/adr/` | Decisiones de arquitectura aceptadas (por qué, no qué) |
@@ -61,17 +63,24 @@ Web real para **Parque Tenis Club** (Argentina). Dos secciones:
 │   │   ├── categorias/[slug]/page.tsx
 │   │   ├── equipos/[slug]/page.tsx
 │   │   └── reglamento/page.tsx
-│   └── panel-parque/             # Panel admin (protegido por middleware)
+│   ├── interparque/              # Sección Interparque
+│   │   └── page.tsx              # Reglas + tabla + partidos jugados
+│   ├── panel-parque/             # Panel admin Liga Invierno (protegido por proxy.ts)
+│   │   ├── login/page.tsx
+│   │   ├── page.tsx
+│   │   └── liga-invierno/
+│   └── panel-interparque/        # Panel admin Interparque (protegido por proxy.ts)
 │       ├── login/page.tsx
-│       ├── page.tsx
-│       └── liga-invierno/
+│       └── page.tsx
 ├── components/
 │   ├── ui/                       # shadcn/ui base
 │   ├── layout/                   # Navbar, Footer
-│   └── liga/                     # Componentes del torneo
+│   ├── liga/                     # Componentes del torneo
+│   ├── interparque/               # Tabla de posiciones y partidos jugados (público)
+│   └── admin/interparque/         # Formularios del panel admin de Interparque
 ├── content/
 │   └── site.ts                   # Textos y datos editables del club
-├── proxy.ts                       # Protección de rutas /panel-parque/* (Next.js 16)
+├── proxy.ts                       # Protección de rutas /panel-*/* (Next.js 16)
 ├── lib/
 │   ├── tournament/               # Lógica pura del torneo (sin UI)
 │   │   ├── types.ts
@@ -82,6 +91,10 @@ Web real para **Parque Tenis Club** (Argentina). Dos secciones:
 │   │   ├── calculateStandings.ts
 │   │   ├── sortStandings.ts
 │   │   └── getTeamSchedule.ts
+│   ├── interparque/              # Lógica pura de Interparque (sin UI)
+│   │   ├── parseInterparqueScore.ts
+│   │   ├── calculateInterparqueMatchResult.ts
+│   │   └── calculateInterparqueStandings.ts
 │   ├── playoffs/                 # Lógica de bracket de playoffs
 │   │   └── generateProvisionalBracket.ts
 │   ├── data/                     # Acceso a Supabase (server-only)
@@ -90,7 +103,8 @@ Web real para **Parque Tenis Club** (Argentina). Dos secciones:
 │   │   ├── teams.ts
 │   │   ├── series.ts
 │   │   ├── standings.ts
-│   │   └── playoffs.ts
+│   │   ├── playoffs.ts
+│   │   └── interparque/          # Lecturas de interparque_players / interparque_matches
 │   ├── supabase/                 # Clientes Supabase tipados
 │   │   ├── client.ts             # Browser (anon key)
 │   │   ├── server.ts             # Server components (anon key + RLS)
@@ -121,7 +135,9 @@ Esta regla está reforzada por un test (`lib/data/__tests__/standings-write-boun
 
 ### Admin invisible
 
-`/panel-parque` no está linkeado desde ninguna página pública. Nunca en navbar ni footer.
+`/panel-parque`, `/panel-master` y `/panel-interparque` no están linkeados desde ninguna página pública. Nunca en navbar ni footer.
+
+**Interparque es distinto de sus paneles**: `/interparque` (la sección pública) SÍ va en navbar y footer — la regla de invisibilidad aplica solo a `/panel-interparque`, no a la sección pública del mismo módulo.
 
 ### Datos sensibles
 
@@ -138,6 +154,7 @@ No mostrar teléfonos en vistas públicas. No commitear `.env`. No exponer `SUPA
 | `/liga-invierno/categorias/[slug]` | Tabla, fixture y equipos de categoría |
 | `/liga-invierno/equipos/[slug]` | Página de equipo con historial |
 | `/liga-invierno/reglamento` | Reglamento resumido |
+| `/interparque` | Reglas, tabla de posiciones y partidos jugados de Interparque |
 
 ## Rutas admin (no enlazar públicamente)
 
@@ -150,6 +167,8 @@ No mostrar teléfonos en vistas públicas. No commitear `.env`. No exponer `SUPA
 | `/panel-parque/liga-invierno/fixture` | Cargar y editar fixture |
 | `/panel-parque/liga-invierno/resultados` | Cargar y editar resultados |
 | `/panel-parque/liga-invierno/reprogramaciones` | Reprogramar series |
+| `/panel-interparque/login` | Login con Supabase Auth (mismo rol admin) |
+| `/panel-interparque` | Dashboard: alta de jugadores, carga y edición de partidos/resultados |
 
 ---
 
@@ -168,6 +187,17 @@ Ver `/product/reglas-liga-invierno.md` para el detalle completo.
 | Tercer set | Siempre registrado como 7-6 |
 | Desempate | Pts → Δcanchas → Δsets → Δgames → mini-tabla H2H |
 | Mixto B | 5 equipos (resto tienen 6) |
+
+Ver `/product/reglas-interparque.md` para el detalle de Interparque.
+
+| Regla (Interparque) | Valor |
+|-------|-------|
+| Formato de partido | Single, mejor de 3 sets |
+| Puntos | 1 por game ganado (sets 1-2) |
+| Bonus por ganar el partido | +3 puntos |
+| Super tie-break (3er set) | Score variable (10+, 2 de diferencia); ganador +1 punto bonus |
+| Jugadores | Tabla propia (`interparque_players`), no se comparte con Liga Invierno |
+| Tabla de posiciones | Calculada en vivo, sin snapshot |
 
 ---
 

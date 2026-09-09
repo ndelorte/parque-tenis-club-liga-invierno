@@ -3,6 +3,7 @@ import { Hero } from "@/components/hero"
 import { Activities } from "@/components/activities"
 import { WinterLeague } from "@/components/winter-league"
 import { MidMasterPromo } from "@/components/mid-master/MidMasterPromo"
+import { InterparquePromo } from "@/components/interparque/InterparquePromo"
 import { LocationContact } from "@/components/location-contact"
 import { SiteFooter } from "@/components/site-footer"
 import { WhatsappFab } from "@/components/whatsapp-fab"
@@ -15,6 +16,7 @@ export default function Home() {
         <Hero />
         <Activities />
         <WinterLeague />
+        <InterparquePromo />
         <MidMasterPromo />
         <LocationContact />
       </main>

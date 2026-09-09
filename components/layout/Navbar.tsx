@@ -8,6 +8,7 @@ import { site } from "@/content/site";
 const navLinks = [
   { label: "Inicio", href: "/" },
   { label: "Liga de Invierno", href: "/liga-invierno" },
+  { label: "Interparque", href: "/interparque" },
   { label: "Actividades", href: "/#actividades" },
   { label: "Contacto", href: "/#contacto" },
 ];
