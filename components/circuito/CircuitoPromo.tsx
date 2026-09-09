@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRight, Star } from "lucide-react"
+import { ArrowRight, Calendar } from "lucide-react"
 
 export function CircuitoPromo() {
   return (
@@ -15,35 +15,34 @@ export function CircuitoPromo() {
           {/* Left: brand */}
           <div className="max-w-xl">
             <span className="inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.2em] text-mm-gold">
-              <Star className="size-3.5" />
-              Circuito del Parque · Torneo especial
+              <Calendar className="size-3.5" />
+              Torneo individual
             </span>
             <h2 className="mt-4 font-mm-display text-3xl font-bold text-mm-text sm:text-4xl lg:text-5xl">
-              Mid Master 2026
+              Circuito del Parque
             </h2>
             <div className="my-5 h-px w-16 bg-mm-gold opacity-50" />
             <p className="max-w-md text-pretty text-base leading-relaxed text-mm-text-muted">
-              Los mejores clasificados de cada categoría se enfrentan en un
-              torneo de zonas con semifinales y final. Formato individual,
-              estilo grand slam.
+              Un torneo por categoría cada mes del año. Los puntos que sumás
+              en cada uno se acumulan a un ranking anual — los 8 primeros de
+              cada categoría llegan a la Final Master. A mitad de año se juega
+              el Mid Master, el torneo especial del circuito.
             </p>
             <Link
-              href="/circuito-del-parque/especiales/mid-master-2026"
+              href="/circuito-del-parque"
               className="mt-8 inline-flex items-center gap-2 border border-mm-gold/50 px-7 py-3 text-sm font-medium uppercase tracking-[0.1em] text-mm-gold transition-colors hover:border-mm-gold hover:bg-mm-gold/5"
             >
-              Ver torneo
+              Ver el circuito
               <ArrowRight className="size-4" />
             </Link>
           </div>
 
-          {/* Right: categories summary */}
+          {/* Right: how it works */}
           <div className="grid grid-cols-2 gap-px border border-mm-border lg:w-96">
-            {CATEGORIES.map((cat) => (
-              <div
-                key={cat}
-                className="border-l-2 border-l-mm-gold/30 bg-mm-surface px-4 py-3"
-              >
-                <p className="text-xs text-mm-text-muted">{cat}</p>
+            {PILLARS.map((p) => (
+              <div key={p.title} className="border-l-2 border-l-mm-gold/30 bg-mm-surface px-4 py-4">
+                <p className="text-sm font-medium text-mm-text">{p.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-mm-text-muted">{p.body}</p>
               </div>
             ))}
           </div>
@@ -53,13 +52,9 @@ export function CircuitoPromo() {
   )
 }
 
-const CATEGORIES = [
-  "Single Cab. Primera",
-  "Single Cab. Intermedia",
-  "Single Cab. Segunda",
-  "Single Cab. Tercera",
-  "Single Cab. +50",
-  "Single Damas Segunda",
-  "Doble Cab. Segunda",
-  "Doble Mixto Segunda",
+const PILLARS = [
+  { title: "Torneos mensuales", body: "Un torneo por categoría, todos los meses." },
+  { title: "Ranking anual", body: "Los puntos de cada torneo se acumulan." },
+  { title: "Final Master", body: "Clasifican los 8 mejores de cada categoría." },
+  { title: "Mid Master", body: "El torneo especial de mitad de año." },
 ]
