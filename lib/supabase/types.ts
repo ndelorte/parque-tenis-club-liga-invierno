@@ -598,6 +598,8 @@ export type Database = {
           category_id: string
           bracket: "main" | "repechaje"
           round_number: number
+          position: number
+          zone: "A" | "B" | null
           participant_a_id: string | null
           participant_b_id: string | null
           score: string | null
@@ -614,6 +616,8 @@ export type Database = {
           category_id: string
           bracket: "main" | "repechaje"
           round_number: number
+          position?: number
+          zone?: "A" | "B" | null
           participant_a_id?: string | null
           participant_b_id?: string | null
           score?: string | null
@@ -630,6 +634,8 @@ export type Database = {
           category_id?: string
           bracket?: "main" | "repechaje"
           round_number?: number
+          position?: number
+          zone?: "A" | "B" | null
           participant_a_id?: string | null
           participant_b_id?: string | null
           score?: string | null

@@ -400,6 +400,8 @@ Liga/Mid Master (ADR-002). Todavía sin UI ni motor de cuadros (Sprint C4) ni re
 | category_id | uuid FK → circuito_categories | |
 | bracket | text | `main`, `repechaje` — el repechaje es un cuadro aparte, solo existe con 8+ inscriptos |
 | round_number | int | Ronda dentro de su `bracket` |
+| position | int | Índice 0-based dentro de `(category_id, bracket, round_number)` — sin esto no hay forma determinística de saber a qué partido de la ronda siguiente avanza el ganador (Sprint C5, migración 009) |
+| zone | text nullable | `A` / `B` — solo en los partidos de zona del formato 6-7 inscriptos (`groups_then_knockout`) |
 | participant_a_id / participant_b_id | uuid FK → circuito_participants, nullable | `null` hasta que el motor de cuadros (C4) o un resultado previo define quién juega |
 | score | text nullable | Tercer set `7-6` fijo salvo en la final (score real); WO se registra `6-0 6-0` |
 | winner_id | uuid FK → circuito_participants, nullable | |
@@ -408,11 +410,16 @@ Liga/Mid Master (ADR-002). Todavía sin UI ni motor de cuadros (Sprint C4) ni re
 | scheduled_date / scheduled_time | date / time, nullable | |
 | created_at / updated_at | timestamptz | |
 
+Un bye (participante único, `participant_b_id = null` con `participant_a_id` definido) no
+necesita carga de resultado — `lib/data/circuito/bracket.ts` lo avanza solo a la ronda
+siguiente al generar el cuadro.
+
 ### circuito_ranking_points
 
-Snapshot recalculado — **nunca se edita a mano** (mismo criterio que `standings_snapshot`; el
-test de invariante que lo refuerza se agrega en el Sprint C5 junto con su único escritor
-`lib/data/circuito/ranking.ts`).
+Snapshot recalculado — **nunca se edita a mano** (mismo criterio que `standings_snapshot`).
+Único escritor: `lib/data/circuito/ranking.ts` (`recalculateAndPersistCircuitRanking`), reforzado
+por `lib/data/__tests__/circuito-ranking-write-boundary.test.ts` (Sprint C5). Un participante de
+dobles acredita los mismos puntos a sus 2 jugadores (el ranking es por `player_id`, no por pareja).
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|

@@ -159,6 +159,24 @@ por nivel. No implementar hasta tener respuesta.
 
 ---
 
+### OQ-37: Circuito — desempate dentro de una zona (round robin)
+
+**Contexto**: En los formatos de zona (4, 5 y 6-7 inscriptos, `reglas-circuito-del-parque.md`) el
+campeón/subcampeón/clasificados a semifinal salen de la tabla de posiciones de la zona (todos
+contra todos). El documento define cómo se traducen esas posiciones a puntos de ranking, pero no
+define el **criterio de desempate** cuando 2 o más participantes terminan con la misma cantidad de
+partidos ganados dentro de la zona.
+
+**Preguntar**: Para desempatar dentro de una zona, ¿el criterio es diferencia de games ganados/perdidos
+(como en el desempate de equipos de Liga), con enfrentamiento directo como siguiente criterio? ¿O hay
+otro orden preferido?
+
+**Impacto**: `lib/circuito/calculateZoneStandings.ts` — mientras no se confirme, implementado con
+el default: 1) partidos ganados, 2) diferencia de games, 3) games ganados, 4) cabeza de serie (más
+bajo primero) como último desempate estable. Ajustar el orden de criterios si la respuesta es otra.
+
+---
+
 ## Resueltas — Liga Multi-Temporada
 
 ### ~~OQ-19~~: Edición cerrada — ¿tabla+cuadro+campeón o sólo cuadro+campeón?

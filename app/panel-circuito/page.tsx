@@ -47,9 +47,15 @@ export default async function PanelMasterPage() {
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-mm-text">Panel Circuito del Parque</p>
             <p className="text-xs text-mm-text-muted">
-              {activeEdition ? `${activeEdition.name} ${activeEdition.year}` : "Sin edición activa"}
+              Mid Master · {activeEdition ? `${activeEdition.name} ${activeEdition.year}` : "Sin edición activa"}
             </p>
           </div>
+          <Link
+            href="/panel-circuito/mensual"
+            className="hidden items-center gap-1.5 rounded border border-mm-border px-3 py-1.5 text-xs text-mm-text-muted transition-colors hover:border-mm-gold/40 hover:text-mm-gold sm:flex"
+          >
+            Circuito mensual
+          </Link>
           {activeEdition && (
             <Link
               href={`/circuito-del-parque/especiales/${activeEdition.slug}`}

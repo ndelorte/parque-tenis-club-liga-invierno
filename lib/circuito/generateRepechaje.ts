@@ -15,7 +15,10 @@ export function generateRepechaje(
 ): CircuitoBracket | null {
   if (spec.repechaje.eligibility === "none") return null
   if (mainBracketFormat !== "single_elimination") return null
-  if (round1Losers.length === 0) return null
+  // Con 0 o 1 perdedor de 1ª ronda (caso extremo: casi todo el cuadro entró
+  // por bye) no hay con quién armar un partido — no tiene sentido un
+  // "repechaje" de una sola persona.
+  if (round1Losers.length < 2) return null
 
   return buildSingleElimination(sortBySeed(round1Losers), spec.byePolicy)
 }

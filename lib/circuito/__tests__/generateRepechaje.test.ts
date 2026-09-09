@@ -18,6 +18,11 @@ describe("generateRepechaje", () => {
     expect(bracket).toBeNull()
   })
 
+  it("no arma repechaje con un solo perdedor (nadie con quién jugar)", () => {
+    const bracket = generateRepechaje("single_elimination", makeLosers(1), CIRCUITO_FORMAT_SPEC)
+    expect(bracket).toBeNull()
+  })
+
   it("arma un cuadro de eliminación simple con exactamente los perdedores de 1ª ronda", () => {
     const losers = makeLosers(5)
     const bracket = generateRepechaje("single_elimination", losers, CIRCUITO_FORMAT_SPEC)

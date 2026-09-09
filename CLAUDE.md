@@ -176,8 +176,11 @@ Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]
 | `/panel-liga/liga-invierno/resultados` | Cargar y editar resultados |
 | `/panel-liga/liga-invierno/reprogramaciones` | Reprogramar series |
 | `/panel-circuito/login` | Login con Supabase Auth (Circuito del Parque / Mid Master) |
-| `/panel-circuito` | Dashboard de Circuito del Parque |
+| `/panel-circuito` | Dashboard de Mid Master |
 | `/panel-circuito/categorias/[slug]` | Carga de resultados de Mid Master |
+| `/panel-circuito/mensual` | Circuito mensual: listado de ediciones + alta de edición nueva |
+| `/panel-circuito/mensual/[editionSlug]` | Categorías de una edición mensual |
+| `/panel-circuito/mensual/[editionSlug]/[categorySlug]` | Inscripción de participantes, generar cuadro, carga de resultados |
 | `/panel-interparque/login` | Login con Supabase Auth (mismo rol admin) |
 | `/panel-interparque` | Dashboard: alta de jugadores, carga y edición de partidos/resultados |
 
