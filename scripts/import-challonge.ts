@@ -103,6 +103,23 @@ const MONTHS: Array<{ month: number; tokens: string[] }> = [
   { month: 12, tokens: ["belgrado open", "belgrado"] },
 ]
 
+// Nombre real del torneo mensual de cada mes 2026 — usado como
+// circuito_editions.name (mismo criterio que import-circuito-ranking-sheet.ts).
+const EDITION_NAME_BY_MONTH: Record<number, string> = {
+  1: "Australia Open",
+  2: "Argentina Open",
+  3: "Miami Open",
+  4: "Monte Carlo",
+  5: "Roland Garros",
+  6: "Halle Open",
+  7: "Wimbledon",
+  8: "Cincinnati Open",
+  9: "Us Open",
+  10: "China Open",
+  11: "Paris Open",
+  12: "Belgrado Open",
+}
+
 function normalize(s: string): string {
   return s
     .toLowerCase()
@@ -183,7 +200,7 @@ async function findOrCreateEdition(db: AdminClient, month: number, dryRun: boole
 
   const { data, error } = await db
     .from("circuito_editions")
-    .insert({ slug, name: `Circuito ${String(month).padStart(2, "0")}/${YEAR}`, month, year: YEAR, status: "finished" })
+    .insert({ slug, name: EDITION_NAME_BY_MONTH[month] ?? `Circuito ${String(month).padStart(2, "0")}/${YEAR}`, month, year: YEAR, status: "finished" })
     .select("id")
     .single()
   if (error || !data) throw new Error(`Error creando edición ${slug}: ${error?.message ?? "sin datos"}`)

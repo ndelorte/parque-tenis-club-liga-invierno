@@ -1,26 +1,12 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { CIRCUITO_FIXED_CATEGORIES } from "@/lib/circuito/fixedCategories"
 import type { CircuitoCategoryRow } from "./types"
 
-// 14 categorías fijas del Circuito del Parque (reglas-circuito-del-parque.md,
-// respuesta a OQ-23). Se crean automáticamente para cada edición nueva — no
-// hay pantalla para tipearlas a mano cada mes.
-export const CIRCUITO_FIXED_CATEGORIES: Array<{ name: string; slug: string; type: "single" | "dobles" }> = [
-  { name: "Caballeros Primera", slug: "caballeros-primera-single", type: "single" },
-  { name: "Caballeros Intermedia", slug: "caballeros-intermedia-single", type: "single" },
-  { name: "Caballeros Segunda", slug: "caballeros-segunda-single", type: "single" },
-  { name: "Caballeros Tercera", slug: "caballeros-tercera-single", type: "single" },
-  { name: "Caballeros +50", slug: "caballeros-mas50-single", type: "single" },
-  { name: "Damas Primera", slug: "damas-primera-single", type: "single" },
-  { name: "Damas Segunda", slug: "damas-segunda-single", type: "single" },
-  { name: "Caballeros Primera", slug: "caballeros-primera-dobles", type: "dobles" },
-  { name: "Caballeros Intermedia", slug: "caballeros-intermedia-dobles", type: "dobles" },
-  { name: "Caballeros Segunda", slug: "caballeros-segunda-dobles", type: "dobles" },
-  { name: "Damas Primera", slug: "damas-primera-dobles", type: "dobles" },
-  { name: "Damas Segunda", slug: "damas-segunda-dobles", type: "dobles" },
-  { name: "Mixto Intermedia", slug: "mixto-intermedia-dobles", type: "dobles" },
-  { name: "Mixto Segunda", slug: "mixto-segunda-dobles", type: "dobles" },
-]
+// Re-exportado para no romper imports existentes — el dato en sí vive en
+// lib/circuito/fixedCategories.ts (sin dependencias de servidor, así lo
+// pueden usar también componentes de cliente).
+export { CIRCUITO_FIXED_CATEGORIES }
 
 export async function createFixedCategoriesForEdition(editionId: string): Promise<void> {
   const supabase = createAdminClient()

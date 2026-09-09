@@ -1,8 +1,8 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import { getAnnualCircuitRanking } from "@/lib/data/circuito/ranking"
 import { CIRCUITO_FIXED_CATEGORIES } from "@/lib/data/circuito/categories"
 import { RankingTable } from "@/components/circuito/RankingTable"
+import { CategoryFilterPills } from "@/components/circuito/CategoryFilterPills"
 
 export const metadata: Metadata = { title: "Ranking | Circuito del Parque" }
 
@@ -12,8 +12,11 @@ export default async function CircuitoRankingPage({
   searchParams: Promise<{ categoria?: string }>
 }) {
   const { categoria } = await searchParams
+  const selected = CIRCUITO_FIXED_CATEGORIES.some((c) => c.slug === categoria)
+    ? categoria!
+    : CIRCUITO_FIXED_CATEGORIES[0].slug
   const year = new Date().getFullYear()
-  const entries = await getAnnualCircuitRanking(year, categoria)
+  const entries = await getAnnualCircuitRanking(year, selected)
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
@@ -22,33 +25,15 @@ export default async function CircuitoRankingPage({
         Ranking {year}
       </h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        Suma los puntos de todos los torneos mensuales jugados en el año. Mid Master y Final
-        Master no puntúan acá.
+        Suma los puntos de todos los torneos mensuales jugados en el año, por categoría. Mid
+        Master y Final Master no puntúan acá.
       </p>
 
-      <div className="mb-4 flex flex-wrap gap-1.5">
-        <Link
-          href="/circuito-del-parque/ranking"
-          className={`rounded-full border px-3 py-1 text-xs font-medium ${
-            !categoria ? "border-brand bg-brand-light/40 text-brand" : "border-border text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Todas
-        </Link>
-        {CIRCUITO_FIXED_CATEGORIES.map((c) => (
-          <Link
-            key={c.slug}
-            href={`/circuito-del-parque/ranking?categoria=${c.slug}`}
-            className={`rounded-full border px-3 py-1 text-xs font-medium ${
-              categoria === c.slug ? "border-brand bg-brand-light/40 text-brand" : "border-border text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {c.name} {c.type === "dobles" ? "(dobles)" : ""}
-          </Link>
-        ))}
+      <div className="mb-4">
+        <CategoryFilterPills basePath="/circuito-del-parque/ranking" selectedSlug={selected} />
       </div>
 
-      <RankingTable entries={entries} highlightTop={categoria ? 8 : undefined} />
+      <RankingTable entries={entries} highlightTop={8} />
     </main>
   )
 }

@@ -77,6 +77,23 @@ const MONTH_BY_TOURNAMENT_NAME: Record<string, number> = {
   "belgrado open": 12,
 }
 
+// Nombre real del torneo mensual de cada mes 2026 (relevado con el
+// organizador) — usado como circuito_editions.name.
+const EDITION_NAME_BY_MONTH: Record<number, string> = {
+  1: "Australia Open",
+  2: "Argentina Open",
+  3: "Miami Open",
+  4: "Monte Carlo",
+  5: "Roland Garros",
+  6: "Halle Open",
+  7: "Wimbledon",
+  8: "Cincinnati Open",
+  9: "Us Open",
+  10: "China Open",
+  11: "Paris Open",
+  12: "Belgrado Open",
+}
+
 function monthFromColumnHeader(header: string): number | null {
   const name = header
     .replace(/\s*26\s*$/i, "")
@@ -155,7 +172,7 @@ async function findOrCreateEdition(db: AdminClient, month: number, dryRun: boole
 
   const { data, error } = await db
     .from("circuito_editions")
-    .insert({ slug, name: `Circuito ${String(month).padStart(2, "0")}/${YEAR}`, month, year: YEAR, status: "finished" })
+    .insert({ slug, name: EDITION_NAME_BY_MONTH[month] ?? `Circuito ${String(month).padStart(2, "0")}/${YEAR}`, month, year: YEAR, status: "finished" })
     .select("id")
     .single()
   if (error || !data) throw new Error(`Error creando edición ${slug}: ${error?.message ?? "sin datos"}`)

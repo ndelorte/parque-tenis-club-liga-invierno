@@ -1,9 +1,9 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import { Hourglass } from "lucide-react"
 import { getAnnualCircuitRanking } from "@/lib/data/circuito/ranking"
 import { CIRCUITO_FIXED_CATEGORIES } from "@/lib/data/circuito/categories"
 import { RankingTable } from "@/components/circuito/RankingTable"
+import { CategoryFilterPills } from "@/components/circuito/CategoryFilterPills"
 
 export const metadata: Metadata = { title: "Final Master | Circuito del Parque" }
 
@@ -16,7 +16,9 @@ export default async function CircuitoFinalMasterPage({
   searchParams: Promise<{ categoria?: string }>
 }) {
   const { categoria } = await searchParams
-  const selected = categoria ?? CIRCUITO_FIXED_CATEGORIES[0].slug
+  const selected = CIRCUITO_FIXED_CATEGORIES.some((c) => c.slug === categoria)
+    ? categoria!
+    : CIRCUITO_FIXED_CATEGORIES[0].slug
   const year = new Date().getFullYear()
   const entries = (await getAnnualCircuitRanking(year, selected)).slice(0, QUALIFIERS)
 
@@ -33,19 +35,11 @@ export default async function CircuitoFinalMasterPage({
         va la clasificación provisoria hasta ahora.
       </p>
 
-      <div className="mt-6 flex flex-wrap justify-center gap-1.5">
-        {CIRCUITO_FIXED_CATEGORIES.map((c) => (
-          <Link
-            key={c.slug}
-            href={`/circuito-del-parque/final-master?categoria=${c.slug}`}
-            className={`rounded-full border px-3 py-1 text-xs font-medium ${
-              selected === c.slug ? "border-brand bg-brand-light/40 text-brand" : "border-border text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {c.name} {c.type === "dobles" ? "(dobles)" : ""}
-          </Link>
-        ))}
-      </div>
+      <CategoryFilterPills
+        basePath="/circuito-del-parque/final-master"
+        selectedSlug={selected}
+        className="mt-6 justify-center"
+      />
 
       <div className="mt-6 text-left">
         <RankingTable entries={entries} />

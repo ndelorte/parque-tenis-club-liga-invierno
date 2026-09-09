@@ -139,22 +139,24 @@ export async function getCircuitRanking(editionId: string, categoryId?: string):
     .sort((a, b) => b.points - a.points)
 }
 
-// Ranking anual: reglas-circuito-del-parque.md — "el ranking anual suma los
-// puntos de TODOS los torneos jugados en el año" (no hay esquema de
-// "mejores N", no hay mínimo de torneos). Filtra por categoría vía su slug
-// porque cada edición mensual crea sus propias filas de circuito_categories
-// (incluso con el mismo slug) — no hay una categoría "canónica" única.
+// Ranking anual de UNA categoría: reglas-circuito-del-parque.md — "el
+// ranking anual suma los puntos de TODOS los torneos jugados en el año" (no
+// hay esquema de "mejores N", no hay mínimo de torneos). categorySlug es
+// obligatorio a propósito: sumar puntos entre categorías distintas no tiene
+// sentido competitivo (no existe un ranking "general" cruzando categorías).
+// Filtra por slug porque cada edición mensual crea sus propias filas de
+// circuito_categories (incluso con el mismo slug) — no hay una categoría
+// "canónica" única.
 export async function getAnnualCircuitRanking(
   year: number,
-  categorySlug?: string,
+  categorySlug: string,
 ): Promise<CircuitoRankingEntry[]> {
   const supabase = await createClient()
-  let query = supabase
+  const query = supabase
     .from("circuito_ranking_points")
     .select("player_id, points, players(display_name), circuito_categories!inner(slug), circuito_editions!inner(year)")
     .eq("circuito_editions.year", year)
-
-  if (categorySlug) query = query.eq("circuito_categories.slug", categorySlug)
+    .eq("circuito_categories.slug", categorySlug)
 
   const { data, error } = await query
   if (error || !data) return []
