@@ -423,6 +423,8 @@ export type Database = {
           storage_path?: string
           caption?: string | null
           sort_order?: number
+        }
+      }
       interparque_players: {
         Row: {
           id: string

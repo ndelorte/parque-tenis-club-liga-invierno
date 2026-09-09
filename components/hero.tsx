@@ -1,4 +1,5 @@
 import Image from "next/image"
+import Link from "next/link"
 import { MessageCircle, Trophy, Star, Swords, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CLUB, waLink } from "@/lib/site"
