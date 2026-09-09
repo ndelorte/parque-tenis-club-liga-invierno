@@ -32,6 +32,28 @@ export async function getTeamsByCategory(categoryId: string): Promise<Team[]> {
   }))
 }
 
+export async function getTeamById(id: string): Promise<Team | null> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("teams")
+    .select("*")
+    .eq("id", id)
+    .single()
+
+  if (error || !data) return null
+
+  const row = data as TeamRow
+  return {
+    id: row.id,
+    category_id: row.category_id,
+    name: row.name,
+    slug: row.slug,
+    captain_name: row.captain_name ?? undefined,
+    active: row.active,
+  }
+}
+
 export async function getTeamsWithPlayersByCategory(
   categoryId: string,
 ): Promise<(Team & { players: (TeamPlayer & { player: Player })[] })[]> {

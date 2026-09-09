@@ -58,10 +58,11 @@ Web real para **Parque Tenis Club** (Argentina). Secciones:
 ├── app/                          # Next.js App Router
 │   ├── layout.tsx                # Root layout (fuente, colores base)
 │   ├── page.tsx                  # Home /
-│   ├── liga-invierno/            # Sección Liga de Invierno
-│   │   ├── page.tsx
-│   │   ├── categorias/[slug]/page.tsx
-│   │   ├── equipos/[slug]/page.tsx
+│   ├── ligas-invierno-verano/     # Selector + ediciones de Liga Invierno/Verano
+│   │   ├── page.tsx               # Selector de ediciones
+│   │   ├── [season]/page.tsx      # Vista de una edición según status
+│   │   ├── [season]/categorias/[slug]/page.tsx
+│   │   ├── [season]/equipos/[catSlug]/[teamSlug]/page.tsx
 │   │   └── reglamento/page.tsx
 │   ├── interparque/              # Sección Interparque
 │   │   └── page.tsx              # Reglas + tabla + partidos jugados
@@ -150,11 +151,15 @@ No mostrar teléfonos en vistas públicas. No commitear `.env`. No exponer `SUPA
 | Ruta | Descripción |
 |------|-------------|
 | `/` | Home institucional |
-| `/liga-invierno` | Portal del torneo |
-| `/liga-invierno/categorias/[slug]` | Tabla, fixture y equipos de categoría |
-| `/liga-invierno/equipos/[slug]` | Página de equipo con historial |
-| `/liga-invierno/reglamento` | Reglamento resumido |
-| `/interparque` | Reglas, tabla de posiciones y partidos jugados de Interparque |
+| `/ligas-invierno-verano` | Selector de ediciones (Invierno/Verano, pasada/activa/próxima) |
+| `/ligas-invierno-verano/[season]` | Vista de una edición según su status (activa/cerrada/próxima) |
+| `/ligas-invierno-verano/[season]/categorias/[slug]` | Tabla, fixture y equipos de categoría en esa edición |
+| `/ligas-invierno-verano/[season]/equipos/[catSlug]/[teamSlug]` | Página de equipo con historial en esa edición |
+| `/ligas-invierno-verano/reglamento` | Reglamento resumido |
+| `/interparque` | Nueva area de partidos entre alumnos |
+
+
+Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]`, `/liga-invierno/equipos/[catSlug]/[teamSlug]`) quedan como redirects 301 a la nueva base o a la edición activa — no reintroducirlas como rutas reales.
 
 ## Rutas admin (no enlazar públicamente)
 

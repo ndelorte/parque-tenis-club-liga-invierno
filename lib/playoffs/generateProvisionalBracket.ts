@@ -124,3 +124,21 @@ export function mergeProvisionalBracketWithScheduledMatches(
 
   return { ...bracket, quarterfinals: enrichedQFs }
 }
+
+// Arma el bracket a partir de standings + series de playoff ya cargadas, o
+// devuelve null si todavía no hay suficientes equipos/resultados. Evita
+// repetir el try/catch en cada página que renderiza el cuadro.
+export function buildBracketOrNull(
+  standings: StandingsRow[],
+  playoffSeries: ScheduledSeriesStub[]
+): ProvisionalBracket | null {
+  try {
+    if (standings.length >= 5) {
+      const generated = generateProvisionalBracket(standings, standings.length)
+      return mergeProvisionalBracketWithScheduledMatches(generated, playoffSeries)
+    }
+  } catch {
+    return null
+  }
+  return null
+}

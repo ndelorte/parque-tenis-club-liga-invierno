@@ -26,9 +26,9 @@ tournaments
 |-------|------|-------------|
 | id | uuid PK | |
 | name | text | Ej: "Liga de Invierno" |
-| slug | text unique | Ej: "liga-invierno" |
+| slug | text unique | Ej: "liga-invierno-2026" |
 | season | integer | Ej: 2026 |
-| status | text | `active`, `finished` |
+| status | text | `active`, `finished`, `upcoming` (Sprint L1 — selector multi-temporada) |
 | description | text nullable | |
 | start_date | date nullable | |
 | end_date | date nullable | |
@@ -44,13 +44,16 @@ tournaments
 | id | uuid PK | |
 | tournament_id | uuid FK → tournaments | |
 | name | text | Ej: "Caballeros A" |
-| slug unique| text | Ej: "caballeros-a" |
+| slug | text | Ej: "caballeros-a". Único por torneo — `unique (tournament_id, slug)` (Sprint L1: el mismo slug puede repetirse en 2 ediciones distintas) |
 | phase_format | text | Ej: "round_robin" |
 | regular_phase_type | text | Ej: "home_away" (ida y vuelta) |
 | teams_count | integer | 5 o 6 según categoría |
 | direct_semifinalists_count | integer nullable | Para playoffs futuros |
 | quarterfinals_enabled | boolean | Para playoffs futuros |
 | sort_order | integer | Orden de visualización |
+| manual_champion_name | text nullable | Podio cargado a mano (Sprint L7). Fallback de `getPodiumForCategory` cuando no hay serie "final" digitalizada — ediciones históricas sin fixture completo |
+| manual_runner_up_name | text nullable | Ídem, subcampeón |
+| manual_third_place_name | text nullable | Ídem, tercer puesto (serie "third_place") |
 | created_at | timestamptz | |
 | updated_at | timestamptz | |
 
@@ -319,3 +322,25 @@ No se crearon tablas nuevas. Los playoffs reutilizan el modelo existente:
 ### Bracket provisorio
 
 Se calcula en runtime desde `standings_snapshot` (no se persiste). La lógica está en `lib/playoffs/generateProvisionalBracket.ts`.
+
+---
+
+## tournament_photos (Sprint L6)
+
+Galería pública de fotos de premiación por edición/categoría. Storage: bucket `premiaciones` en
+Supabase Storage, **público de solo lectura** (fotos promocionales, no es dato sensible según
+CLAUDE.md — esa regla aplica a teléfonos/contacto).
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | |
+| tournament_id | uuid FK → tournaments | |
+| category_id | uuid FK → categories, nullable | `null` = foto general de la edición |
+| storage_path | text | Path dentro del bucket `premiaciones` (`{tournament_id}/{uuid}.{ext}`) |
+| caption | text nullable | |
+| sort_order | int | Orden dentro del grupo (mismo `tournament_id` + `category_id`) |
+| created_at | timestamptz | |
+
+**Único escritor**: `lib/data/tournament-photos.ts` (`addPhoto`, `deletePhoto`, `reorderPhotos`),
+llamado desde las server actions de `app/actions/admin.ts` (verifican `isAdminUser`). Las subidas
+usan el admin client (service role) para el insert y para `storage.from("premiaciones").upload(...)`.

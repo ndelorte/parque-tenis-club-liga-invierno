@@ -23,14 +23,17 @@ interface Props {
   semifinals?: ScheduledMatch[]
   final?: ScheduledMatch
   thirdPlace?: ThirdPlace
+  provisional?: boolean
 }
 
-export function PlayoffBracket({ bracket, semifinals, final, thirdPlace }: Props) {
+export function PlayoffBracket({ bracket, semifinals, final, thirdPlace, provisional = true }: Props) {
   return (
     <div>
       <div className="mb-4">
         <h3 className="font-semibold text-gray-800">Fase Final</h3>
-        <p className="text-sm text-gray-500 mt-0.5">Con las posiciones actuales provisorias</p>
+        <p className="text-sm text-gray-500 mt-0.5">
+          {provisional ? "Con las posiciones actuales provisorias" : "Cuadro final"}
+        </p>
       </div>
 
       <div className="flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-10">

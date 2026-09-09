@@ -9,7 +9,7 @@ export type Database = {
           name: string
           slug: string
           season: number
-          status: "active" | "finished"
+          status: "active" | "finished" | "upcoming"
           description: string | null
           start_date: string | null
           end_date: string | null
@@ -21,7 +21,7 @@ export type Database = {
           name: string
           slug: string
           season: number
-          status?: "active" | "finished"
+          status?: "active" | "finished" | "upcoming"
           description?: string | null
           start_date?: string | null
           end_date?: string | null
@@ -33,7 +33,7 @@ export type Database = {
           name?: string
           slug?: string
           season?: number
-          status?: "active" | "finished"
+          status?: "active" | "finished" | "upcoming"
           description?: string | null
           start_date?: string | null
           end_date?: string | null
@@ -52,6 +52,9 @@ export type Database = {
           direct_semifinalists_count: number | null
           quarterfinals_enabled: boolean
           sort_order: number
+          manual_champion_name: string | null
+          manual_runner_up_name: string | null
+          manual_third_place_name: string | null
           created_at: string
           updated_at: string
         }
@@ -66,6 +69,9 @@ export type Database = {
           direct_semifinalists_count?: number | null
           quarterfinals_enabled?: boolean
           sort_order?: number
+          manual_champion_name?: string | null
+          manual_runner_up_name?: string | null
+          manual_third_place_name?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -80,6 +86,9 @@ export type Database = {
           direct_semifinalists_count?: number | null
           quarterfinals_enabled?: boolean
           sort_order?: number
+          manual_champion_name?: string | null
+          manual_runner_up_name?: string | null
+          manual_third_place_name?: string | null
           updated_at?: string
         }
       }
@@ -388,6 +397,32 @@ export type Database = {
           updated_at?: string
         }
       }
+      tournament_photos: {
+        Row: {
+          id: string
+          tournament_id: string
+          category_id: string | null
+          storage_path: string
+          caption: string | null
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          tournament_id: string
+          category_id?: string | null
+          storage_path: string
+          caption?: string | null
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          tournament_id?: string
+          category_id?: string | null
+          storage_path?: string
+          caption?: string | null
+          sort_order?: number
       interparque_players: {
         Row: {
           id: string

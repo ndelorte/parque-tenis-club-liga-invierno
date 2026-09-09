@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { categoryHref } from "@/lib/tournament/seasonRoutes";
 import type { Category } from "@/lib/tournament/types";
 
 interface CategoryTabsProps {
   categories: Category[];
+  seasonSlug: string;
 }
 
-export function CategoryTabs({ categories }: CategoryTabsProps) {
+export function CategoryTabs({ categories, seasonSlug }: CategoryTabsProps) {
   const pathname = usePathname();
 
   return (
@@ -17,7 +19,7 @@ export function CategoryTabs({ categories }: CategoryTabsProps) {
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex overflow-x-auto gap-1 py-1 no-scrollbar">
           {categories.map((cat) => {
-            const href = `/liga-invierno/categorias/${cat.slug}`;
+            const href = categoryHref(seasonSlug, cat.slug);
             const active = pathname === href;
             return (
               <Link

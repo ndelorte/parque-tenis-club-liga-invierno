@@ -8,6 +8,7 @@ import {
   Users,
   CalendarClock,
   Swords,
+  ImagePlus,
   LogOut,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -17,7 +18,14 @@ import { ResultLoader } from "@/components/admin/result-loader"
 import { TeamManager } from "@/components/admin/team-manager"
 import { FixtureManager } from "@/components/admin/fixture-manager"
 import { PlayoffManager } from "@/components/admin/playoff-manager"
-import { getAdminCategories } from "@/app/actions/admin"
+import { CloseTournamentButton } from "@/components/admin/close-tournament-button"
+import { PhotoManager } from "@/components/admin/photo-manager"
+import {
+  getAdminCategories,
+  getAdminActiveTournament,
+  getMissingFinalsForTournament,
+  getTournamentsForPhotoAdmin,
+} from "@/app/actions/admin"
 import { signOut } from "@/app/actions/auth"
 
 export const metadata: Metadata = {
@@ -28,6 +36,11 @@ export const metadata: Metadata = {
 
 export default async function PanelPage() {
   const categories = await getAdminCategories()
+  const activeTournament = await getAdminActiveTournament()
+  const missingFinals = activeTournament
+    ? await getMissingFinalsForTournament(activeTournament.id)
+    : []
+  const photoTournaments = await getTournamentsForPhotoAdmin()
 
   return (
     <div className="min-h-dvh bg-background">
@@ -63,7 +76,7 @@ export default async function PanelPage() {
             size="sm"
             className="hidden bg-primary-foreground text-primary hover:bg-primary-foreground/90 sm:inline-flex"
           >
-            <Link href="/liga-invierno">
+            <Link href="/ligas-invierno-verano">
               <ArrowLeft className="size-4" />
               Ver liga
             </Link>
@@ -80,6 +93,16 @@ export default async function PanelPage() {
             Cargá resultados, administrá los planteles de cada equipo y reprogramá las fechas del fixture.
           </p>
         </div>
+
+        {activeTournament && (
+          <div className="mb-5">
+            <CloseTournamentButton
+              tournamentId={activeTournament.id}
+              tournamentName={`${activeTournament.name} ${activeTournament.season}`}
+              missingCategories={missingFinals}
+            />
+          </div>
+        )}
 
         <Tabs defaultValue="resultados">
           <TabsList className="h-auto w-full flex-wrap gap-1 bg-muted p-1 sm:w-auto">
@@ -99,6 +122,10 @@ export default async function PanelPage() {
               <Swords className="size-4" />
               Playoffs
             </TabsTrigger>
+            <TabsTrigger value="fotos" className="h-9 gap-1.5 px-3">
+              <ImagePlus className="size-4" />
+              Fotos
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="resultados" className="mt-5">
@@ -112,6 +139,9 @@ export default async function PanelPage() {
           </TabsContent>
           <TabsContent value="playoffs" className="mt-5">
             <PlayoffManager categories={categories} />
+          </TabsContent>
+          <TabsContent value="fotos" className="mt-5">
+            <PhotoManager tournaments={photoTournaments} />
           </TabsContent>
         </Tabs>
       </main>

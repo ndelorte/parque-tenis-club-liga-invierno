@@ -7,6 +7,16 @@ import { createClient } from "@/lib/supabase/server"
 import { isAdminUser } from "@/lib/auth/admin"
 import { resolveSeriesWinner } from "@/lib/tournament/calculateSeriesResult"
 import { recalculateAndPersistStandings } from "@/lib/data/standings"
+import { isCategoryReadyToClose } from "@/lib/tournament/isCategoryReadyToClose"
+import { getAllTournaments } from "@/lib/data/tournaments"
+import { getCategoriesForTournament } from "@/lib/data/categories"
+import {
+  getPhotos,
+  addPhoto,
+  deletePhoto,
+  reorderPhotos,
+  type TournamentPhoto,
+} from "@/lib/data/tournament-photos"
 
 // ——— Public types ———
 
@@ -333,7 +343,7 @@ export async function saveTeamPlayers(
     }
 
     revalidatePath("/panel-parque")
-    revalidatePath("/liga-invierno", "layout")
+    revalidatePath("/ligas-invierno-verano", "layout")
     return { success: true }
   } catch (e) {
     return { success: false, error: String(e) }
@@ -398,7 +408,7 @@ export async function saveSeriesResult(
 
       if (categoryId && isRegularPhase) await recalculateAndPersistStandings(categoryId)
       revalidatePath("/panel-parque")
-      revalidatePath("/liga-invierno", "layout")
+      revalidatePath("/ligas-invierno-verano", "layout")
       return { success: true }
     }
 
@@ -458,7 +468,7 @@ export async function saveSeriesResult(
 
     if (categoryId && isRegularPhase) await recalculateAndPersistStandings(categoryId)
     revalidatePath("/panel-parque")
-    revalidatePath("/liga-invierno", "layout")
+    revalidatePath("/ligas-invierno-verano", "layout")
     return { success: true }
   } catch (e) {
     return { success: false, error: String(e) }
@@ -679,7 +689,7 @@ export async function createQuarterFinalSeries(
       if (updateError) return { success: false, error: updateError.message }
 
       revalidatePath("/panel-parque")
-      revalidatePath("/liga-invierno", "layout")
+      revalidatePath("/ligas-invierno-verano", "layout")
       return { success: true, seriesId: (existingSeries as any).id }
     }
 
@@ -703,7 +713,7 @@ export async function createQuarterFinalSeries(
     }
 
     revalidatePath("/panel-parque")
-    revalidatePath("/liga-invierno", "layout")
+    revalidatePath("/ligas-invierno-verano", "layout")
     return { success: true, seriesId: (newSeries as any).id }
   } catch (e) {
     return { success: false, error: String(e) }
@@ -763,7 +773,7 @@ export async function upsertPlayoffSeries(params: {
         .eq("category_id", categoryId)
       if (error) return { success: false, error: error.message }
       revalidatePath("/panel-parque")
-      revalidatePath("/liga-invierno", "layout")
+      revalidatePath("/ligas-invierno-verano", "layout")
       return { success: true, seriesId: existingSeriesId }
     }
 
@@ -805,7 +815,7 @@ export async function upsertPlayoffSeries(params: {
     if (existingSeries) {
       await supabase.from("series").update({ scheduled_date: scheduledDate, scheduled_time: scheduledTime }).eq("id", (existingSeries as any).id)
       revalidatePath("/panel-parque")
-      revalidatePath("/liga-invierno", "layout")
+      revalidatePath("/ligas-invierno-verano", "layout")
       return { success: true, seriesId: (existingSeries as any).id }
     }
 
@@ -826,7 +836,7 @@ export async function upsertPlayoffSeries(params: {
 
     if (seriesError || !newSeries) return { success: false, error: seriesError?.message ?? "Error al crear la serie" }
     revalidatePath("/panel-parque")
-    revalidatePath("/liga-invierno", "layout")
+    revalidatePath("/ligas-invierno-verano", "layout")
     return { success: true, seriesId: (newSeries as any).id }
   } catch (e) {
     return { success: false, error: String(e) }
@@ -847,7 +857,7 @@ export async function recalculateStandingsForCategory(
   try {
     await recalculateAndPersistStandings(categoryId)
     revalidatePath("/panel-parque")
-    revalidatePath("/liga-invierno", "layout")
+    revalidatePath("/ligas-invierno-verano", "layout")
     return { success: true }
   } catch (e) {
     return { success: false, error: String(e) }
@@ -901,9 +911,217 @@ export async function updateSeriesSchedule(
       .eq("id", seriesId)
 
     revalidatePath("/panel-parque")
-    revalidatePath("/liga-invierno", "layout")
+    revalidatePath("/ligas-invierno-verano", "layout")
     return { success: true }
   } catch (e) {
     return { success: false, error: String(e) }
   }
+}
+
+// ——— Cierre de temporada (Sprint L4) ———
+
+export type AdminTournament = {
+  id: string
+  name: string
+  season: number
+  status: "active" | "finished" | "upcoming"
+}
+
+export async function getAdminActiveTournament(): Promise<AdminTournament | null> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) return null
+
+  const { data } = await supabase
+    .from("tournaments")
+    .select("id, name, season, status")
+    .eq("status", "active")
+    .limit(1)
+    .single()
+
+  return data ? (data as AdminTournament) : null
+}
+
+// Categorías cuya final todavía no tiene resultado cargado — bloquean el
+// cierre. Una categoría cuenta como lista cuando su ronda "final" tiene una
+// serie "completed" o "walkover".
+export async function getMissingFinalsForTournament(tournamentId: string): Promise<string[]> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) return []
+
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("id, name")
+    .eq("tournament_id", tournamentId)
+    .order("sort_order")
+
+  const categoryRows = (categories ?? []) as { id: string; name: string }[]
+  const missing: string[] = []
+
+  for (const category of categoryRows) {
+    const { data: rounds } = await supabase
+      .from("rounds")
+      .select("series(status)")
+      .eq("category_id", category.id)
+      .eq("phase", "final")
+
+    const finalSeriesStatuses = ((rounds ?? []) as { series: { status: string }[] | null }[]).flatMap(
+      (r) => (r.series ?? []).map((s) => s.status),
+    )
+    if (!isCategoryReadyToClose(finalSeriesStatuses)) missing.push(category.name)
+  }
+
+  return missing
+}
+
+export async function closeTournament(
+  tournamentId: string,
+): Promise<{ success: boolean; error?: string }> {
+  const authClient = await createClient()
+  const {
+    data: { user },
+  } = await authClient.auth.getUser()
+  if (!isAdminUser(user)) {
+    return { success: false, error: "No autorizado" }
+  }
+
+  const missing = await getMissingFinalsForTournament(tournamentId)
+  if (missing.length > 0) {
+    return { success: false, error: `Faltan finales por cargar en: ${missing.join(", ")}` }
+  }
+
+  const supabase = createAdminClient()
+  const { error } = await supabase
+    .from("tournaments")
+    .update({ status: "finished" })
+    .eq("id", tournamentId)
+
+  if (error) {
+    return { success: false, error: "No se pudo cerrar la temporada" }
+  }
+
+  revalidatePath("/panel-parque")
+  revalidatePath("/ligas-invierno-verano", "layout")
+  return { success: true }
+}
+
+// ——— Fotos de premiación (Sprint L6) ———
+
+export type AdminTournamentOption = {
+  id: string
+  name: string
+  season: number
+  status: "active" | "finished" | "upcoming"
+}
+
+export type AdminCategoryOption = {
+  id: string
+  name: string
+}
+
+export async function getTournamentsForPhotoAdmin(): Promise<AdminTournamentOption[]> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) return []
+
+  const tournaments = await getAllTournaments()
+  return tournaments.map((t) => ({ id: t.id, name: t.name, season: t.season, status: t.status }))
+}
+
+export async function getCategoriesForPhotoAdmin(tournamentId: string): Promise<AdminCategoryOption[]> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) return []
+
+  const categories = await getCategoriesForTournament(tournamentId)
+  return categories.map((c) => ({ id: c.id, name: c.name }))
+}
+
+export async function getPhotosForAdmin(
+  tournamentId: string,
+  categoryId: string | null,
+): Promise<TournamentPhoto[]> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) return []
+
+  return getPhotos(tournamentId, categoryId)
+}
+
+export async function uploadTournamentPhotos(
+  formData: FormData,
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) {
+    return { success: false, error: "No autorizado" }
+  }
+
+  const tournamentId = formData.get("tournamentId") as string | null
+  if (!tournamentId) return { success: false, error: "Falta la temporada" }
+
+  const categoryIdRaw = formData.get("categoryId") as string | null
+  const categoryId = categoryIdRaw ? categoryIdRaw : null
+  const caption = (formData.get("caption") as string | null) || null
+  const files = formData.getAll("files").filter((f): f is File => f instanceof File && f.size > 0)
+
+  if (files.length === 0) return { success: false, error: "Elegí al menos una foto" }
+
+  for (const file of files) {
+    const result = await addPhoto({ tournamentId, categoryId, file, caption })
+    if (!result.success) return result
+  }
+
+  revalidatePath("/panel-parque")
+  revalidatePath("/ligas-invierno-verano", "layout")
+  return { success: true }
+}
+
+export async function deleteTournamentPhoto(id: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) {
+    return { success: false, error: "No autorizado" }
+  }
+
+  const result = await deletePhoto(id)
+  if (result.success) {
+    revalidatePath("/panel-parque")
+    revalidatePath("/ligas-invierno-verano", "layout")
+  }
+  return result
+}
+
+export async function reorderTournamentPhotos(
+  orderedIds: string[],
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) {
+    return { success: false, error: "No autorizado" }
+  }
+
+  const result = await reorderPhotos(orderedIds)
+  if (result.success) {
+    revalidatePath("/panel-parque")
+    revalidatePath("/ligas-invierno-verano", "layout")
+  }
+  return result
 }

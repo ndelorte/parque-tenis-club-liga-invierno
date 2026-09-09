@@ -1,43 +1,81 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import { getCategoryBySlug, getCategoriesForTournament } from "@/lib/data/categories"
-import { getActiveTournament } from "@/lib/data/tournaments"
+import { getCategoryBySlugForTournament, getCategoriesForTournament } from "@/lib/data/categories"
+import { getTournamentBySlug } from "@/lib/data/tournaments"
 import { getTeamsByCategory } from "@/lib/data/teams"
 import { getStandingsSnapshot } from "@/lib/data/standings"
 import { getRoundsWithSeries } from "@/lib/data/series"
-import { getPlayoffSeries } from "@/lib/data/playoffs"
+import { getPlayoffSeries, getChampionForCategory } from "@/lib/data/playoffs"
 import { TournamentHeader } from "@/components/liga/TournamentHeader"
 import { StandingsTable } from "@/components/liga/StandingsTable"
 import { FixtureList } from "@/components/liga/FixtureList"
 import { TeamCard } from "@/components/liga/TeamCard"
 import { CategoryTabs } from "@/components/liga/CategoryTabs"
 import { PlayoffBracket } from "@/components/liga/PlayoffBracket"
-import { generateProvisionalBracket, mergeProvisionalBracketWithScheduledMatches } from "@/lib/playoffs/generateProvisionalBracket"
+import { ChampionBanner } from "@/components/liga/ChampionBanner"
+import { buildBracketOrNull } from "@/lib/playoffs/generateProvisionalBracket"
+import { formatTournamentTitle } from "@/lib/tournament/formatTournamentTitle"
 
 export const dynamic = "force-dynamic"
 
 interface Props {
-  params: Promise<{ slug: string }>
+  params: Promise<{ season: string; slug: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params
-  const category = await getCategoryBySlug(slug)
+  const { season, slug } = await params
+  const tournament = await getTournamentBySlug(season)
+  if (!tournament) return {}
+  const category = await getCategoryBySlugForTournament(tournament.id, slug)
   if (!category) return {}
   return {
-    title: `${category.name} | Liga de Invierno | Parque Tenis Club`,
+    title: `${category.name} | ${formatTournamentTitle(tournament)} | Parque Tenis Club`,
     description: `Tabla de posiciones, fixture y equipos de la categoría ${category.name}.`,
   }
 }
 
 export default async function CategoriaPage({ params }: Props) {
-  const { slug } = await params
-  const category = await getCategoryBySlug(slug)
+  const { season, slug } = await params
+
+  const tournament = await getTournamentBySlug(season)
+  if (!tournament) notFound()
+
+  const category = await getCategoryBySlugForTournament(tournament.id, slug)
   if (!category) notFound()
 
-  const [tournament, categories, teams, standings, rounds, playoffSeries] = await Promise.all([
-    getActiveTournament(),
-    getCategoriesForTournament(category.tournament_id),
+  if (tournament.status === "finished") {
+    const [categories, standings, playoffSeries, champion] = await Promise.all([
+      getCategoriesForTournament(tournament.id),
+      getStandingsSnapshot(category.id),
+      getPlayoffSeries(category.id),
+      getChampionForCategory(category.id),
+    ])
+    const bracket = buildBracketOrNull(standings, playoffSeries)
+
+    return (
+      <div>
+        <TournamentHeader tournament={tournament} />
+        <CategoryTabs categories={categories} seasonSlug={tournament.slug} />
+
+        <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+          <h2 className="text-xl font-bold text-gray-900">{category.name}</h2>
+          <ChampionBanner champion={champion} />
+          <section>
+            <h3 className="font-semibold text-gray-800 mb-3">Tabla final</h3>
+            <StandingsTable standings={standings} />
+          </section>
+          {bracket && (
+            <section>
+              <PlayoffBracket bracket={bracket} provisional={false} />
+            </section>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  const [categories, teams, standings, rounds, playoffSeries] = await Promise.all([
+    getCategoriesForTournament(tournament.id),
     getTeamsByCategory(category.id),
     getStandingsSnapshot(category.id),
     getRoundsWithSeries(category.id),
@@ -94,18 +132,10 @@ export default async function CategoriaPage({ params }: Props) {
           position: i + 1,
         }))
 
-  let bracket = null
-  try {
-    if (bracketStandings.length >= 5) {
-      const generated = generateProvisionalBracket(bracketStandings, bracketStandings.length)
-      bracket = mergeProvisionalBracketWithScheduledMatches(
-        generated,
-        playoffSeries.filter((s) => s.phase === "quarterfinal"),
-      )
-    }
-  } catch {
-    bracket = null
-  }
+  const bracket = buildBracketOrNull(
+    bracketStandings,
+    playoffSeries.filter((s) => s.phase === "quarterfinal"),
+  )
 
   const thirdPlaceSeries = playoffSeries.find((s) => s.phase === "third_place")
   const thirdPlace = thirdPlaceSeries
@@ -141,8 +171,8 @@ export default async function CategoriaPage({ params }: Props) {
 
   return (
     <div>
-      {tournament && <TournamentHeader tournament={tournament} />}
-      <CategoryTabs categories={categories} />
+      <TournamentHeader tournament={tournament} />
+      <CategoryTabs categories={categories} seasonSlug={tournament.slug} />
 
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-10">
         <h2 className="text-xl font-bold text-gray-900">{category.name}</h2>
@@ -172,7 +202,7 @@ export default async function CategoriaPage({ params }: Props) {
             <h3 className="font-semibold text-gray-800 mb-3">Equipos</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               {teams.map((team) => (
-                <TeamCard key={team.id} team={team} categorySlug={slug} />
+                <TeamCard key={team.id} team={team} categorySlug={slug} seasonSlug={tournament.slug} />
               ))}
             </div>
           </section>

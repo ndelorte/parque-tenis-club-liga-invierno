@@ -23,6 +23,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { formatDate } from "@/lib/utils"
+import { seasonHref, categoryHref } from "@/lib/tournament/seasonRoutes"
 import type { TeamDetail } from "@/lib/team-detail-types"
 
 export function TeamDetailView({ team }: { team: TeamDetail }) {
@@ -61,7 +62,11 @@ export function TeamDetailView({ team }: { team: TeamDetail }) {
         />
         <div className="relative mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
           <Link
-            href={team.categorySlug ? `/liga-invierno?categoria=${team.categorySlug}` : "/liga-invierno"}
+            href={
+              team.categorySlug
+                ? categoryHref(team.seasonSlug, team.categorySlug)
+                : seasonHref(team.seasonSlug)
+            }
             className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-foreground/80 transition-colors hover:text-primary-foreground"
           >
             <ArrowLeft className="size-4" />

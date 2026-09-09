@@ -1,28 +1,32 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import { getCategoryBySlug } from "@/lib/data/categories"
+import { getCategoryBySlugForTournament } from "@/lib/data/categories"
+import { getTournamentBySlug } from "@/lib/data/tournaments"
 import { getTeamBySlugAndCategory } from "@/lib/data/teams"
 import { getSeriesForTeam } from "@/lib/data/series"
 import { getStandingsSnapshot } from "@/lib/data/standings"
 import { TeamDetailView } from "@/components/liga/team-detail"
 import type { TeamDetail, PlayedDate, PendingDate, CourtDetail } from "@/lib/team-detail-types"
+import { formatTournamentTitle } from "@/lib/tournament/formatTournamentTitle"
 import type { CourtMatch } from "@/lib/tournament/types"
 
 export const dynamic = "force-dynamic"
 
 interface Props {
-  params: Promise<{ catSlug: string; teamSlug: string }>
+  params: Promise<{ season: string; catSlug: string; teamSlug: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { catSlug, teamSlug } = await params
-  const category = await getCategoryBySlug(catSlug)
+  const { season, catSlug, teamSlug } = await params
+  const tournament = await getTournamentBySlug(season)
+  if (!tournament) return {}
+  const category = await getCategoryBySlugForTournament(tournament.id, catSlug)
   if (!category) return {}
   const team = await getTeamBySlugAndCategory(teamSlug, category.id)
   if (!team) return {}
   return {
-    title: `${team.name} | Liga de Invierno | Parque Tenis Club`,
-    description: `Historial, jugadores y fixture de ${team.name} en la Liga de Invierno.`,
+    title: `${team.name} | ${formatTournamentTitle(tournament)} | Parque Tenis Club`,
+    description: `Historial, jugadores y fixture de ${team.name} en la ${tournament.name}.`,
   }
 }
 
@@ -46,9 +50,12 @@ function buildCourtDetail(cm: CourtMatch, teamId: string, isHome: boolean): Cour
 }
 
 export default async function EquipoPage({ params }: Props) {
-  const { catSlug, teamSlug } = await params
+  const { season, catSlug, teamSlug } = await params
 
-  const category = await getCategoryBySlug(catSlug)
+  const tournament = await getTournamentBySlug(season)
+  if (!tournament) notFound()
+
+  const category = await getCategoryBySlugForTournament(tournament.id, catSlug)
   if (!category) notFound()
 
   const team = await getTeamBySlugAndCategory(teamSlug, category.id)
@@ -110,6 +117,7 @@ export default async function EquipoPage({ params }: Props) {
   const teamDetail: TeamDetail = {
     slug: team.slug,
     name: team.name,
+    seasonSlug: tournament.slug,
     categorySlug: category.slug,
     categoryLabel,
     captain: captainName,

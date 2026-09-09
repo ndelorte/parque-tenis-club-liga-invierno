@@ -1,6 +1,8 @@
 import { notFound, redirect } from "next/navigation"
 import { getTeamBySlug } from "@/lib/data/teams"
 import { getCategoryById } from "@/lib/data/categories"
+import { getActiveTournament } from "@/lib/data/tournaments"
+import { LIGAS_BASE, teamHref } from "@/lib/tournament/seasonRoutes"
 
 export default async function EquipoRedirectPage({
   params,
@@ -12,5 +14,6 @@ export default async function EquipoRedirectPage({
   if (!team) notFound()
   const category = await getCategoryById(team.category_id)
   if (!category) notFound()
-  redirect(`/liga-invierno/equipos/${category.slug}/${team.slug}`)
+  const tournament = await getActiveTournament()
+  redirect(tournament ? teamHref(tournament.slug, category.slug, team.slug) : LIGAS_BASE)
 }
