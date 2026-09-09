@@ -1,10 +1,9 @@
 import Image from "next/image"
 import Link from "next/link"
-import { Trophy, Calendar, Users, ArrowRight } from "lucide-react"
+import { Trophy, Users, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const FEATURES = [
-  { icon: Calendar, label: "Junio a Agosto" },
   { icon: Users, label: "Categorías por nivel" },
   { icon: Trophy, label: "Grandes premios" },
 ]
@@ -16,10 +15,10 @@ export function WinterLeague() {
         <div>
           <span className="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent-foreground">
             <Trophy className="size-3.5" />
-            Liga de Invierno
+            Liga Invierno / Verano
           </span>
           <h2 className="mt-5 text-balance font-heading text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
-            Competí todo el invierno
+            Competí todo el año
           </h2>
           <p className="mt-4 max-w-lg text-pretty text-lg leading-relaxed text-primary-foreground/80">
             La liga más esperada del club. Partidos semanales, categorías para
@@ -47,12 +46,20 @@ export function WinterLeague() {
           </Button>
         </div>
 
-        <div className="relative aspect-[4/3] overflow-hidden rounded-3xl ring-1 ring-primary-foreground/20">
+        <div className="flex aspect-[4/3] items-center justify-center gap-6 rounded-3xl bg-primary-foreground/10 ring-1 ring-primary-foreground/20">
           <Image
             src="/images/logoligadeinvierno.png"
-            alt="Liga de Invierno"
-            fill
-            className="object-cover"
+            alt="Logo Liga de Invierno"
+            width={200}
+            height={200}
+            className="size-28 object-contain sm:size-36"
+          />
+          <Image
+            src="/images/logoligaverano.png"
+            alt="Logo Liga de Verano"
+            width={200}
+            height={200}
+            className="size-28 object-contain sm:size-36"
           />
         </div>
       </div>
