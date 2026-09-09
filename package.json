@@ -11,6 +11,8 @@
     "test:watch": "vitest",
     "import:rosters": "tsx scripts/import-rosters.ts",
     "import:fixture": "tsx scripts/import-fixture.ts",
+    "import:challonge": "tsx scripts/import-challonge.ts",
+    "import:circuito-sheet": "tsx scripts/import-circuito-ranking-sheet.ts",
     "validate:data": "tsx scripts/validate-data.ts"
   },
   "dependencies": {

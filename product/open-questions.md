@@ -159,6 +159,24 @@ por nivel. No implementar hasta tener respuesta.
 
 ---
 
+### OQ-37: Circuito — desempate dentro de una zona (round robin)
+
+**Contexto**: En los formatos de zona (4, 5 y 6-7 inscriptos, `reglas-circuito-del-parque.md`) el
+campeón/subcampeón/clasificados a semifinal salen de la tabla de posiciones de la zona (todos
+contra todos). El documento define cómo se traducen esas posiciones a puntos de ranking, pero no
+define el **criterio de desempate** cuando 2 o más participantes terminan con la misma cantidad de
+partidos ganados dentro de la zona.
+
+**Preguntar**: Para desempatar dentro de una zona, ¿el criterio es diferencia de games ganados/perdidos
+(como en el desempate de equipos de Liga), con enfrentamiento directo como siguiente criterio? ¿O hay
+otro orden preferido?
+
+**Impacto**: `lib/circuito/calculateZoneStandings.ts` — mientras no se confirme, implementado con
+el default: 1) partidos ganados, 2) diferencia de games, 3) games ganados, 4) cabeza de serie (más
+bajo primero) como último desempate estable. Ajustar el orden de criterios si la respuesta es otra.
+
+---
+
 ## Resueltas — Liga Multi-Temporada
 
 ### ~~OQ-19~~: Edición cerrada — ¿tabla+cuadro+campeón o sólo cuadro+campeón?
@@ -305,9 +323,30 @@ Ver tabla completa de puntos en `reglas-circuito-del-parque.md`.
 
 ### ~~OQ (nueva — Challonge scores_csv)~~: ¿Challonge expone detalle set por set?
 
-**Respuesta**: No verificado aún — se confirma en el Sprint C7 (import) antes de programar el
-import definitivo. Si no expone `scores_csv`, se define ahí un desempate alternativo solo para
-datos importados (no se infiere ahora).
+**Respuesta** (2026-09-09, Sprint C7): quedó sin objeto — `scripts/import-challonge.ts` no
+reconstruye el cuadro de cada torneo histórico (arriesgaba forzar datos de Challonge a una
+estructura de rondas que puede no coincidir con el motor nuevo). En cambio usa el `final_rank`
+que ya calcula Challonge para derivar directo la instancia de cada participante y volcarla a
+`circuito_ranking_points`. Al no reconstruir el cuadro, no hace falta `scores_csv` ni un
+desempate por diferencia de games para los datos importados.
+
+---
+
+### ~~OQ-25~~: ¿Prefijo `circuito_` nuevo o extender `mid_master_`?
+
+**Respuesta** (2026-09-07): Prefijo nuevo `circuito_`, tablas tipadas en `lib/supabase/types.ts`
+desde que se crean (no repetir el patrón `any` de `mid_master_*`). Decisión técnica, no una regla
+deportiva — documentada en ADR-005 (Sprint C1.5).
+
+---
+
+### ~~OQ-36~~: Circuito — formato 6-7 inscriptos, ¿cómo se arman las 2 zonas?
+
+**Respuesta** (2026-09-09): Mismo criterio de ranking vigente que las byes de 8+, repartido en
+serpentina (1° → Zona A, 2°-3° → Zona B, 4°-5° → Zona A, 6°-7° → Zona B) para equilibrar el nivel
+de cada zona. Confirma el default que ya estaba implementado en
+`lib/circuito/generateBracket.ts` (`splitIntoTwoZones`). Volcado en
+`reglas-circuito-del-parque.md` (sección "Seeding").
 
 ---
 

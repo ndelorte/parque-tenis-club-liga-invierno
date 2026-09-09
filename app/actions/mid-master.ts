@@ -17,7 +17,7 @@ function db() { return createAdminClient() as any }
 export async function signOutMaster() {
   const supabase = await createClient()
   await supabase.auth.signOut()
-  redirect("/panel-master/login")
+  redirect("/panel-circuito/login")
 }
 
 // ── Match: schedule ───────────────────────────────────────────
@@ -38,8 +38,8 @@ export async function updateMmMatchSchedule(
     .eq("id", matchId)
 
   if (error) return { ok: false, error: "Error al guardar la fecha." }
-  revalidatePath("/panel-master")
-  revalidatePath("/mid-master")
+  revalidatePath("/panel-circuito")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -112,8 +112,8 @@ export async function updateMmMatchResult(
     }
   }
 
-  revalidatePath("/panel-master")
-  revalidatePath("/mid-master")
+  revalidatePath("/panel-circuito")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -126,8 +126,8 @@ export async function clearMmMatchResult(matchId: string): Promise<ActionResult>
     .eq("id", matchId)
 
   if (error) return { ok: false, error: "Error al borrar el resultado." }
-  revalidatePath("/panel-master")
-  revalidatePath("/mid-master")
+  revalidatePath("/panel-circuito")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -188,8 +188,8 @@ export async function addMmParticipant(
     if (matchError) return { ok: false, error: `Error al crear partidos: ${matchError.message}` }
   }
 
-  revalidatePath("/panel-master")
-  revalidatePath("/mid-master")
+  revalidatePath("/panel-circuito")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -209,8 +209,8 @@ export async function updateMmParticipant(
 
   if (error) return { ok: false, error: "Error al actualizar el nombre." }
 
-  revalidatePath("/panel-master")
-  revalidatePath("/mid-master")
+  revalidatePath("/panel-circuito")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -310,8 +310,8 @@ export async function resolveKnockoutParticipants(
     }).eq("id", sfMatches[1].id),
   ])
 
-  revalidatePath("/panel-master")
-  revalidatePath("/mid-master")
+  revalidatePath("/panel-circuito")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -333,14 +333,14 @@ export async function assignMmMatchParticipants(
     .update({ participant_1_id: participant1Id, participant_2_id: participant2Id })
     .eq("id", matchId)
   if (error) return { ok: false, error: "Error al asignar participantes." }
-  revalidatePath("/panel-master")
-  revalidatePath("/mid-master")
+  revalidatePath("/panel-circuito")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
 // ── Trigger revalidation (standings computed on-the-fly) ──────
 
 export async function revalidateMmCategory(slug: string): Promise<void> {
-  revalidatePath(`/panel-master/categorias/${slug}`)
-  revalidatePath(`/mid-master/categorias/${slug}`)
+  revalidatePath(`/panel-circuito/categorias/${slug}`)
+  revalidatePath(`/circuito-del-parque/especiales/mid-master-2026/categorias/${slug}`)
 }

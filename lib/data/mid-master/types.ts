@@ -1,7 +1,17 @@
 // ── DB row types — reflejo exacto del esquema real de Supabase ───────────────
 
+export interface DbMmEdition {
+  id: string
+  slug: string
+  name: string
+  year: number
+  status: "upcoming" | "active" | "finished"
+  created_at?: string
+}
+
 export interface DbMmCategory {
   id: string
+  edition_id: string
   name: string
   slug: string
   type: string               // "single" | "double"
