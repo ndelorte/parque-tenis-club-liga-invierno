@@ -122,6 +122,12 @@
 fecha por fecha (partidos de fase regular). Implementado en Sprint L3
 (`components/liga/ClosedSeasonView.tsx`).
 
+**Actualización** (2026-09-09): El organizador cambió de decisión. En una edición `finished` ahora
+se muestra **solo el podio por categoría** (campeón, subcampeón, tercer puesto) — ni tabla final ni
+cuadro de playoffs completo. `getPodiumForCategory` (`lib/data/playoffs.ts`) deriva el podio de las
+series `final` y `third_place`; `ClosedSeasonView` renderiza `PodiumBanner` en vez de
+`StandingsTable`/`PlayoffBracket`.
+
 ---
 
 ### ~~OQ-20~~: ¿Cierre por torneo o por categoría?
@@ -136,6 +142,27 @@ fecha por fecha (partidos de fase regular). Implementado en Sprint L3
 **Respuesta** (2026-09-07): Pantalla única (logo + "Próximamente" + reloj de arena animado).
 No hay selector de categoría porque todavía no existen categorías/equipos cargados para esa
 edición. Implementado en Sprint L5 (`components/liga/ComingSoonView.tsx`).
+
+---
+
+### ~~OQ-35~~: Formato de las planillas de ediciones anteriores
+
+**Respuesta** (2026-09-09): El organizador pasó las posiciones finales (campeón/subcampeón/tercer
+puesto por categoría) por chat, no hay planillas partido a partido digitalizadas. Como la vista de
+edición cerrada ahora solo muestra podio (ver actualización de OQ-19), esto alcanza — no hace falta
+reconstruir fixture ni resultados de cancha (se descarta el "Camino A" del plan original).
+
+Cargado en `supabase/seeds/003_liga_historica_podios.sql` como `categories.manual_champion_name` /
+`manual_runner_up_name` / `manual_third_place_name` (fallback — Sprint L7):
+- Liga de Invierno 2025, Liga de Verano 2025/2026: creadas sin categorías todavía, se cargan por
+  primera vez con este seed.
+- Liga de Verano 2024/2025: no existía como torneo en el selector multi-temporada; se crea con este
+  seed (`season = 2024`, `status = 'finished'`). En Damas B, Caballeros A y Caballeros B había un
+  4° puesto en la planilla original que no se carga (la vista pública es solo top 3).
+- Liga de Invierno 2026: ya tenía categorías con fixture real (torneo activo durante la temporada).
+  El podio manual es solo respaldo — `getPodiumForCategory` siempre prioriza la serie "final"/
+  "third_place" digitalizada si existe. Se marcó `status = 'finished'` (el organizador confirmó que
+  ya se jugaron todas las finales).
 
 ---
 

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { getTeamById } from "@/lib/data/teams"
+import { getCategoryById } from "@/lib/data/categories"
 import type { Team } from "@/lib/tournament/types"
 
 export type PlayoffSeriesSimple = {
@@ -75,4 +76,50 @@ export async function getChampionForCategory(categoryId: string): Promise<Team |
   const final = series.find((s) => s.phase === "final")
   if (!final?.winner_team_id) return null
   return getTeamById(final.winner_team_id)
+}
+
+export type PodiumNames = {
+  championName: string | null
+  runnerUpName: string | null
+  thirdPlaceName: string | null
+}
+
+// Podio derivado de las series "final"/"third_place" digitalizadas.
+async function getDerivedPodiumForCategory(categoryId: string): Promise<PodiumNames> {
+  const series = await getPlayoffSeries(categoryId)
+
+  const final = series.find((s) => s.phase === "final")
+  const champion = final?.winner_team_id ? await getTeamById(final.winner_team_id) : null
+  const runnerUpId = final?.winner_team_id
+    ? final.winner_team_id === final.home_team_id
+      ? final.away_team_id
+      : final.home_team_id
+    : null
+  const runnerUp = runnerUpId ? await getTeamById(runnerUpId) : null
+
+  const thirdPlaceSeries = series.find((s) => s.phase === "third_place")
+  const thirdPlace = thirdPlaceSeries?.winner_team_id
+    ? await getTeamById(thirdPlaceSeries.winner_team_id)
+    : null
+
+  return {
+    championName: champion?.name ?? null,
+    runnerUpName: runnerUp?.name ?? null,
+    thirdPlaceName: thirdPlace?.name ?? null,
+  }
+}
+
+// Podio de una categoría para la vista de edición cerrada. Prioriza el dato
+// derivado de series digitalizadas; si no hay (ediciones históricas sin
+// fixture completo — Sprint L7), cae al podio cargado a mano en `categories`.
+export async function getPodiumForCategory(categoryId: string): Promise<PodiumNames> {
+  const derived = await getDerivedPodiumForCategory(categoryId)
+  if (derived.championName) return derived
+
+  const category = await getCategoryById(categoryId)
+  return {
+    championName: category?.manual_champion_name ?? null,
+    runnerUpName: category?.manual_runner_up_name ?? null,
+    thirdPlaceName: category?.manual_third_place_name ?? null,
+  }
 }

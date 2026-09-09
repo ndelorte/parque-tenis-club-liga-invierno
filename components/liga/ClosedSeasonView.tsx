@@ -1,18 +1,13 @@
-import { StandingsTable } from "@/components/liga/StandingsTable";
-import { PlayoffBracket } from "@/components/liga/PlayoffBracket";
-import { ChampionBanner } from "@/components/liga/ChampionBanner";
+import { PodiumBanner } from "@/components/liga/PodiumBanner";
 import { PhotoGallery } from "@/components/liga/PhotoGallery";
-import type { Category, StandingsRow, Team } from "@/lib/tournament/types";
-import type { PlayoffSeriesSimple } from "@/lib/data/playoffs";
-import type { ProvisionalBracket } from "@/lib/playoffs/types";
+import type { Category } from "@/lib/tournament/types";
 import type { TournamentPhoto } from "@/lib/data/tournament-photos";
 
 type ClosedCategoryBundle = {
   category: Category;
-  standings: StandingsRow[];
-  bracket: ProvisionalBracket | null;
-  playoffSeries: PlayoffSeriesSimple[];
-  champion: Team | null;
+  championName: string | null;
+  runnerUpName: string | null;
+  thirdPlaceName: string | null;
   photos: TournamentPhoto[];
 };
 
@@ -40,22 +35,15 @@ export function ClosedSeasonView({
         </section>
       )}
 
-      {bundles.map(({ category, standings, bracket, champion, photos }) => (
+      {bundles.map(({ category, championName, runnerUpName, thirdPlaceName, photos }) => (
         <section key={category.id} className="space-y-6">
           <h2 className="font-heading text-xl font-bold text-gray-900">{category.name}</h2>
 
-          <ChampionBanner champion={champion} />
-
-          <div>
-            <h3 className="font-semibold text-gray-800 mb-3">Tabla final</h3>
-            <StandingsTable standings={standings} />
-          </div>
-
-          {bracket && (
-            <div>
-              <PlayoffBracket bracket={bracket} provisional={false} />
-            </div>
-          )}
+          <PodiumBanner
+            championName={championName}
+            runnerUpName={runnerUpName}
+            thirdPlaceName={thirdPlaceName}
+          />
 
           {photos.length > 0 && (
             <div>

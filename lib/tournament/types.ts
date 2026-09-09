@@ -54,6 +54,11 @@ export interface Category {
   sort_order: number;
   direct_semifinalists_count?: number;
   quarterfinals_enabled?: boolean;
+  // Podio cargado a mano (Sprint L7) — fallback cuando no hay serie "final"/
+  // "third_place" digitalizada (ediciones históricas sin fixture completo).
+  manual_champion_name?: string;
+  manual_runner_up_name?: string;
+  manual_third_place_name?: string;
 }
 
 export interface Team {

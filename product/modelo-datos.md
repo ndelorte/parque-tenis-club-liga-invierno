@@ -51,6 +51,9 @@ tournaments
 | direct_semifinalists_count | integer nullable | Para playoffs futuros |
 | quarterfinals_enabled | boolean | Para playoffs futuros |
 | sort_order | integer | Orden de visualización |
+| manual_champion_name | text nullable | Podio cargado a mano (Sprint L7). Fallback de `getPodiumForCategory` cuando no hay serie "final" digitalizada — ediciones históricas sin fixture completo |
+| manual_runner_up_name | text nullable | Ídem, subcampeón |
+| manual_third_place_name | text nullable | Ídem, tercer puesto (serie "third_place") |
 | created_at | timestamptz | |
 | updated_at | timestamptz | |
 

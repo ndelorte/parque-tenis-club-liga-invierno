@@ -12,7 +12,7 @@ import { getCategoriesForTournament } from "@/lib/data/categories"
 import { getTeamsByCategory } from "@/lib/data/teams"
 import { getStandingsSnapshot } from "@/lib/data/standings"
 import { getRoundsWithSeries } from "@/lib/data/series"
-import { getPlayoffSeries, getChampionForCategory } from "@/lib/data/playoffs"
+import { getPlayoffSeries, getPodiumForCategory } from "@/lib/data/playoffs"
 import { getPhotos } from "@/lib/data/tournament-photos"
 import { buildBracketOrNull } from "@/lib/playoffs/generateProvisionalBracket"
 import { formatTournamentTitle } from "@/lib/tournament/formatTournamentTitle"
@@ -58,19 +58,16 @@ export default async function SeasonPage({ params, searchParams }: Props) {
     const [closedBundles, generalPhotos] = await Promise.all([
       Promise.all(
         categories.map(async (category) => {
-          const [standings, playoffSeries, champion, photos] = await Promise.all([
-            getStandingsSnapshot(category.id),
-            getPlayoffSeries(category.id),
-            getChampionForCategory(category.id),
+          const [podium, photos] = await Promise.all([
+            getPodiumForCategory(category.id),
             getPhotos(tournament.id, category.id),
           ])
 
           return {
             category,
-            standings,
-            bracket: buildBracketOrNull(standings, playoffSeries),
-            playoffSeries,
-            champion,
+            championName: podium.championName,
+            runnerUpName: podium.runnerUpName,
+            thirdPlaceName: podium.thirdPlaceName,
             photos,
           }
         }),

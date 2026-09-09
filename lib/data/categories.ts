@@ -16,6 +16,9 @@ function mapCategoryRow(row: CategoryRow): Category {
     sort_order: row.sort_order,
     direct_semifinalists_count: row.direct_semifinalists_count ?? undefined,
     quarterfinals_enabled: row.quarterfinals_enabled,
+    manual_champion_name: row.manual_champion_name ?? undefined,
+    manual_runner_up_name: row.manual_runner_up_name ?? undefined,
+    manual_third_place_name: row.manual_third_place_name ?? undefined,
   }
 }
 

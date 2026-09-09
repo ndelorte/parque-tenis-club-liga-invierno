@@ -52,6 +52,9 @@ export type Database = {
           direct_semifinalists_count: number | null
           quarterfinals_enabled: boolean
           sort_order: number
+          manual_champion_name: string | null
+          manual_runner_up_name: string | null
+          manual_third_place_name: string | null
           created_at: string
           updated_at: string
         }
@@ -66,6 +69,9 @@ export type Database = {
           direct_semifinalists_count?: number | null
           quarterfinals_enabled?: boolean
           sort_order?: number
+          manual_champion_name?: string | null
+          manual_runner_up_name?: string | null
+          manual_third_place_name?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -80,6 +86,9 @@ export type Database = {
           direct_semifinalists_count?: number | null
           quarterfinals_enabled?: boolean
           sort_order?: number
+          manual_champion_name?: string | null
+          manual_runner_up_name?: string | null
+          manual_third_place_name?: string | null
           updated_at?: string
         }
       }

@@ -42,6 +42,7 @@ function makeFakeClient(tables: Record<string, FixtureRow[]>) {
 const CATEGORY_PLAYED = "cat-final-played"
 const CATEGORY_NOT_PLAYED = "cat-final-not-played"
 const CATEGORY_NO_FINAL = "cat-no-final"
+const CATEGORY_MANUAL_ONLY = "cat-manual-only"
 
 const ROUNDS_FIXTURE: FixtureRow[] = [
   {
@@ -59,6 +60,24 @@ const ROUNDS_FIXTURE: FixtureRow[] = [
         scheduled_time: null,
         status: "completed",
         winner_team_id: "team-a",
+      },
+    ],
+  },
+  {
+    id: "round-third-place-played",
+    category_id: CATEGORY_PLAYED,
+    phase: "third_place",
+    round_number: 103,
+    series: [
+      {
+        id: "series-third-place-played",
+        round_id: "round-third-place-played",
+        home_team_id: "team-c",
+        away_team_id: "team-d",
+        scheduled_date: null,
+        scheduled_time: null,
+        status: "completed",
+        winner_team_id: "team-c",
       },
     ],
   },
@@ -91,11 +110,45 @@ const TEAMS_FIXTURE: FixtureRow[] = [
     captain_name: null,
     active: true,
   },
+  {
+    id: "team-b",
+    category_id: CATEGORY_PLAYED,
+    name: "Las Águilas",
+    slug: "las-aguilas",
+    captain_name: null,
+    active: true,
+  },
+  {
+    id: "team-c",
+    category_id: CATEGORY_PLAYED,
+    name: "Los Cóndores",
+    slug: "los-condores",
+    captain_name: null,
+    active: true,
+  },
+]
+
+const CATEGORIES_FIXTURE: FixtureRow[] = [
+  {
+    id: CATEGORY_MANUAL_ONLY,
+    tournament_id: "t-historic",
+    name: "Damas A",
+    slug: "damas-a",
+    phase_format: "round_robin",
+    regular_phase_type: "home_away",
+    teams_count: 6,
+    direct_semifinalists_count: null,
+    quarterfinals_enabled: false,
+    sort_order: 0,
+    manual_champion_name: "Equipo Histórico A",
+    manual_runner_up_name: "Equipo Histórico B",
+    manual_third_place_name: "Equipo Histórico C",
+  },
 ]
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () =>
-    makeFakeClient({ rounds: ROUNDS_FIXTURE, teams: TEAMS_FIXTURE }),
+    makeFakeClient({ rounds: ROUNDS_FIXTURE, teams: TEAMS_FIXTURE, categories: CATEGORIES_FIXTURE }),
 }))
 
 describe("getChampionForCategory", () => {
@@ -122,5 +175,45 @@ describe("getChampionForCategory", () => {
     const champion = await getChampionForCategory(CATEGORY_NO_FINAL)
 
     expect(champion).toBeNull()
+  })
+})
+
+describe("getPodiumForCategory", () => {
+  it("devuelve campeón, subcampeón y tercer puesto cuando final y third_place ya se jugaron", async () => {
+    const { getPodiumForCategory } = await import("../playoffs")
+
+    const podium = await getPodiumForCategory(CATEGORY_PLAYED)
+
+    expect(podium.championName).toBe("Los Halcones")
+    expect(podium.runnerUpName).toBe("Las Águilas")
+    expect(podium.thirdPlaceName).toBe("Los Cóndores")
+  })
+
+  it("devuelve todo null cuando la final todavía no se jugó y no hay podio cargado a mano", async () => {
+    const { getPodiumForCategory } = await import("../playoffs")
+
+    const podium = await getPodiumForCategory(CATEGORY_NOT_PLAYED)
+
+    expect(podium.championName).toBeNull()
+    expect(podium.runnerUpName).toBeNull()
+    expect(podium.thirdPlaceName).toBeNull()
+  })
+
+  it("devuelve tercer puesto null cuando no se jugó ese partido", async () => {
+    const { getPodiumForCategory } = await import("../playoffs")
+
+    const podium = await getPodiumForCategory(CATEGORY_NO_FINAL)
+
+    expect(podium.thirdPlaceName).toBeNull()
+  })
+
+  it("cae al podio cargado a mano cuando no hay series de playoffs digitalizadas (ediciones históricas)", async () => {
+    const { getPodiumForCategory } = await import("../playoffs")
+
+    const podium = await getPodiumForCategory(CATEGORY_MANUAL_ONLY)
+
+    expect(podium.championName).toBe("Equipo Histórico A")
+    expect(podium.runnerUpName).toBe("Equipo Histórico B")
+    expect(podium.thirdPlaceName).toBe("Equipo Histórico C")
   })
 })
