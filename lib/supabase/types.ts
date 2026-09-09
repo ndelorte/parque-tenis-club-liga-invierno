@@ -499,6 +499,174 @@ export type Database = {
           updated_at?: string
         }
       }
+      circuito_editions: {
+        Row: {
+          id: string
+          slug: string
+          name: string
+          month: number
+          year: number
+          status: "upcoming" | "active" | "finished"
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          slug: string
+          name: string
+          month: number
+          year: number
+          status?: "upcoming" | "active" | "finished"
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          slug?: string
+          name?: string
+          month?: number
+          year?: number
+          status?: "upcoming" | "active" | "finished"
+        }
+      }
+      circuito_categories: {
+        Row: {
+          id: string
+          edition_id: string
+          name: string
+          slug: string
+          type: "single" | "dobles"
+          draw_size: number | null
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          edition_id: string
+          name: string
+          slug: string
+          type: "single" | "dobles"
+          draw_size?: number | null
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          edition_id?: string
+          name?: string
+          slug?: string
+          type?: "single" | "dobles"
+          draw_size?: number | null
+          sort_order?: number
+          updated_at?: string
+        }
+      }
+      circuito_participants: {
+        Row: {
+          id: string
+          category_id: string
+          player_id: string | null
+          player_2_id: string | null
+          display_name: string
+          seed: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          category_id: string
+          player_id?: string | null
+          player_2_id?: string | null
+          display_name: string
+          seed?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          category_id?: string
+          player_id?: string | null
+          player_2_id?: string | null
+          display_name?: string
+          seed?: number | null
+          updated_at?: string
+        }
+      }
+      circuito_matches: {
+        Row: {
+          id: string
+          category_id: string
+          bracket: "main" | "repechaje"
+          round_number: number
+          participant_a_id: string | null
+          participant_b_id: string | null
+          score: string | null
+          winner_id: string | null
+          is_walkover: boolean
+          status: "pending" | "scheduled" | "played" | "walkover"
+          scheduled_date: string | null
+          scheduled_time: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          category_id: string
+          bracket: "main" | "repechaje"
+          round_number: number
+          participant_a_id?: string | null
+          participant_b_id?: string | null
+          score?: string | null
+          winner_id?: string | null
+          is_walkover?: boolean
+          status?: "pending" | "scheduled" | "played" | "walkover"
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          category_id?: string
+          bracket?: "main" | "repechaje"
+          round_number?: number
+          participant_a_id?: string | null
+          participant_b_id?: string | null
+          score?: string | null
+          winner_id?: string | null
+          is_walkover?: boolean
+          status?: "pending" | "scheduled" | "played" | "walkover"
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          updated_at?: string
+        }
+      }
+      circuito_ranking_points: {
+        Row: {
+          id: string
+          player_id: string
+          category_id: string
+          edition_id: string
+          points: number
+          computed_at: string
+        }
+        Insert: {
+          id?: string
+          player_id: string
+          category_id: string
+          edition_id: string
+          points: number
+          computed_at?: string
+        }
+        Update: {
+          id?: string
+          player_id?: string
+          category_id?: string
+          edition_id?: string
+          points?: number
+          computed_at?: string
+        }
+      }
     }
     Views: { [_ in never]: never }
     Functions: { [_ in never]: never }
