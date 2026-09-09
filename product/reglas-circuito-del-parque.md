@@ -162,26 +162,29 @@ Junio=Halle, Julio=Wimbledon (Mid Master se juega el mismo mes pero es un torneo
 puntúa acá), Agosto=Toronto/Cincinnati (mismo mes, nombre distinto según categoría),
 Septiembre=Us Open, Octubre=China Open, Noviembre=Paris Open, Diciembre=Belgrado Open.
 
-### Partidos históricos (cuadros navegables) — pendiente, cuota de Challonge agotada
+### Partidos históricos (cuadros navegables)
 
-Además del ranking (arriba), se puede traer el detalle partido por partido desde la API de
-Challonge para poder navegar los cuadros históricos en `/circuito-del-parque/torneos/...`
-(`scripts/import-challonge.ts`, reescrito para la API v2.1 con OAuth2 — la cuenta del club pasó a
-pedir `client_id`/`client_secret` en vez de la API key simple v1 que se había asumido al principio).
-**No toca `circuito_ranking_points`** (esa tabla sigue viniendo solo de la planilla, arriba).
+Además del ranking (arriba), `scripts/import-challonge.ts` trae el detalle partido por partido
+desde la API de Challonge (v2.1, OAuth2) y lo guarda en `circuito_matches`, para poder navegar los
+cuadros históricos en `/circuito-del-parque/torneos/...`. **No toca `circuito_ranking_points`**
+(esa tabla sigue viniendo solo de la planilla, arriba).
+
+Corrido y verificado el 2026-09-09: 67 torneos, 652 partidos, ~495 participantes nuevos en
+`players`. La cuota de 500 requests/30 días del plan gratuito de Challonge es **por aplicación
+(client_id), no por cuenta** — se resolvió sin esperar creando una segunda "Application" dentro de
+la misma cuenta del club en vez de esperar el reset.
 
 Confirmado con el organizador el 2026-09-09:
-- Alcance: solo torneos 2026 (67 torneos reales, ya validados con el parser de nombres).
+- Alcance: solo torneos 2026 (67 torneos reales, validados con el parser de nombres).
 - En Challonge, el cuadro principal y el repechaje de una categoría/mes son dos torneos separados
   — coincide con nuestro propio modelo `bracket: "main" | "repechaje"`.
 - "Dobles [género] Torneo X" sin nivel explícito en el nombre → siempre es la categoría "Segunda"
   de ese género. "Dobles Damas Intermedia" → en realidad "Damas Primera Dobles" (mismo caso que en
   la planilla de ranking).
 
-**Bloqueado**: la cuenta está en el plan gratuito de Challonge (500 requests / 30 días) y se agotó
-explorando la API y validando el parser. El script queda terminado y probado, pendiente de
-correrse cuando se renueve la cuota (~30 días desde el 2026-09-09) o si se hace upgrade del plan
-antes. Pasos documentados en el encabezado de `scripts/import-challonge.ts`.
+Detalle de los 2 bugs encontrados y corregidos durante la corrida real (caché de participantes
+sin escopear por edición + falta de paginación en Challonge) en el encabezado de
+`scripts/import-challonge.ts`.
 
 ---
 

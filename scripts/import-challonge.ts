@@ -34,40 +34,37 @@
  *   npm run import:challonge -- --dry-run
  *   npm run import:challonge
  *
- * ── ESTADO (2026-09-09): pendiente de correr, cuota de Challonge agotada ──
+ * ── ESTADO (2026-09-09): corrido y verificado ──
  *
- * El script está terminado y validado (parseo probado contra los 67
- * torneos 2026 reales, reparto de parejas de dobles y filtro de
- * placeholders de Challonge — "Perdedor de X" — ya andan bien), pero la
- * cuenta del club está en el plan gratuito de Challonge: 500 requests cada
- * 30 días, y se agotó explorando la API + iterando el dry-run. Un
- * --dry-run gasta exactamente los mismos requests que la corrida real (solo
- * cambia si al final escribe en Supabase o no) — no tiene sentido gastar
- * cuota en otro dry-run antes de la corrida real.
+ * Se agotó la cuota de la aplicación original explorando la API (500
+ * requests/30 días, plan gratuito) — se resolvió sin esperar creando una
+ * SEGUNDA "Application" (client_id/secret propios) dentro de la MISMA
+ * cuenta de Challonge del club: el límite es por aplicación, no por cuenta
+ * completa, así que la segunda tenía su propia cuota de 500 sin costo.
+ * (Se probó primero con una cuenta de Challonge totalmente nueva — no
+ * sirve: la API solo deja leer torneos propios de la cuenta autenticada,
+ * el flag "private: false" de un torneo no habilita lectura cross-cuenta.)
  *
- * Pasos para cuando se renueve la cuota (~30 días desde el 2026-09-09, o
- * antes si se hace upgrade del plan en challonge.com):
- *   1. Confirmar que CHALLONGE_CLIENT_ID y CHALLONGE_CLIENT_SECRET siguen
- *      en .env.local. Si hay que regenerarlos: challonge.com → ícono de
- *      perfil → Developer → Applications.
- *   2. Correr DIRECTO (sin --dry-run): `npm run import:challonge`.
- *   3. Revisar el resumen final: torneos importados (deberían ser 67),
- *      partidos guardados (~650+), participantes nuevos creados, y la
- *      lista de "sin jugador vinculado en players" — son mayormente
- *      variantes de nombre/apodo (ej. "Nacho Ciarlantini" vs "Ignacio
- *      Ciarlantini" que ya existe en `players` desde el import de la
- *      planilla) o erratas de tipeo del propio Challonge. No rompen nada:
- *      esos partidos quedan igual guardados (para verse en la web), solo
- *      que ese participante puntual no queda vinculado a un player_id.
- *      circuito_ranking_points NO se toca — sigue viniendo de la planilla
- *      (scripts/import-circuito-ranking-sheet.ts), así que esta lista no
- *      afecta al ranking ya cargado.
- *   4. Verificar en el navegador que algún torneo con partidos reales
- *      renderiza bien, ej. `/circuito-del-parque/torneos/circuito-2026-05/caballeros-segunda-single`.
- *   5. (Opcional, prolijidad) Revisar a mano la lista de "sin jugador
- *      vinculado" — fusionar en `players` los que sean la misma persona
- *      que otro nombre ya existente (typos/apodos), vía el panel de Liga o
- *      directo en Supabase. No es bloqueante.
+ * Resultado: 67 torneos, 652 partidos, ~495 participantes nuevos en
+ * `players`, 74 sin vincular (variantes de nombre/apodo — no rompen nada,
+ * no afectan circuito_ranking_points que sigue viniendo de la planilla).
+ *
+ * Dos bugs encontrados y corregidos durante la corrida real (no aparecían
+ * en el dry-run porque no llegó a cubrir todos los casos):
+ * - El caché de participantes reusables estaba indexado por categorySlug
+ *   en vez de por categoryId — mezclaba participantes de la misma
+ *   categoría en meses distintos (ej. "Caballeros Segunda" de mayo
+ *   terminaba referenciando participantes creados para febrero). Ver
+ *   participantsByCategory abajo.
+ * - getTournamentParticipants/getTournamentMatches (scripts/lib/challonge.ts)
+ *   no paginaban — un torneo con más entradas que el page size default de
+ *   Challonge perdía participantes silenciosamente, dejando partidos con
+ *   score pero sin participant_a_id/b_id ("Por definir" en vez del nombre
+ *   real). Se corrigió con el mismo patrón de paginación de listAllTournaments.
+ *
+ * Si hace falta correr de nuevo desde una base limpia (ej. reset de datos
+ * de prueba), correr directo `npm run import:challonge` — no hace falta
+ * dry-run, ya está validado.
  */
 
 import * as dotenv from "dotenv"
@@ -266,7 +263,11 @@ async function main() {
     unmatchedPlayers: new Set<string>(),
   }
 
-  // Ya existente (creado por el import de la planilla) o nuevo por categoría → participantId por nombre normalizado
+  // Ya existente o nuevo por CATEGORÍA DE UNA EDICIÓN PUNTUAL (categoryId,
+  // no categorySlug — "Caballeros Segunda" de mayo y de junio son filas de
+  // circuito_categories distintas, con sus propios circuito_participants;
+  // cachear solo por slug mezclaría participantes de meses distintos) →
+  // participantId por nombre normalizado.
   const participantsByCategory = new Map<string, Map<string, string>>()
 
   // Procesar primero los cuadros "main" y después los "repechaje": así el
@@ -283,8 +284,8 @@ async function main() {
     const editionId = await findOrCreateEdition(db, parsed.month, dryRun)
     const categoryId = await findOrCreateCategory(db, editionId, parsed.categorySlug, dryRun)
 
-    if (!participantsByCategory.has(parsed.categorySlug)) participantsByCategory.set(parsed.categorySlug, new Map())
-    const categoryParticipants = participantsByCategory.get(parsed.categorySlug)!
+    if (!participantsByCategory.has(categoryId)) participantsByCategory.set(categoryId, new Map())
+    const categoryParticipants = participantsByCategory.get(categoryId)!
 
     const challongeParticipants = await getTournamentParticipants(tournament.id)
     const challongeIdToLocalId = new Map<number, string>()
@@ -334,6 +335,15 @@ async function main() {
         summary.participantsCreated++
       }
       challongeIdToLocalId.set(Number(p.id), localId)
+    }
+
+    // draw_size lo fija el cuadro principal (participantes reales, sin los
+    // placeholders "Perdedor de X") — la vista pública de la categoría
+    // (app/circuito-del-parque/torneos/.../[categoria]) no renderiza sin esto.
+    if (bracket === "main" && !dryRun) {
+      const realCount = challongeParticipants.filter((p) => !/^p(e|é)r?dedor\b/i.test(p.attributes.name.trim())).length
+      const { error } = await db.from("circuito_categories").update({ draw_size: realCount }).eq("id", categoryId)
+      if (error) throw new Error(`Error fijando draw_size de ${parsed.categorySlug}: ${error.message}`)
     }
 
     const matches = (await getTournamentMatches(tournament.id)).filter((m) => m.attributes.state === "complete")

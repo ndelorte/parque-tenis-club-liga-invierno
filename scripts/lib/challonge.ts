@@ -107,14 +107,34 @@ export async function listAllTournaments(): Promise<ChallongeTournament[]> {
   return all
 }
 
+// Bug encontrado corriendo el import real: sin paginar, un torneo con más
+// participantes/partidos que el page size por default de Challonge perdía
+// silenciosamente el resto (participantes de la ronda de clasificación
+// quedaban afuera, dejando partidos sin participant_a_id/b_id). Mismo
+// patrón de paginación que listAllTournaments.
+async function getAllPages<T>(path: string): Promise<T[]> {
+  const all: T[] = []
+  let page = 1
+  for (;;) {
+    const data = await challongeGet<{ data: T[]; meta?: { count: number } }>(path, {
+      page: String(page),
+      per_page: "100",
+    })
+    all.push(...data.data)
+    if (data.data.length === 0) break
+    if (data.meta && all.length >= data.meta.count) break
+    if (!data.meta && data.data.length < 100) break // algunos sub-recursos no traen meta.count
+    page++
+  }
+  return all
+}
+
 export async function getTournamentParticipants(tournamentId: string): Promise<ChallongeParticipant[]> {
-  const data = await challongeGet<{ data: ChallongeParticipant[] }>(`/tournaments/${tournamentId}/participants.json`)
-  return data.data
+  return getAllPages<ChallongeParticipant>(`/tournaments/${tournamentId}/participants.json`)
 }
 
 export async function getTournamentMatches(tournamentId: string): Promise<ChallongeMatch[]> {
-  const data = await challongeGet<{ data: ChallongeMatch[] }>(`/tournaments/${tournamentId}/matches.json`)
-  return data.data
+  return getAllPages<ChallongeMatch>(`/tournaments/${tournamentId}/matches.json`)
 }
 
 // "score_in_sets" ya viene como [participanteA, participanteB] por set en el
