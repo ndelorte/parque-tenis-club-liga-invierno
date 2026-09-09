@@ -12,7 +12,8 @@ tener que abrirlos todos para saber cuál corresponde antes de tocar código.
 | Liga de Invierno: puntos, WO, desempate, formato de serie | `reglas-liga-invierno.md` |
 | Mid Master: zonas, semifinales, desempate, formato de partido | `reglas-mid-master.md` |
 | Circuito del Parque: torneos mensuales (formato según inscriptos, seeding, repechaje, puntaje/ranking) | `reglas-circuito-del-parque.md` |
-| Una regla deportiva que no aparece en ninguno de los tres | No inventarla — agregarla a `open-questions.md` |
+| Interparque: puntaje de partido, super tie-break, tabla de posiciones | `reglas-interparque.md` |
+| Una regla deportiva que no aparece en ninguno de los cuatro | No inventarla — agregarla a `open-questions.md` |
 
 ## Producto / alcance
 
@@ -27,7 +28,7 @@ tener que abrirlos todos para saber cuál corresponde antes de tocar código.
 
 | Si la tarea toca... | Leer |
 |---|---|
-| Esquema de tablas Supabase (Liga de Invierno + Mid Master) | `modelo-datos.md` |
+| Esquema de tablas Supabase (Liga de Invierno + Mid Master + Interparque) | `modelo-datos.md` |
 | Por qué se tomó una decisión estructural (rename de rutas, aislamiento de un módulo, etc.) | `adr/README.md` y el ADR correspondiente |
 | Principios generales de desarrollo (no reglas deportivas) | `reglas.md` |
 

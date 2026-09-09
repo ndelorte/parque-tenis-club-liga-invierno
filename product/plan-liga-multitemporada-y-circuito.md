@@ -676,6 +676,15 @@ Fase 5  ── C7 import Challonge .................. Al final, una sola corrida
    manual. No agendar como job recurrente.
 5. **Regla de oro:** ante una regla deportiva faltante, **no inventar** — agregar a `open-questions.md`
    y frenar el sprint afectado.
+6. **Rama paralela `feat/interparque` (2026-09-08):** mientras este refactor estaba en curso en
+   `feat/circuito-c2-mid-master-multi-edicion`, se pidió sacar a producción una modalidad nueva
+   ("Interparque") sin esperar a que termine. Se implementó en una rama aparte, creada desde `main`
+   (no desde esta rama de refactor), como módulo aislado — ver
+   [ADR-006](./adr/ADR-006-interparque-modulo-aislado.md) y `reglas-interparque.md`. **Al mergear
+   ambas ramas a `main`, revisar a mano** `proxy.ts` (matcher + lookup de paneles admin),
+   `components/layout/Navbar.tsx` y `components/layout/Footer.tsx` — las dos ramas los tocan de
+   forma independiente y es probable que haya conflictos de merge (no de lógica: cada una agrega su
+   propia entrada a listas/arrays existentes).
 
 ---
 

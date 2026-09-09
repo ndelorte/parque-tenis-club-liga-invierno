@@ -175,6 +175,15 @@
 
 ---
 
+## Pendiente / futuro (sin sprint asignado)
+
+- **Refactor visual del sitio** (mencionado 2026-09-08, sin rama ni doc propio
+  todavía): cuando arranque, revisar `/interparque` — hoy usa los tokens
+  `brand`/`accent` existentes combinados con la identidad de los flyers
+  (ver ADR-006), pensado como diseño simple de arranque, no definitivo.
+
+---
+
 ## Criterios de aceptación del MVP
 
 El MVP está terminado cuando todos estos puntos están en verde:
