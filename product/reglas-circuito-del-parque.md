@@ -146,13 +146,26 @@ comprimen así:
 
 ---
 
-## Import histórico Challonge (Sprint C7)
+## Import histórico 2026 (Sprint C7)
 
-Pendiente de verificar en el Sprint C7, antes de programar el import: **¿la cuenta de Challonge
-(`elcircuitodelparque`) expone el detalle set por set de cada partido (`scores_csv`), o solo el
-resultado agregado (ej. `2-1`)?** Si no expone detalle de sets, el ranking importado no puede usar
-diferencia de games como desempate para esos datos — definir en ese momento un desempate
-alternativo **solo** para partidos importados (no inventarlo ahora).
+**Fuente real usada**: el club ya lleva el ranking anual a mano en una planilla de Google Sheets
+(una pestaña por categoría, una columna por torneo mensual, puntos ya calculados por jugador).
+`scripts/import-circuito-ranking-sheet.ts` importa esa planilla directo a
+`circuito_ranking_points` — no reconstruye el cuadro de cada torneo (`circuito_matches`), solo el
+resultado final por jugador. Corrido el 2026-09-09: 429 filas de ranking, 181 jugadores nuevos en
+`players`, 12 ediciones 2026 creadas (julio a diciembre quedaron sin datos porque la planilla
+todavía no los tenía cargados a esa fecha).
+
+Calendario 2026 relevado con el organizador (nombre de torneo → mes; 1/5/7/9 son "Grand Slam"):
+Enero=Australia Open, Febrero=Argentina Open, Marzo=Miami, Abril=Monte Carlo, Mayo=Roland Garros,
+Junio=Halle, Julio=Wimbledon (Mid Master se juega el mismo mes pero es un torneo aparte, no
+puntúa acá), Agosto=Toronto/Cincinnati (mismo mes, nombre distinto según categoría),
+Septiembre=Us Open, Octubre=China Open, Noviembre=Paris Open, Diciembre=Belgrado Open.
+
+`scripts/import-challonge.ts` queda en el repo como alternativa sin usar (la cuenta de Challonge
+del club pasó a pedir OAuth2 client id/secret en vez de una API key simple, y la planilla resultó
+ser la fuente más simple y confiable) — usa el `final_rank` que calcula Challonge para el mismo
+propósito, por si hiciera falta en el futuro.
 
 ---
 

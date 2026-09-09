@@ -417,9 +417,13 @@ siguiente al generar el cuadro.
 ### circuito_ranking_points
 
 Snapshot recalculado — **nunca se edita a mano** (mismo criterio que `standings_snapshot`).
-Único escritor: `lib/data/circuito/ranking.ts` (`recalculateAndPersistCircuitRanking`), reforzado
-por `lib/data/__tests__/circuito-ranking-write-boundary.test.ts` (Sprint C5). Un participante de
+Único punto de escritura real: `lib/data/circuito/ranking.ts`
+(`upsertCircuitoRankingPoints`/`recalculateAndPersistCircuitRanking`), reforzado por
+`lib/data/__tests__/circuito-ranking-write-boundary.test.ts` (Sprint C5). Un participante de
 dobles acredita los mismos puntos a sus 2 jugadores (el ranking es por `player_id`, no por pareja).
+El import histórico 2026 (Sprint C7, `scripts/import-circuito-ranking-sheet.ts`) también pasa por
+`upsertCircuitoRankingPoints`, calculando los puntos desde una planilla externa en vez de
+`circuito_matches` — ver `reglas-circuito-del-parque.md`.
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|

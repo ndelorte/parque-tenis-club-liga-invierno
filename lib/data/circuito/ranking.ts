@@ -69,16 +69,43 @@ export async function recalculateAndPersistCircuitRanking(categoryId: string): P
   if (pointsByPlayer.size === 0) return
 
   const rows = [...pointsByPlayer.entries()].map(([playerId, points]) => ({
-    player_id: playerId,
-    category_id: categoryId,
-    edition_id: category.edition_id,
+    playerId,
+    categoryId,
+    editionId: category.edition_id,
     points,
+  }))
+
+  await upsertCircuitoRankingPoints(rows)
+}
+
+export interface CircuitoRankingPointsInput {
+  playerId: string
+  categoryId: string
+  editionId: string
+  points: number
+}
+
+// Único punto de escritura real de circuito_ranking_points — tanto el
+// recálculo en vivo (arriba) como el import histórico de Challonge
+// (scripts/import-challonge.ts, Sprint C7) pasan por acá, así el invariante
+// que reforzamos con circuito-ranking-write-boundary.test.ts sigue siendo
+// cierto aunque el import calcule los puntos de otra forma (desde
+// final_rank de Challonge en vez de circuito_matches).
+export async function upsertCircuitoRankingPoints(rows: CircuitoRankingPointsInput[]): Promise<void> {
+  if (rows.length === 0) return
+  const supabase = createAdminClient()
+
+  const payload = rows.map((r) => ({
+    player_id: r.playerId,
+    category_id: r.categoryId,
+    edition_id: r.editionId,
+    points: r.points,
     computed_at: new Date().toISOString(),
   }))
 
   const { error } = await supabase
     .from("circuito_ranking_points")
-    .upsert(rows, { onConflict: "player_id,category_id,edition_id" })
+    .upsert(payload, { onConflict: "player_id,category_id,edition_id" })
   if (error) throw new Error(`Error al actualizar el ranking del circuito: ${error.message}`)
 }
 

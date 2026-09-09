@@ -323,9 +323,12 @@ Ver tabla completa de puntos en `reglas-circuito-del-parque.md`.
 
 ### ~~OQ (nueva — Challonge scores_csv)~~: ¿Challonge expone detalle set por set?
 
-**Respuesta**: No verificado aún — se confirma en el Sprint C7 (import) antes de programar el
-import definitivo. Si no expone `scores_csv`, se define ahí un desempate alternativo solo para
-datos importados (no se infiere ahora).
+**Respuesta** (2026-09-09, Sprint C7): quedó sin objeto — `scripts/import-challonge.ts` no
+reconstruye el cuadro de cada torneo histórico (arriesgaba forzar datos de Challonge a una
+estructura de rondas que puede no coincidir con el motor nuevo). En cambio usa el `final_rank`
+que ya calcula Challonge para derivar directo la instancia de cada participante y volcarla a
+`circuito_ranking_points`. Al no reconstruir el cuadro, no hace falta `scores_csv` ni un
+desempate por diferencia de games para los datos importados.
 
 ---
 
