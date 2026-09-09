@@ -162,10 +162,26 @@ Junio=Halle, Julio=Wimbledon (Mid Master se juega el mismo mes pero es un torneo
 puntúa acá), Agosto=Toronto/Cincinnati (mismo mes, nombre distinto según categoría),
 Septiembre=Us Open, Octubre=China Open, Noviembre=Paris Open, Diciembre=Belgrado Open.
 
-`scripts/import-challonge.ts` queda en el repo como alternativa sin usar (la cuenta de Challonge
-del club pasó a pedir OAuth2 client id/secret en vez de una API key simple, y la planilla resultó
-ser la fuente más simple y confiable) — usa el `final_rank` que calcula Challonge para el mismo
-propósito, por si hiciera falta en el futuro.
+### Partidos históricos (cuadros navegables) — pendiente, cuota de Challonge agotada
+
+Además del ranking (arriba), se puede traer el detalle partido por partido desde la API de
+Challonge para poder navegar los cuadros históricos en `/circuito-del-parque/torneos/...`
+(`scripts/import-challonge.ts`, reescrito para la API v2.1 con OAuth2 — la cuenta del club pasó a
+pedir `client_id`/`client_secret` en vez de la API key simple v1 que se había asumido al principio).
+**No toca `circuito_ranking_points`** (esa tabla sigue viniendo solo de la planilla, arriba).
+
+Confirmado con el organizador el 2026-09-09:
+- Alcance: solo torneos 2026 (67 torneos reales, ya validados con el parser de nombres).
+- En Challonge, el cuadro principal y el repechaje de una categoría/mes son dos torneos separados
+  — coincide con nuestro propio modelo `bracket: "main" | "repechaje"`.
+- "Dobles [género] Torneo X" sin nivel explícito en el nombre → siempre es la categoría "Segunda"
+  de ese género. "Dobles Damas Intermedia" → en realidad "Damas Primera Dobles" (mismo caso que en
+  la planilla de ranking).
+
+**Bloqueado**: la cuenta está en el plan gratuito de Challonge (500 requests / 30 días) y se agotó
+explorando la API y validando el parser. El script queda terminado y probado, pendiente de
+correrse cuando se renueve la cuota (~30 días desde el 2026-09-09) o si se hace upgrade del plan
+antes. Pasos documentados en el encabezado de `scripts/import-challonge.ts`.
 
 ---
 

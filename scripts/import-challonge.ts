@@ -1,123 +1,110 @@
 /**
- * Importador histórico de Challonge — Sprint C7.
+ * Importador histórico de partidos 2026 del Circuito del Parque — Challonge.
  *
- * Corre UNA sola vez para poblar el historial 2026 del Circuito del Parque
- * (cuenta Challonge "elcircuitodelparque"). De ahí en más, todo torneo se
- * carga desde /panel-circuito/mensual (Sprint C5) — este script no está
- * pensado para correr en cada deploy ni de forma recurrente (Challonge
- * limita a 500 req/mes en el plan gratuito).
+ * A diferencia de scripts/import-circuito-ranking-sheet.ts (que importa los
+ * puntos ya calculados desde la planilla del club — sigue siendo la fuente
+ * de circuito_ranking_points, no tocar), este script trae el detalle
+ * partido por partido desde la API de Challonge y lo guarda en
+ * circuito_matches, para poder navegar los cuadros históricos en la web
+ * (/circuito-del-parque/torneos/...). NO recalcula ni escribe
+ * circuito_ranking_points — esa tabla ya está poblada desde la planilla y
+ * este import no debe pisarla.
  *
- * Decisión de diseño importante: NO reconstruye el cuadro (circuito_matches)
- * de cada torneo histórico. Los torneos de Challonge pueden haber usado un
- * formato (doble eliminación, byes repartidos distinto, etc.) que no
- * necesariamente coincide con el motor nuevo (lib/circuito/generateBracket.ts,
- * eliminación simple + repechaje). Forzar esos datos históricos a nuestra
- * estructura de rondas arriesgaría corromper el resultado. En cambio, usa el
- * `final_rank` que ya calcula Challonge (autoridad de la clasificación final,
- * resuelve ella misma empates/WO/etc.) para derivar la instancia de cada
- * participante (campeón/subcampeón/semifinal/...) y volcar directo a
- * circuito_ranking_points. Esto también evita depender de si `scores_csv`
- * viene con detalle set por set — no hace falta para esto.
+ * Alcance: solo torneos 2026 (mismo criterio que el ranking, ver
+ * reglas-circuito-del-parque.md — "alcance ranking: solo 2026+"). Challonge
+ * tiene historial desde fines de 2024 pero no se importa acá.
+ *
+ * Descubrimiento clave: en Challonge, el cuadro principal y el repechaje de
+ * una categoría/mes son DOS torneos separados (ej. "SINGLE TERCERA
+ * Cincinnati Open" + "SINGLE TERCERA REPECHAJE Cincinnati Open") — coincide
+ * con nuestro propio modelo (bracket "main"/"repechaje"), así que no hace
+ * falta reconstruir nada, solo mapear 1 a 1.
+ *
+ * Parseo de nombres (confirmado con el organizador el 2026-09-09):
+ * - "Dobles [género] Torneo X" sin nivel explícito → siempre es "Segunda"
+ *   de ese género.
+ * - "Dobles Damas Intermedia" → en realidad "Damas Primera Dobles" (no
+ *   existe una categoría "Damas Intermedia Dobles").
+ * - "+50 X" sin la palabra "single"/"dobles" → +50 solo existe en single,
+ *   sin ambigüedad posible.
+ * - Tolera errores de tipeo observados en los nombres reales ("SINLGE",
+ *   "SIMGLE", "Wimbleom", "Wimbledom", etc.).
  *
  * Uso:
- *   1) Listar torneos y ver la categoría que sugiere la heurística de nombre:
- *      npm run import:challonge -- --list
+ *   npm run import:challonge -- --dry-run
+ *   npm run import:challonge
  *
- *   2) Confirmar/corregir el mapeo torneo → categoría a mano en un JSON:
- *      [{ "tournamentId": 12345, "categorySlug": "caballeros-primera-single" }, ...]
- *      (categorySlug: uno de los 14 slugs fijos, ver lib/data/circuito/categories.ts)
+ * ── ESTADO (2026-09-09): pendiente de correr, cuota de Challonge agotada ──
  *
- *   3) Dry-run (no escribe nada, solo reporta):
- *      npm run import:challonge -- --mapping ./data/challonge-mapping.json --dry-run
+ * El script está terminado y validado (parseo probado contra los 67
+ * torneos 2026 reales, reparto de parejas de dobles y filtro de
+ * placeholders de Challonge — "Perdedor de X" — ya andan bien), pero la
+ * cuenta del club está en el plan gratuito de Challonge: 500 requests cada
+ * 30 días, y se agotó explorando la API + iterando el dry-run. Un
+ * --dry-run gasta exactamente los mismos requests que la corrida real (solo
+ * cambia si al final escribe en Supabase o no) — no tiene sentido gastar
+ * cuota en otro dry-run antes de la corrida real.
  *
- *   4) Import real:
- *      npm run import:challonge -- --mapping ./data/challonge-mapping.json
- *
- * Requiere CHALLONGE_API_KEY en .env.local (no commitear).
+ * Pasos para cuando se renueve la cuota (~30 días desde el 2026-09-09, o
+ * antes si se hace upgrade del plan en challonge.com):
+ *   1. Confirmar que CHALLONGE_CLIENT_ID y CHALLONGE_CLIENT_SECRET siguen
+ *      en .env.local. Si hay que regenerarlos: challonge.com → ícono de
+ *      perfil → Developer → Applications.
+ *   2. Correr DIRECTO (sin --dry-run): `npm run import:challonge`.
+ *   3. Revisar el resumen final: torneos importados (deberían ser 67),
+ *      partidos guardados (~650+), participantes nuevos creados, y la
+ *      lista de "sin jugador vinculado en players" — son mayormente
+ *      variantes de nombre/apodo (ej. "Nacho Ciarlantini" vs "Ignacio
+ *      Ciarlantini" que ya existe en `players` desde el import de la
+ *      planilla) o erratas de tipeo del propio Challonge. No rompen nada:
+ *      esos partidos quedan igual guardados (para verse en la web), solo
+ *      que ese participante puntual no queda vinculado a un player_id.
+ *      circuito_ranking_points NO se toca — sigue viniendo de la planilla
+ *      (scripts/import-circuito-ranking-sheet.ts), así que esta lista no
+ *      afecta al ranking ya cargado.
+ *   4. Verificar en el navegador que algún torneo con partidos reales
+ *      renderiza bien, ej. `/circuito-del-parque/torneos/circuito-2026-05/caballeros-segunda-single`.
+ *   5. (Opcional, prolijidad) Revisar a mano la lista de "sin jugador
+ *      vinculado" — fusionar en `players` los que sean la misma persona
+ *      que otro nombre ya existente (typos/apodos), vía el panel de Liga o
+ *      directo en Supabase. No es bloqueante.
  */
 
 import * as dotenv from "dotenv"
 dotenv.config({ path: ".env.local" })
 
-import * as fs from "fs"
 import { createAdminClient, type AdminClient } from "./lib/db"
-import { parseArgs, log, ok, warn, err } from "./lib/utils"
-import { listTournaments, getTournamentDetail, type ChallongeParticipant } from "./lib/challonge"
+import { parseArgs, log, ok, warn } from "./lib/utils"
+import {
+  listAllTournaments,
+  getTournamentParticipants,
+  getTournamentMatches,
+  scoreInSetsToClubFormat,
+  type ChallongeTournament,
+} from "./lib/challonge"
 import { CIRCUITO_FIXED_CATEGORIES } from "../lib/data/circuito/categories"
-import { selectDrawRule } from "../lib/circuito/generateBracket"
-import { CIRCUITO_FORMAT_SPEC } from "../lib/circuito/formatSpec"
-import { pointsForInstance, isGrandSlamMonth, type CircuitoInstance } from "../lib/circuito/pointsTable"
-import { upsertCircuitoRankingPoints, type CircuitoRankingPointsInput } from "../lib/data/circuito/ranking"
 
-interface MappingEntry {
-  tournamentId: number
-  categorySlug: string
-}
+const YEAR = 2026
 
-// ── Heurística de nombre (solo para --list; nunca escribe sin mapping) ──
+const FIXED_SET = new Set(CIRCUITO_FIXED_CATEGORIES.map((c) => c.slug))
 
-function guessCategorySlug(tournamentName: string): string | null {
-  const n = tournamentName
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+const MONTHS: Array<{ month: number; tokens: string[] }> = [
+  { month: 1, tokens: ["australia open", "australia"] },
+  { month: 2, tokens: ["argentina open", "argentina"] },
+  { month: 3, tokens: ["miami open", "miami"] },
+  { month: 4, tokens: ["monte carlo", "montecarlo"] },
+  { month: 5, tokens: ["roland garros", "rolandgarros"] },
+  { month: 6, tokens: ["halle open", "halle"] },
+  { month: 7, tokens: ["wimbledon", "wimbledom", "wimbleom", "wimblendon"] },
+  { month: 8, tokens: ["cincinnati open", "cincinnati", "toronto"] },
+  { month: 9, tokens: ["us open", "usopen"] },
+  { month: 10, tokens: ["china open", "china"] },
+  { month: 11, tokens: ["paris open", "paris"] },
+  { month: 12, tokens: ["belgrado open", "belgrado"] },
+]
 
-  const isDoubles = /doble|dupla|pareja/.test(n)
-  const isMixto = /mixt/.test(n)
-  const level = /primera|1ra|1a\b/.test(n)
-    ? "primera"
-    : /intermedia/.test(n)
-      ? "intermedia"
-      : /segunda|2da|2a\b/.test(n)
-        ? "segunda"
-        : /tercera|3ra|3a\b/.test(n)
-          ? "tercera"
-          : /\+\s*50|mas\s*50/.test(n)
-            ? "mas50"
-            : null
-  if (!level) return null
-
-  if (isMixto) {
-    const slug = `mixto-${level}-dobles`
-    return CIRCUITO_FIXED_CATEGORIES.some((c) => c.slug === slug) ? slug : null
-  }
-
-  const gender = /dama|femen/.test(n) ? "damas" : /caballer|masculin/.test(n) ? "caballeros" : null
-  if (!gender) return null
-
-  const type = isDoubles ? "dobles" : "single"
-  const slug = `${gender}-${level}-${type}`
-  return CIRCUITO_FIXED_CATEGORIES.some((c) => c.slug === slug) ? slug : null
-}
-
-// ── Instancia final según el final_rank que ya calculó Challonge ──
-// Mismos cortes que reglas-circuito-del-parque.md, sección "Puntos y ranking".
-
-function instanceFromFinalRank(finalRank: number, totalParticipants: number): CircuitoInstance | null {
-  const rule = selectDrawRule(totalParticipants, CIRCUITO_FORMAT_SPEC)
-  if (!rule) return null // <4 inscriptos: no corresponde (no se hubiera jugado)
-
-  if (finalRank === 1) return "champion"
-  if (finalRank === 2) return "runner_up"
-
-  switch (rule.format) {
-    case "round_robin_pure":
-    case "round_robin_with_final":
-      return "round_of_32_plus"
-    case "groups_then_knockout":
-      return finalRank <= 4 ? "semifinalist" : "round_of_32_plus"
-    case "single_elimination":
-      if (finalRank <= 4) return "semifinalist"
-      if (finalRank <= 8) return "quarterfinalist"
-      if (finalRank <= 16) return "round_of_16"
-      return "round_of_32_plus"
-  }
-}
-
-// ── Reconciliación de nombres (Challonge = texto libre, no FK a players) ──
-
-function normalizeName(name: string): string {
-  return name
+function normalize(s: string): string {
+  return s
     .toLowerCase()
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -125,9 +112,57 @@ function normalizeName(name: string): string {
     .trim()
 }
 
-// Nombres de dobles suelen venir como "Fulano / Mengano" — separadores comunes.
-function splitDoublesName(name: string): string[] {
-  return name.split(/\s*(?:\/|&| y )\s*/i).filter(Boolean)
+interface ParsedTournamentName {
+  month: number
+  categorySlug: string
+  isRepechaje: boolean
+}
+
+function parseTournamentName(rawName: string): ParsedTournamentName | null {
+  const n = normalize(rawName)
+  if (/master/.test(n) && !/mixto/.test(n)) return null // Mid Master, no es el circuito mensual
+
+  const isRepechaje = /repechaje/.test(n)
+
+  let month: number | null = null
+  for (const m of MONTHS) {
+    if (m.tokens.some((tok) => n.includes(tok))) {
+      month = m.month
+      break
+    }
+  }
+  if (!month) return null
+
+  const isDobles = /dobles?|duplas?/.test(n)
+  const isSingle = /si?n[gl]?[eg]l?e|sinlge|simgle/.test(n)
+
+  const isMixto = /mixto/.test(n)
+  const isDamas = /damas/.test(n)
+  const gender = isMixto ? "mixto" : isDamas ? "damas" : "caballeros"
+
+  let level: string | null = null
+  if (/primera/.test(n)) level = "primera"
+  else if (/intermedia|inter\b/.test(n)) level = "intermedia"
+  else if (/segunda/.test(n)) level = "segunda"
+  else if (/tercera/.test(n)) level = "tercera"
+  else if (/\+?\s*50|mas\s*50/.test(n)) level = "mas50"
+
+  const type: "single" | "dobles" | null = isDobles ? "dobles" : isSingle ? "single" : level === "mas50" ? "single" : null
+  if (!type) return null
+
+  if (type === "dobles" && !level) level = "segunda" // confirmado con el organizador
+  if (type === "dobles" && gender === "damas" && level === "intermedia") level = "primera" // ídem
+
+  if (!level) return null
+
+  const fixed = CIRCUITO_FIXED_CATEGORIES.find((c) => c.type === type && c.slug.startsWith(gender) && c.slug.includes(level!))
+  if (!fixed || !FIXED_SET.has(fixed.slug)) return null
+
+  return { month, categorySlug: fixed.slug, isRepechaje }
+}
+
+function normalizeName(name: string): string {
+  return normalize(name)
 }
 
 async function loadPlayersByNormalizedName(db: AdminClient): Promise<Map<string, string>> {
@@ -140,37 +175,15 @@ async function loadPlayersByNormalizedName(db: AdminClient): Promise<Map<string,
   return map
 }
 
-function reconcileParticipant(
-  challongeName: string,
-  playersByName: Map<string, string>,
-): { playerId: string | null; player2Id: string | null; matched: boolean } {
-  const parts = splitDoublesName(challongeName)
-  if (parts.length === 2) {
-    const id1 = playersByName.get(normalizeName(parts[0])) ?? null
-    const id2 = playersByName.get(normalizeName(parts[1])) ?? null
-    return { playerId: id1, player2Id: id2, matched: !!id1 && !!id2 }
-  }
-  const id = playersByName.get(normalizeName(challongeName)) ?? null
-  return { playerId: id, player2Id: null, matched: !!id }
-}
-
-// ── Edición mensual: se deriva de la fecha del torneo, no del nombre ──
-
-async function findOrCreateEdition(
-  db: AdminClient,
-  year: number,
-  month: number,
-  dryRun: boolean,
-): Promise<string> {
-  const slug = `circuito-${year}-${String(month).padStart(2, "0")}`
+async function findOrCreateEdition(db: AdminClient, month: number, dryRun: boolean): Promise<string> {
+  const slug = `circuito-${YEAR}-${String(month).padStart(2, "0")}`
   const { data: existing } = await db.from("circuito_editions").select("id").eq("slug", slug).maybeSingle()
   if (existing) return existing.id
-
   if (dryRun) return `[dry-run:edition:${slug}]`
 
   const { data, error } = await db
     .from("circuito_editions")
-    .insert({ slug, name: `Circuito ${String(month).padStart(2, "0")}/${year}`, month, year, status: "finished" })
+    .insert({ slug, name: `Circuito ${String(month).padStart(2, "0")}/${YEAR}`, month, year: YEAR, status: "finished" })
     .select("id")
     .single()
   if (error || !data) throw new Error(`Error creando edición ${slug}: ${error?.message ?? "sin datos"}`)
@@ -178,15 +191,8 @@ async function findOrCreateEdition(
   return data.id
 }
 
-async function findOrCreateCategory(
-  db: AdminClient,
-  editionId: string,
-  categorySlug: string,
-  dryRun: boolean,
-): Promise<string> {
-  const fixed = CIRCUITO_FIXED_CATEGORIES.find((c) => c.slug === categorySlug)
-  if (!fixed) throw new Error(`categorySlug desconocido: "${categorySlug}"`)
-
+async function findOrCreateCategory(db: AdminClient, editionId: string, categorySlug: string, dryRun: boolean): Promise<string> {
+  const fixed = CIRCUITO_FIXED_CATEGORIES.find((c) => c.slug === categorySlug)!
   const { data: existing } = await db
     .from("circuito_categories")
     .select("id")
@@ -194,7 +200,6 @@ async function findOrCreateCategory(
     .eq("slug", categorySlug)
     .maybeSingle()
   if (existing) return existing.id
-
   if (dryRun) return `[dry-run:category:${categorySlug}]`
 
   const { data, error } = await db
@@ -206,138 +211,168 @@ async function findOrCreateCategory(
   return data.id
 }
 
-// ── Comando: --list ──────────────────────────────────────────
-
-async function runList(subdomain?: string) {
-  const tournaments = await listTournaments(subdomain)
-  log(`\n${tournaments.length} torneos encontrados${subdomain ? ` (subdomain=${subdomain})` : ""}\n`)
-  for (const t of tournaments) {
-    const guess = guessCategorySlug(t.name)
-    log(
-      `  #${t.id}\t${t.state}\t${t.tournament_type}\t${t.participants_count} inscriptos\t` +
-        `${t.started_at ?? t.created_at}\t"${t.name}"\t→ ${guess ?? "⚠ sin match automático"}`,
-    )
-  }
-  log("\nArmá el JSON de mapping con los tournamentId + categorySlug confirmados y corré con --mapping.")
-}
-
-// ── Comando: --mapping ───────────────────────────────────────
-
-async function runImport(mappingFile: string, dryRun: boolean) {
-  if (!fs.existsSync(mappingFile)) {
-    err(`No existe el archivo de mapping: ${mappingFile}`)
-    process.exit(1)
-  }
-  const mapping = JSON.parse(fs.readFileSync(mappingFile, "utf-8")) as MappingEntry[]
-  const invalidSlugs = mapping
-    .map((m) => m.categorySlug)
-    .filter((slug) => !CIRCUITO_FIXED_CATEGORIES.some((c) => c.slug === slug))
-  if (invalidSlugs.length > 0) {
-    err(`categorySlug inválido en el mapping: ${[...new Set(invalidSlugs)].join(", ")}`)
-    process.exit(1)
-  }
+async function main() {
+  const args = parseArgs(process.argv.slice(2))
+  const dryRun = args["dry-run"] === true
+  if (dryRun) log("[DRY RUN — no se escribirá nada en la base de datos]")
 
   const db = createAdminClient()
   const playersByName = await loadPlayersByNormalizedName(db)
 
-  const summary = { tournaments: 0, participants: 0, matched: 0, unmatched: [] as string[], skipped: [] as string[] }
+  log("Trayendo lista de torneos de Challonge...")
+  const allTournaments = await listAllTournaments()
+  const complete = allTournaments.filter((t) => t.attributes.state === "complete")
 
-  for (const entry of mapping) {
-    log(`\n── Torneo #${entry.tournamentId} → ${entry.categorySlug} ──`)
-    const { tournament, participants } = await getTournamentDetail(entry.tournamentId)
-
-    if (tournament.state !== "complete") {
-      warn(`Estado "${tournament.state}" (no "complete") — se salta. Terminalo en Challonge antes de importar.`)
-      summary.skipped.push(`#${entry.tournamentId} (${tournament.name}): estado ${tournament.state}`)
+  const scoped: Array<{ tournament: ChallongeTournament; parsed: ParsedTournamentName }> = []
+  for (const t of complete) {
+    const year = t.attributes.starts_at ? new Date(t.attributes.starts_at).getUTCFullYear() : null
+    if (year !== YEAR) continue
+    const parsed = parseTournamentName(t.attributes.name)
+    if (!parsed) {
+      warn(`No se pudo interpretar el nombre, se salta: "${t.attributes.name}" (#${t.id})`)
       continue
     }
-    if (tournament.tournament_type !== "single elimination" && tournament.tournament_type !== "round robin") {
-      warn(
-        `Tipo "${tournament.tournament_type}" no tiene traducción definida a reglas-circuito-del-parque.md ` +
-          `(solo eliminación simple / round robin) — se salta.`,
-      )
-      summary.skipped.push(`#${entry.tournamentId} (${tournament.name}): tipo ${tournament.tournament_type}`)
-      continue
+    scoped.push({ tournament: t, parsed })
+  }
+  log(`${scoped.length} torneos 2026 a importar (de ${complete.length} completos totales).`)
+
+  const summary = {
+    matchesWritten: 0,
+    participantsCreated: 0,
+    unmatchedPlayers: new Set<string>(),
+  }
+
+  // Ya existente (creado por el import de la planilla) o nuevo por categoría → participantId por nombre normalizado
+  const participantsByCategory = new Map<string, Map<string, string>>()
+
+  // Procesar primero los cuadros "main" y después los "repechaje": así el
+  // repechaje puede reusar el mismo circuito_participant de la persona en
+  // vez de crear uno nuevo (son 2 torneos de Challonge distintos con IDs de
+  // participante distintos para la misma persona real).
+  scoped.sort((a, b) => Number(a.parsed.isRepechaje) - Number(b.parsed.isRepechaje))
+
+  for (const { tournament, parsed } of scoped) {
+    const bracket = parsed.isRepechaje ? "repechaje" : "main"
+    const isDoblesCategory = CIRCUITO_FIXED_CATEGORIES.find((c) => c.slug === parsed.categorySlug)?.type === "dobles"
+    log(`\n── ${parsed.categorySlug} · mes ${parsed.month} · ${bracket} — "${tournament.attributes.name}" (#${tournament.id}) ──`)
+
+    const editionId = await findOrCreateEdition(db, parsed.month, dryRun)
+    const categoryId = await findOrCreateCategory(db, editionId, parsed.categorySlug, dryRun)
+
+    if (!participantsByCategory.has(parsed.categorySlug)) participantsByCategory.set(parsed.categorySlug, new Map())
+    const categoryParticipants = participantsByCategory.get(parsed.categorySlug)!
+
+    const challongeParticipants = await getTournamentParticipants(tournament.id)
+    const challongeIdToLocalId = new Map<number, string>()
+
+    for (const p of challongeParticipants) {
+      // Placeholder de Challonge para un casillero de repechaje todavía sin
+      // definir ("Perdedor de X" / "Pededor de X") — no es una persona real.
+      if (/^p(e|é)r?dedor\b/i.test(p.attributes.name.trim())) continue
+
+      const key = normalizeName(p.attributes.name)
+      const existing = categoryParticipants.get(key)
+      let localId: string
+
+      if (existing) {
+        localId = existing
+      } else {
+        // En dobles, Challonge guarda la pareja como "Jugador A/Jugador B" en
+        // un solo participante — se separa para poder acreditar a los 2.
+        // Solo se separa en categorías de dobles — en single un "-" puede
+        // ser parte legítima de un apellido compuesto, no un separador.
+        const parts = isDoblesCategory
+          ? p.attributes.name.split(/\/|-(?!\s*\d)/).map((s) => s.trim()).filter(Boolean)
+          : [p.attributes.name]
+        const playerId = playersByName.get(normalizeName(parts[0])) ?? null
+        const player2Id = parts.length === 2 ? playersByName.get(normalizeName(parts[1])) ?? null : null
+        if (!playerId) summary.unmatchedPlayers.add(parts[0])
+        if (parts.length === 2 && !player2Id) summary.unmatchedPlayers.add(parts[1])
+
+        if (dryRun) {
+          localId = `[dry-run:participant:${key}]`
+        } else {
+          const { data, error } = await db
+            .from("circuito_participants")
+            .insert({
+              category_id: categoryId,
+              player_id: playerId,
+              player_2_id: player2Id,
+              display_name: p.attributes.name,
+              seed: p.attributes.seed,
+            })
+            .select("id")
+            .single()
+          if (error || !data) throw new Error(`Error creando participante "${p.attributes.name}": ${error?.message ?? "sin datos"}`)
+          localId = data.id
+        }
+        categoryParticipants.set(key, localId)
+        summary.participantsCreated++
+      }
+      challongeIdToLocalId.set(Number(p.id), localId)
     }
 
-    const dateStr = tournament.completed_at ?? tournament.started_at ?? tournament.created_at
-    const date = new Date(dateStr)
-    const year = date.getUTCFullYear()
-    const month = date.getUTCMonth() + 1
-    const grandSlam = isGrandSlamMonth(month)
-
-    const editionId = await findOrCreateEdition(db, year, month, dryRun)
-    const categoryId = await findOrCreateCategory(db, editionId, entry.categorySlug, dryRun)
-
-    const ranked = participants.filter((p): p is ChallongeParticipant & { final_rank: number } => p.final_rank !== null)
-    if (ranked.length !== participants.length) {
-      warn(`${participants.length - ranked.length} participante(s) sin final_rank — se ignoran para el ranking.`)
+    const matches = (await getTournamentMatches(tournament.id)).filter((m) => m.attributes.state === "complete")
+    const matchesByRound = new Map<number, typeof matches>()
+    for (const m of matches) {
+      const round = m.attributes.round
+      if (!matchesByRound.has(round)) matchesByRound.set(round, [])
+      matchesByRound.get(round)!.push(m)
     }
 
-    const rows: CircuitoRankingPointsInput[] = []
+    const rows: Array<{
+      category_id: string
+      bracket: "main" | "repechaje"
+      round_number: number
+      position: number
+      participant_a_id: string | null
+      participant_b_id: string | null
+      score: string | null
+      winner_id: string | null
+      status: "played"
+    }> = []
 
-    for (const p of ranked) {
-      summary.participants++
-      const { playerId, player2Id, matched } = reconcileParticipant(p.name, playersByName)
-      if (matched) summary.matched++
-      else summary.unmatched.push(`"${p.name}" (torneo #${entry.tournamentId})`)
-
-      const instance = instanceFromFinalRank(p.final_rank, participants.length)
-      if (!instance) continue
-      const points = pointsForInstance(instance, grandSlam)
-      if (points === 0) continue
-
-      if (playerId) rows.push({ playerId, categoryId, editionId, points })
-      if (player2Id) rows.push({ playerId: player2Id, categoryId, editionId, points })
-
-      log(`  ${matched ? "✓" : "⚠"} ${p.name} — rank ${p.final_rank}/${participants.length} → ${instance} (${points} pts)`)
+    for (const [round, roundMatches] of [...matchesByRound.entries()].sort(([a], [b]) => a - b)) {
+      roundMatches.forEach((m, position) => {
+        const [pA, pB] = m.attributes.points_by_participant
+        const aId = pA ? challongeIdToLocalId.get(pA.participant_id) ?? null : null
+        const bId = pB ? challongeIdToLocalId.get(pB.participant_id) ?? null : null
+        const winnerLocalId = m.attributes.winner_id ? challongeIdToLocalId.get(m.attributes.winner_id) ?? null : null
+        rows.push({
+          category_id: categoryId,
+          bracket,
+          round_number: round,
+          position,
+          participant_a_id: aId,
+          participant_b_id: bId,
+          score: scoreInSetsToClubFormat(m.attributes.score_in_sets),
+          winner_id: winnerLocalId,
+          status: "played",
+        })
+      })
     }
 
     if (!dryRun && rows.length > 0) {
-      await upsertCircuitoRankingPoints(rows)
+      const { error } = await db.from("circuito_matches").upsert(rows, {
+        onConflict: "category_id,bracket,round_number,position",
+      })
+      if (error) throw new Error(`Error guardando partidos de #${tournament.id}: ${error.message}`)
     }
-
-    summary.tournaments++
+    summary.matchesWritten += rows.length
+    ok(`${rows.length} partidos ${dryRun ? "a escribir (dry-run)" : "guardados"}`)
   }
 
   log("\n── Resumen ──────────────────────────────────")
-  log(`  Torneos procesados: ${summary.tournaments}`)
-  log(`  Torneos salteados:  ${summary.skipped.length}`)
-  for (const s of summary.skipped) log(`    - ${s}`)
-  log(`  Participantes:      ${summary.participants}`)
-  log(`  Matcheados:         ${summary.matched}`)
-  log(`  Sin matchear:       ${summary.unmatched.length}`)
-  for (const u of summary.unmatched) log(`    - ${u}`)
+  log(`  Torneos importados: ${scoped.length}`)
+  log(`  Partidos guardados: ${summary.matchesWritten}`)
+  log(`  Participantes nuevos creados: ${summary.participantsCreated}`)
+  log(`  Sin jugador vinculado en players: ${summary.unmatchedPlayers.size}`)
+  for (const p of summary.unmatchedPlayers) log(`    - "${p}"`)
   log(
     dryRun
-      ? "\n  Dry run completado. Revisá la lista de \"sin matchear\" antes de correr sin --dry-run."
-      : "\n  Import completado. Los no matcheados quedaron con display_name pero sin player_id — no suman al ranking hasta reconciliarlos a mano.",
+      ? "\n  Dry run completado."
+      : "\n  Import completado. No se tocó circuito_ranking_points (sigue viniendo de la planilla).",
   )
-}
-
-// ── main ─────────────────────────────────────────────────────
-
-async function main() {
-  const args = parseArgs(process.argv.slice(2))
-
-  if (args["list"]) {
-    await runList(typeof args["subdomain"] === "string" ? args["subdomain"] : "elcircuitodelparque")
-    return
-  }
-
-  const mappingFile = args["mapping"] as string | undefined
-  if (!mappingFile) {
-    console.error(
-      "Uso:\n" +
-        "  npm run import:challonge -- --list [--subdomain elcircuitodelparque]\n" +
-        "  npm run import:challonge -- --mapping ./data/challonge-mapping.json [--dry-run]",
-    )
-    process.exit(1)
-  }
-
-  const dryRun = args["dry-run"] === true
-  if (dryRun) log("[DRY RUN — no se escribirá nada en la base de datos]")
-  await runImport(mappingFile, dryRun)
 }
 
 main().catch((e) => {

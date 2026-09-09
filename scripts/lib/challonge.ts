@@ -1,59 +1,58 @@
-// Cliente mínimo de la API pública de Challonge (v1, JSON). Documentación:
-// https://api.challonge.com/v1
+// Cliente de la API de Challonge v2.1 (JSON:API, OAuth2 client_credentials).
+// Documentación real (no la v1 que asumía el diseño original de este
+// archivo): https://challonge.apidog.io — base https://api.challonge.com/v2.1,
+// headers Content-Type/Accept + `Authorization-Type: v2` además del Bearer.
 //
-// Requiere CHALLONGE_API_KEY en .env.local (Settings → Developer API en
-// challonge.com). Nunca commitear la key.
+// Requiere CHALLONGE_CLIENT_ID y CHALLONGE_CLIENT_SECRET en .env.local
+// (Settings → Developer API en challonge.com, cuenta del club). Nunca
+// commitear esos valores.
 
-const BASE_URL = "https://api.challonge.com/v1"
+const BASE_URL = "https://api.challonge.com/v2.1"
 
-export interface ChallongeTournament {
-  id: number
-  name: string
-  url: string
-  subdomain: string | null
-  state: string // "pending" | "underway" | "complete" | "awaiting_review"
-  tournament_type: string // "single elimination" | "double elimination" | "round robin" | ...
-  started_at: string | null
-  completed_at: string | null
-  created_at: string
-  participants_count: number
+interface TokenResponse {
+  access_token: string
+  expires_in: number
 }
 
-export interface ChallongeParticipant {
-  id: number
-  name: string
-  seed: number | null
-  final_rank: number | null
-  misc: string | null
-}
+let cachedToken: { token: string; expiresAt: number } | null = null
 
-export interface ChallongeMatch {
-  id: number
-  round: number // negativo = losers bracket (doble eliminación)
-  state: string // "open" | "pending" | "complete"
-  player1_id: number | null
-  player2_id: number | null
-  winner_id: number | null
-  loser_id: number | null
-  scores_csv: string | null // ej: "6-4,3-6,10-8" — puede venir vacío
-}
+async function getAccessToken(): Promise<string> {
+  if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) return cachedToken.token
 
-function apiKey(): string {
-  const key = process.env.CHALLONGE_API_KEY
-  if (!key) {
-    throw new Error(
-      "Falta CHALLONGE_API_KEY en .env.local (Settings → Developer API en challonge.com, cuenta elcircuitodelparque).",
-    )
+  const clientId = process.env.CHALLONGE_CLIENT_ID
+  const clientSecret = process.env.CHALLONGE_CLIENT_SECRET
+  if (!clientId || !clientSecret) {
+    throw new Error("Faltan CHALLONGE_CLIENT_ID / CHALLONGE_CLIENT_SECRET en .env.local.")
   }
-  return key
+
+  const res = await fetch("https://api.challonge.com/oauth/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: clientId,
+      client_secret: clientSecret,
+    }),
+  })
+  if (!res.ok) throw new Error(`Error obteniendo token de Challonge: HTTP ${res.status}`)
+  const data = (await res.json()) as TokenResponse
+  cachedToken = { token: data.access_token, expiresAt: Date.now() + data.expires_in * 1000 }
+  return cachedToken.token
 }
 
 async function challongeGet<T>(path: string, params: Record<string, string> = {}): Promise<T> {
+  const token = await getAccessToken()
   const url = new URL(`${BASE_URL}${path}`)
-  url.searchParams.set("api_key", apiKey())
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
 
-  const res = await fetch(url.toString())
+  const res = await fetch(url.toString(), {
+    headers: {
+      "Content-Type": "application/vnd.api+json",
+      Accept: "application/json",
+      "Authorization-Type": "v2",
+      Authorization: `Bearer ${token}`,
+    },
+  })
   if (!res.ok) {
     const body = await res.text().catch(() => "")
     throw new Error(`Challonge API error ${res.status} en ${path}: ${body}`)
@@ -61,52 +60,68 @@ async function challongeGet<T>(path: string, params: Record<string, string> = {}
   return res.json() as Promise<T>
 }
 
-// Lista los torneos de la cuenta (opcionalmente de una "community"/subdomain
-// puntual). No pagina explícitamente — Challonge devuelve hasta 25 por
-// default; se pide el máximo permitido (1000) para traer todo en una pasada.
-export async function listTournaments(subdomain?: string): Promise<ChallongeTournament[]> {
-  const params: Record<string, string> = { per_page: "1000" }
-  if (subdomain) params.subdomain = subdomain
-  const data = await challongeGet<Array<{ tournament: ChallongeTournament }>>("/tournaments.json", params)
-  return data.map((d) => d.tournament)
-}
-
-export async function getTournamentDetail(idOrUrl: string | number): Promise<{
-  tournament: ChallongeTournament
-  participants: ChallongeParticipant[]
-  matches: ChallongeMatch[]
-}> {
-  type RawTournament = ChallongeTournament & {
-    participants: Array<{ participant: ChallongeParticipant }>
-    matches: Array<{ match: ChallongeMatch }>
-  }
-  const data = await challongeGet<{ tournament: RawTournament }>(`/tournaments/${idOrUrl}.json`, {
-    include_participants: "1",
-    include_matches: "1",
-  })
-  const t = data.tournament
-  return {
-    tournament: t,
-    participants: (t.participants ?? []).map((p) => p.participant),
-    matches: (t.matches ?? []).map((m) => m.match),
+export interface ChallongeTournament {
+  id: string
+  attributes: {
+    name: string
+    state: string // "pending" | "underway" | "complete" | ...
+    tournament_type: string
+    participants_count: number
+    starts_at: string | null
   }
 }
 
-// Convierte "6-4,3-6,10-8" (formato Challonge) a "6-4 3-6 10-8" (formato del
-// club — ver lib/circuito/parseCircuitoScore.ts). Devuelve null si no hay
-// nada que convertir (scores_csv vacío) o si no tiene forma de sets de
-// tenis (ej. "1-0", usado por otros deportes en Challonge) — nunca inventa
-// un score.
-export function convertScoresCsv(scoresCsv: string | null): string | null {
-  if (!scoresCsv || !scoresCsv.trim()) return null
-  const sets = scoresCsv.split(",").map((s) => s.trim())
-  const looksLikeTennis = sets.every((s) => {
-    const m = s.match(/^(\d{1,2})-(\d{1,2})$/)
-    if (!m) return false
-    const a = parseInt(m[1], 10)
-    const b = parseInt(m[2], 10)
-    return Math.max(a, b) >= 4 // un "1-0" de mejor-de-N no pasa este filtro
-  })
-  if (!looksLikeTennis) return null
-  return sets.join(" ")
+export interface ChallongeParticipant {
+  id: string
+  attributes: {
+    name: string
+    seed: number | null
+    final_rank: number | null
+  }
+}
+
+export interface ChallongeMatch {
+  id: string
+  attributes: {
+    state: string // "complete" | "open" | "pending"
+    round: number
+    scores: string | null // "2 - 0"
+    score_in_sets: [number, number][] | null
+    points_by_participant: Array<{ participant_id: number; scores: number[] }>
+    winner_id: number | null
+  }
+}
+
+export async function listAllTournaments(): Promise<ChallongeTournament[]> {
+  const all: ChallongeTournament[] = []
+  let page = 1
+  for (;;) {
+    const data = await challongeGet<{ data: ChallongeTournament[]; meta: { count: number } }>("/tournaments", {
+      page: String(page),
+      per_page: "100",
+    })
+    all.push(...data.data)
+    if (all.length >= data.meta.count || data.data.length === 0) break
+    page++
+  }
+  return all
+}
+
+export async function getTournamentParticipants(tournamentId: string): Promise<ChallongeParticipant[]> {
+  const data = await challongeGet<{ data: ChallongeParticipant[] }>(`/tournaments/${tournamentId}/participants.json`)
+  return data.data
+}
+
+export async function getTournamentMatches(tournamentId: string): Promise<ChallongeMatch[]> {
+  const data = await challongeGet<{ data: ChallongeMatch[] }>(`/tournaments/${tournamentId}/matches.json`)
+  return data.data
+}
+
+// "score_in_sets" ya viene como [participanteA, participanteB] por set en el
+// mismo orden que "points_by_participant" — se arma directo el formato del
+// club ("6-4 3-6 7-6"), sin parsear el string "scores" (formato agregado,
+// ej. "2 - 0", que no sirve para esto).
+export function scoreInSetsToClubFormat(scoreInSets: [number, number][] | null): string | null {
+  if (!scoreInSets || scoreInSets.length === 0) return null
+  return scoreInSets.map(([a, b]) => `${a}-${b}`).join(" ")
 }
