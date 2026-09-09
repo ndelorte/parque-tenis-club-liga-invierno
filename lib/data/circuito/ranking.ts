@@ -111,3 +111,35 @@ export async function getCircuitRanking(editionId: string, categoryId?: string):
     .map(([playerId, v]) => ({ playerId, playerName: v.name, points: v.points }))
     .sort((a, b) => b.points - a.points)
 }
+
+// Ranking anual: reglas-circuito-del-parque.md — "el ranking anual suma los
+// puntos de TODOS los torneos jugados en el año" (no hay esquema de
+// "mejores N", no hay mínimo de torneos). Filtra por categoría vía su slug
+// porque cada edición mensual crea sus propias filas de circuito_categories
+// (incluso con el mismo slug) — no hay una categoría "canónica" única.
+export async function getAnnualCircuitRanking(
+  year: number,
+  categorySlug?: string,
+): Promise<CircuitoRankingEntry[]> {
+  const supabase = await createClient()
+  let query = supabase
+    .from("circuito_ranking_points")
+    .select("player_id, points, players(display_name), circuito_categories!inner(slug), circuito_editions!inner(year)")
+    .eq("circuito_editions.year", year)
+
+  if (categorySlug) query = query.eq("circuito_categories.slug", categorySlug)
+
+  const { data, error } = await query
+  if (error || !data) return []
+
+  const totals = new Map<string, { name: string; points: number }>()
+  for (const row of data as unknown as Array<{ player_id: string; points: number; players: { display_name: string } | null }>) {
+    const current = totals.get(row.player_id)
+    const name = row.players?.display_name ?? "—"
+    totals.set(row.player_id, { name, points: (current?.points ?? 0) + row.points })
+  }
+
+  return [...totals.entries()]
+    .map(([playerId, v]) => ({ playerId, playerName: v.name, points: v.points }))
+    .sort((a, b) => b.points - a.points)
+}

@@ -159,6 +159,11 @@ No mostrar teléfonos en vistas públicas. No commitear `.env`. No exponer `SUPA
 | `/ligas-invierno-verano/[season]/equipos/[catSlug]/[teamSlug]` | Página de equipo con historial en esa edición |
 | `/ligas-invierno-verano/reglamento` | Reglamento resumido |
 | `/interparque` | Nueva area de partidos entre alumnos |
+| `/circuito-del-parque` | Landing: torneos mensuales, acceso a ranking y Final Master |
+| `/circuito-del-parque/torneos/[edition]` | Categorías de una edición mensual |
+| `/circuito-del-parque/torneos/[edition]/[categoria]` | Cuadro principal + repechaje de una categoría |
+| `/circuito-del-parque/ranking` | Ranking anual, filtrable por categoría |
+| `/circuito-del-parque/final-master` | "Próximamente" + clasificados provisorios (top 8) por categoría |
 | `/circuito-del-parque/especiales/[edition]` | Torneo especial (Mid Master, Final Master, ...) — zonas + semis + final |
 | `/circuito-del-parque/especiales/[edition]/categorias/[slug]` | Zonas, fixture y cuadro final de una categoría de esa edición |
 

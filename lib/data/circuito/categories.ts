@@ -5,7 +5,7 @@ import type { CircuitoCategoryRow } from "./types"
 // 14 categorías fijas del Circuito del Parque (reglas-circuito-del-parque.md,
 // respuesta a OQ-23). Se crean automáticamente para cada edición nueva — no
 // hay pantalla para tipearlas a mano cada mes.
-const FIXED_CATEGORIES: Array<{ name: string; slug: string; type: "single" | "dobles" }> = [
+export const CIRCUITO_FIXED_CATEGORIES: Array<{ name: string; slug: string; type: "single" | "dobles" }> = [
   { name: "Caballeros Primera", slug: "caballeros-primera-single", type: "single" },
   { name: "Caballeros Intermedia", slug: "caballeros-intermedia-single", type: "single" },
   { name: "Caballeros Segunda", slug: "caballeros-segunda-single", type: "single" },
@@ -24,7 +24,7 @@ const FIXED_CATEGORIES: Array<{ name: string; slug: string; type: "single" | "do
 
 export async function createFixedCategoriesForEdition(editionId: string): Promise<void> {
   const supabase = createAdminClient()
-  const rows = FIXED_CATEGORIES.map((c, i) => ({
+  const rows = CIRCUITO_FIXED_CATEGORIES.map((c, i) => ({
     edition_id: editionId,
     name: c.name,
     slug: c.slug,
