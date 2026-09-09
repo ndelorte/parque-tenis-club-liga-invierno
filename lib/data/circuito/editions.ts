@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { statusForMonth } from "@/lib/circuito/editionStatus"
 import type { CircuitoEditionRow } from "./types"
 import { createFixedCategoriesForEdition } from "./categories"
 
@@ -36,7 +37,13 @@ export async function createCircuitoEdition(input: {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("circuito_editions")
-    .insert({ slug: input.slug, name: input.name, month: input.month, year: input.year, status: "active" })
+    .insert({
+      slug: input.slug,
+      name: input.name,
+      month: input.month,
+      year: input.year,
+      status: statusForMonth(input.year, input.month),
+    })
     .select("*")
     .single()
 

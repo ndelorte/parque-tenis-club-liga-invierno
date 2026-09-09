@@ -83,6 +83,7 @@ import {
   type ChallongeTournament,
 } from "./lib/challonge"
 import { CIRCUITO_FIXED_CATEGORIES } from "../lib/data/circuito/categories"
+import { statusForMonth } from "../lib/circuito/editionStatus"
 
 const YEAR = 2026
 
@@ -200,7 +201,13 @@ async function findOrCreateEdition(db: AdminClient, month: number, dryRun: boole
 
   const { data, error } = await db
     .from("circuito_editions")
-    .insert({ slug, name: EDITION_NAME_BY_MONTH[month] ?? `Circuito ${String(month).padStart(2, "0")}/${YEAR}`, month, year: YEAR, status: "finished" })
+    .insert({
+      slug,
+      name: EDITION_NAME_BY_MONTH[month] ?? `Circuito ${String(month).padStart(2, "0")}/${YEAR}`,
+      month,
+      year: YEAR,
+      status: statusForMonth(YEAR, month),
+    })
     .select("id")
     .single()
   if (error || !data) throw new Error(`Error creando edición ${slug}: ${error?.message ?? "sin datos"}`)
