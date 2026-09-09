@@ -6,7 +6,6 @@ import type {
   DbMmMatch,
   DbMmParticipant,
   MmCategoryAdminData,
-  MmGroupWithData,
 } from "./types"
 import { getZoneSize, getDisplayOrder, normalizeType } from "./types"
 import type {

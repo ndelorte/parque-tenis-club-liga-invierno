@@ -266,6 +266,7 @@ function BracketSection({
 
   // Re-populate forms for any new series that appear after a refresh
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForms((prev) => {
       const next = { ...prev }
       for (const s of playoffSeries) {
@@ -413,6 +414,7 @@ function QFCard({
 
   // Sync inputs cuando existingSeries llega o cambia después de un refresh
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setScheduleDate(existingSeries?.scheduledDate ?? "")
     setScheduleTime(existingSeries?.scheduledTime ?? "")
   }, [existingSeries?.scheduledDate, existingSeries?.scheduledTime])
@@ -807,74 +809,6 @@ function SemiFinalAndFinalSection({
   )
 }
 
-function PlayoffScheduleCard({
-  label,
-  description,
-  existing,
-  onSave,
-}: {
-  label: string
-  description: string
-  existing?: PlayoffSeriesForAdmin
-  onSave: (date: string, time: string) => Promise<void>
-}) {
-  const [date, setDate] = useState(existing?.scheduledDate ?? "")
-  const [time, setTime] = useState(existing?.scheduledTime ?? "")
-  const [saving, setSaving] = useState(false)
-
-  useEffect(() => {
-    setDate(existing?.scheduledDate ?? "")
-    setTime(existing?.scheduledTime ?? "")
-  }, [existing?.scheduledDate, existing?.scheduledTime])
-
-  async function handleSave() {
-    if (!date) return
-    setSaving(true)
-    await onSave(date, time)
-    setSaving(false)
-  }
-
-  return (
-    <div className="space-y-3 rounded-xl border border-border p-3">
-      <div className="flex items-center gap-2">
-        <Badge variant="outline" className="text-xs">{label}</Badge>
-        {existing?.scheduledDate && (
-          <Badge className="text-xs bg-primary/10 text-primary hover:bg-primary/10">Programado</Badge>
-        )}
-      </div>
-      <p className="text-sm text-muted-foreground">{description}</p>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Fecha</Label>
-          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-9" />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Hora</Label>
-          <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="h-9" />
-        </div>
-      </div>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        className="w-full"
-        disabled={!date || saving}
-        onClick={handleSave}
-      >
-        {saving ? <Loader2 className="size-4 animate-spin" /> : existing ? <Save className="size-4" /> : <Plus className="size-4" />}
-        {existing ? "Actualizar fecha" : "Programar"}
-      </Button>
-      {existing?.scheduledDate && (
-        <p className="text-xs text-muted-foreground">
-          <Clock className="size-3 inline mr-1" />
-          {formatDate(existing.scheduledDate)}
-          {existing.scheduledTime ? ` ${formatTime(existing.scheduledTime)}` : ""}
-        </p>
-      )}
-    </div>
-  )
-}
-
 // ─── SF / Final card (schedule + result editor) ───────────────────────────────
 
 function SFOrFinalCard({
@@ -914,16 +848,21 @@ function SFOrFinalCard({
   const [showResult, setShowResult] = useState(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDate(existing?.scheduledDate ?? "")
     setTime(existing?.scheduledTime ?? "")
   }, [existing?.scheduledDate, existing?.scheduledTime])
 
-  // When series is created, sync selected IDs from DB data
+  // When series is created, sync selected IDs from DB data. Depende solo de
+  // existing?.id (no del objeto completo) a propósito: re-sincroniza cuando
+  // cambia la serie, no en cada render con una referencia nueva de `existing`.
   useEffect(() => {
     if (existing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedHomeId(existing.homeTeam.id)
       setSelectedAwayId(existing.awayTeam.id)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existing?.id])
 
   const effectiveHomeId = existing ? existing.homeTeam.id : selectedHomeId

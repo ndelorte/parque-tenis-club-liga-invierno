@@ -63,11 +63,13 @@ async function testRead(
   columns: string,
   filters?: Array<[string, unknown]>,
 ) {
-  let q = sb.from(table).select(columns).limit(1)
+  // Los filtros se aplican antes de `.limit()`: una vez que la query pasa
+  // por un transform (limit/order) deja de exponer `.eq()` en el tipado.
+  let query = sb.from(table).select(columns)
   for (const [col, val] of filters ?? []) {
-    q = (q as any).eq(col, val)
+    query = query.eq(col, val)
   }
-  const { error } = await (q as any)
+  const { error } = await query.limit(1)
   if (error) fail(label, error.message)
   else ok(label)
 }
@@ -79,11 +81,11 @@ async function testReadOrder(
   orderCol: string,
   filters?: Array<[string, unknown]>,
 ) {
-  let q = sb.from(table).select(columns).order(orderCol, { ascending: true }).limit(1)
+  let query = sb.from(table).select(columns)
   for (const [col, val] of filters ?? []) {
-    q = (q as any).eq(col, val)
+    query = query.eq(col, val)
   }
-  const { error } = await (q as any)
+  const { error } = await query.order(orderCol, { ascending: true }).limit(1)
   if (error) fail(label, error.message)
   else ok(label)
 }
@@ -97,7 +99,7 @@ async function testWrite(
 ) {
   const { error } = await sb
     .from(table)
-    .update(payload as any)
+    .update(payload)
     .eq("id", FAKE_UUID)
   if (error) fail(label, error.message)
   else ok(label)
