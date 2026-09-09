@@ -96,9 +96,8 @@ function buildRoundRobinWithFinal(participants: CircuitoParticipant[]): Circuito
 }
 
 // Reparto en serpentina por seed (1→A, 2→B, 3→B, 4→A, 5→A, 6→B, ...) para
-// equilibrar el nivel de las 2 zonas. reglas-circuito-del-parque.md no
-// especifica el criterio de armado de zonas para este formato — default
-// razonable documentado en OQ-36 (product/open-questions.md), a confirmar.
+// equilibrar el nivel de las 2 zonas — ver reglas-circuito-del-parque.md,
+// sección "Seeding" (respuesta a OQ-36).
 function splitIntoTwoZones(
   participants: CircuitoParticipant[],
 ): { zoneA: CircuitoParticipant[]; zoneB: CircuitoParticipant[] } {

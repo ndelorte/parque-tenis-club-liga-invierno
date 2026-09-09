@@ -159,23 +159,6 @@ por nivel. No implementar hasta tener respuesta.
 
 ---
 
-### OQ-36: Circuito — formato 6-7 inscriptos, ¿cómo se arman las 2 zonas?
-
-**Contexto**: `reglas-circuito-del-parque.md` define que con 6-7 inscriptos se juega en dos zonas
-(2 primeros de cada una pasan a semifinal), y define el seeding/reparto de byes para el formato de
-8+ (eliminación simple). Pero no dice **cómo se distribuyen los inscriptos entre la Zona A y la
-Zona B** para este formato intermedio (¿por sorteo, por ranking en serpentina, a mano?).
-
-**Preguntar**: Para armar las 2 zonas de un torneo con 6 o 7 inscriptos, ¿el criterio es el mismo
-"ranking vigente" que ya se usa para las byes de 8+, repartido en serpentina (1ª A, 2ª B, 3ª B, 4ª
-A, ...) para equilibrar el nivel de cada zona? ¿O es sorteo libre / a mano de la coordinadora?
-
-**Impacto**: `lib/circuito/generateBracket.ts` (`buildGroupsThenKnockout`) — mientras no se
-confirme, implementado con el criterio de ranking en serpentina (mismo criterio ya validado para
-byes) como default razonable y documentado en el código; ajustar si la respuesta es otra.
-
----
-
 ## Resueltas — Liga Multi-Temporada
 
 ### ~~OQ-19~~: Edición cerrada — ¿tabla+cuadro+campeón o sólo cuadro+campeón?
@@ -333,6 +316,16 @@ datos importados (no se infiere ahora).
 **Respuesta** (2026-09-07): Prefijo nuevo `circuito_`, tablas tipadas en `lib/supabase/types.ts`
 desde que se crean (no repetir el patrón `any` de `mid_master_*`). Decisión técnica, no una regla
 deportiva — documentada en ADR-005 (Sprint C1.5).
+
+---
+
+### ~~OQ-36~~: Circuito — formato 6-7 inscriptos, ¿cómo se arman las 2 zonas?
+
+**Respuesta** (2026-09-09): Mismo criterio de ranking vigente que las byes de 8+, repartido en
+serpentina (1° → Zona A, 2°-3° → Zona B, 4°-5° → Zona A, 6°-7° → Zona B) para equilibrar el nivel
+de cada zona. Confirma el default que ya estaba implementado en
+`lib/circuito/generateBracket.ts` (`splitIntoTwoZones`). Volcado en
+`reglas-circuito-del-parque.md` (sección "Seeding").
 
 ---
 

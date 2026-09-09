@@ -64,6 +64,9 @@ El armado del cuadro **cambia según N** (cantidad de inscriptos ese mes). Esto 
   ranking formal (aunque el circuito ya existía por Challonge, sin ranking anual sistematizado),
   no hay ranking previo disponible. Ese primer torneo, los cabezas de serie los define
   **manualmente la coordinadora**.
+- **Armado de las 2 zonas (formato 6-7 inscriptos)**: mismo criterio de ranking que las byes,
+  repartido en **serpentina** para equilibrar el nivel de cada zona — 1° al ranking → Zona A, 2° y
+  3° → Zona B, 4° y 5° → Zona A, 6° (y 7° si lo hay) → Zona B.
 
 ---
 
