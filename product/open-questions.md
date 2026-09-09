@@ -7,6 +7,51 @@
 
 ## Pendientes
 
+### OQ-IP-01: ¿Cuál es el criterio de desempate en la tabla de Interparque?
+
+**Contexto**: `reglas-interparque.md` define cómo se suman los puntos, pero
+no hay ninguna regla de desempate cuando dos o más jugadores quedan con los
+mismos puntos.
+
+**Preguntar**: ¿Desempata partidos ganados? ¿Diferencia de games?
+¿Enfrentamiento directo? ¿Orden alfabético está bien como fallback final?
+
+**Impacto**: `calculateInterparqueStandings` (`lib/interparque/`) — hoy
+ordena por puntos y, a igualdad, por nombre (sin significado deportivo).
+
+---
+
+### OQ-IP-02: ¿Qué pasa con un jugador ausente en Interparque?
+
+**Contexto**: Los flyers no mencionan walkover ni ausencias — a diferencia
+de Liga Invierno (que sí tiene WO general y de cancha), Interparque no
+define este caso.
+
+**Preguntar**: ¿Un jugador ausente pierde el partido automáticamente?
+¿Se anota como partido jugado? ¿Suma puntos el rival?
+
+**Impacto**: No implementado. El panel admin de Interparque solo permite
+cargar un score real; no hay opción de "walkover" hasta tener respuesta.
+
+---
+
+### OQ-IP-03: ¿Cómo se van a separar los "dos niveles" de Interparque?
+
+**Contexto**: El flyer dice "Los niveles serán por categorías pero estarán
+mezclados varones y mujeres" — pero el Sheet provisorio del club todavía
+tiene una sola lista de jugadores, sin niveles. La implementación inicial
+(confirmada con el usuario) arranca con una sola tabla general.
+
+**Preguntar**: ¿Los niveles se arman por handicap/categoría de juego? ¿Cómo
+se asigna un jugador a un nivel? ¿Hay una tabla por nivel o una tabla única
+con columna de nivel?
+
+**Impacto**: Cuando se implemente, probablemente agregue una columna
+`level` a `interparque_players` y filtre `calculateInterparqueStandings`
+por nivel. No implementar hasta tener respuesta.
+
+---
+
 ### OQ-02: ¿Cómo se maneja el bye en la categoría de 5 equipos (Mixto B)?
 
 **Contexto**: En un todos-contra-todos con número impar de equipos (Mixto B = 5 equipos), un equipo queda libre cada fecha.

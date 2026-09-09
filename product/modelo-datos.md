@@ -252,6 +252,51 @@ La tabla puede calcularse en vivo desde los resultados, pero este snapshot permi
 
 ---
 
+## Interparque
+
+Módulo aislado (ver ADR-006) — jugadores y partidos propios, sin relación
+con `players`/`teams` de Liga Invierno. Standings calculados en vivo desde
+`interparque_matches`, sin snapshot.
+
+### interparque_players
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | |
+| first_name | text | |
+| last_name | text | |
+| active | boolean | Default true |
+| created_at | timestamptz | |
+| updated_at | timestamptz | |
+
+### interparque_matches
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | |
+| player_a_id | uuid FK → interparque_players | |
+| player_b_id | uuid FK → interparque_players | |
+| match_date | date nullable | |
+| score | text nullable | Ej: `"6-2 6-7 10-8"` — 2 sets + super tie-break opcional de score variable |
+| status | text | `scheduled`, `completed` |
+| winner_player_id | uuid FK → interparque_players nullable | |
+| games_a | integer | Games de jugador A en sets 1-2 (sin contar el super TB) |
+| games_b | integer | Games de jugador B en sets 1-2 |
+| points_a | integer | Puntos calculados de jugador A (ver `reglas-interparque.md`) |
+| points_b | integer | Puntos calculados de jugador B |
+| notes | text nullable | |
+| created_at | timestamptz | |
+| updated_at | timestamptz | |
+
+`games_*`/`points_*`/`winner_player_id` se calculan una única vez al cargar
+el score (`lib/interparque/calculateInterparqueMatchResult.ts`) y se
+guardan en la fila — nunca se editan a mano. La tabla de posiciones pública
+se arma sumando estas columnas en vivo sobre los partidos `completed`
+(`lib/interparque/calculateInterparqueStandings.ts`), sin tabla de
+snapshot.
+
+---
+
 ## Playoffs (Sprint 12)
 
 No se crearon tablas nuevas. Los playoffs reutilizan el modelo existente:

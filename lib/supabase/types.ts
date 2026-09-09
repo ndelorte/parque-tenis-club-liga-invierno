@@ -388,6 +388,80 @@ export type Database = {
           updated_at?: string
         }
       }
+      interparque_players: {
+        Row: {
+          id: string
+          first_name: string
+          last_name: string
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          first_name: string
+          last_name: string
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          first_name?: string
+          last_name?: string
+          active?: boolean
+          updated_at?: string
+        }
+      }
+      interparque_matches: {
+        Row: {
+          id: string
+          player_a_id: string
+          player_b_id: string
+          match_date: string | null
+          score: string | null
+          status: "scheduled" | "completed"
+          winner_player_id: string | null
+          games_a: number
+          games_b: number
+          points_a: number
+          points_b: number
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          player_a_id: string
+          player_b_id: string
+          match_date?: string | null
+          score?: string | null
+          status?: "scheduled" | "completed"
+          winner_player_id?: string | null
+          games_a?: number
+          games_b?: number
+          points_a?: number
+          points_b?: number
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          player_a_id?: string
+          player_b_id?: string
+          match_date?: string | null
+          score?: string | null
+          status?: "scheduled" | "completed"
+          winner_player_id?: string | null
+          games_a?: number
+          games_b?: number
+          points_a?: number
+          points_b?: number
+          notes?: string | null
+          updated_at?: string
+        }
+      }
     }
     Views: { [_ in never]: never }
     Functions: { [_ in never]: never }
