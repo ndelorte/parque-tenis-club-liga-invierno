@@ -195,6 +195,31 @@
     `/circuito-del-parque/especiales/[edition]/categorias/[slug]`
     (Mid Master, que reusa un patrón parecido).
 
+  **Actualización (2026-09-23) — corregido el bug de fondo, queda pendiente el pulido visual de arriba:**
+  `BracketView` etiquetaba **incorrectamente** partidos de fase de grupos como
+  "Cuartos de final"/"Semifinal" para categorías chicas (4/5/6-7 inscriptos)
+  importadas de Challonge, porque usaba el `round_number` crudo de Challonge
+  asumiendo siempre eliminación directa. Se agregó `lib/circuito/bracketDisplay.ts`
+  (`classifyMainBracketSections`), que reusa la misma `CircuitoFormatSpec` del
+  motor propio (`generateBracket.ts`) para determinar el formato real según la
+  cantidad de inscriptos y agrupar los partidos en secciones correctas
+  ("Fase de grupos", "Zona A"/"Zona B", "Semifinales", "Final" — o el árbol de
+  eliminación clásico solo cuando corresponde). Verificado contra datos reales
+  (Cincinnati Open y Halle Open, categorías de 4 inscriptos): ya no aparece
+  ninguna etiqueta de eliminación falsa.
+
+  **Limitación conocida, requiere las credenciales de la API de Challonge para
+  resolverse del todo:** en las categorías `round_robin_with_final` (N=4), el
+  `round_number` que trajo el import de Challonge no es cronológico ni
+  estructurado — en los 2 casos reales verificados, el par que se repite (la
+  final) aparece en el medio de la secuencia, no al final, así que el
+  clasificador no puede identificar con certeza cuál de los 7 partidos fue la
+  final real y por seguridad muestra los 7 juntos como "Fase de grupos" (ya no
+  dice "Cuartos de final" en ningún caso, pero tampoco separa la Final todavía).
+  Para resolverlo hace falta volver a pedirle a la API de Challonge el orden
+  real/fecha de cada partido (`getTournamentMatches` hoy no lo trae) y usar eso
+  en vez de `round_number` para identificar la final.
+
 - **Deuda técnica — datos del import de Challonge** (Sprint C7,
   `scripts/import-challonge.ts`, corrido el 2026-09-09): quedó funcional
   y verificado con un caso de muestra, pero falta una auditoría más a

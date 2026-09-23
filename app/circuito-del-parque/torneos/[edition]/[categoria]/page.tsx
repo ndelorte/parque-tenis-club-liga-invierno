@@ -8,6 +8,7 @@ import { getCircuitoParticipants } from "@/lib/data/circuito/participants"
 import { getCircuitoMatches } from "@/lib/data/circuito/matches"
 import { BracketView } from "@/components/circuito/BracketView"
 import { RepechajeView } from "@/components/circuito/RepechajeView"
+import { classifyMainBracketSections } from "@/lib/circuito/bracketDisplay"
 
 export async function generateMetadata({
   params,
@@ -56,7 +57,7 @@ export default async function CircuitoTorneoCategoriaPage({
         {category.type === "single" ? "Single" : "Dobles"} · {category.draw_size} inscriptos
       </p>
 
-      <BracketView matches={mainMatches} participantNames={participantNames} />
+      <BracketView sections={classifyMainBracketSections(mainMatches)} participantNames={participantNames} />
       <RepechajeView matches={repechajeMatches} participantNames={participantNames} />
     </main>
   )
