@@ -109,29 +109,37 @@ function connectedComponents(matches: DisplayMatch[]): DisplayMatch[][] {
 }
 
 function classifyRoundRobinWithFinal(matches: DisplayMatch[]): BracketSection[] {
-  const pairCount = new Map<string, number>()
-  for (const m of matches) {
-    if (!m.participant_a_id || !m.participant_b_id) continue
-    const k = pairKey(m.participant_a_id, m.participant_b_id)
-    pairCount.set(k, (pairCount.get(k) ?? 0) + 1)
+  // La final es un revancha entre los 2 primeros de la zona: el mismo par
+  // aparece 2 veces en los datos. A diferencia de una suposición inicial,
+  // el `round_number` que trae el import de Challonge NO garantiza que esa
+  // revancha sea el partido de mayor round_number — Challonge numera las
+  // rondas de este formato ("Groups then SE") sin relación directa con el
+  // significado del partido (verificado contra la propia UI de Challonge:
+  // la revancha puede aparecer en cualquier posición de la secuencia). Por
+  // eso se busca el par repetido en TODOS los partidos, no solo el último.
+  const seenPairs = new Map<string, string>() // pairKey -> id del primer partido con ese par
+  let finalMatch: DisplayMatch | null = null
+  for (const match of matches) {
+    if (!match.participant_a_id || !match.participant_b_id) continue
+    const key = pairKey(match.participant_a_id, match.participant_b_id)
+    if (seenPairs.has(key)) {
+      // segunda vez que se enfrenta este par → es la final (solo puede haber 1)
+      finalMatch = match
+      break
+    }
+    seenPairs.set(key, match.id)
   }
-  const maxRound = matches.reduce((max, m) => Math.max(max, m.round_number), 0)
-  const lastRoundMatches = roundOf(matches, maxRound)
-  const candidate = lastRoundMatches.length === 1 ? lastRoundMatches[0] : null
-  const isRepeatOfEarlierPair =
-    !!candidate?.participant_a_id &&
-    !!candidate.participant_b_id &&
-    (pairCount.get(pairKey(candidate.participant_a_id, candidate.participant_b_id)) ?? 0) > 1
 
-  if (candidate && isRepeatOfEarlierPair) {
-    const group = matches.filter((m) => m.id !== candidate.id)
+  if (finalMatch) {
+    const group = matches.filter((m) => m.id !== finalMatch!.id)
     return [
       { label: "Fase de grupos (todos contra todos)", matches: group },
-      { label: "Final", matches: [candidate] },
+      { label: "Final", matches: [finalMatch] },
     ]
   }
-  // No se pudo identificar la final de forma confiable — mejor mostrar todo
-  // como fase de grupos que arriesgar una etiqueta de eliminación incorrecta.
+  // No se pudo identificar la final de forma confiable (ningún par se repite)
+  // — mejor mostrar todo como fase de grupos que arriesgar una etiqueta de
+  // eliminación incorrecta.
   return [{ label: "Fase de grupos (todos contra todos)", matches }]
 }
 

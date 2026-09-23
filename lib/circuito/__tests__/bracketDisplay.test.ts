@@ -43,6 +43,26 @@ describe("classifyMainBracketSections", () => {
     }
   })
 
+  it("N=4 con la revancha en el medio de la secuencia (patrón real observado en Challonge, ej. Cincinnati Open): igual detecta la Final aunque no sea el último partido", () => {
+    // Caso real: Challonge no numera las rondas por significado del partido.
+    // El par que se repite (Carola vs Gabriela) aparece en la posición 5 de 7,
+    // no al final — el clasificador debe encontrarlo igual.
+    const matches: DisplayMatch[] = [
+      m("1", 1, "Karina", "Gabriela", "Gabriela"),
+      m("2", 1, "Carola", "Paola", "Carola"),
+      m("3", 1, "Carola", "Gabriela", "Carola"),
+      m("4", 2, "Paola", "Karina", "Karina"),
+      m("5", 2, "Gabriela", "Carola", "Carola"), // revancha de #3 → esta es la Final
+      m("6", 3, "Carola", "Karina", "Carola"),
+      m("7", 3, "Gabriela", "Paola", "Gabriela"),
+    ]
+    const sections = classifyMainBracketSections(matches)
+    expect(sections).toHaveLength(2)
+    expect(sections[0].matches).toHaveLength(6)
+    expect(sections[1].label).toBe("Final")
+    expect(sections[1].matches).toEqual([matches[4]])
+  })
+
   it("N=4 sin par repetido identificable: no arriesga a inventar una Final, todo va a Fase de grupos", () => {
     const matches: DisplayMatch[] = [
       m("1", 1, "P1", "P2", "P1"),
