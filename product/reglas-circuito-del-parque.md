@@ -64,6 +64,9 @@ El armado del cuadro **cambia según N** (cantidad de inscriptos ese mes). Esto 
   ranking formal (aunque el circuito ya existía por Challonge, sin ranking anual sistematizado),
   no hay ranking previo disponible. Ese primer torneo, los cabezas de serie los define
   **manualmente la coordinadora**.
+- **Armado de las 2 zonas (formato 6-7 inscriptos)**: mismo criterio de ranking que las byes,
+  repartido en **serpentina** para equilibrar el nivel de cada zona — 1° al ranking → Zona A, 2° y
+  3° → Zona B, 4° y 5° → Zona A, 6° (y 7° si lo hay) → Zona B.
 
 ---
 
@@ -143,13 +146,45 @@ comprimen así:
 
 ---
 
-## Import histórico Challonge (Sprint C7)
+## Import histórico 2026 (Sprint C7)
 
-Pendiente de verificar en el Sprint C7, antes de programar el import: **¿la cuenta de Challonge
-(`elcircuitodelparque`) expone el detalle set por set de cada partido (`scores_csv`), o solo el
-resultado agregado (ej. `2-1`)?** Si no expone detalle de sets, el ranking importado no puede usar
-diferencia de games como desempate para esos datos — definir en ese momento un desempate
-alternativo **solo** para partidos importados (no inventarlo ahora).
+**Fuente real usada**: el club ya lleva el ranking anual a mano en una planilla de Google Sheets
+(una pestaña por categoría, una columna por torneo mensual, puntos ya calculados por jugador).
+`scripts/import-circuito-ranking-sheet.ts` importa esa planilla directo a
+`circuito_ranking_points` — no reconstruye el cuadro de cada torneo (`circuito_matches`), solo el
+resultado final por jugador. Corrido el 2026-09-09: 429 filas de ranking, 181 jugadores nuevos en
+`players`, 12 ediciones 2026 creadas (julio a diciembre quedaron sin datos porque la planilla
+todavía no los tenía cargados a esa fecha).
+
+Calendario 2026 relevado con el organizador (nombre de torneo → mes; 1/5/7/9 son "Grand Slam"):
+Enero=Australia Open, Febrero=Argentina Open, Marzo=Miami, Abril=Monte Carlo, Mayo=Roland Garros,
+Junio=Halle, Julio=Wimbledon (Mid Master se juega el mismo mes pero es un torneo aparte, no
+puntúa acá), Agosto=Toronto/Cincinnati (mismo mes, nombre distinto según categoría),
+Septiembre=Us Open, Octubre=China Open, Noviembre=Paris Open, Diciembre=Belgrado Open.
+
+### Partidos históricos (cuadros navegables)
+
+Además del ranking (arriba), `scripts/import-challonge.ts` trae el detalle partido por partido
+desde la API de Challonge (v2.1, OAuth2) y lo guarda en `circuito_matches`, para poder navegar los
+cuadros históricos en `/circuito-del-parque/torneos/...`. **No toca `circuito_ranking_points`**
+(esa tabla sigue viniendo solo de la planilla, arriba).
+
+Corrido y verificado el 2026-09-09: 67 torneos, 652 partidos, ~495 participantes nuevos en
+`players`. La cuota de 500 requests/30 días del plan gratuito de Challonge es **por aplicación
+(client_id), no por cuenta** — se resolvió sin esperar creando una segunda "Application" dentro de
+la misma cuenta del club en vez de esperar el reset.
+
+Confirmado con el organizador el 2026-09-09:
+- Alcance: solo torneos 2026 (67 torneos reales, validados con el parser de nombres).
+- En Challonge, el cuadro principal y el repechaje de una categoría/mes son dos torneos separados
+  — coincide con nuestro propio modelo `bracket: "main" | "repechaje"`.
+- "Dobles [género] Torneo X" sin nivel explícito en el nombre → siempre es la categoría "Segunda"
+  de ese género. "Dobles Damas Intermedia" → en realidad "Damas Primera Dobles" (mismo caso que en
+  la planilla de ranking).
+
+Detalle de los 2 bugs encontrados y corregidos durante la corrida real (caché de participantes
+sin escopear por edición + falta de paginación en Challonge) en el encabezado de
+`scripts/import-challonge.ts`.
 
 ---
 

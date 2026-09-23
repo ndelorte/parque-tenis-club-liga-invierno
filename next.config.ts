@@ -22,6 +22,16 @@ const nextConfig: NextConfig = {
         destination: "/ligas-invierno-verano/:path*",
         permanent: true,
       },
+      {
+        source: "/mid-master",
+        destination: "/circuito-del-parque/especiales/mid-master-2026",
+        permanent: true,
+      },
+      {
+        source: "/mid-master/categorias/:slug",
+        destination: "/circuito-del-parque/especiales/mid-master-2026/categorias/:slug",
+        permanent: true,
+      },
     ];
   },
 };

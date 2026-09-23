@@ -65,11 +65,11 @@ export function Hero() {
             variant="outline"
             className="h-13 border-background/40 bg-background/10 px-7 text-base text-background backdrop-blur-sm hover:bg-background/20 hover:text-background"
           >
-            <a href="/mid-master">
+            <Link href="/circuito-del-parque">
               <Star className="size-5" />
-              Mid Master
+              Circuito del Parque
               <ArrowRight className="size-4" />
-            </a>
+            </Link>
           </Button>
           <Button
             asChild

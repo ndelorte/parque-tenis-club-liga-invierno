@@ -44,5 +44,8 @@ Qué implica para el código a futuro. Qué NO hay que hacer por error.
 | ADR | Título | Status |
 |---|---|---|
 | [ADR-001](./ADR-001-rename-admin-a-panel-parque.md) | Renombrar panel admin de `/admin` a `/panel-parque` + auth vía `proxy.ts` | Accepted |
-| [ADR-002](./ADR-002-mid-master-modulo-aislado.md) | Mid Master como módulo aislado (prefijo `mm_`, sin reuso de `lib/tournament/`) | Accepted |
+| [ADR-002](./ADR-002-mid-master-modulo-aislado.md) | Mid Master como módulo aislado (prefijo `mid_master_`, sin reuso de `lib/tournament/`) | Accepted |
+| [ADR-003](./ADR-003-rename-paneles-liga-circuito.md) | Rename de paneles `/panel-parque` → `/panel-liga`, `/panel-master` → `/panel-circuito` | Accepted |
+| [ADR-004](./ADR-004-mid-master-multi-edicion.md) | Mid Master pasa de una edición implícita a N ediciones (`edition_id`) | Accepted |
+| [ADR-005](./ADR-005-prefijo-tablas-circuito.md) | Prefijo `circuito_` para las tablas nuevas del Circuito del Parque, tipadas desde el día 1 | Accepted |
 | [ADR-006](./ADR-006-interparque-modulo-aislado.md) | Interparque como módulo aislado (prefijo `interparque_`, jugadores propios, sin snapshot de standings) | Accepted |

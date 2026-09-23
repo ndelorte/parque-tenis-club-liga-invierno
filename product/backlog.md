@@ -181,6 +181,73 @@
   todavía): cuando arranque, revisar `/interparque` — hoy usa los tokens
   `brand`/`accent` existentes combinados con la identidad de los flyers
   (ver ADR-006), pensado como diseño simple de arranque, no definitivo.
+  Sumar también al alcance del refactor, relevado el 2026-09-09 con el
+  organizador sobre las vistas del Circuito del Parque (hoy funcionales
+  pero con la estética muy floja — se armaron rápido para tener el dato
+  navegable, sin pasada de diseño real):
+  - `BracketView`/`RepechajeView` (`components/circuito/`) hoy listan las
+    rondas apiladas verticalmente. Pasar a un cuadro horizontal de
+    izquierda a derecha (ronda 1 → semis → final, como un bracket de
+    torneo real), con el repechaje como un cuadro aparte debajo del
+    principal (ya está separado a nivel de datos/componente, falta el
+    tratamiento visual de cuadro).
+  - Esto aplica a `/circuito-del-parque/torneos/[edition]/[categoria]` y a
+    `/circuito-del-parque/especiales/[edition]/categorias/[slug]`
+    (Mid Master, que reusa un patrón parecido).
+
+  **Actualización (2026-09-23) — corregido el bug de fondo, queda pendiente el pulido visual de arriba:**
+  `BracketView` etiquetaba **incorrectamente** partidos de fase de grupos como
+  "Cuartos de final"/"Semifinal" para categorías chicas (4/5/6-7 inscriptos)
+  importadas de Challonge, porque usaba el `round_number` crudo de Challonge
+  asumiendo siempre eliminación directa. Se agregó `lib/circuito/bracketDisplay.ts`
+  (`classifyMainBracketSections`), que reusa la misma `CircuitoFormatSpec` del
+  motor propio (`generateBracket.ts`) para determinar el formato real según la
+  cantidad de inscriptos y agrupar los partidos en secciones correctas
+  ("Fase de grupos", "Zona A"/"Zona B", "Semifinales", "Final" — o el árbol de
+  eliminación clásico solo cuando corresponde). Verificado contra datos reales
+  (Cincinnati Open y Halle Open, categorías de 4 inscriptos): ya no aparece
+  ninguna etiqueta de eliminación falsa.
+
+  **Limitación conocida, requiere las credenciales de la API de Challonge para
+  resolverse del todo:** en las categorías `round_robin_with_final` (N=4), el
+  `round_number` que trajo el import de Challonge no es cronológico ni
+  estructurado — en los 2 casos reales verificados, el par que se repite (la
+  final) aparece en el medio de la secuencia, no al final, así que el
+  clasificador no puede identificar con certeza cuál de los 7 partidos fue la
+  final real y por seguridad muestra los 7 juntos como "Fase de grupos" (ya no
+  dice "Cuartos de final" en ningún caso, pero tampoco separa la Final todavía).
+  Para resolverlo hace falta volver a pedirle a la API de Challonge el orden
+  real/fecha de cada partido (`getTournamentMatches` hoy no lo trae) y usar eso
+  en vez de `round_number` para identificar la final.
+
+- **Deuda técnica — datos del import de Challonge** (Sprint C7,
+  `scripts/import-challonge.ts`, corrido el 2026-09-09): quedó funcional
+  y verificado con un caso de muestra, pero falta una auditoría más a
+  fondo antes de confiar en él como fuente completa:
+  - Revisar partido por partido contra Challonge (no solo la estructura)
+    para una muestra más amplia de categorías/meses, no solo el caso que
+    se verificó a mano (Roland Garros, Caballeros Segunda).
+  - Confirmar que **todas** las categorías que realmente se jugaron en
+    2026 quedaron navegables en `/circuito-del-parque/torneos/...` — no
+    se hizo una auditoría categoría por categoría contra los 67 torneos
+    reales de Challonge, sólo se validó que el parser de nombres los
+    matcheaba a todos.
+  - **Torneos que en la práctica se jugaron como zona (todos contra
+    todos) dentro de un torneo de Challonge tipado "single elimination"**
+    — el import asume que `tournament_type: "single elimination"`
+    implica de verdad una eliminación directa limpia (N-1 partidos, sin
+    revanchas), pero no siempre es así. Caso concreto encontrado:
+    "SINGLE DAMAS SEGUNDA Cincinnati Open" (torneo #18397088, mes 8 2026,
+    4 inscriptas) — Challonge lo tipa "single elimination" pero tiene
+    **7 partidos** en vez de los 3 que le corresponderían a una
+    eliminación directa de 4, con al menos un cruce repetido (mismas 2
+    jugadoras se enfrentan 2 veces con scores distintos). Aparenta ser
+    una zona todos-contra-todos cargada a mano dentro de un torneo
+    "elimination". El cuadro se ve raro en la web (rondas etiquetadas
+    como si fueran fases de eliminación cuando en realidad son fechas de
+    zona). Hay que auditar cuántos torneos más tienen este patrón y
+    darles un tratamiento de datos de zona (no de bracket) antes de
+    confiar en el resultado importado para esos casos puntuales.
 
 ---
 

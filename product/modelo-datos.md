@@ -344,3 +344,95 @@ CLAUDE.md — esa regla aplica a teléfonos/contacto).
 **Único escritor**: `lib/data/tournament-photos.ts` (`addPhoto`, `deletePhoto`, `reorderPhotos`),
 llamado desde las server actions de `app/actions/admin.ts` (verifican `isAdminUser`). Las subidas
 usan el admin client (service role) para el insert y para `storage.from("premiaciones").upload(...)`.
+
+---
+
+## Circuito del Parque (Sprint C3)
+
+Módulo aislado (ver ADR-002/ADR-005) — torneos mensuales del circuito, prefijo `circuito_`,
+tipado en `lib/supabase/types.ts` desde el día 1 (no repetir el patrón `any` de `mid_master_*`).
+Reglas deportivas: `reglas-circuito-del-parque.md`. `players` es el único dato compartido con
+Liga/Mid Master (ADR-002). Todavía sin UI ni motor de cuadros (Sprint C4) ni recálculo de ranking
+(Sprint C5) — este sprint solo crea el esquema.
+
+### circuito_editions
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | |
+| slug | text, único | |
+| name | text | Ej: "Roland Garros" |
+| month | int | 1-12. Enero/Mayo/Julio/Septiembre son "Grand Slam" (ver reglas) |
+| year | int | |
+| status | text | `upcoming`, `active`, `finished` |
+| created_at | timestamptz | |
+
+### circuito_categories
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | |
+| edition_id | uuid FK → circuito_editions | |
+| name | text | Una de las 14 categorías fijas (ver reglas) |
+| slug | text | Único por `edition_id` |
+| type | text | `single`, `dobles` |
+| draw_size | int nullable | Cantidad de inscriptos ese mes — **no es fijo**, varía mes a mes; `null` hasta que cierran inscripciones |
+| sort_order | int | |
+| created_at / updated_at | timestamptz | |
+
+### circuito_participants
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | |
+| category_id | uuid FK → circuito_categories | |
+| player_id | uuid FK → players, nullable | `null` en participantes importados de Challonge sin reconciliar todavía (Sprint C7) |
+| player_2_id | uuid FK → players, nullable | Pareja, solo en categorías `dobles` |
+| display_name | text | Nombre a mostrar; guarda el nombre crudo del import cuando `player_id` es `null` |
+| seed | int nullable | Cabeza de serie (ver reglas: ranking vigente / manual en el primer torneo 2026) |
+| created_at / updated_at | timestamptz | |
+
+### circuito_matches
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | |
+| category_id | uuid FK → circuito_categories | |
+| bracket | text | `main`, `repechaje` — el repechaje es un cuadro aparte, solo existe con 8+ inscriptos |
+| round_number | int | Ronda dentro de su `bracket` |
+| position | int | Índice 0-based dentro de `(category_id, bracket, round_number)` — sin esto no hay forma determinística de saber a qué partido de la ronda siguiente avanza el ganador (Sprint C5, migración 009) |
+| zone | text nullable | `A` / `B` — solo en los partidos de zona del formato 6-7 inscriptos (`groups_then_knockout`) |
+| participant_a_id / participant_b_id | uuid FK → circuito_participants, nullable | `null` hasta que el motor de cuadros (C4) o un resultado previo define quién juega |
+| score | text nullable | Tercer set `7-6` fijo salvo en la final (score real); WO se registra `6-0 6-0` |
+| winner_id | uuid FK → circuito_participants, nullable | |
+| is_walkover | boolean | Default `false` |
+| status | text | `pending`, `scheduled`, `played`, `walkover` |
+| scheduled_date / scheduled_time | date / time, nullable | |
+| created_at / updated_at | timestamptz | |
+
+Un bye (participante único, `participant_b_id = null` con `participant_a_id` definido) no
+necesita carga de resultado — `lib/data/circuito/bracket.ts` lo avanza solo a la ronda
+siguiente al generar el cuadro.
+
+### circuito_ranking_points
+
+Snapshot recalculado — **nunca se edita a mano** (mismo criterio que `standings_snapshot`).
+Único punto de escritura real: `lib/data/circuito/ranking.ts`
+(`upsertCircuitoRankingPoints`/`recalculateAndPersistCircuitRanking`), reforzado por
+`lib/data/__tests__/circuito-ranking-write-boundary.test.ts` (Sprint C5). Un participante de
+dobles acredita los mismos puntos a sus 2 jugadores (el ranking es por `player_id`, no por pareja).
+El import histórico 2026 (Sprint C7, `scripts/import-circuito-ranking-sheet.ts`) también pasa por
+`upsertCircuitoRankingPoints`, calculando los puntos desde una planilla externa en vez de
+`circuito_matches` — ver `reglas-circuito-del-parque.md`.
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | |
+| player_id | uuid FK → players | |
+| category_id | uuid FK → circuito_categories | |
+| edition_id | uuid FK → circuito_editions | |
+| points | int | Ver escala Grand Slam / normal en `reglas-circuito-del-parque.md` |
+| computed_at | timestamptz | |
+
+Unicidad: `(player_id, category_id, edition_id)` — un jugador tiene un único puntaje por
+categoría y edición.
