@@ -45,6 +45,14 @@
   --clay: #d4622a; /* polvo del logo: franjas y decoración, nunca texto */
   --ball: #d4e04a; /* pelota: solo como punto de saque */
 
+  /* Colores de "arte": iguales en claro y oscuro, no son tokens semánticos. */
+  --court-winter: #9cc4e4; /* mitad invierno de la cancha de la Liga */
+  --court-summer: #f3c969; /* mitad verano */
+  --court-green: #2c5a41; /* cancha de Interparque */
+  --court-net: #141414; /* red y bordes del Circuito */
+  --court-line: rgb(255 255 255 / 0.85);
+  --clay-light: #e8844f; /* polvo claro: íconos y acentos sobre verde tablero */
+
   --board: #1c3a2a; /* header, footer y tableros */
   --board-foreground: #f4f6f2;
 
@@ -162,6 +170,12 @@
   --color-accent-light: var(--accent-light);
   --color-clay: var(--clay);
   --color-ball: var(--ball);
+  --color-court-winter: var(--court-winter);
+  --color-court-summer: var(--court-summer);
+  --color-court-green: var(--court-green);
+  --color-court-net: var(--court-net);
+  --color-court-line: var(--court-line);
+  --color-clay-light: var(--clay-light);
   --color-board: var(--board);
   --color-board-foreground: var(--board-foreground);
   --color-win: var(--win);
@@ -236,6 +250,26 @@ h3 {
 }
 .press:active {
   transform: scale(0.97);
+}
+
+/* Tablero "En juego" de la home: único momento orquestado de la página. Los
+   números entran una vez al cargar (clip-path de arriba hacia abajo). */
+@keyframes board-in {
+  from { clip-path: inset(0 0 100% 0); transform: translateY(-8px); }
+  to { clip-path: inset(0 0 0 0); transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.board-flip {
+  display: inline-block;
+  animation: board-in 360ms var(--ease-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .board-flip {
+    animation: fade-in 200ms ease both;
+  }
 }
 
 /* ── Animaciones existentes (se revisan en la fase de cada pantalla) ──────── */
