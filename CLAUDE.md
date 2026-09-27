@@ -249,6 +249,21 @@ Ver `/product/reglas-interparque.md` para el detalle de Interparque.
 
 ---
 
+## Modelo según el tipo de tarea
+
+| Tarea | Modelo |
+|-------|--------|
+| Razonar, planificar, decidir; diseñar maquetas o artefactos visuales para comparar alternativas; auditorías de diseño | **Opus** |
+| Implementación y código (escribir, editar, lint, tests, build) | **Sonnet** |
+| Búsquedas de archivos de solo lectura (relevar, ubicar, listar) | **Fable** |
+
+- La sesión principal no puede cambiar su propio `/model`: la tarea se delega a un subagente con el modelo de la tabla, o el usuario cambia `/model` a mano.
+- Commit, push y PR los hace la sesión principal (no se crea un subagente solo para eso).
+- Las correcciones de código que salen de una auditoría las implementa Sonnet.
+- Si no está claro qué modelo corresponde, **preguntar al usuario antes de arrancar**.
+
+---
+
 ## Flujo antes de modificar código
 
 1. Leer el PRD: `/product/PRD_PARQUE_TENIS_LIGA_INVIERNO.md`

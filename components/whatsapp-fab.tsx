@@ -8,9 +8,9 @@ export function WhatsappFab() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Consultar por WhatsApp"
-      className="fixed bottom-5 right-5 z-50 flex size-14 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-lg ring-4 ring-accent/20 transition-transform hover:scale-105"
+      className="press fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-5 z-50 flex size-14 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-lg ring-4 ring-accent/20 [@media(hover:hover)]:hover:brightness-110 sm:hidden"
     >
-      <MessageCircle className="size-7" />
+      <MessageCircle aria-hidden="true" className="size-7" />
     </a>
   )
 }
