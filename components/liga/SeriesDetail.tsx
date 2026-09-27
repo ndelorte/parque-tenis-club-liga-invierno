@@ -8,8 +8,8 @@ interface SeriesDetailProps {
 export function SeriesDetail({ series }: SeriesDetailProps) {
   if (series.is_general_walkover) {
     return (
-      <div className="text-sm text-gray-600">
-        <span className="inline-block bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-semibold mr-2">
+      <div className="text-sm text-muted-foreground">
+        <span className="inline-block bg-loss-soft text-loss px-2 py-0.5 rounded text-xs font-semibold mr-2">
           WO General
         </span>
         {series.home_team?.name ?? series.home_team_id} no se presentó.
@@ -22,7 +22,7 @@ export function SeriesDetail({ series }: SeriesDetailProps) {
 
   if (courts.length === 0) {
     return (
-      <p className="text-sm text-gray-500">Sin detalle de canchas disponible.</p>
+      <p className="text-sm text-muted-foreground">Sin detalle de canchas disponible.</p>
     );
   }
 

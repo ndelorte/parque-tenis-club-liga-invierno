@@ -23,10 +23,10 @@ export function ComingSoonView({ tournament }: { tournament: Tournament }) {
         className="mt-8 size-10 text-brand animate-hourglass motion-reduce:animate-none"
       />
 
-      <h1 className="mt-6 font-heading text-2xl font-bold text-gray-900 sm:text-3xl">
+      <h1 className="mt-6 font-heading text-2xl font-bold text-foreground sm:text-3xl">
         {formatTournamentTitle(tournament)}
       </h1>
-      <p className="mt-2 max-w-md text-gray-600">
+      <p className="mt-2 max-w-md text-muted-foreground">
         Próximamente. Todavía no arrancó esta edición — volvé más adelante para ver categorías,
         equipos y fixture.
       </p>

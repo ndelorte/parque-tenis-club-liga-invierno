@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background font-sans">
       <SiteHeader />
-      <main>
+      <main id="contenido" className="scroll-mt-20">
         <Hero />
         <Activities />
         <WinterLeague />

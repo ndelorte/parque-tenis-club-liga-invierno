@@ -18,7 +18,7 @@ export function PhotoGallery({ photos }: { photos: TournamentPhoto[] }) {
             />
           </div>
           {photo.caption && (
-            <figcaption className="px-2 py-1.5 text-xs text-gray-600">{photo.caption}</figcaption>
+            <figcaption className="px-2 py-1.5 text-xs text-muted-foreground">{photo.caption}</figcaption>
           )}
         </figure>
       ))}

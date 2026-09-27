@@ -35,10 +35,10 @@ export function SeasonCard({ tournament }: { tournament: Tournament }) {
             <Icon className="size-6" />
           </span>
           <div className="flex-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Temporada {formatSeasonLabel(tournament)}
             </p>
-            <h3 className="font-heading text-lg font-bold text-gray-900 group-hover:text-brand transition-colors">
+            <h3 className="font-heading text-lg font-bold text-foreground group-hover:text-brand transition-colors">
               {tournament.name}
             </h3>
           </div>
@@ -46,7 +46,7 @@ export function SeasonCard({ tournament }: { tournament: Tournament }) {
             <Badge variant={STATUS_VARIANT[tournament.status]}>
               {STATUS_LABEL[tournament.status]}
             </Badge>
-            <ArrowRight className="size-4 text-gray-400 transition-transform group-hover:translate-x-1" />
+            <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
           </div>
         </CardContent>
       </Card>

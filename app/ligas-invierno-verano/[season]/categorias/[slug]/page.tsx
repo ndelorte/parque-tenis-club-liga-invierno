@@ -58,10 +58,10 @@ export default async function CategoriaPage({ params }: Props) {
         <CategoryTabs categories={categories} seasonSlug={tournament.slug} />
 
         <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-          <h2 className="text-xl font-bold text-gray-900">{category.name}</h2>
+          <h2 className="text-xl font-bold text-foreground">{category.name}</h2>
           <ChampionBanner champion={champion} />
           <section>
-            <h3 className="font-semibold text-gray-800 mb-3">Tabla final</h3>
+            <h3 className="font-semibold text-foreground mb-3">Tabla final</h3>
             <StandingsTable standings={standings} />
           </section>
           {bracket && (
@@ -175,10 +175,10 @@ export default async function CategoriaPage({ params }: Props) {
       <CategoryTabs categories={categories} seasonSlug={tournament.slug} />
 
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-10">
-        <h2 className="text-xl font-bold text-gray-900">{category.name}</h2>
+        <h2 className="text-xl font-bold text-foreground">{category.name}</h2>
 
         <section>
-          <h3 className="font-semibold text-gray-800 mb-3">Tabla de posiciones</h3>
+          <h3 className="font-semibold text-foreground mb-3">Tabla de posiciones</h3>
           <StandingsTable standings={effectiveStandings} />
         </section>
 
@@ -199,7 +199,7 @@ export default async function CategoriaPage({ params }: Props) {
 
         {teams.length > 0 && (
           <section>
-            <h3 className="font-semibold text-gray-800 mb-3">Equipos</h3>
+            <h3 className="font-semibold text-foreground mb-3">Equipos</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               {teams.map((team) => (
                 <TeamCard key={team.id} team={team} categorySlug={slug} seasonSlug={tournament.slug} />

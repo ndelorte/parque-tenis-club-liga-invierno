@@ -4,5 +4,6 @@ export default function EdicionEspecialLayout({
   children: React.ReactNode
 }) {
   // SiteHeader/SiteFooter los pone el layout padre (app/circuito-del-parque/layout.tsx).
-  return <main className="min-h-dvh bg-mm-bg text-mm-text">{children}</main>
+  // Especiales (Mid Master, Final Master) se ven siempre en oscuro.
+  return <main className="dark min-h-dvh bg-mm-bg text-mm-text">{children}</main>
 }

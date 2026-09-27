@@ -22,34 +22,34 @@ export function ResultCard({ series }: ResultCardProps) {
   const isWalkover = series.status === "walkover" || series.is_general_walkover;
 
   return (
-    <div className="bg-white border border-border rounded-lg overflow-hidden">
+    <div className="bg-card border border-border rounded-lg overflow-hidden">
       <div
         className="px-4 py-3 cursor-pointer hover:bg-surface transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-500 mb-1">{series.round?.name ?? ""}</p>
+            <p className="text-xs text-muted-foreground mb-1">{series.round?.name ?? ""}</p>
             <div className="flex items-center gap-2 flex-wrap">
               <span
-                className={`font-semibold text-sm truncate ${homeWon ? "text-gray-900" : "text-gray-400"}`}
+                className={`font-semibold text-sm truncate ${homeWon ? "text-foreground" : "text-muted-foreground"}`}
               >
                 {series.home_team?.name ?? series.home_team_id}
               </span>
-              <span className="text-xs font-bold text-gray-600 shrink-0">
+              <span className="text-xs font-bold text-muted-foreground shrink-0">
                 {isWalkover
                   ? "WO"
                   : `${series.home_courts_won ?? 0}-${series.away_courts_won ?? 0}`}
               </span>
               <span
-                className={`font-semibold text-sm truncate ${awayWon ? "text-gray-900" : "text-gray-400"}`}
+                className={`font-semibold text-sm truncate ${awayWon ? "text-foreground" : "text-muted-foreground"}`}
               >
                 {series.away_team?.name ?? series.away_team_id}
               </span>
             </div>
           </div>
           <button
-            className="text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+            className="text-muted-foreground hover:text-muted-foreground transition-colors shrink-0"
             aria-label={expanded ? "Colapsar detalle" : "Ver detalle de canchas"}
           >
             {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
