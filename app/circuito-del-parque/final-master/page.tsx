@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { Hourglass } from "lucide-react"
-import { getAnnualCircuitRanking } from "@/lib/data/circuito/ranking"
+import { getAnnualCircuitRanking, getCircuitoCategorySlugsWithRanking } from "@/lib/data/circuito/ranking"
 import { CIRCUITO_FIXED_CATEGORIES } from "@/lib/data/circuito/categories"
 import { RankingTable } from "@/components/circuito/RankingTable"
 import { CategoryFilterPills } from "@/components/circuito/CategoryFilterPills"
@@ -16,11 +16,13 @@ export default async function CircuitoFinalMasterPage({
   searchParams: Promise<{ categoria?: string }>
 }) {
   const { categoria } = await searchParams
-  const selected = CIRCUITO_FIXED_CATEGORIES.some((c) => c.slug === categoria)
-    ? categoria!
-    : CIRCUITO_FIXED_CATEGORIES[0].slug
   const year = new Date().getFullYear()
-  const entries = (await getAnnualCircuitRanking(year, selected)).slice(0, QUALIFIERS)
+  // Solo las categorías con jugadores en el ranking del año; si la pedida
+  // no tiene, se muestra la primera que sí.
+  const rankedSlugs = await getCircuitoCategorySlugsWithRanking(year)
+  const categories = CIRCUITO_FIXED_CATEGORIES.filter((c) => rankedSlugs.has(c.slug))
+  const selected = categories.some((c) => c.slug === categoria) ? categoria! : categories[0]?.slug
+  const entries = selected ? (await getAnnualCircuitRanking(year, selected)).slice(0, QUALIFIERS) : []
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10 text-center sm:px-6">
@@ -35,15 +37,22 @@ export default async function CircuitoFinalMasterPage({
         va la clasificación provisoria hasta ahora.
       </p>
 
-      <CategoryFilterPills
-        basePath="/circuito-del-parque/final-master"
-        selectedSlug={selected}
-        className="mt-6 justify-center"
-      />
+      {selected ? (
+        <>
+          <CategoryFilterPills
+            basePath="/circuito-del-parque/final-master"
+            selectedSlug={selected}
+            categories={categories}
+            className="mt-6 justify-center"
+          />
 
-      <div className="mt-6 text-left">
-        <RankingTable entries={entries} />
-      </div>
+          <div className="mt-6 text-left">
+            <RankingTable entries={entries} />
+          </div>
+        </>
+      ) : (
+        <p className="mt-6 text-sm text-muted-foreground">Todavía no hay puntos cargados en el ranking {year}.</p>
+      )}
     </main>
   )
 }

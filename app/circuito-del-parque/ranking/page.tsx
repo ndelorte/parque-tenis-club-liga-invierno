@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { getAnnualCircuitRanking } from "@/lib/data/circuito/ranking"
+import { getAnnualCircuitRanking, getCircuitoCategorySlugsWithRanking } from "@/lib/data/circuito/ranking"
 import { CIRCUITO_FIXED_CATEGORIES } from "@/lib/data/circuito/categories"
 import { RankingTable } from "@/components/circuito/RankingTable"
 import { CategoryFilterPills } from "@/components/circuito/CategoryFilterPills"
@@ -12,11 +12,13 @@ export default async function CircuitoRankingPage({
   searchParams: Promise<{ categoria?: string }>
 }) {
   const { categoria } = await searchParams
-  const selected = CIRCUITO_FIXED_CATEGORIES.some((c) => c.slug === categoria)
-    ? categoria!
-    : CIRCUITO_FIXED_CATEGORIES[0].slug
   const year = new Date().getFullYear()
-  const entries = await getAnnualCircuitRanking(year, selected)
+  // Solo las categorías con jugadores en el ranking del año; si la pedida
+  // no tiene, se muestra la primera que sí.
+  const rankedSlugs = await getCircuitoCategorySlugsWithRanking(year)
+  const categories = CIRCUITO_FIXED_CATEGORIES.filter((c) => rankedSlugs.has(c.slug))
+  const selected = categories.some((c) => c.slug === categoria) ? categoria! : categories[0]?.slug
+  const entries = selected ? await getAnnualCircuitRanking(year, selected) : []
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
@@ -29,11 +31,21 @@ export default async function CircuitoRankingPage({
         Master y Final Master no puntúan acá.
       </p>
 
-      <div className="mb-4">
-        <CategoryFilterPills basePath="/circuito-del-parque/ranking" selectedSlug={selected} />
-      </div>
+      {selected ? (
+        <>
+          <div className="mb-4">
+            <CategoryFilterPills
+              basePath="/circuito-del-parque/ranking"
+              selectedSlug={selected}
+              categories={categories}
+            />
+          </div>
 
-      <RankingTable entries={entries} highlightTop={8} />
+          <RankingTable entries={entries} highlightTop={8} />
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">Todavía no hay puntos cargados en el ranking {year}.</p>
+      )}
     </main>
   )
 }

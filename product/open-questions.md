@@ -177,6 +177,34 @@ bajo primero) como último desempate estable. Ajustar el orden de criterios si l
 
 ---
 
+### OQ-38: Circuito — desempate del ranking anual (y del corte de la Final Master)
+
+**Contexto**: `reglas-circuito-del-parque.md` dice que el ranking anual suma los puntos de todos
+los torneos del año y que a la Final Master clasifican los 8 mejores por categoría, pero no dice
+qué pasa si 2 o más jugadores terminan con los **mismos puntos**. Con la escala de puntos (valores
+redondos y repetidos) los empates son frecuentes, y un empate en el 8° puesto decide quién
+clasifica.
+
+**Preguntar**: ¿Cómo se desempata? Opciones habituales: más torneos ganados (o mejor resultado
+individual), más torneos jugados/menos jugados, puntos del último torneo, enfrentamiento directo,
+o comparten puesto (y en el corte de 8 entran todos los empatados).
+
+**Impacto**: `lib/data/circuito/ranking.ts` (`getAnnualCircuitRanking`) ordena solo por puntos:
+entre empatados el orden es arbitrario. Mientras no se responda no se implementa ningún
+desempate.
+
+---
+
+### ~~OQ-39~~: Circuito — ubicación de los cabezas de serie en el cuadro (8+)
+
+**Respuesta** (2026-09-27): como en el tenis profesional — el 1 arriba de todo, el 2 abajo de
+todo, los primeros 8 seeds en lados contrarios, y los byes se enfrentan a los mejores seeds.
+Detalle (líneas fijas, sin sorteo) en `reglas-circuito-del-parque.md`, "Ubicación en el cuadro".
+Antes el motor ponía los byes en orden de seed uno al lado del otro y el 1 y el 2 se cruzaban
+en la 2ª ronda.
+
+---
+
 ## Resueltas — Liga Multi-Temporada
 
 ### ~~OQ-19~~: Edición cerrada — ¿tabla+cuadro+campeón o sólo cuadro+campeón?

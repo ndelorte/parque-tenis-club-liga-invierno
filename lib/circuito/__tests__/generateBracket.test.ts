@@ -164,3 +164,72 @@ describe("generateBracket — determinismo y validaciones", () => {
     expect(() => generateBracket(dup, CIRCUITO_FORMAT_SPEC)).toThrow()
   })
 })
+
+// Ubicación de los cabezas de serie (reglas-circuito-del-parque.md,
+// "Ubicación en el cuadro"): como en el tenis profesional.
+describe("generateBracket — ubicación de los seeds (eliminación simple)", () => {
+  // Línea (0-based, de arriba abajo) de cada participante en la 1ª ronda.
+  function lineOf(n: number): Map<string, number> {
+    const round1 = generateBracket(makeParticipants(n), CIRCUITO_FORMAT_SPEC).rounds[0]
+    const lines = new Map<string, number>()
+    round1.forEach((m, i) => {
+      if (m.participantA) lines.set(m.participantA.id, i * 2)
+      if (m.participantB) lines.set(m.participantB.id, i * 2 + 1)
+    })
+    return lines
+  }
+
+  // Ronda en la que se pueden cruzar dos líneas (1 = 1ª ronda).
+  function meetingRound(a: number, b: number): number {
+    let round = 1
+    while (a >> round !== b >> round) round++
+    return round
+  }
+
+  it("N=8: cruces 1-8, 4-5, 3-6, 2-7 de arriba abajo", () => {
+    const round1 = generateBracket(makeParticipants(8), CIRCUITO_FORMAT_SPEC).rounds[0]
+    expect(round1.map((m) => [m.participantA?.seed, m.participantB?.seed])).toEqual([
+      [1, 8],
+      [4, 5],
+      [3, 6],
+      [2, 7],
+    ])
+  })
+
+  it.each([8, 12, 16, 20, 32])("N=%i: el 1 arriba de todo y el 2 abajo de todo", (n) => {
+    const lines = lineOf(n)
+    const bracketSize = nextPowerOfTwo(n)
+    expect(lines.get("p1")).toBe(0)
+    // el 2 ocupa la última línea con rival, o la anteúltima si tiene bye
+    expect(lines.get("p2")).toBeGreaterThanOrEqual(bracketSize - 2)
+  })
+
+  it.each([8, 12, 16, 20, 32])("N=%i: 1 y 2 solo se cruzan en la final; 3 y 4 en mitades distintas", (n) => {
+    const lines = lineOf(n)
+    const totalRounds = Math.log2(nextPowerOfTwo(n))
+    const round = (a: string, b: string) => meetingRound(lines.get(a)!, lines.get(b)!)
+    expect(round("p1", "p2")).toBe(totalRounds)
+    expect(round("p3", "p4")).toBe(totalRounds)
+    // cada uno de 3 y 4 cae en la mitad de uno de los 2 primeros: se cruzan en semis
+    expect([round("p1", "p3"), round("p1", "p4")].sort()).toEqual([totalRounds - 1, totalRounds].sort())
+    expect([round("p2", "p3"), round("p2", "p4")].sort()).toEqual([totalRounds - 1, totalRounds].sort())
+  })
+
+  it.each([16, 20, 32])("N=%i: del 1 al 8 cada uno en un cuarto distinto de a pares (recién se cruzan en cuartos)", (n) => {
+    const lines = lineOf(n)
+    const totalRounds = Math.log2(nextPowerOfTwo(n))
+    for (let i = 1; i <= 8; i++) {
+      for (let j = i + 1; j <= 8; j++) {
+        expect(meetingRound(lines.get(`p${i}`)!, lines.get(`p${j}`)!)).toBeGreaterThanOrEqual(totalRounds - 2)
+      }
+    }
+  })
+
+  it("N=12: los 4 byes son para los seeds 1-4, uno en cada cuarto", () => {
+    const round1 = generateBracket(makeParticipants(12), CIRCUITO_FORMAT_SPEC).rounds[0]
+    const byes = round1.map((m, i) => (m.isBye ? { seed: m.participantA!.seed, quarter: Math.floor(i / 2) } : null))
+    const realByes = byes.filter((b) => b !== null)
+    expect(realByes.map((b) => b.seed).sort()).toEqual([1, 2, 3, 4])
+    expect(new Set(realByes.map((b) => b.quarter)).size).toBe(4)
+  })
+})

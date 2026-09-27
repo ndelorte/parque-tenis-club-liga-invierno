@@ -6,18 +6,26 @@ import { CIRCUITO_FIXED_CATEGORIES } from "@/lib/circuito/fixedCategories"
 interface Props {
   basePath: string
   selectedSlug: string
+  // Categorías a mostrar (por defecto, las 14 fijas). El ranking y la Final
+  // Master pasan solo las que tienen jugadores con puntos en el año.
+  categories?: typeof CIRCUITO_FIXED_CATEGORIES
   className?: string
 }
 
 // Cambia el filtro sin saltar al principio de la página (scroll: false) ni
 // perder el historial — volver atrás con el navegador va desfiltrando en el
 // mismo orden en que se fue filtrando.
-export function CategoryFilterPills({ basePath, selectedSlug, className }: Props) {
+export function CategoryFilterPills({
+  basePath,
+  selectedSlug,
+  categories = CIRCUITO_FIXED_CATEGORIES,
+  className,
+}: Props) {
   const router = useRouter()
 
   return (
     <div className={`flex flex-wrap gap-1.5 ${className ?? ""}`}>
-      {CIRCUITO_FIXED_CATEGORIES.map((c) => (
+      {categories.map((c) => (
         <button
           key={c.slug}
           type="button"

@@ -64,6 +64,16 @@ El armado del cuadro **cambia según N** (cantidad de inscriptos ese mes). Esto 
   ranking formal (aunque el circuito ya existía por Challonge, sin ranking anual sistematizado),
   no hay ranking previo disponible. Ese primer torneo, los cabezas de serie los define
   **manualmente la coordinadora**.
+- **Ubicación en el cuadro (formato 8+, y repechaje)**: como en el tenis profesional, los
+  cabezas de serie se reparten en lados contrarios para que los mejores se crucen lo más tarde
+  posible — **el 1 arriba de todo, el 2 abajo de todo**, el 3 y el 4 en mitades distintas
+  (recién pueden cruzarse con el 1 o el 2 en semifinal), del 5 al 8 uno en cada cuarto. Los
+  **byes se enfrentan a los mejores seeds**: los mejores preclasificados pasan la 1ª ronda sin
+  jugar. Respuesta del organizador (2026-09-27).
+  - A diferencia del tenis profesional, las líneas del 3-4 y del 5-8 **no se sortean**: son
+    fijas (orden clásico de cuadro: con 8 lugares 1-8, 4-5, 3-6, 2-7 de arriba abajo), así el
+    mismo listado de inscriptos genera siempre el mismo cuadro. Del 9 en adelante se sigue el
+    mismo orden según el ranking.
 - **Armado de las 2 zonas (formato 6-7 inscriptos)**: mismo criterio de ranking que las byes,
   repartido en **serpentina** para equilibrar el nivel de cada zona — 1° al ranking → Zona A, 2° y
   3° → Zona B, 4° y 5° → Zona A, 6° (y 7° si lo hay) → Zona B.

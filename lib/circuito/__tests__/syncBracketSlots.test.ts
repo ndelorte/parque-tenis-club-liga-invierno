@@ -2,101 +2,43 @@ import { describe, it, expect } from "vitest"
 import { generateBracket } from "../generateBracket"
 import { generateRepechaje } from "../generateRepechaje"
 import { CIRCUITO_FORMAT_SPEC } from "../formatSpec"
-import {
-  computeSlotUpdates,
-  isPanelGeneratedBracket,
-  round1LosersIfComplete,
-  type BracketSlotMatch,
-  type SlotUpdate,
-} from "../syncBracketSlots"
-import type { CircuitoBracket, CircuitoParticipant, DrawFormatKind } from "../types"
-
-function participants(n: number): CircuitoParticipant[] {
-  return Array.from({ length: n }, (_, i) => ({ id: `p${i + 1}`, seed: i + 1 }))
-}
-
-// Mismo volcado que lib/data/circuito/bracket.ts:insertCircuitoBracket.
-function toRows(bracket: CircuitoBracket, bracketType: "main" | "repechaje"): BracketSlotMatch[] {
-  return bracket.rounds.flatMap((roundMatches, roundIdx) =>
-    roundMatches.map((m, position) => ({
-      id: `${bracketType}-${roundIdx + 1}-${position}`,
-      bracket: bracketType,
-      round: roundIdx + 1,
-      position,
-      zone: m.group,
-      participantAId: m.participantA?.id ?? null,
-      participantBId: m.participantB?.id ?? null,
-      winnerId: null,
-      score: null,
-    })),
-  )
-}
-
-function apply(matches: BracketSlotMatch[], updates: SlotUpdate[]): BracketSlotMatch[] {
-  return matches.map((m) => {
-    const u = updates.find((x) => x.matchId === m.id)
-    if (!u) return m
-    return {
-      ...m,
-      participantAId: u.participantAId,
-      participantBId: u.participantBId,
-      ...(u.clearResult ? { winnerId: null, score: null } : {}),
-    }
-  })
-}
-
-function sync(format: DrawFormatKind, ps: CircuitoParticipant[], matches: BracketSlotMatch[]) {
-  return apply(matches, computeSlotUpdates(format, ps, matches))
-}
-
-// Carga el resultado de un partido: gana `winnerId` por 6-0 6-0.
-function play(matches: BracketSlotMatch[], id: string, winnerId: string): BracketSlotMatch[] {
-  return matches.map((m) => {
-    if (m.id !== id) return m
-    if (winnerId !== m.participantAId && winnerId !== m.participantBId) {
-      throw new Error(`${winnerId} no juega ${id}`)
-    }
-    return { ...m, winnerId, score: winnerId === m.participantAId ? "6-0 6-0" : "0-6 0-6" }
-  })
-}
-
-const get = (matches: BracketSlotMatch[], id: string) => matches.find((m) => m.id === id)!
-const slots = (m: BracketSlotMatch) => [m.participantAId, m.participantBId]
+import { computeSlotUpdates, isPanelGeneratedBracket, round1LosersIfComplete, type BracketSlotMatch } from "../syncBracketSlots"
+import { get, participants, play, slots, sync, toRows } from "./bracketTestUtils"
 
 describe("computeSlotUpdates — eliminación simple", () => {
-  // 10 inscriptos → cuadro de 16: 6 byes (seeds 1-6) + 2 partidos reales
-  // (7 vs 10, 8 vs 9) en la 1ª ronda.
+  // 10 inscriptos → cuadro de 16: 6 byes (seeds 1-6) + 2 partidos reales.
+  // 1ª ronda de arriba abajo: 1-bye | 8-9 | 4-bye | 5-bye | 6-bye | 3-bye | 7-10 | 2-bye.
   const ps = participants(10)
   const initial = toRows(generateBracket(ps, CIRCUITO_FORMAT_SPEC), "main")
 
   it("los byes de 1ª ronda avanzan solos", () => {
     const m = sync("single_elimination", ps, initial)
-    expect(slots(get(m, "main-2-0"))).toEqual(["p1", "p2"])
-    expect(slots(get(m, "main-2-1"))).toEqual(["p3", "p4"])
-    expect(slots(get(m, "main-2-2"))).toEqual(["p5", "p6"])
-    expect(slots(get(m, "main-2-3"))).toEqual([null, null])
+    expect(slots(get(m, "main-2-0"))).toEqual(["p1", null])
+    expect(slots(get(m, "main-2-1"))).toEqual(["p4", "p5"])
+    expect(slots(get(m, "main-2-2"))).toEqual(["p6", "p3"])
+    expect(slots(get(m, "main-2-3"))).toEqual([null, "p2"])
   })
 
   it("el ganador de un partido real avanza a su lugar", () => {
     let m = sync("single_elimination", ps, initial)
     m = sync("single_elimination", ps, play(m, "main-1-6", "p7"))
-    expect(slots(get(m, "main-2-3"))).toEqual(["p7", null])
+    expect(slots(get(m, "main-2-3"))).toEqual(["p7", "p2"])
   })
 
   it("corregir un resultado reemplaza al que avanzó y borra en cascada lo que ya había jugado", () => {
     let m = sync("single_elimination", ps, initial)
     m = sync("single_elimination", ps, play(m, "main-1-6", "p7"))
-    m = sync("single_elimination", ps, play(m, "main-1-7", "p8"))
+    m = sync("single_elimination", ps, play(m, "main-1-1", "p8"))
     m = sync("single_elimination", ps, play(m, "main-2-3", "p7"))
-    m = sync("single_elimination", ps, play(m, "main-2-2", "p5"))
+    m = sync("single_elimination", ps, play(m, "main-2-2", "p3"))
     m = sync("single_elimination", ps, play(m, "main-3-1", "p7"))
     expect(slots(get(m, "main-4-0"))).toEqual([null, "p7"])
 
     // Se corrige: en realidad ganó p10 en 1ª ronda.
     m = sync("single_elimination", ps, play(m, "main-1-6", "p10"))
-    expect(slots(get(m, "main-2-3"))).toEqual(["p10", "p8"])
+    expect(slots(get(m, "main-2-3"))).toEqual(["p10", "p2"])
     expect(get(m, "main-2-3").winnerId).toBeNull()
-    expect(slots(get(m, "main-3-1"))).toEqual(["p5", null])
+    expect(slots(get(m, "main-3-1"))).toEqual(["p3", null])
     expect(get(m, "main-3-1").winnerId).toBeNull()
     expect(slots(get(m, "main-4-0"))).toEqual([null, null])
   })
@@ -216,7 +158,7 @@ describe("round1LosersIfComplete", () => {
   })
 
   it("devuelve los perdedores (los byes no cuentan)", () => {
-    const m = play(play(initial, "main-1-6", "p7"), "main-1-7", "p9")
+    const m = play(play(initial, "main-1-6", "p7"), "main-1-1", "p9")
     expect(round1LosersIfComplete(m)?.sort()).toEqual(["p10", "p8"])
   })
 })
@@ -231,7 +173,7 @@ describe("isPanelGeneratedBracket", () => {
   it("lo sigue reconociendo con resultados cargados, lugares propagados y repechaje", () => {
     const ps = participants(10)
     let m = sync("single_elimination", ps, toRows(generateBracket(ps, CIRCUITO_FORMAT_SPEC), "main"))
-    m = sync("single_elimination", ps, play(play(m, "main-1-6", "p7"), "main-1-7", "p9"))
+    m = sync("single_elimination", ps, play(play(m, "main-1-6", "p7"), "main-1-1", "p9"))
     const repechaje = toRows(generateRepechaje("single_elimination", participants(2), CIRCUITO_FORMAT_SPEC)!, "repechaje")
     expect(isPanelGeneratedBracket(ps, [...m, ...repechaje], CIRCUITO_FORMAT_SPEC)).toBe(true)
   })

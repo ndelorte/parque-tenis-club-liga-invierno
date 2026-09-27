@@ -127,9 +127,25 @@ function buildGroupsThenKnockout(participants: CircuitoParticipant[]): CircuitoB
   return { format: "groups_then_knockout", rounds: [zoneMatches, semifinals, final] }
 }
 
+// Orden de las líneas del cuadro, de arriba abajo, expresado como posición
+// en el ranking (1 = mejor sembrado). Orden clásico que separa a los
+// mejores lo más posible (con 8: 1,8 | 4,5 | 3,6 | 2,7 por partido), con la
+// mitad de abajo espejada para que el 2 quede abajo de todo — ver
+// reglas-circuito-del-parque.md, "Ubicación en el cuadro".
+export function drawLineOrder(bracketSize: number): number[] {
+  let order = [1]
+  while (order.length < bracketSize) {
+    const size = order.length * 2
+    order = order.flatMap((rank) => [rank, size + 1 - rank])
+  }
+  const half = bracketSize / 2
+  return [...order.slice(0, half), ...order.slice(half).reverse()]
+}
+
 // Exportada para que generateRepechaje.ts reuse el mismo armado de
-// eliminación simple (byes a los mejores sembrados, resto emparejado de
-// mejor a peor cerrando hacia el medio) en vez de duplicar el algoritmo.
+// eliminación simple (mismo criterio de seeding/byes) en vez de duplicarlo.
+// Los lugares del ranking que exceden a los inscriptos son byes: por el
+// orden de líneas, siempre le tocan a los mejores sembrados.
 export function buildSingleElimination(
   participants: CircuitoParticipant[],
   byePolicy: ByePolicy,
@@ -138,34 +154,15 @@ export function buildSingleElimination(
     throw new Error(`byePolicy "${byePolicy}" no implementada`)
   }
 
-  const n = participants.length
-  const bracketSize = nextPowerOfTwo(n)
-  const byeCount = bracketSize - n
+  const bracketSize = nextPowerOfTwo(participants.length)
+  const lines = drawLineOrder(bracketSize)
 
-  const byeParticipants = participants.slice(0, byeCount)
-  const playing = participants.slice(byeCount)
-
-  const round1: BracketMatch[] = byeParticipants.map((p) => ({
-    round: 1,
-    group: null,
-    participantA: p,
-    participantB: null,
-    isBye: true,
-  }))
-
-  // Mejor sembrado restante vs peor sembrado restante, cerrando hacia el medio.
-  let lo = 0
-  let hi = playing.length - 1
-  while (lo < hi) {
-    round1.push({
-      round: 1,
-      group: null,
-      participantA: playing[lo],
-      participantB: playing[hi],
-      isBye: false,
-    })
-    lo++
-    hi--
+  const round1: BracketMatch[] = []
+  for (let i = 0; i < lines.length; i += 2) {
+    // El mejor sembrado del partido va como A: un bye es "A sin rival".
+    const better = participants[Math.min(lines[i], lines[i + 1]) - 1]
+    const worse = participants[Math.max(lines[i], lines[i + 1]) - 1] ?? null
+    round1.push({ round: 1, group: null, participantA: better, participantB: worse, isBye: worse === null })
   }
 
   const rounds: BracketMatch[][] = [round1]

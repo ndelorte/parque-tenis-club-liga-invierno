@@ -4,6 +4,7 @@ import { calculateRankingPoints, type CircuitoBracketMatchResult } from "@/lib/c
 import { selectDrawRule } from "@/lib/circuito/generateBracket"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
 import { isGrandSlamMonth } from "@/lib/circuito/pointsTable"
+import { CIRCUITO_FIXED_CATEGORIES } from "@/lib/circuito/fixedCategories"
 import type { CircuitoParticipant } from "@/lib/circuito/types"
 import type { CircuitoParticipantRow } from "./types"
 
@@ -165,6 +166,7 @@ export async function getAnnualCircuitRanking(
     .select("player_id, points, players(display_name), circuito_categories!inner(slug), circuito_editions!inner(year)")
     .eq("circuito_editions.year", year)
     .eq("circuito_categories.slug", categorySlug)
+    .gt("points", 0)
 
   const { data, error } = await query
   if (error || !data) return []
@@ -179,4 +181,25 @@ export async function getAnnualCircuitRanking(
   return [...totals.entries()]
     .map(([playerId, v]) => ({ playerId, playerName: v.name, points: v.points }))
     .sort((a, b) => b.points - a.points)
+}
+
+// Slugs de las categorías que tienen al menos un jugador con puntos en el
+// ranking del año — las demás no se muestran en /ranking ni en
+// /final-master. Un count por categoría (14 consultas livianas en paralelo)
+// en vez de traer todas las filas del año: esas superan el límite de 1000
+// filas por respuesta de PostgREST a medida que avanza el año.
+export async function getCircuitoCategorySlugsWithRanking(year: number): Promise<Set<string>> {
+  const supabase = await createClient()
+  const slugs = await Promise.all(
+    CIRCUITO_FIXED_CATEGORIES.map(async ({ slug }) => {
+      const { count, error } = await supabase
+        .from("circuito_ranking_points")
+        .select("id, circuito_categories!inner(slug), circuito_editions!inner(year)", { count: "exact", head: true })
+        .eq("circuito_editions.year", year)
+        .eq("circuito_categories.slug", slug)
+        .gt("points", 0)
+      return !error && (count ?? 0) > 0 ? slug : null
+    }),
+  )
+  return new Set(slugs.filter((slug): slug is string => slug !== null))
 }
