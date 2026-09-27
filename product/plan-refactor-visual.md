@@ -14,7 +14,8 @@
 | Identidad | **Base común Parque Tenis Club + sub-identidades por sección** (Liga Invierno, Liga Verano, Circuito, Especiales/Mid Master, Interparque). Charlable en la maqueta de la Fase 1. |
 | Home | Se diseña **y se programa en la Fase 1**, junto con la base: define la identidad que respetan las demás secciones. |
 | Modo oscuro | **Sí.** Sigue al sistema y hay un botón en el header. Aplica al sitio público. Mid Master (y Final Master) son oscuras siempre. Los paneles quedan en claro. |
-| Animaciones | **Sutiles, con la librería Motion.** Entradas al hacer scroll, transiciones entre pestañas/filtros, momentos puntuales (campeón, nieve/sol). Siempre respetando "reducir movimiento". |
+| Animaciones | **Sutiles, CSS primero** (criterio de Emil Kowalski): Motion solo para layout, salidas y springs. Un solo momento orquestado por página, nada de revelar secciones al scrollear en pantallas de uso diario, celebración reservada al campeón. Siempre respetando "reducir movimiento" (§3.5). |
+| Dirección de la home | **A "Marcador"**, en su versión refinada tras revisarla con las skills frontend-design, UI UX Pro Max y las de Emil Kowalski, y auditarla con web-design-guidelines (2026-09-27). Pendiente la aprobación final del humano. |
 | Invierno vs verano | La estación se **deriva del slug** de la edición en un helper de presentación (`liga-invierno-AAAA` / `liga-verano-AAAA-AAAA`). No se toca la base ni `lib/`. |
 | Paleta de la Liga | **Base verde/naranja de los logos LI/LV + un acento por estación**: invierno azul hielo + nieve; verano amarillo sol + luz/calor. |
 | Fotos | El humano **consigue fotos nuevas** (lista en §7). El diseño las aprovecha (carrusel, galerías). |
@@ -168,6 +169,8 @@ Qué **tomar de Córdoba Lawn** para cada sección (propuestas para las maquetas
 - Grillas de cards idénticas con ícono + título + párrafo ("bento" genérico).
 - Todo centrado, todo `rounded-2xl` con sombra suave, grises `zinc` por defecto.
 - Titulares vacíos ("Vive la experiencia…"). Los textos se dicen como los diría el club.
+- Señales que marca la skill `frontend-design`: fondo crema cerca de #F4F1EA con acento terracota; etiquetas en MAYÚSCULAS espaciadas sobre cada título; textos unidos con "·"; flechas "→" al final de links y botones; una sola palabra del título en otro color; numeración 01/02/03 si el contenido no es una secuencia; animación de entrada en cada sección.
+- **Audacia en un solo lugar**: cada pantalla tiene un elemento memorable (en la home, el tablero del hero) y el resto queda sobrio.
 
 **Lenguaje visual propio** (lo que reemplaza lo genérico): líneas de cancha como estructura (divisores, marcos, encabezados de tabla), textura/color de polvo de ladrillo, el amarillo de la pelota como detalle mínimo, números con aspecto de marcador (anchos fijos, tabulares), fotos reales del club.
 
@@ -206,9 +209,9 @@ Punto de partida para la maqueta (a ajustar):
 
 | Rol | Valor actual | Dirección propuesta |
 |---|---|---|
-| Principal | `brand` #2d8653 | Verde tomado del anillo del logo PTC (más oliva/profundo), con escala 50–950 |
-| Acento | `accent` #f47c2b | Naranja polvo de ladrillo del círculo del logo |
-| Fondo | #ffffff / `surface` #f9fafb | Blanco cálido / hueso en claro; verde casi negro en oscuro (no gris puro) |
+| Principal | `brand` #2d8653 | **Tablero** #1C3A2A (verde de tablero de tenis) + verde del logo #4E7A3D, con escala 50–950 |
+| Acento | `accent` #f47c2b | **Polvo** #D4622A para franjas; **polvo fuerte** #AF5122 para botones y links (contraste AA); **pelota** #D4E04A solo como punto de saque |
+| Fondo | #ffffff / `surface` #f9fafb | **Cal** #F4F6F2 (blanco levemente verdoso, como las líneas de la cancha; se descartó el hueso #F4F1EA por ser una señal de diseño generado) y superficies blancas; en oscuro, verde casi negro #0E1A13 |
 | Texto | #111827 / #6b7280 | Neutros cálidos (no `zinc`) |
 | Ganó / perdió / pendiente / WO | no hay tokens | Verde / rojo / amarillo / gris, con contraste AA en claro y oscuro |
 | Invierno | `winter` #4d90c4 | Azul hielo como acento de sección |
@@ -218,6 +221,10 @@ Punto de partida para la maqueta (a ajustar):
 
 ### 3.3 Tipografía
 
+**Con la dirección A: Barlow Condensed (títulos y marcadores, en mayúsculas) + Barlow (texto).** Es una sola familia, y es la pareja que UI UX Pro Max recomienda para deporte y competencia. Reemplaza a Geist. Las mayúsculas se usan solo en títulos y en el tablero, nunca en etiquetas.
+
+Opciones evaluadas en la maqueta F1:
+
 La maqueta de la Fase 1 muestra **tres parejas aplicadas a la misma pantalla** (hero de la home + tabla de posiciones + tarjeta de partido), para comparar en contexto:
 
 | Opción | Títulos | Texto | Carácter |
@@ -226,7 +233,7 @@ La maqueta de la Fase 1 muestra **tres parejas aplicadas a la misma pantalla** (
 | B — Contemporánea | Archivo, con Archivo Expanded en titulares | Archivo | Moderna y sobria, estilo El Prado |
 | C — Club clásico | Una serif editorial (ej. Fraunces) | Geist | Tradición e institución, estilo Córdoba Lawn |
 
-- **Números de resultados**: siempre `tabular-nums`. Se evalúa una mono (Geist Mono o JetBrains Mono) solo para marcadores.
+- **Números de resultados**: siempre `tabular-nums`, en Barlow Condensed (sin mono).
 - **Mid Master**: se decide si sigue con Playfair o si toma la serif de la opción C, para que Especiales y la base compartan familia.
 - Escala: `h1` con `clamp()` (≈ 36→64 px), `h2` ≈ 28→40, `h3` ≈ 20→24, texto 16 px, notas 14 px. Todo con `next/font` (sin CLS).
 
@@ -240,15 +247,40 @@ La maqueta de la Fase 1 muestra **tres parejas aplicadas a la misma pantalla** (
 
 ### 3.5 Movimiento
 
-- Librería `motion` (import `motion/react`), con `LazyMotion` + `domAnimation` y componentes `m.*` para que el peso sea mínimo. Solo en componentes cliente chicos: las páginas siguen siendo server components.
-- Primitivas en `components/motion/`:
-  - `Reveal`: entrada al hacer scroll; reemplaza a `MmReveal`.
-  - `Stagger`: filas de tabla y tarjetas en cascada, con retraso tope.
-  - `AnimatedTabs`: indicador que se desliza en los filtros de categoría.
-  - `Celebrate`: momento del campeón (brillo/escala una sola vez, sin confeti).
-- Decoraciones de estación: `Snowfall` (existe) y `SunGlow` (nueva, luz cálida que respira), ambas decorativas y con `aria-hidden`.
-- **Reducir movimiento**: `MotionConfig reducedMotion="user"` + `@media (prefers-reduced-motion)` para las animaciones CSS (nieve, marquee de sponsors).
-- **Límites**: nada de parallax pesado ni contadores animados; duraciones de 150–400 ms; nada se anima dos veces en la misma vista.
+Criterio de Emil Kowalski (skills `animate` y `review-animations`): **la herramienta más barata que funcione** y, antes que nada, si algo tiene que animarse o no.
+
+| Necesidad | Herramienta |
+|---|---|
+| Hover, presión, color, cambios de estado con una clase | Transición CSS |
+| Entrada al montar, sin JS | `@starting-style` |
+| Movimiento predeterminado que no debe trabarse mientras carga la página | Animación CSS |
+| Layout compartido, salidas, springs | `motion` (`motion/react`, `LazyMotion` + `domAnimation`), en componentes cliente chicos y con el `transform` completo, no con `x`/`y` |
+
+Tokens en `globals.css` (no se inventan otras curvas):
+
+```css
+--ease-out: cubic-bezier(0.23, 1, 0.32, 1);      /* entradas y salidas */
+--ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);  /* movimiento en pantalla */
+--ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);   /* menú del celular */
+```
+
+Qué se anima (aprobado en la maqueta F1):
+
+| Momento | Propósito | Cómo |
+|---|---|---|
+| Tablero del hero de la home | Único momento orquestado de la página | Animación CSS, `clip-path` de arriba hacia abajo, 360 ms `--ease-out`, 60 ms entre números, una sola vez |
+| Presión de botones y links con forma de botón | Respuesta | `:active { transform: scale(0.97) }`, 160 ms `--ease-out`; hover solo en `@media (hover: hover) and (pointer: fine)` |
+| Indicador del filtro de categoría | Indicar el estado | Copia recortada con `clip-path`, 250 ms `--ease-in-out` |
+| Serie de la Liga que abre sus 3 canchas | Indicar el estado | Transición de alto + opacidad, 200 ms, interrumpible |
+| Menú del celular | Continuidad espacial | Entra y sale por el mismo lado, 250 ms `--ease-drawer` |
+| Campeón (cuadro, edición cerrada) | Celebración: momento raro | `motion`, spring `{ duration: 0.5, bounce: 0.2 }`, la primera vez que entra en pantalla |
+| Nieve / luz de verano | Identidad de estación | Animación CSS decorativa, `aria-hidden`; se apaga con "reducir movimiento" |
+
+Qué **no** se anima: entradas de secciones al scrollear en pantallas de uso diario (tablas, fixture, ranking); filas de tablas en cascada (son datos que se leen); elevación de tarjetas al pasar el mouse; contadores; parallax.
+
+- **Reducir movimiento** = menos y más suave, no cero: se quitan desplazamientos y se dejan fundidos cortos. `MotionConfig reducedMotion="user"` para `motion`.
+- `MmReveal` se reemplaza por una entrada con `@starting-style` o por nada, según la pantalla.
+- **Límites**: UI ≤ 300 ms; nunca `transition: all`, `scale(0)` ni `ease-in`; solo `transform`, `opacity` y `clip-path`.
 
 ### 3.6 Componentes compartidos
 
@@ -279,7 +311,7 @@ Viven en `components/shared/`. Toman el color de la sección desde `--section-*`
 ### 4.1 Cómo se trabaja cada fase
 
 1. **Maqueta** — HTML autocontenido con 2–3 variantes y datos reales (copiados de producción o del mock). Se publica como página privada para verla en el celular y se guarda en `product/refactor-visual/maquetas/fase-N/`.
-2. **Auditoría** — antes de mostrarla, la maqueta se revisa con la skill `web-design-guidelines` (`.claude/skills/`, guías de interfaz de Vercel) + un chequeo de contraste AA de los pares de color. Se corrige lo que aplica a una maqueta; lo que es de implementación queda en el checklist §6.
+2. **Revisión y auditoría** — antes de mostrarla, la maqueta pasa por las skills de criterio (`frontend-design` y UI UX Pro Max para la dirección visual, las de Emil Kowalski para el movimiento; se leen de sus repositorios porque no están instaladas) y después se audita con la skill `web-design-guidelines` (`.claude/skills/`, guías de interfaz de Vercel) + un chequeo de contraste AA de los pares de color. Se corrige lo que aplica a una maqueta; lo que es de implementación queda en el checklist §6.
 3. **Ida y vuelta** — el humano elige y corrige. Las decisiones se anotan en §8 de este archivo.
 4. **Capturas aprobadas** en `product/refactor-visual/aprobado/fase-N/` (escritorio + 375 px, claro + oscuro).
 5. **Implementación** en una rama `feat/visual-fN-<tema>` desde `main`.
@@ -297,7 +329,7 @@ Las capturas del estado actual (antes de cada fase) van en `product/refactor-vis
 - Tokens de tres capas en `globals.css` (§3.2), con `@custom-variant dark` y los estados de resultado.
 - Fuentes nuevas en `app/layout.tsx` con `next/font`.
 - `next-themes`: `components/theme-provider.tsx` en el root layout y `components/theme-toggle.tsx` en el header.
-- `motion` + primitivas de `components/motion/` (`Reveal`, `Stagger`, `AnimatedTabs`); `MotionConfig reducedMotion="user"`.
+- Tokens de movimiento (§3.5) y clases CSS de presión y tablero; `motion` solo para el campeón y el indicador del filtro si la versión CSS no alcanza; `MotionConfig reducedMotion="user"`.
 - `components/shared/`: `SectionHero`, `EmptyState`, `CategoryFilter`, `StandingsTable`, `MatchCard`, `Score`/`ResultBadge`, `ChampionCard` (el `Bracket` va en la Fase 2, que es su primer uso real).
 - Layout de sección compartido: los tres `layout.tsx` idénticos pasan a usar un solo `components/layout/section-shell.tsx` (header + footer + `data-identity`).
 - `site-header` y `site-footer` rediseñados: logo, navegación, CTA WhatsApp, botón de tema, menú del celular animado. **Sin links a `/panel-*` y sin teléfonos.**
@@ -312,7 +344,7 @@ Las capturas del estado actual (antes de cada fase) van en `product/refactor-vis
 - Una tarjeta por actividad (Liga, Circuito, Interparque, clases/escuela) con el logo de cada una como "escudo" y un toque de su sub-identidad: reemplaza a `activities`, `winter-league`, `CircuitoPromo`, `InterparquePromo`. **`winter-league` deja de ser solo invierno**: muestra la edición de Liga activa (o la próxima) con su estación.
 - Opcionales, según la maqueta: bloque "el club en números", galería, sponsors, línea de tiempo de campeones.
 - `location-contact` y `whatsapp-fab` rediseñados.
-- Entradas con `Reveal`/`Stagger`.
+- Tablero del hero con el último resultado cargado de la Liga (dato real del servidor) y su animación de entrada (§3.5); el resto de la home sin animaciones de entrada.
 
 *Terminado*: home aprobada por el humano; en 375 px el CTA de WhatsApp está visible sin scrollear; LCP con la foto del hero optimizada (`next/image`, `priority`, `sizes`); checklist §6.
 
@@ -451,7 +483,8 @@ Se cierran en la maqueta de cada fase y se anotan acá con la fecha.
 - [x] ¿Modo oscuro? → **Sí, sistema + botón; Especiales siempre oscuro; paneles en claro** (2026-09-27).
 - [x] ¿Animaciones? → **Sutiles con Motion** (2026-09-27).
 - [x] ¿Cómo se marca la estación de la Liga? → **Helper que lee el slug, sin cambios de datos** (2026-09-27).
-- [ ] Tipografía: opción A, B o C (§3.3), y si Mid Master sigue con Playfair. → Maqueta F1.
+- [x] Dirección de la home → **A "Marcador", versión refinada** (2026-09-27; falta la aprobación final de la versión refinada).
+- [x] Tipografía → **Barlow Condensed + Barlow** (2026-09-27). Queda abierto si Mid Master sigue con Playfair.
 - [ ] Valores finales de la paleta (verde y naranja del logo, acentos de estación). → Maqueta F1.
 - [ ] ¿La home lleva carrusel en el hero o foto fija? → Maqueta F1, según las fotos que lleguen.
 - [ ] ¿Cómo se diferencian single y dobles en el Circuito? → Maqueta F2.
