@@ -64,6 +64,11 @@ El armado del cuadro **cambia según N** (cantidad de inscriptos ese mes). Esto 
   ranking formal (aunque el circuito ya existía por Challonge, sin ranking anual sistematizado),
   no hay ranking previo disponible. Ese primer torneo, los cabezas de serie los define
   **manualmente la coordinadora**.
+- **Dobles**: la pareja toma la posición en el ranking de su **mejor jugador** (respuesta del
+  organizador, 2026-09-27). Quien no tiene puntos en el ranking entra sin seed, después de los
+  sembrados.
+- **Cuándo se asigna**: al generar el cuadro, desde el ranking anual de esa categoría en ese
+  momento (con su desempate: menos torneos jugados, más torneos ganados).
 - **Ubicación en el cuadro (formato 8+, y repechaje)**: como en el tenis profesional, los
   cabezas de serie se reparten en lados contrarios para que los mejores se crucen lo más tarde
   posible — **el 1 arriba de todo, el 2 abajo de todo**, el 3 y el 4 en mitades distintas

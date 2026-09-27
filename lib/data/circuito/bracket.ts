@@ -3,7 +3,9 @@ import { generateBracket, selectDrawRule } from "@/lib/circuito/generateBracket"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
 import { computeSlotUpdates, type BracketSlotMatch } from "@/lib/circuito/syncBracketSlots"
 import type { CircuitoBracket, CircuitoParticipant, DrawFormatKind } from "@/lib/circuito/types"
+import { assignSeedsFromRanking } from "@/lib/circuito/assignSeedsFromRanking"
 import type { CircuitoMatchRow } from "./types"
+import { getAnnualCircuitRanking } from "./ranking"
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
@@ -85,6 +87,38 @@ export async function syncCircuitoBracketSlots(
   }
 }
 
+// Cabezas de serie desde el ranking vigente de la categoría
+// (reglas-circuito-del-parque.md, "Seeding"): el ranking del año de la
+// edición; si todavía no hay ranking de ese año, el final del año anterior.
+// Se guardan en circuito_participants.seed antes de armar el cuadro.
+async function assignSeedsForCategory(supabase: AdminClient, categoryId: string): Promise<void> {
+  const { data: category, error: categoryError } = await supabase
+    .from("circuito_categories")
+    .select("slug, circuito_editions!inner(year)")
+    .eq("id", categoryId)
+    .maybeSingle()
+  if (categoryError || !category) throw new Error("No se encontró la categoría.")
+  const year = (category as unknown as { circuito_editions: { year: number } }).circuito_editions.year
+
+  let ranking = await getAnnualCircuitRanking(year, category.slug)
+  if (ranking.entries.length === 0) ranking = await getAnnualCircuitRanking(year - 1, category.slug)
+
+  const { data: participantRows, error } = await supabase
+    .from("circuito_participants")
+    .select("id, player_id, player_2_id")
+    .eq("category_id", categoryId)
+  if (error) throw new Error(`Error al leer participantes: ${error.message}`)
+
+  const seeds = assignSeedsFromRanking(
+    (participantRows ?? []).map((p) => ({ id: p.id, playerId: p.player_id, player2Id: p.player_2_id })),
+    ranking.entries.map((e) => e.playerId),
+  )
+  for (const [participantId, seed] of seeds) {
+    const { error: seedError } = await supabase.from("circuito_participants").update({ seed }).eq("id", participantId)
+    if (seedError) throw new Error(`Error al asignar cabezas de serie: ${seedError.message}`)
+  }
+}
+
 export async function generateAndPersistCircuitoBracket(categoryId: string): Promise<void> {
   const supabase = createAdminClient()
 
@@ -96,6 +130,8 @@ export async function generateAndPersistCircuitoBracket(categoryId: string): Pro
   if (existing && existing.length > 0) {
     throw new Error("El cuadro de esta categoría ya fue generado.")
   }
+
+  await assignSeedsForCategory(supabase, categoryId)
 
   const { data: participantRows, error } = await supabase
     .from("circuito_participants")

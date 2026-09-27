@@ -15,6 +15,7 @@ interface Participant {
   display_name: string
   player_id: string | null
   player_2_id: string | null
+  seed: number | null
 }
 
 interface Player {
@@ -101,7 +102,14 @@ export function ParticipantsPanel({
         <ul className="mb-3 divide-y divide-border">
           {participants.map((p) => (
             <li key={p.id} className="flex items-center justify-between py-2">
-              <span className="text-sm text-foreground">{p.display_name}</span>
+              <span className="text-sm text-foreground">
+                {p.seed !== null && (
+                  <span className="mr-2 font-mono text-xs text-muted-foreground" title="Cabeza de serie">
+                    [{p.seed}]
+                  </span>
+                )}
+                {p.display_name}
+              </span>
               {!hasBracket && (
                 <button
                   onClick={() => handleRemove(p.id)}
@@ -145,6 +153,9 @@ export function ParticipantsPanel({
             <Button onClick={handleGenerate} disabled={loading || participants.length < 4} className="w-full">
               {loading ? "Generando..." : "Generar cuadro"}
             </Button>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Los cabezas de serie se asignan solos desde el ranking de la categoría al generar el cuadro.
+            </p>
             {participants.length < 4 && (
               <p className="mt-1.5 text-xs text-muted-foreground">
                 Mínimo 4 inscriptos para que la categoría se juegue este mes.
