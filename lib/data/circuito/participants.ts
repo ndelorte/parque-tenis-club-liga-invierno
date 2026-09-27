@@ -63,6 +63,15 @@ export async function addCircuitoParticipant(input: {
   }
 
   const playerIds = input.player2Id ? [input.playerId, input.player2Id] : [input.playerId]
+
+  const { data: inscribed } = await supabase
+    .from("circuito_participants")
+    .select("player_id, player_2_id")
+    .eq("category_id", input.categoryId)
+  const alreadyIn = (inscribed ?? []).some(
+    (p) => playerIds.includes(p.player_id ?? "") || playerIds.includes(p.player_2_id ?? ""),
+  )
+  if (alreadyIn) throw new Error("Ese jugador ya está inscripto en esta categoría.")
   const { data: players, error: playersError } = await supabase
     .from("players")
     .select("id, display_name")

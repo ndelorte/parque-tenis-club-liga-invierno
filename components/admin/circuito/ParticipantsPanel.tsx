@@ -8,10 +8,13 @@ import {
   generateCircuitoBracketAction,
 } from "@/app/actions/circuito"
 import { Button } from "@/components/ui/button"
+import { PlayerCombobox } from "@/components/admin/PlayerCombobox"
 
 interface Participant {
   id: string
   display_name: string
+  player_id: string | null
+  player_2_id: string | null
 }
 
 interface Player {
@@ -42,6 +45,11 @@ export function ParticipantsPanel({
   const [player2Id, setPlayer2Id] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  // Se incrementa para vaciar los autocompletar después de agregar.
+  const [resetKey, setResetKey] = useState(0)
+
+  // Quien ya está inscripto en la categoría no se sugiere de nuevo.
+  const inscribedIds = participants.flatMap((p) => [p.player_id, p.player_2_id]).filter((id): id is string => !!id)
 
   const isDobles = categoryType === "dobles"
   const canAdd = playerId && (!isDobles || (player2Id && player2Id !== playerId))
@@ -60,6 +68,7 @@ export function ParticipantsPanel({
     if (result.ok) {
       setPlayerId("")
       setPlayer2Id("")
+      setResetKey((k) => k + 1)
     } else {
       setError(result.error)
     }
@@ -111,31 +120,21 @@ export function ParticipantsPanel({
       {!hasBracket && (
         <>
           <div className="flex flex-wrap gap-2">
-            <select
-              value={playerId}
-              onChange={(e) => setPlayerId(e.target.value)}
-              className="flex h-9 min-w-[10rem] flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-            >
-              <option value="">{isDobles ? "Jugador/a 1" : "Elegir jugador/a"}</option>
-              {players.map((p) => (
-                <option key={p.id} value={p.id} disabled={p.id === player2Id}>
-                  {p.displayName}
-                </option>
-              ))}
-            </select>
+            <PlayerCombobox
+              key={`p1-${resetKey}`}
+              players={players}
+              onChange={setPlayerId}
+              placeholder={isDobles ? "Jugador/a 1 — escribí nombre o apellido" : "Escribí nombre o apellido"}
+              excludeIds={[...inscribedIds, player2Id].filter(Boolean)}
+            />
             {isDobles && (
-              <select
-                value={player2Id}
-                onChange={(e) => setPlayer2Id(e.target.value)}
-                className="flex h-9 min-w-[10rem] flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-              >
-                <option value="">Jugador/a 2</option>
-                {players.map((p) => (
-                  <option key={p.id} value={p.id} disabled={p.id === playerId}>
-                    {p.displayName}
-                  </option>
-                ))}
-              </select>
+              <PlayerCombobox
+                key={`p2-${resetKey}`}
+                players={players}
+                onChange={setPlayer2Id}
+                placeholder="Jugador/a 2 — escribí nombre o apellido"
+                excludeIds={[...inscribedIds, playerId].filter(Boolean)}
+              />
             )}
             <Button onClick={handleAdd} disabled={loading || !canAdd} size="sm">
               Agregar
