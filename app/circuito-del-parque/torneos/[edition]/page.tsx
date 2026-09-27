@@ -1,9 +1,16 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, ArrowRight } from "lucide-react"
 import { getCircuitoEditionBySlug } from "@/lib/data/circuito/editions"
 import { getCircuitoCategoriesForEdition } from "@/lib/data/circuito/categories"
+import { getCircuitoParticipants } from "@/lib/data/circuito/participants"
+import { getCircuitoMatches } from "@/lib/data/circuito/matches"
+import { categoryStatus, formatLabel } from "@/lib/circuito/categoryStatus"
+import { isGrandSlamMonth } from "@/lib/circuito/pointsTable"
+import { MONTH_NAMES } from "@/lib/circuito/seasonCalendar"
+import { CategoryColumn, DoubleRacquetIcon, SingleRacquetIcon, type CategoryListItem } from "@/components/circuito/category-list"
+import { CategoryModeSwitch } from "@/components/circuito/category-mode-switch"
+import type { CircuitoCategoryRow } from "@/lib/data/circuito/types"
 
 export async function generateMetadata({
   params,
@@ -15,6 +22,40 @@ export async function generateMetadata({
   return { title: ed ? `${ed.name} | Circuito del Parque` : "Circuito del Parque" }
 }
 
+// "Campeón"/"Campeona"/"Campeones" según la categoría — dato de presentación
+// (no una regla deportiva): dobles siempre es una pareja ("Campeones"),
+// single femenino "Campeona", el resto "Campeón".
+function championWord(category: Pick<CircuitoCategoryRow, "type" | "name">): string {
+  if (category.type === "dobles") return "Campeones"
+  return category.name.includes("Damas") ? "Campeona" : "Campeón"
+}
+
+async function toListItem(category: CircuitoCategoryRow): Promise<CategoryListItem> {
+  const [participants, matches] = await Promise.all([
+    getCircuitoParticipants(category.id),
+    getCircuitoMatches(category.id),
+  ])
+  const names = Object.fromEntries(participants.map((p) => [p.id, { name: p.display_name, seed: p.seed }]))
+  const status = categoryStatus(category.draw_size ?? 0, matches, names)
+
+  const statusText =
+    status.kind === "finished"
+      ? `${championWord(category)}: ${status.champion}`
+      : status.kind === "live"
+        ? status.label
+        : "Por definir"
+  const statusTone = status.kind === "finished" ? "done" : status.kind === "live" ? "live" : "pending"
+
+  return {
+    slug: category.slug,
+    name: category.name,
+    formatText: formatLabel(category.draw_size ?? 0),
+    countText: `${category.draw_size} ${category.type === "single" ? "inscriptos" : "parejas"}`,
+    statusText,
+    statusTone,
+  }
+}
+
 export default async function CircuitoTorneoPage({
   params,
 }: {
@@ -24,59 +65,47 @@ export default async function CircuitoTorneoPage({
   const edition = await getCircuitoEditionBySlug(editionSlug)
   if (!edition) notFound()
 
-  // Solo las categorías que se juegan este mes (tienen cuadro armado). Las
-  // que no, no se muestran; y si no queda ninguna de un tipo, su recuadro
-  // tampoco (CategoryGroup devuelve null con la lista vacía).
+  // Solo las categorías que se juegan este mes (tienen cuadro armado).
   const categories = (await getCircuitoCategoriesForEdition(edition.id)).filter((c) => c.draw_size)
-  const singles = categories.filter((c) => c.type === "single")
-  const dobles = categories.filter((c) => c.type === "dobles")
+  const [singleItems, doblesItems] = await Promise.all([
+    Promise.all(categories.filter((c) => c.type === "single").map(toListItem)),
+    Promise.all(categories.filter((c) => c.type === "dobles").map(toListItem)),
+  ])
+
+  const grandSlam = isGrandSlamMonth(edition.month)
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <Link href="/circuito-del-parque" className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="size-3.5" />
-        Circuito del Parque
-      </Link>
-
-      <h1 className="mb-6 font-heading text-2xl font-bold text-foreground sm:text-3xl">{edition.name}</h1>
-
-      {categories.length === 0 && (
-        <p className="text-sm text-muted-foreground">Todavía no hay categorías con cuadro armado para este torneo.</p>
-      )}
-      <CategoryGroup title="Single" categories={singles} editionSlug={editionSlug} />
-      <CategoryGroup title="Dobles" categories={dobles} editionSlug={editionSlug} />
-    </main>
-  )
-}
-
-function CategoryGroup({
-  title,
-  categories,
-  editionSlug,
-}: {
-  title: string
-  categories: Array<{ id: string; name: string; slug: string; draw_size: number | null }>
-  editionSlug: string
-}) {
-  if (categories.length === 0) return null
-  return (
-    <div className="mb-8">
-      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">{title}</p>
-      <div className="space-y-px overflow-hidden rounded-lg border border-border">
-        {categories.map((cat) => (
-          <Link
-            key={cat.id}
-            href={`/circuito-del-parque/torneos/${editionSlug}/${cat.slug}`}
-            className="group flex items-center justify-between bg-card px-4 py-3 transition-colors hover:bg-muted"
-          >
-            <div>
-              <p className="text-sm font-medium text-foreground">{cat.name}</p>
-              <p className="text-xs text-muted-foreground">{cat.draw_size} inscriptos</p>
-            </div>
-            <ArrowRight className="size-4 text-muted-foreground transition-colors group-hover:text-foreground" />
+    <main>
+      <section className="court-stripe-header px-4 py-11 text-board-foreground sm:px-6 lg:px-8 lg:py-14">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3">
+          <Link href="/circuito-del-parque" className="self-start text-[15px] font-semibold no-underline hover:underline">
+            Temporada {edition.year}
           </Link>
-        ))}
+          <h1 className="font-heading text-7xl font-extrabold uppercase leading-[0.85] sm:text-8xl lg:text-[9rem]">
+            {edition.name}
+          </h1>
+          <p className="text-base sm:text-lg">
+            {MONTH_NAMES[edition.month - 1]} {edition.year}
+            {grandSlam && ". Grand Slam: puntos dobles para el ranking."}
+          </p>
+        </div>
+      </section>
+
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+        {categories.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Todavía no hay categorías con cuadro armado para este torneo.</p>
+        ) : (
+          <>
+            <div className="hidden gap-14 lg:grid lg:grid-cols-2">
+              <CategoryColumn title="Single" icon={<SingleRacquetIcon className="size-8" />} items={singleItems} editionSlug={editionSlug} />
+              <CategoryColumn title="Dobles" icon={<DoubleRacquetIcon className="size-8" />} items={doblesItems} editionSlug={editionSlug} />
+            </div>
+            <div className="lg:hidden">
+              <CategoryModeSwitch single={singleItems} dobles={doblesItems} editionSlug={editionSlug} />
+            </div>
+          </>
+        )}
       </div>
-    </div>
+    </main>
   )
 }

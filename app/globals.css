@@ -52,9 +52,14 @@
   --court-net: #141414; /* red y bordes del Circuito */
   --court-line: rgb(255 255 255 / 0.85);
   --clay-light: #e8844f; /* polvo claro: íconos y acentos sobre verde tablero */
+  --court-clay: #af5122; /* polvo de la franja de cancha: fijo en claro y oscuro, --accent en .dark es un naranja claro que no llega a AA con texto claro encima */
 
   --board: #1c3a2a; /* header, footer y tableros */
   --board-foreground: #f4f6f2;
+
+  --draw-line: #141414; /* líneas y bordes del cuadro (Circuito) */
+  --clay-soft: #f6e3d7; /* meses jugados no Grand Slam (calendario de temporada) */
+  --clay-soft-border: #e9c4ad;
 
   --win: #1f6b37;
   --win-soft: #e2f0e5;
@@ -112,6 +117,10 @@
 
   --board: #13241a;
   --board-foreground: #eef1ec;
+
+  --draw-line: #8a978e;
+  --clay-soft: #3a2217;
+  --clay-soft-border: #5a3322;
 
   --win: #7fcf8f;
   --win-soft: #16321f;
@@ -176,8 +185,12 @@
   --color-court-net: var(--court-net);
   --color-court-line: var(--court-line);
   --color-clay-light: var(--clay-light);
+  --color-court-clay: var(--court-clay);
   --color-board: var(--board);
   --color-board-foreground: var(--board-foreground);
+  --color-draw-line: var(--draw-line);
+  --color-clay-soft: var(--clay-soft);
+  --color-clay-soft-border: var(--clay-soft-border);
   --color-win: var(--win);
   --color-win-soft: var(--win-soft);
   --color-loss: var(--loss);
@@ -270,6 +283,123 @@ h3 {
   .board-flip {
     animation: fade-in 200ms ease both;
   }
+}
+
+/* ── Circuito del Parque: franja de cancha (polvo fuerte + líneas) ────────── */
+.court-stripe {
+  background-color: var(--color-court-clay);
+  background-image:
+    linear-gradient(
+      90deg,
+      transparent calc(50% - 1px),
+      var(--color-draw-line) calc(50% - 1px),
+      var(--color-draw-line) calc(50% + 1px),
+      transparent calc(50% + 1px)
+    ),
+    linear-gradient(
+      transparent 14px,
+      var(--color-court-line) 14px,
+      var(--color-court-line) 16px,
+      transparent 16px,
+      transparent calc(100% - 16px),
+      var(--color-court-line) calc(100% - 16px),
+      var(--color-court-line) calc(100% - 14px),
+      transparent calc(100% - 14px)
+    );
+}
+
+/* Variante para franjas de encabezado con título enorme encima (p. ej. el
+   nombre del torneo): por debajo de 1024px la línea vertical de la red
+   cruzaría el texto, así que se oculta y queda solo la textura horizontal. */
+.court-stripe-header {
+  background-color: var(--color-court-clay);
+  background-image:
+    linear-gradient(
+      transparent 14px,
+      var(--color-court-line) 14px,
+      var(--color-court-line) 16px,
+      transparent 16px,
+      transparent calc(100% - 16px),
+      var(--color-court-line) calc(100% - 16px),
+      var(--color-court-line) calc(100% - 14px),
+      transparent calc(100% - 14px)
+    );
+}
+@media (min-width: 1024px) {
+  .court-stripe-header {
+    background-image:
+      linear-gradient(
+        90deg,
+        transparent calc(50% - 1px),
+        var(--color-draw-line) calc(50% - 1px),
+        var(--color-draw-line) calc(50% + 1px),
+        transparent calc(50% + 1px)
+      ),
+      linear-gradient(
+        transparent 14px,
+        var(--color-court-line) 14px,
+        var(--color-court-line) 16px,
+        transparent 16px,
+        transparent calc(100% - 16px),
+        var(--color-court-line) calc(100% - 16px),
+        var(--color-court-line) calc(100% - 14px),
+        transparent calc(100% - 14px)
+      );
+  }
+}
+
+/* Insignia chica de Grand Slam (calendario de temporada, ranking). */
+.gs-badge {
+  background-color: var(--color-court-clay);
+  background-image:
+    linear-gradient(
+      90deg,
+      transparent calc(50% - 1px),
+      var(--color-draw-line) calc(50% - 1px),
+      var(--color-draw-line) calc(50% + 1px),
+      transparent calc(50% + 1px)
+    ),
+    linear-gradient(transparent 12px, var(--color-court-line) 12px, var(--color-court-line) 14px, transparent 14px);
+}
+
+/* Cuadro horizontal del Circuito (árbol de eliminación, escritorio) —
+   conectores con pseudo-elementos, sin SVG ni cálculo en JS: funciona en
+   server components y con cualquier cantidad de rondas. Ver
+   components/circuito/bracket-tree.tsx. */
+.bracket-round-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.bracket-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  position: relative;
+}
+.bracket-group.is-pair::after {
+  content: "";
+  position: absolute;
+  right: -16px;
+  top: 25%;
+  bottom: 25%;
+  width: 16px;
+  border: 2px solid var(--color-draw-line);
+  border-left: 0;
+  border-radius: 0 3px 3px 0;
+}
+.bracket-match {
+  position: relative;
+  margin: 5px 0;
+}
+.bracket-col-fed .bracket-match::before {
+  content: "";
+  position: absolute;
+  left: -17.5px;
+  top: 50%;
+  width: 16px;
+  border-top: 2px solid var(--color-draw-line);
 }
 
 /* ── Animaciones existentes (se revisan en la fase de cada pantalla) ──────── */
