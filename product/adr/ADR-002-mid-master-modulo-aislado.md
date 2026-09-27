@@ -1,4 +1,4 @@
-# ADR-002: Mid Master como módulo aislado (prefijo `mm_`, sin reuso de `lib/tournament/`)
+# ADR-002: Mid Master como módulo aislado (prefijo `mid_master_`, sin reuso de `lib/tournament/`)
 
 Status: Accepted
 
@@ -18,16 +18,21 @@ ganados y no tiene WO).
 
 ## Decisión
 
-- Tablas Supabase con prefijo `mm_` — aislamiento total del esquema de Liga
-  de Invierno a nivel de base de datos.
+- Tablas Supabase con prefijo `mid_master_` — aislamiento total del esquema
+  de Liga de Invierno a nivel de base de datos. (Corrección 2026-09-07: el
+  prefijo real en el código y la base es `mid_master_`; este documento decía
+  `mm_` por error desde su redacción original — ver auditoría en
+  `product/plan-liga-multitemporada-y-circuito.md` §1.2.1.)
 - Lógica deportiva propia en `lib/mid-master/`. No reutiliza
   `lib/tournament/`, con una única excepción: `parseScore` (función pura,
   sin estado, sin reglas de negocio — solo parsea un string de score).
 - Acceso a datos en `lib/data/mid-master/` (`index.ts`, `types.ts`),
   paralelo a `lib/data/` de Liga de Invierno pero sin compartir queries.
 - UI separada: `components/mid-master/`, `components/admin/mid-master/`.
-- Rutas públicas bajo `app/mid-master/`, panel admin en `app/panel-master/`
-  — mismo Supabase Auth y mismo `isAdminUser()` que `panel-parque`
+- Rutas públicas bajo `app/mid-master/`, panel admin en `app/panel-circuito/`
+  (renombrado de `panel-master` en Sprint C1 — ver
+  [ADR-003](./ADR-003-rename-paneles-liga-circuito.md)) — mismo Supabase Auth
+  y mismo `isAdminUser()` que `panel-liga`
   (ver [ADR-001](./ADR-001-rename-admin-a-panel-parque.md)), pero rutas y
   matcher separados.
 - Los jugadores sí se comparten (tabla `players`) — un jugador puede

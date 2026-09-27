@@ -479,6 +479,7 @@ const dobleMixtoSegunda: MmCategory = {
 
 export const MID_MASTER_EDITION: MmEdition = {
   id: "mm-2026",
+  slug: "mid-master-2026",
   name: "Mid Master",
   year: 2026,
   status: "active",

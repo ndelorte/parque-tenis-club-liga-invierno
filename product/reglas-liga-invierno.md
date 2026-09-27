@@ -101,6 +101,11 @@ Ejemplo de score completo:
 
 Ocurre cuando un equipo **no se presenta a la serie completa**.
 
+Las **3 canchas** de la serie se registran como **6-0 6-0** a favor del equipo presente. Si la
+serie ya tenía resultados cargados y se convierte en WO general, esos resultados se reemplazan
+todos por 6-0 6-0 (respuesta a OQ-08, 2026-09-27). Así el detalle de canchas coincide con lo
+que computa la tabla (3 canchas, 6 sets y 36 games).
+
 ### Computa para el equipo ganador:
 
 | Estadística | Valor |
@@ -176,7 +181,7 @@ Dentro de esa mini-tabla se aplica el mismo orden de criterios:
 5c. Diferencia de games en enfrentamientos directos
 ```
 
-Si al aplicar 5a–5c sigue el empate, queda sin resolver (pendiente definición de criterio final — ver OQ-03 actualizado).
+Si al aplicar 5a–5c sigue el empate, se define por **sorteo** (respuesta a OQ-03b, 2026-09-27).
 
 **Para 2 equipos empatados**: se comparan solo las 2 series jugadas entre ellos (ida y vuelta).
 

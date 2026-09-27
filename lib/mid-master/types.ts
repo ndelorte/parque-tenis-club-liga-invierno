@@ -74,6 +74,7 @@ export interface MmCategory {
 
 export interface MmEdition {
   id: string
+  slug: string
   name: string
   year: number
   status: "upcoming" | "active" | "finished"

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { isAdminUser } from "@/lib/auth/admin"
+import { generalWalkoverCourts } from "@/lib/tournament/generalWalkoverCourts"
 import { resolveSeriesWinner } from "@/lib/tournament/calculateSeriesResult"
 import { recalculateAndPersistStandings } from "@/lib/data/standings"
 import { isCategoryReadyToClose } from "@/lib/tournament/isCategoryReadyToClose"
@@ -342,7 +343,7 @@ export async function saveTeamPlayers(
       await supabase.from("teams").update({ captain_name: captainName }).eq("id", teamId)
     }
 
-    revalidatePath("/panel-parque")
+    revalidatePath("/panel-liga")
     revalidatePath("/ligas-invierno-verano", "layout")
     return { success: true }
   } catch (e) {
@@ -406,8 +407,31 @@ export async function saveSeriesResult(
         })
         .eq("id", input.seriesId)
 
+      // Las 3 canchas pasan a 6-0 6-0 a favor del presente, aunque la serie
+      // ya tuviera resultados cargados (reglas-liga-invierno.md, OQ-08). Los
+      // jugadores que ya estuvieran asignados se conservan.
+      for (const court of generalWalkoverCourts(input.walkoverWinnerId, input.homeTeamId)) {
+        const courtResult = {
+          score: court.score,
+          winner_team_id: court.winnerTeamId,
+          is_court_walkover: false,
+        }
+        const { data: existing } = await supabase
+          .from("court_matches")
+          .select("id")
+          .eq("series_id", input.seriesId)
+          .eq("court_number", court.courtNumber)
+          .maybeSingle()
+        const { error: courtError } = existing
+          ? await supabase.from("court_matches").update(courtResult).eq("id", (existing as any).id)
+          : await supabase
+              .from("court_matches")
+              .insert({ series_id: input.seriesId, court_number: court.courtNumber, ...courtResult })
+        if (courtError) return { success: false, error: courtError.message }
+      }
+
       if (categoryId && isRegularPhase) await recalculateAndPersistStandings(categoryId)
-      revalidatePath("/panel-parque")
+      revalidatePath("/panel-liga")
       revalidatePath("/ligas-invierno-verano", "layout")
       return { success: true }
     }
@@ -467,7 +491,7 @@ export async function saveSeriesResult(
       .eq("id", input.seriesId)
 
     if (categoryId && isRegularPhase) await recalculateAndPersistStandings(categoryId)
-    revalidatePath("/panel-parque")
+    revalidatePath("/panel-liga")
     revalidatePath("/ligas-invierno-verano", "layout")
     return { success: true }
   } catch (e) {
@@ -688,7 +712,7 @@ export async function createQuarterFinalSeries(
 
       if (updateError) return { success: false, error: updateError.message }
 
-      revalidatePath("/panel-parque")
+      revalidatePath("/panel-liga")
       revalidatePath("/ligas-invierno-verano", "layout")
       return { success: true, seriesId: (existingSeries as any).id }
     }
@@ -712,7 +736,7 @@ export async function createQuarterFinalSeries(
       return { success: false, error: seriesError?.message ?? "Error al crear la serie" }
     }
 
-    revalidatePath("/panel-parque")
+    revalidatePath("/panel-liga")
     revalidatePath("/ligas-invierno-verano", "layout")
     return { success: true, seriesId: (newSeries as any).id }
   } catch (e) {
@@ -772,7 +796,7 @@ export async function upsertPlayoffSeries(params: {
         .eq("id", existingSeriesId)
         .eq("category_id", categoryId)
       if (error) return { success: false, error: error.message }
-      revalidatePath("/panel-parque")
+      revalidatePath("/panel-liga")
       revalidatePath("/ligas-invierno-verano", "layout")
       return { success: true, seriesId: existingSeriesId }
     }
@@ -814,7 +838,7 @@ export async function upsertPlayoffSeries(params: {
 
     if (existingSeries) {
       await supabase.from("series").update({ scheduled_date: scheduledDate, scheduled_time: scheduledTime }).eq("id", (existingSeries as any).id)
-      revalidatePath("/panel-parque")
+      revalidatePath("/panel-liga")
       revalidatePath("/ligas-invierno-verano", "layout")
       return { success: true, seriesId: (existingSeries as any).id }
     }
@@ -835,7 +859,7 @@ export async function upsertPlayoffSeries(params: {
       .single()
 
     if (seriesError || !newSeries) return { success: false, error: seriesError?.message ?? "Error al crear la serie" }
-    revalidatePath("/panel-parque")
+    revalidatePath("/panel-liga")
     revalidatePath("/ligas-invierno-verano", "layout")
     return { success: true, seriesId: (newSeries as any).id }
   } catch (e) {
@@ -856,7 +880,7 @@ export async function recalculateStandingsForCategory(
 
   try {
     await recalculateAndPersistStandings(categoryId)
-    revalidatePath("/panel-parque")
+    revalidatePath("/panel-liga")
     revalidatePath("/ligas-invierno-verano", "layout")
     return { success: true }
   } catch (e) {
@@ -910,7 +934,7 @@ export async function updateSeriesSchedule(
       })
       .eq("id", seriesId)
 
-    revalidatePath("/panel-parque")
+    revalidatePath("/panel-liga")
     revalidatePath("/ligas-invierno-verano", "layout")
     return { success: true }
   } catch (e) {
@@ -1005,7 +1029,7 @@ export async function closeTournament(
     return { success: false, error: "No se pudo cerrar la temporada" }
   }
 
-  revalidatePath("/panel-parque")
+  revalidatePath("/panel-liga")
   revalidatePath("/ligas-invierno-verano", "layout")
   return { success: true }
 }

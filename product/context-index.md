@@ -28,7 +28,7 @@ tener que abrirlos todos para saber cuál corresponde antes de tocar código.
 
 | Si la tarea toca... | Leer |
 |---|---|
-| Esquema de tablas Supabase (Liga de Invierno + Mid Master + Interparque) | `modelo-datos.md` |
+| Esquema de tablas Supabase (Liga de Invierno + Mid Master + Interparque + Circuito del Parque) | `modelo-datos.md` |
 | Por qué se tomó una decisión estructural (rename de rutas, aislamiento de un módulo, etc.) | `adr/README.md` y el ADR correspondiente |
 | Principios generales de desarrollo (no reglas deportivas) | `reglas.md` |
 

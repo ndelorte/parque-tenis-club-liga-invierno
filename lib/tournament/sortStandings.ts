@@ -128,6 +128,9 @@ function sortByH2H(
     if (bH2H.courts_diff !== aH2H.courts_diff) return bH2H.courts_diff - aH2H.courts_diff;
     if (bH2H.sets_diff !== aH2H.sets_diff) return bH2H.sets_diff - aH2H.sets_diff;
     if (bH2H.games_diff !== aH2H.games_diff) return bH2H.games_diff - aH2H.games_diff;
+    // Empate total después de 5a–5c: se define por sorteo (reglas-liga-invierno.md,
+    // OQ-03b). El sorteo lo hace el organizador y no es aleatorio acá — la
+    // tabla se recalcula en cada resultado y tiene que dar siempre lo mismo.
     return 0;
   });
 }

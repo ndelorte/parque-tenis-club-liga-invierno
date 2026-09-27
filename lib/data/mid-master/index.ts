@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { calculateZoneStandings } from "@/lib/mid-master/calculateZoneStandings"
 import type {
   DbMmCategory,
+  DbMmEdition,
   DbMmGroup,
   DbMmMatch,
   DbMmParticipant,
@@ -42,11 +43,42 @@ function getMatchStatus(row: AnyRow): string {
   return row.status ?? "pending"
 }
 
+// ── Editions ──────────────────────────────────────────────────────────────────
+
+export async function getMmEditions(): Promise<DbMmEdition[]> {
+  const sb = await supabase()
+  const { data, error } = await sb.from("mid_master_editions").select("*")
+  if (error) { logError("getMmEditions", error); return [] }
+  return ((data as DbMmEdition[]) ?? []).sort((a, b) => b.year - a.year)
+}
+
+export async function getMmEditionBySlug(slug: string): Promise<DbMmEdition | null> {
+  const sb = await supabase()
+  const { data, error } = await sb.from("mid_master_editions").select("*").eq("slug", slug).maybeSingle()
+  if (error) { logError("getMmEditionBySlug", error); return null }
+  return (data as DbMmEdition) ?? null
+}
+
+// Ediciones "activas" (en curso) — hoy solo puede haber una a la vez, mismo
+// criterio que getActiveTournament() de Liga.
+export async function getMmActiveEdition(): Promise<DbMmEdition | null> {
+  const sb = await supabase()
+  const { data, error } = await sb
+    .from("mid_master_editions")
+    .select("*")
+    .eq("status", "active")
+    .order("year", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) { logError("getMmActiveEdition", error); return null }
+  return (data as DbMmEdition) ?? null
+}
+
 // ── Raw DB queries ────────────────────────────────────────────────────────────
 
-export async function getMmCategories(): Promise<DbMmCategory[]> {
+export async function getMmCategories(editionId: string): Promise<DbMmCategory[]> {
   const sb = await supabase()
-  const { data, error } = await sb.from("mid_master_categories").select("*")
+  const { data, error } = await sb.from("mid_master_categories").select("*").eq("edition_id", editionId)
   if (error) { logError("getMmCategories", error); return [] }
   if (!data?.length) return []
   return (data as DbMmCategory[]).sort((a, b) => {
@@ -56,9 +88,14 @@ export async function getMmCategories(): Promise<DbMmCategory[]> {
   })
 }
 
-export async function getMmCategoryBySlug(slug: string): Promise<DbMmCategory | null> {
+export async function getMmCategoryBySlug(editionId: string, slug: string): Promise<DbMmCategory | null> {
   const sb = await supabase()
-  const { data, error } = await sb.from("mid_master_categories").select("*").eq("slug", slug).maybeSingle()
+  const { data, error } = await sb
+    .from("mid_master_categories")
+    .select("*")
+    .eq("edition_id", editionId)
+    .eq("slug", slug)
+    .maybeSingle()
   if (error) { logError("getMmCategoryBySlug", error); return null }
   return (data as DbMmCategory) ?? null
 }
@@ -232,23 +269,23 @@ async function buildCategory(cat: DbMmCategory): Promise<MmCategory | null> {
 
 // ── Public composite queries ──────────────────────────────────────────────────
 
-export async function getMmCategoriesForPublic(): Promise<MmCategory[]> {
-  const categories = await getMmCategories()
+export async function getMmCategoriesForPublic(editionId: string): Promise<MmCategory[]> {
+  const categories = await getMmCategories(editionId)
   if (!categories.length) return []
   const results = await Promise.all(categories.map(buildCategory))
   return results.filter((r): r is MmCategory => r !== null)
 }
 
-export async function getMmCategoryForPublic(slug: string): Promise<MmCategory | null> {
-  const cat = await getMmCategoryBySlug(slug)
+export async function getMmCategoryForPublic(editionId: string, slug: string): Promise<MmCategory | null> {
+  const cat = await getMmCategoryBySlug(editionId, slug)
   if (!cat) return null
   return buildCategory(cat)
 }
 
 // ── Admin composite query ─────────────────────────────────────────────────────
 
-export async function getMmCategoryAdminData(slug: string): Promise<MmCategoryAdminData | null> {
-  const cat = await getMmCategoryBySlug(slug)
+export async function getMmCategoryAdminData(editionId: string, slug: string): Promise<MmCategoryAdminData | null> {
+  const cat = await getMmCategoryBySlug(editionId, slug)
   if (!cat) return null
 
   const [groups, allParticipants, matches] = await Promise.all([

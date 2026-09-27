@@ -1,12 +1,15 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { isRequestFromAdmin } from "@/lib/auth/requireAdmin"
 import { redirect } from "next/navigation"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { parseMmScore, determineWinner } from "@/lib/mid-master/parseMmScore"
 
 type ActionResult = { ok: true } | { ok: false; error: string }
+
+const UNAUTHORIZED: ActionResult = { ok: false, error: "No autorizado." }
 
 // Helper: Supabase sin tipado estricto para tablas mid_master_*
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -17,7 +20,7 @@ function db() { return createAdminClient() as any }
 export async function signOutMaster() {
   const supabase = await createClient()
   await supabase.auth.signOut()
-  redirect("/panel-master/login")
+  redirect("/panel-circuito/login")
 }
 
 // ── Match: schedule ───────────────────────────────────────────
@@ -27,6 +30,7 @@ export async function updateMmMatchSchedule(
   scheduledDate: string,
   scheduledTime: string,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const status = scheduledDate ? "scheduled" : "pending"
   const { error } = await db()
     .from("mid_master_matches")
@@ -38,8 +42,8 @@ export async function updateMmMatchSchedule(
     .eq("id", matchId)
 
   if (error) return { ok: false, error: "Error al guardar la fecha." }
-  revalidatePath("/panel-master")
-  revalidatePath("/mid-master")
+  revalidatePath("/panel-circuito")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -50,6 +54,7 @@ export async function updateMmMatchResult(
   score: string,
   isFinal: boolean,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   let setsA: number, setsB: number
   try {
     const parsed = parseMmScore(score, isFinal)
@@ -112,22 +117,23 @@ export async function updateMmMatchResult(
     }
   }
 
-  revalidatePath("/panel-master")
-  revalidatePath("/mid-master")
+  revalidatePath("/panel-circuito")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
 // ── Match: clear result ───────────────────────────────────────
 
 export async function clearMmMatchResult(matchId: string): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const { error } = await db()
     .from("mid_master_matches")
     .update({ score: null, winner_participant_id: null, status: "pending" })
     .eq("id", matchId)
 
   if (error) return { ok: false, error: "Error al borrar el resultado." }
-  revalidatePath("/panel-master")
-  revalidatePath("/mid-master")
+  revalidatePath("/panel-circuito")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -139,6 +145,7 @@ export async function addMmParticipant(
   groupName: string,
   displayName: string,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const name = displayName.trim()
   if (!name) return { ok: false, error: "El nombre no puede estar vacío." }
 
@@ -188,8 +195,8 @@ export async function addMmParticipant(
     if (matchError) return { ok: false, error: `Error al crear partidos: ${matchError.message}` }
   }
 
-  revalidatePath("/panel-master")
-  revalidatePath("/mid-master")
+  revalidatePath("/panel-circuito")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -199,6 +206,7 @@ export async function updateMmParticipant(
   participantId: string,
   displayName: string,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const name = displayName.trim()
   if (!name) return { ok: false, error: "El nombre no puede estar vacío." }
 
@@ -209,8 +217,8 @@ export async function updateMmParticipant(
 
   if (error) return { ok: false, error: "Error al actualizar el nombre." }
 
-  revalidatePath("/panel-master")
-  revalidatePath("/mid-master")
+  revalidatePath("/panel-circuito")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -219,6 +227,7 @@ export async function updateMmParticipant(
 export async function resolveKnockoutParticipants(
   categoryId: string,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const supabase = db()
 
   // Fetch groups
@@ -310,8 +319,8 @@ export async function resolveKnockoutParticipants(
     }).eq("id", sfMatches[1].id),
   ])
 
-  revalidatePath("/panel-master")
-  revalidatePath("/mid-master")
+  revalidatePath("/panel-circuito")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
@@ -322,6 +331,7 @@ export async function assignMmMatchParticipants(
   participant1Id: string,
   participant2Id: string,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   if (!participant1Id || !participant2Id) {
     return { ok: false, error: "Seleccioná los dos participantes." }
   }
@@ -333,14 +343,15 @@ export async function assignMmMatchParticipants(
     .update({ participant_1_id: participant1Id, participant_2_id: participant2Id })
     .eq("id", matchId)
   if (error) return { ok: false, error: "Error al asignar participantes." }
-  revalidatePath("/panel-master")
-  revalidatePath("/mid-master")
+  revalidatePath("/panel-circuito")
+  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
   return { ok: true }
 }
 
 // ── Trigger revalidation (standings computed on-the-fly) ──────
 
 export async function revalidateMmCategory(slug: string): Promise<void> {
-  revalidatePath(`/panel-master/categorias/${slug}`)
-  revalidatePath(`/mid-master/categorias/${slug}`)
+  if (!(await isRequestFromAdmin())) return
+  revalidatePath(`/panel-circuito/categorias/${slug}`)
+  revalidatePath(`/circuito-del-parque/especiales/mid-master-2026/categorias/${slug}`)
 }

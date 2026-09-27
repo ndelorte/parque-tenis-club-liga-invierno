@@ -9,9 +9,10 @@ Guía de referencia rápida para Claude Code. Leer antes de modificar cualquier 
 Web real para **Parque Tenis Club** (Argentina). Secciones:
 
 1. **Landing institucional pública** (`/`) — vitrina del club con CTA a WhatsApp.
-2. **Liga de Invierno** (`/liga-invierno`) — torneo por equipos con fixture, tabla y resultados.
-3. **Interparque** (`/interparque`) — modalidad de partidos de single exclusiva para alumnos del club: reglas, tabla de posiciones y partidos jugados.
-4. **Paneles admin privados** (`/panel-parque`, `/panel-master`, `/panel-interparque`) — solo para organizadores autenticados.
+2. **Liga Invierno/Verano** (`/ligas-invierno-verano`) — selector de ediciones (Invierno/Verano, pasada/activa/próxima), torneo por equipos con fixture, tabla y resultados.
+3. **Circuito del Parque** (`/circuito-del-parque/especiales/[edition]`) — torneos individuales; Mid Master y Final Master son "torneos especiales" (ediciones) dentro de esta sección.
+4. **Interparque** (`/interparque`) — modalidad de partidos de single exclusiva para alumnos del club: reglas, tabla de posiciones y partidos jugados.
+5. **Paneles admin privados** (`/panel-liga`, `/panel-circuito`, `/panel-interparque`) — solo para organizadores autenticados.
 
 ---
 
@@ -66,10 +67,11 @@ Web real para **Parque Tenis Club** (Argentina). Secciones:
 │   │   └── reglamento/page.tsx
 │   ├── interparque/              # Sección Interparque
 │   │   └── page.tsx              # Reglas + tabla + partidos jugados
-│   ├── panel-parque/             # Panel admin Liga Invierno (protegido por proxy.ts)
+│   ├── panel-liga/                # Panel admin de Liga (protegido por proxy.ts)
 │   │   ├── login/page.tsx
 │   │   ├── page.tsx
 │   │   └── liga-invierno/
+│   ├── panel-circuito/            # Panel admin de Circuito del Parque / Mid Master
 │   └── panel-interparque/        # Panel admin Interparque (protegido por proxy.ts)
 │       ├── login/page.tsx
 │       └── page.tsx
@@ -81,7 +83,7 @@ Web real para **Parque Tenis Club** (Argentina). Secciones:
 │   └── admin/interparque/         # Formularios del panel admin de Interparque
 ├── content/
 │   └── site.ts                   # Textos y datos editables del club
-├── proxy.ts                       # Protección de rutas /panel-*/* (Next.js 16)
+├── proxy.ts                       # Protección de rutas /panel-liga/*, /panel-circuito/* y /panel-interparque/* (Next.js 16)
 ├── lib/
 │   ├── tournament/               # Lógica pura del torneo (sin UI)
 │   │   ├── types.ts
@@ -136,13 +138,17 @@ Esta regla está reforzada por un test (`lib/data/__tests__/standings-write-boun
 
 ### Admin invisible
 
-`/panel-parque`, `/panel-master` y `/panel-interparque` no están linkeados desde ninguna página pública. Nunca en navbar ni footer.
+`/panel-liga`, `/panel-circuito` y `/panel-interparque` no están linkeados desde ninguna página pública. Nunca en navbar ni footer.
 
-**Interparque es distinto de sus paneles**: `/interparque` (la sección pública) SÍ va en navbar y footer — la regla de invisibilidad aplica solo a `/panel-interparque`, no a la sección pública del mismo módulo.
+**Interparque es distinto de su panel**: `/interparque` (la sección pública) SÍ va en navbar y footer — la regla de invisibilidad aplica solo a `/panel-interparque`, no a la sección pública del mismo módulo.
 
 ### Datos sensibles
 
 No mostrar teléfonos en vistas públicas. No commitear `.env`. No exponer `SUPABASE_SERVICE_ROLE_KEY` al cliente.
+
+### Server actions validan admin
+
+`proxy.ts` protege las páginas `/panel-*`, no las server actions (son endpoints POST invocables desde cualquier ruta). Toda action exportada en `app/actions/` que escribe tiene que validar el rol admin en su primera línea (`isRequestFromAdmin()` de `lib/auth/requireAdmin.ts`, o `isAdminUser` como en `admin.ts`). Reforzado por `app/actions/__tests__/admin-guard.test.ts`.
 
 ---
 
@@ -157,23 +163,37 @@ No mostrar teléfonos en vistas públicas. No commitear `.env`. No exponer `SUPA
 | `/ligas-invierno-verano/[season]/equipos/[catSlug]/[teamSlug]` | Página de equipo con historial en esa edición |
 | `/ligas-invierno-verano/reglamento` | Reglamento resumido |
 | `/interparque` | Nueva area de partidos entre alumnos |
+| `/circuito-del-parque` | Landing: torneos mensuales, acceso a ranking y Final Master |
+| `/circuito-del-parque/torneos/[edition]` | Categorías de una edición mensual |
+| `/circuito-del-parque/torneos/[edition]/[categoria]` | Cuadro principal + repechaje de una categoría |
+| `/circuito-del-parque/ranking` | Ranking anual, filtrable por categoría |
+| `/circuito-del-parque/final-master` | "Próximamente" + clasificados provisorios (top 8) por categoría |
+| `/circuito-del-parque/especiales/[edition]` | Torneo especial (Mid Master, Final Master, ...) — zonas + semis + final |
+| `/circuito-del-parque/especiales/[edition]/categorias/[slug]` | Zonas, fixture y cuadro final de una categoría de esa edición |
 
-
-Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]`, `/liga-invierno/equipos/[catSlug]/[teamSlug]`) quedan como redirects 301 a la nueva base o a la edición activa — no reintroducirlas como rutas reales.
+Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]`, `/liga-invierno/equipos/[catSlug]/[teamSlug]`) y `/mid-master`, `/mid-master/categorias/[slug]` quedan como redirects 301 (ver `next.config.ts`) — no reintroducirlas como rutas reales.
 
 ## Rutas admin (no enlazar públicamente)
 
 | Ruta | Descripción |
 |------|-------------|
-| `/panel-parque/login` | Login con Supabase Auth |
-| `/panel-parque` | Dashboard |
-| `/panel-parque/liga-invierno/equipos` | CRUD equipos |
-| `/panel-parque/liga-invierno/jugadores` | CRUD jugadores |
-| `/panel-parque/liga-invierno/fixture` | Cargar y editar fixture |
-| `/panel-parque/liga-invierno/resultados` | Cargar y editar resultados |
-| `/panel-parque/liga-invierno/reprogramaciones` | Reprogramar series |
+| `/panel-liga/login` | Login con Supabase Auth |
+| `/panel-liga` | Dashboard de Liga |
+| `/panel-liga/liga-invierno/equipos` | CRUD equipos |
+| `/panel-liga/liga-invierno/jugadores` | CRUD jugadores |
+| `/panel-liga/liga-invierno/fixture` | Cargar y editar fixture |
+| `/panel-liga/liga-invierno/resultados` | Cargar y editar resultados |
+| `/panel-liga/liga-invierno/reprogramaciones` | Reprogramar series |
+| `/panel-circuito/login` | Login con Supabase Auth (Circuito del Parque / Mid Master) |
+| `/panel-circuito` | Dashboard de Mid Master |
+| `/panel-circuito/categorias/[slug]` | Carga de resultados de Mid Master |
+| `/panel-circuito/mensual` | Circuito mensual: listado de ediciones + alta de edición nueva |
+| `/panel-circuito/mensual/[editionSlug]` | Categorías de una edición mensual |
+| `/panel-circuito/mensual/[editionSlug]/[categorySlug]` | Inscripción de participantes, generar cuadro, carga de resultados |
 | `/panel-interparque/login` | Login con Supabase Auth (mismo rol admin) |
 | `/panel-interparque` | Dashboard: alta de jugadores, carga y edición de partidos/resultados |
+
+Rutas viejas `/panel-parque/*` y `/panel-master/*` quedan como redirects 301 (ver `proxy.ts`) — no reintroducirlas.
 
 ---
 
@@ -187,10 +207,10 @@ Ver `/product/reglas-liga-invierno.md` para el detalle completo.
 | Gana la serie | Quien gana 2 de 3 canchas |
 | Serie ganada | 2 puntos |
 | Serie perdida | 1 punto |
-| WO general (ausente) | 0 puntos; rival +2pts, +3c, +6s, +36g |
+| WO general (ausente) | 0 puntos; rival +2pts, +3c, +6s, +36g (las 3 canchas quedan 6-0 6-0) |
 | WO de cancha | Score 6-0 6-0, solo 1 cancha posible por serie |
 | Tercer set | Siempre registrado como 7-6 |
-| Desempate | Pts → Δcanchas → Δsets → Δgames → mini-tabla H2H |
+| Desempate | Pts → Δcanchas → Δsets → Δgames → mini-tabla H2H → sorteo |
 | Mixto B | 5 equipos (resto tienen 6) |
 
 Ver `/product/reglas-interparque.md` para el detalle de Interparque.
@@ -203,6 +223,8 @@ Ver `/product/reglas-interparque.md` para el detalle de Interparque.
 | Super tie-break (3er set) | Score variable (10+, 2 de diferencia); ganador +1 punto bonus |
 | Jugadores | Tabla propia (`interparque_players`), no se comparte con Liga Invierno |
 | Tabla de posiciones | Calculada en vivo, sin snapshot |
+| Desempate (Interparque) | Pts → menos partidos jugados |
+| WO (Interparque) | 6-0 6-0 para el presente |
 
 ---
 

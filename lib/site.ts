@@ -5,6 +5,8 @@ export const CLUB = {
   phoneDisplay: "+54 9 11 5728-7851",
   whatsapp: "+54 9 11 5728-7851",
   email: "parquetenisclub@gmail.com",
+  // Dominio de producción (sale desde main) — OQ-11.
+  url: "https://www.parquetenisclub.com.ar",
   address: "Primera junta 726, Quilmes, Buenos Aires",
   hours: "Lun a Vier · 8:00 a 23:00 - Sab a Dom · 8:00 a 20:00",
   mapsEmbed:
@@ -20,7 +22,7 @@ export const NAV_LINKS = [
   { label: "Actividades", href: "/#actividades" },
   { label: "Liga Invierno/Verano", href: "/ligas-invierno-verano" },
   { label: "Interparque", href: "/interparque" },
-  { label: "Mid Master", href: "/mid-master" },
+  { label: "Circuito del Parque", href: "/circuito-del-parque" },
   { label: "Ubicación", href: "/#ubicacion" },
   { label: "Contacto", href: "/#contacto" },
 ]
@@ -67,7 +69,7 @@ export const ACTIVITIES = [
     waMessage:
       "Hola! Quiero info sobre los torneos y la competencia en Parque Tenis Club.",
     links: [
-      { label: "Mid Master", href: "/mid-master" },
+      { label: "Mid Master", href: "/circuito-del-parque/especiales/mid-master-2026" },
     ],
   },
 ] as const
