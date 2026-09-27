@@ -6,6 +6,7 @@ export interface AnnualRankingRow {
   playerId: string
   playerName: string
   editionId: string
+  editionName: string
   month: number
   points: number
 }
@@ -16,6 +17,19 @@ export interface AnnualRankingEntry {
   points: number
   tournamentsPlayed: number
   tournamentsWon: number
+  pointsByEdition: Record<string, number> // editionId → puntos en ese torneo
+}
+
+// Un torneo mensual que se jugó en la categoría (alguien sumó puntos).
+export interface AnnualRankingTournament {
+  editionId: string
+  name: string
+  month: number
+}
+
+export interface AnnualRanking {
+  entries: AnnualRankingEntry[]
+  tournaments: AnnualRankingTournament[] // en orden cronológico
 }
 
 // Ranking anual de una categoría — reglas-circuito-del-parque.md,
@@ -26,8 +40,13 @@ export interface AnnualRankingEntry {
 // Torneo jugado = torneo con puntos (todo participante del cuadro principal
 // suma al menos "16vos o más"). Torneo ganado = sus puntos son los de
 // campeón en la escala de ese mes (normal o Grand Slam).
-export function buildAnnualRanking(rows: AnnualRankingRow[]): AnnualRankingEntry[] {
-  const byPlayer = new Map<string, AnnualRankingEntry & { editions: Set<string> }>()
+//
+// `tournaments` son las columnas de la tabla: solo los torneos en los que
+// alguien sumó puntos en la categoría — si la categoría no se jugó ese mes,
+// ese torneo no aparece.
+export function buildAnnualRanking(rows: AnnualRankingRow[]): AnnualRanking {
+  const byPlayer = new Map<string, Omit<AnnualRankingEntry, "tournamentsPlayed">>()
+  const tournaments = new Map<string, AnnualRankingTournament>()
 
   for (const row of rows) {
     if (row.points <= 0) continue
@@ -35,18 +54,18 @@ export function buildAnnualRanking(rows: AnnualRankingRow[]): AnnualRankingEntry
       playerId: row.playerId,
       playerName: row.playerName,
       points: 0,
-      tournamentsPlayed: 0,
       tournamentsWon: 0,
-      editions: new Set<string>(),
+      pointsByEdition: {},
     }
     entry.points += row.points
-    entry.editions.add(row.editionId)
+    entry.pointsByEdition[row.editionId] = (entry.pointsByEdition[row.editionId] ?? 0) + row.points
+    tournaments.set(row.editionId, { editionId: row.editionId, name: row.editionName, month: row.month })
     if (row.points === pointsForInstance("champion", isGrandSlamMonth(row.month))) entry.tournamentsWon++
     byPlayer.set(row.playerId, entry)
   }
 
-  return [...byPlayer.values()]
-    .map(({ editions, ...entry }) => ({ ...entry, tournamentsPlayed: editions.size }))
+  const entries = [...byPlayer.values()]
+    .map((entry) => ({ ...entry, tournamentsPlayed: Object.keys(entry.pointsByEdition).length }))
     .sort(
       (a, b) =>
         b.points - a.points ||
@@ -54,4 +73,9 @@ export function buildAnnualRanking(rows: AnnualRankingRow[]): AnnualRankingEntry
         b.tournamentsWon - a.tournamentsWon ||
         a.playerName.localeCompare(b.playerName, "es"),
     )
+
+  return {
+    entries,
+    tournaments: [...tournaments.values()].sort((a, b) => a.month - b.month),
+  }
 }

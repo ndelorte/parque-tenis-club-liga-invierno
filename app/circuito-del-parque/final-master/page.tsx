@@ -22,7 +22,7 @@ export default async function CircuitoFinalMasterPage({
   const rankedSlugs = await getCircuitoCategorySlugsWithRanking(year)
   const categories = CIRCUITO_FIXED_CATEGORIES.filter((c) => rankedSlugs.has(c.slug))
   const selected = categories.some((c) => c.slug === categoria) ? categoria! : categories[0]?.slug
-  const entries = selected ? (await getAnnualCircuitRanking(year, selected)).slice(0, QUALIFIERS) : []
+  const entries = selected ? (await getAnnualCircuitRanking(year, selected)).entries.slice(0, QUALIFIERS) : []
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10 text-center sm:px-6">

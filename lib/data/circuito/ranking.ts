@@ -5,7 +5,7 @@ import { selectDrawRule } from "@/lib/circuito/generateBracket"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
 import { isGrandSlamMonth } from "@/lib/circuito/pointsTable"
 import { CIRCUITO_FIXED_CATEGORIES } from "@/lib/circuito/fixedCategories"
-import { buildAnnualRanking, type AnnualRankingEntry } from "@/lib/circuito/buildAnnualRanking"
+import { buildAnnualRanking, type AnnualRanking } from "@/lib/circuito/buildAnnualRanking"
 import type { CircuitoParticipant } from "@/lib/circuito/types"
 import type { CircuitoParticipantRow } from "./types"
 
@@ -161,31 +161,32 @@ export async function getCircuitRanking(editionId: string, categoryId?: string):
 export async function getAnnualCircuitRanking(
   year: number,
   categorySlug: string,
-): Promise<AnnualRankingEntry[]> {
+): Promise<AnnualRanking> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from("circuito_ranking_points")
     .select(
-      "player_id, edition_id, points, players(display_name), circuito_categories!inner(slug), circuito_editions!inner(year, month)",
+      "player_id, edition_id, points, players(display_name), circuito_categories!inner(slug), circuito_editions!inner(year, month, name)",
     )
     .eq("circuito_editions.year", year)
     .eq("circuito_categories.slug", categorySlug)
     .gt("points", 0)
 
-  if (error || !data) return []
+  if (error || !data) return { entries: [], tournaments: [] }
 
   type Row = {
     player_id: string
     edition_id: string
     points: number
     players: { display_name: string } | null
-    circuito_editions: { month: number } | null
+    circuito_editions: { month: number; name: string } | null
   }
   return buildAnnualRanking(
     (data as unknown as Row[]).map((r) => ({
       playerId: r.player_id,
       playerName: r.players?.display_name ?? "—",
       editionId: r.edition_id,
+      editionName: r.circuito_editions?.name ?? "—",
       month: r.circuito_editions?.month ?? 0,
       points: r.points,
     })),
