@@ -30,8 +30,8 @@ export function PlayoffBracket({ bracket, semifinals, final, thirdPlace, provisi
   return (
     <div>
       <div className="mb-4">
-        <h3 className="font-semibold text-gray-800">Fase Final</h3>
-        <p className="text-sm text-gray-500 mt-0.5">
+        <h3 className="font-semibold text-foreground">Fase Final</h3>
+        <p className="text-sm text-muted-foreground mt-0.5">
           {provisional ? "Con las posiciones actuales provisorias" : "Cuadro final"}
         </p>
       </div>
@@ -71,7 +71,7 @@ export function PlayoffBracket({ bracket, semifinals, final, thirdPlace, provisi
 
         {/* 3er y 4to puesto — desconectado del bracket principal */}
         <div className="lg:w-72 lg:shrink-0">
-          <p className="text-xs text-gray-400 mb-2 italic">Partido separado</p>
+          <p className="text-xs text-muted-foreground mb-2 italic">Partido separado</p>
           <ThirdPlaceCard thirdPlace={thirdPlace} />
         </div>
       </div>
@@ -83,7 +83,7 @@ function ByeRow({ slot }: { slot: PlayoffSlot }) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
       <SeedBadge seed={slot.seed} />
-      <span className="font-medium text-gray-900 flex-1 min-w-0 truncate">
+      <span className="font-medium text-foreground flex-1 min-w-0 truncate">
         {slot.team.name}
       </span>
       <span className="text-xs font-semibold uppercase tracking-wide text-primary bg-primary/10 rounded-md px-2 py-0.5">
@@ -179,13 +179,13 @@ function MatchRow({
           </span>
         )}
         {isScheduled && !isCompleted && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-pending">
             <AlertCircle className="size-3.5" />
             Programado
           </span>
         )}
       </div>
-      <div className="flex items-center gap-2 flex-wrap text-sm font-medium text-gray-800">
+      <div className="flex items-center gap-2 flex-wrap text-sm font-medium text-foreground">
         <span className="truncate max-w-[120px] sm:max-w-none">{match.homeTeamName}</span>
         <span className="text-muted-foreground">vs</span>
         <span className="truncate max-w-[120px] sm:max-w-none">{match.awayTeamName}</span>
@@ -214,7 +214,7 @@ function ThirdPlaceCard({ thirdPlace }: { thirdPlace?: ThirdPlace }) {
       className={cn(
         "rounded-xl border px-4 py-3 space-y-2",
         isCompleted
-          ? "border-amber-300/60 bg-amber-50/60"
+          ? "border-amber-300/60 bg-amber-50/60 dark:border-amber-700/50 dark:bg-amber-950/30"
           : "border-border bg-card",
       )}
     >
@@ -224,20 +224,20 @@ function ThirdPlaceCard({ thirdPlace }: { thirdPlace?: ThirdPlace }) {
           3er y 4to Puesto
         </span>
         {isCompleted && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-pending">
             <CheckCircle2 className="size-3.5" />
             Jugado
           </span>
         )}
         {isScheduled && !isCompleted && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-pending">
             <AlertCircle className="size-3.5" />
             Programado
           </span>
         )}
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap text-sm font-medium text-gray-800">
+      <div className="flex items-center gap-2 flex-wrap text-sm font-medium text-foreground">
         <span className="truncate max-w-[120px] sm:max-w-none">
           {thirdPlace?.homeTeamName ?? <span className="italic font-normal text-muted-foreground">A definir</span>}
         </span>
@@ -268,7 +268,7 @@ function TeamSlot({ slot, winnerId }: { slot: PlayoffSlot; winnerId?: string }) 
     <span
       className={cn(
         "inline-flex items-center gap-1.5",
-        isWinner ? "font-bold text-primary" : "font-medium text-gray-800",
+        isWinner ? "font-bold text-primary" : "font-medium text-foreground",
       )}
     >
       <SeedBadge seed={slot.seed} small />
@@ -302,7 +302,7 @@ function StatusPill({ status }: { status: QuarterFinalMatchup["status"] }) {
   }
   if (status === "scheduled") {
     return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-pending">
         <AlertCircle className="size-3.5" />
         Programado
       </span>

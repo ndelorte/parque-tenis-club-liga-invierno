@@ -6,7 +6,7 @@ const sponsorLoop = [...sponsors, ...sponsors, ...sponsors]
 
 export function SponsorsBanner() {
   return (
-    <section className="border-y border-border bg-white" aria-labelledby="sponsors-title">
+    <section className="border-y border-border bg-card" aria-labelledby="sponsors-title">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
         <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -63,7 +63,7 @@ function SponsorLogo({
     <div
       aria-hidden={duplicate ? true : undefined}
       className={cn(
-        "flex h-24 w-36 shrink-0 items-center justify-center rounded-xl border border-border bg-white p-4 shadow-sm sm:h-28 sm:w-44",
+        "flex h-24 w-36 shrink-0 items-center justify-center rounded-xl border border-border bg-card p-4 shadow-sm sm:h-28 sm:w-44",
         isCircular && "p-3",
       )}
     >

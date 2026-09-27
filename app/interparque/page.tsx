@@ -74,16 +74,16 @@ export default async function InterparquePage() {
   return (
     <div className="bg-background">
       {/* Hero */}
-      <section className="bg-brand text-white">
+      <section className="bg-board text-board-foreground">
         <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-board-foreground/75">
             Parque Tenis Club
           </p>
           <h1 className="mt-2 font-heading text-4xl font-extrabold tracking-tight sm:text-5xl">
             Inter<span className="text-accent">Parque</span>
           </h1>
-          <p className="mt-3 max-w-xl text-lg text-white/90">Cada game suma.</p>
-          <p className="mt-4 max-w-2xl text-sm text-white/70">
+          <p className="mt-3 max-w-xl text-lg text-board-foreground/90">Cada game suma.</p>
+          <p className="mt-4 max-w-2xl text-sm text-board-foreground/75">
             Todos juegan, todos suman — el nuevo formato de partidos de single exclusivo
             para alumnos del club.
           </p>

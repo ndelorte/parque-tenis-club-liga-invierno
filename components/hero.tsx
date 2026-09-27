@@ -8,26 +8,26 @@ export function Hero() {
   return (
     <section className="relative isolate overflow-hidden">
       <Image
-        src="/images/fondo3.jpeg"
+        src="/images/fondo3.png"
         alt="Parque Tenis Club"
         fill
         priority
         className="object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-foreground/60 to-foreground/30" />
+      <div className="absolute inset-0 bg-gradient-to-t from-board/90 via-board/60 to-board/30" />
 
       <div className="relative mx-auto flex min-h-[88vh] max-w-6xl flex-col justify-end px-4 pb-16 pt-28 sm:px-6 sm:pb-24">
-        <span className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-background/30 bg-background/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-background backdrop-blur-sm">
+        <span className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-board-foreground/30 bg-board-foreground/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-board-foreground backdrop-blur-sm">
           <span className="size-2 rounded-full bg-accent" />
           {CLUB.tagline}
         </span>
 
-        <h1 className="max-w-3xl text-balance font-heading text-4xl font-extrabold leading-[1.05] tracking-tight text-background sm:text-6xl lg:text-7xl">
+        <h1 className="max-w-3xl text-balance font-heading text-4xl font-extrabold leading-[1.05] tracking-tight text-board-foreground sm:text-6xl lg:text-7xl">
           Viví el tenis en{" "}
-          <span className="text-accent">Parque Tenis Club</span>
+          <span className="text-[#e8844f]">Parque Tenis Club</span>
         </h1>
 
-        <p className="mt-5 max-w-xl text-pretty text-lg leading-relaxed text-background/80">
+        <p className="mt-5 max-w-xl text-pretty text-lg leading-relaxed text-board-foreground/80">
           Canchas, entrenamientos, escuela y torneos durante todo el año. Vení a
           jugar y sumate a la comunidad.
         </p>
@@ -51,7 +51,7 @@ export function Hero() {
             asChild
             size="lg"
             variant="outline"
-            className="h-13 border-background/40 bg-background/10 px-7 text-base text-background backdrop-blur-sm hover:bg-background/20 hover:text-background"
+            className="h-13 border-board-foreground/40 bg-board-foreground/10 px-7 text-base text-board-foreground backdrop-blur-sm hover:bg-board-foreground/20 hover:text-board-foreground"
           >
             <Link href="/ligas-invierno-verano">
               <Trophy className="size-5" />
@@ -63,7 +63,7 @@ export function Hero() {
             asChild
             size="lg"
             variant="outline"
-            className="h-13 border-background/40 bg-background/10 px-7 text-base text-background backdrop-blur-sm hover:bg-background/20 hover:text-background"
+            className="h-13 border-board-foreground/40 bg-board-foreground/10 px-7 text-base text-board-foreground backdrop-blur-sm hover:bg-board-foreground/20 hover:text-board-foreground"
           >
             <Link href="/circuito-del-parque">
               <Star className="size-5" />
@@ -75,7 +75,7 @@ export function Hero() {
             asChild
             size="lg"
             variant="outline"
-            className="h-13 border-background/40 bg-background/10 px-7 text-base text-background backdrop-blur-sm hover:bg-background/20 hover:text-background"
+            className="h-13 border-board-foreground/40 bg-board-foreground/10 px-7 text-base text-board-foreground backdrop-blur-sm hover:bg-board-foreground/20 hover:text-board-foreground"
           >
             <a href="/interparque">
               <Swords className="size-5" />

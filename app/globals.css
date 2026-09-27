@@ -1,40 +1,194 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
+
+/*
+ * Sistema visual (product/plan-refactor-visual.md §3).
+ * Tres capas: primitivos del club → tokens semánticos (claro/oscuro) → tokens
+ * de sección (data-identity). Los componentes usan solo los semánticos.
+ */
+
+/* Modo oscuro por clase (next-themes). Los paneles admin se quedan en claro:
+   .theme-light corta la herencia del modo oscuro. */
+@custom-variant dark (&:where(.dark, .dark *):not(:where(.theme-light, .theme-light *)));
+
+/* ── Tokens semánticos: claro ─────────────────────────────────────────────── */
+:root,
+.theme-light {
+  color-scheme: light;
+
+  --background: #f4f6f2; /* cal */
+  --foreground: #13241a;
+  --surface: #eef2ec;
+  --card: #ffffff;
+  --card-foreground: #13241a;
+  --popover: #ffffff;
+  --popover-foreground: #13241a;
+  --muted: #e8ede6;
+  --muted-foreground: #4f5f55;
+  --secondary: #e8ede6;
+  --secondary-foreground: #13241a;
+  --border: #d3dbd2;
+  --input: #c7d1c6;
+
+  --primary: #1c3a2a; /* tablero */
+  --primary-foreground: #ffffff;
+  --ring: #af5122;
+
+  --brand: #2c5a41;
+  --brand-foreground: #ffffff;
+  --brand-dark: #1c3a2a;
+  --brand-light: #e3eee4;
+
+  --accent: #af5122; /* polvo fuerte: botones, links */
+  --accent-foreground: #ffffff;
+  --accent-dark: #8a3f1a;
+  --accent-light: #fdf1ea;
+  --clay: #d4622a; /* polvo del logo: franjas y decoración, nunca texto */
+  --ball: #d4e04a; /* pelota: solo como punto de saque */
+
+  --board: #1c3a2a; /* header, footer y tableros */
+  --board-foreground: #f4f6f2;
+
+  --win: #1f6b37;
+  --win-soft: #e2f0e5;
+  --loss: #a3231b;
+  --loss-soft: #f8e0dd;
+  --pending: #7d5700;
+  --pending-soft: #faefcc;
+  --walkover: #46514b;
+  --walkover-soft: #e5e7e5;
+
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+
+  --scrollbar: #c7d1c6;
+
+  /* Sección: cada layout lo pisa con data-identity. */
+  --section: var(--brand);
+  --section-foreground: var(--brand-foreground);
+  --section-accent: var(--clay);
+}
+
+/* ── Tokens semánticos: oscuro ────────────────────────────────────────────── */
+.dark {
+  color-scheme: dark;
+
+  --background: #0e1a13;
+  --foreground: #eef1ec;
+  --surface: #13241a;
+  --card: #15241b;
+  --card-foreground: #eef1ec;
+  --popover: #15241b;
+  --popover-foreground: #eef1ec;
+  --muted: #1d3025;
+  --muted-foreground: #a3b0a7;
+  --secondary: #1d3025;
+  --secondary-foreground: #eef1ec;
+  --border: #25392d;
+  --input: #2f4638;
+
+  --primary: #7fb08a;
+  --primary-foreground: #0e1a13;
+  --ring: #f08a55;
+
+  --brand: #7fb08a;
+  --brand-foreground: #0e1a13;
+  --brand-dark: #a9cfb2;
+  --brand-light: #1b3325;
+
+  --accent: #e0703a;
+  --accent-foreground: #140c07;
+  --accent-dark: #f08a55;
+  --accent-light: #3a2217;
+  --clay: #d4622a;
+  --ball: #d4e04a;
+
+  --board: #13241a;
+  --board-foreground: #eef1ec;
+
+  --win: #7fcf8f;
+  --win-soft: #16321f;
+  --loss: #ff8f85;
+  --loss-soft: #3a1a17;
+  --pending: #f2c14e;
+  --pending-soft: #342a10;
+  --walkover: #a3b0a7;
+  --walkover-soft: #26302a;
+
+  --destructive: #ff8f85;
+  --destructive-foreground: #140c07;
+
+  --scrollbar: #2f4638;
+}
+
+/* ── Sub-identidades (se diseñan en profundidad en la fase de cada sección) ── */
+[data-identity="liga-invierno"] {
+  --section-accent: #6fa8d6;
+}
+[data-identity="liga-verano"] {
+  --section-accent: #f0b429;
+}
+[data-identity="circuito"] {
+  --section-accent: var(--clay);
+}
+[data-identity="interparque"] {
+  --section-accent: var(--ball);
+}
+
+/* ── Mapeo a Tailwind ─────────────────────────────────────────────────────── */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-light: var(--brand-light);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-dark: var(--accent-dark);
+  --color-accent-light: var(--accent-light);
+  --color-clay: var(--clay);
+  --color-ball: var(--ball);
+  --color-board: var(--board);
+  --color-board-foreground: var(--board-foreground);
+  --color-win: var(--win);
+  --color-win-soft: var(--win-soft);
+  --color-loss: var(--loss);
+  --color-loss-soft: var(--loss-soft);
+  --color-pending: var(--pending);
+  --color-pending-soft: var(--pending-soft);
+  --color-walkover: var(--walkover);
+  --color-walkover-soft: var(--walkover-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-section: var(--section);
+  --color-section-foreground: var(--section-foreground);
+  --color-section-accent: var(--section-accent);
+
+  --font-sans: var(--font-barlow), system-ui, sans-serif;
+  --font-heading: var(--font-barlow-condensed), var(--font-barlow), system-ui, sans-serif;
+  --font-mm-display: var(--font-playfair), Georgia, serif;
+}
 
 @theme {
-  /* Brand */
-  --color-brand: #2d8653;
-  --color-brand-dark: #1e5c38;
-  --color-brand-light: #e8f5ed;
-
-  /* shadcn/ui semantic tokens */
-  --color-background: #ffffff;
-  --color-foreground: #111827;
-  --color-primary: #2d8653;
-  --color-primary-foreground: #ffffff;
-  --color-accent: #f47c2b;
-  --color-accent-dark: #d4621c;
-  --color-accent-light: #fef0e6;
-  --color-accent-foreground: #ffffff;
-  --color-secondary: #f3f4f6;
-  --color-secondary-foreground: #111827;
-  --color-muted: #f3f4f6;
-  --color-muted-foreground: #6b7280;
-  --color-card: #ffffff;
-  --color-card-foreground: #111827;
-  --color-popover: #ffffff;
-  --color-popover-foreground: #111827;
-  --color-border: #e5e7eb;
-  --color-input: #e5e7eb;
-  --color-ring: #2d8653;
-  --color-surface: #f9fafb;
-  --color-destructive: #ef4444;
-  --color-destructive-foreground: #ffffff;
-
-  /* Winter / Liga de Invierno */
+  /* Liga de Invierno (decoración del encabezado) */
   --color-winter: #4d90c4;
   --color-winter-foreground: #ffffff;
 
-  /* Mid Master — dark premium theme */
+  /* Mid Master — siempre oscuro, identidad propia (se migra en la Fase 4) */
   --color-mm-bg: #0d0f0d;
   --color-mm-surface: #161a15;
   --color-mm-surface-2: #1e2520;
@@ -47,30 +201,54 @@
   --color-mm-text-faint: #4a4740;
   --color-mm-green-deep: #1a2e1f;
 
-  /* Fonts */
-  --font-heading: var(--font-geist-sans);
-  --font-mm-display: var(--font-playfair), Georgia, serif;
+  /* Movimiento (§3.5): criterio de Emil Kowalski. No inventar otras curvas. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 
-  /* Animations */
   --animate-bob: bob 3s ease-in-out infinite;
   --animate-snow: snow-fall 12s linear infinite;
   --animate-hourglass: hourglass-flip 4s ease-in-out infinite;
 }
 
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  touch-action: manipulation;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+/* Presión de botones y links con forma de botón: respuesta, 160 ms. */
+.press {
+  transition: transform 160ms var(--ease-out);
+}
+.press:active {
+  transform: scale(0.97);
+}
+
+/* ── Animaciones existentes (se revisan en la fase de cada pantalla) ──────── */
 @keyframes bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
 }
 
-/* ── "Próximamente" (Sprint L5) ──────────────────────────────────────────── */
 @keyframes hourglass-flip {
   0%, 40% { transform: rotate(0deg); }
   50%, 90% { transform: rotate(180deg); }
   100% { transform: rotate(360deg); }
 }
-
-
-/* ── Mid Master animations ───────────────────────────────────────────────── */
 
 @keyframes mm-fade-up {
   from { opacity: 0; transform: translateY(18px); }
@@ -79,14 +257,13 @@
 
 .mm-fade-up {
   opacity: 0;
-  animation: mm-fade-up 0.7s ease forwards;
+  animation: mm-fade-up 0.7s var(--ease-out) forwards;
 }
 
-/* Scroll reveal */
 .mm-reveal-target {
   opacity: 0;
   transform: translateY(22px);
-  transition: opacity 0.65s ease, transform 0.65s ease;
+  transition: opacity 0.65s var(--ease-out), transform 0.65s var(--ease-out);
 }
 
 .mm-reveal-target.mm-revealed {
@@ -109,6 +286,7 @@
     animation-play-state: paused;
   }
 }
+
 @keyframes snow-fall {
   0% { transform: translateY(-24px) translateX(0); opacity: 0; }
   10% { opacity: 1; }
@@ -116,11 +294,27 @@
   100% { transform: translateY(110vh) translateX(var(--snow-drift, 0)); opacity: 0; }
 }
 
-body {
-  background: var(--color-background);
-  color: var(--color-foreground);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Reducir movimiento = menos y más suave: sin desplazamientos ni loops. */
+@media (prefers-reduced-motion: reduce) {
+  .press,
+  .press:active {
+    transition: none;
+    transform: none;
+  }
+  .sponsors-marquee-track,
+  .animate-snow,
+  .animate-bob,
+  .animate-hourglass {
+    animation: none;
+  }
+  .mm-fade-up {
+    animation: none;
+    opacity: 1;
+  }
+  .mm-reveal-target {
+    transform: none;
+    transition: opacity 0.2s ease;
+  }
 }
 
 /* Scrollbar sutil */
@@ -132,6 +326,6 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: var(--scrollbar);
   border-radius: 3px;
 }

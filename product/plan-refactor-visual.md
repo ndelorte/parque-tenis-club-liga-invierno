@@ -343,10 +343,10 @@ Las capturas del estado actual (antes de cada fase) van en `product/refactor-vis
 - Fuentes nuevas en `app/layout.tsx` con `next/font`.
 - `next-themes`: `components/theme-provider.tsx` en el root layout y `components/theme-toggle.tsx` en el header.
 - Tokens de movimiento (§3.5) y clases CSS de presión y tablero; `motion` solo para el campeón y el indicador del filtro si la versión CSS no alcanza; `MotionConfig reducedMotion="user"`.
-- `components/shared/`: `SectionHero`, `EmptyState`, `CategoryFilter`, `StandingsTable`, `MatchCard`, `Score`/`ResultBadge`, `ChampionCard` (el `Bracket` va en la Fase 2, que es su primer uso real).
+- ~~`components/shared/`~~ **Cambio al implementar (2026-09-27):** los componentes compartidos se construyen en la fase de su primer uso (`StandingsTable`, `CategoryFilter`, `MatchCard` y `Bracket` en la Fase 2; `ChampionCard` y `SectionHero` en la 2 y la 3), con la maqueta de esa sección. Hacerlos en el 1A dejaba código sin uso, que §5 prohíbe.
 - Layout de sección compartido: los tres `layout.tsx` idénticos pasan a usar un solo `components/layout/section-shell.tsx` (header + footer + `data-identity`).
 - `site-header` y `site-footer` rediseñados: logo, navegación, CTA WhatsApp, botón de tema, menú del celular animado. **Sin links a `/panel-*` y sin teléfonos.**
-- Limpieza: borrar `components/layout/Footer.tsx`, `Navbar.tsx`, los SVG de ejemplo de `public/`, `content/site.ts` (SEO a `lib/site.ts`); renombrar assets con espacios y `fondo3.jpeg` → `.png` (actualizando las referencias).
+- Limpieza: borrar `components/layout/Footer.tsx`, `Navbar.tsx`, los SVG de ejemplo de `public/`, `content/site.ts` (SEO a `lib/site.ts`); renombrar assets con espacios y `fondo3.jpeg` → `.png` (actualizando las referencias). El PDF del reglamento **no** se renombra: su link probablemente circula por WhatsApp.
 - Las pantallas existentes **no se rediseñan acá**: solo se reemplazan los colores fijos por tokens semánticos donde haga falta para que nada se rompa en oscuro. Si una pantalla no llega a verse bien en oscuro hasta su fase, queda anotado en el PR.
 
 *Terminado*: tokens y fuentes de la maqueta aplicados; header y footer aprobados en escritorio y 375 px, claro y oscuro; componentes compartidos con una página de muestra solo para desarrollo (`app/dev/ui/page.tsx`, que no se construye en producción: `notFound()` si `NODE_ENV === "production"`); código muerto borrado; checklist §6.

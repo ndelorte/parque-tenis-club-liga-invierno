@@ -634,7 +634,7 @@ function SFMatchup({
           </span>
         )}
         {isScheduled && (
-          <span className="inline-flex items-center gap-1 text-xs text-amber-600">
+          <span className="inline-flex items-center gap-1 text-xs text-pending">
             <AlertCircle className="size-3" /> Programado
           </span>
         )}
@@ -716,7 +716,7 @@ function QFMatchup({ qf }: { qf: ProvisionalBracket["quarterfinals"][0] }) {
           </span>
         ) : isScheduled ? (
           <>
-            <span className="inline-flex items-center gap-1 text-xs text-amber-600">
+            <span className="inline-flex items-center gap-1 text-xs text-pending">
               <AlertCircle className="size-3" /> Programado
             </span>
             <span className="text-xs text-muted-foreground">

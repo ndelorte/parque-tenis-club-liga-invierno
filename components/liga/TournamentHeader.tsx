@@ -7,14 +7,14 @@ interface TournamentHeaderProps {
 
 export function TournamentHeader({ tournament }: TournamentHeaderProps) {
   return (
-    <div className="bg-brand text-white py-8 px-4">
+    <div className="bg-board text-board-foreground py-8 px-4">
       <div className="max-w-6xl mx-auto">
-        <p className="text-white/70 text-sm font-medium uppercase tracking-wider mb-1">
+        <p className="text-board-foreground/75 text-sm font-medium uppercase tracking-wider mb-1">
           Temporada {formatSeasonLabel(tournament)}
         </p>
         <h1 className="text-3xl font-bold">{tournament.name}</h1>
         {tournament.description && (
-          <p className="mt-2 text-white/80 text-sm max-w-xl">
+          <p className="mt-2 text-board-foreground/80 text-sm max-w-xl">
             {tournament.description}
           </p>
         )}

@@ -41,7 +41,7 @@ export function InterparquePromo() {
 
             <Link
               href="/interparque"
-              className="mt-9 inline-flex h-13 items-center gap-2 rounded-lg bg-brand px-7 text-base font-semibold text-white transition-colors hover:bg-brand-dark"
+              className="mt-9 inline-flex h-13 items-center gap-2 rounded-lg bg-brand px-7 text-base font-semibold text-brand-foreground transition-colors hover:bg-brand-dark"
             >
               Ver Interparque
               <ArrowRight className="size-5" />

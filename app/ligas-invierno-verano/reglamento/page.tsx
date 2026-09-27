@@ -69,18 +69,18 @@ const sections = [
 export default function ReglamentoPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Reglamento</h1>
-      <p className="text-gray-500 text-sm mb-8">Liga de Invierno — Parque Tenis Club</p>
+      <h1 className="text-2xl font-bold text-foreground mb-2">Reglamento</h1>
+      <p className="text-muted-foreground text-sm mb-8">Liga de Invierno — Parque Tenis Club</p>
 
       <div className="space-y-8">
         {sections.map((section) => (
           <div key={section.title}>
-            <h2 className="font-semibold text-gray-900 text-base mb-3 pb-2 border-b border-border">
+            <h2 className="font-semibold text-foreground text-base mb-3 pb-2 border-b border-border">
               {section.title}
             </h2>
             <ul className="space-y-2">
               {section.content.map((item, i) => (
-                <li key={i} className="flex gap-2 text-sm text-gray-700">
+                <li key={i} className="flex gap-2 text-sm text-foreground">
                   <span className="text-brand mt-0.5 shrink-0">•</span>
                   <span>{item}</span>
                 </li>

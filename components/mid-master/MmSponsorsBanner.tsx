@@ -44,7 +44,7 @@ export function MmSponsorsBanner() {
               <div
                 key={`${sponsor.name}-${index}`}
                 aria-hidden={index >= sponsors.length ? true : undefined}
-                className="flex h-20 w-32 shrink-0 items-center justify-center border border-mm-border bg-white p-3 sm:h-24 sm:w-40"
+                className="flex h-20 w-32 shrink-0 items-center justify-center border border-mm-border bg-card p-3 sm:h-24 sm:w-40"
               >
                 <Image
                   src={sponsor.image}

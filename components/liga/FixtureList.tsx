@@ -30,8 +30,8 @@ export function FixtureList({ series, title }: FixtureListProps) {
   if (series.length === 0) {
     return (
       <div>
-        {title && <h3 className="font-semibold text-gray-800 mb-3">{title}</h3>}
-        <p className="text-gray-500 text-sm">Sin fechas cargadas.</p>
+        {title && <h3 className="font-semibold text-foreground mb-3">{title}</h3>}
+        <p className="text-muted-foreground text-sm">Sin fechas cargadas.</p>
       </div>
     );
   }
@@ -43,17 +43,17 @@ export function FixtureList({ series, title }: FixtureListProps) {
     <div className="space-y-6">
       {pending.length > 0 && (
         <div>
-          <h3 className="font-semibold text-gray-800 mb-3">
+          <h3 className="font-semibold text-foreground mb-3">
             {title ?? "Próximas fechas"}
           </h3>
           <div className="space-y-2">
             {pending.map((s) => (
               <div
                 key={s.id}
-                className="bg-white border border-border rounded-lg px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                className="bg-card border border-border rounded-lg px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
               >
                 <div>
-                  <p className="text-xs text-gray-500 font-medium mb-0.5">
+                  <p className="text-xs text-muted-foreground font-medium mb-0.5">
                     {s.round?.name ?? ""}
                     {s.rescheduled_reason && (
                       <span className="ml-2 text-accent font-medium">
@@ -61,16 +61,16 @@ export function FixtureList({ series, title }: FixtureListProps) {
                       </span>
                     )}
                   </p>
-                  <p className="font-semibold text-gray-900">
+                  <p className="font-semibold text-foreground">
                     {s.home_team?.name ?? s.home_team_id} vs{" "}
                     {s.away_team?.name ?? s.away_team_id}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {formatDate(s.scheduled_date, s.scheduled_time)}
                   </p>
-                  <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                  <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                     {statusLabel[s.status] ?? s.status}
                   </span>
                 </div>
@@ -82,7 +82,7 @@ export function FixtureList({ series, title }: FixtureListProps) {
 
       {completed.length > 0 && (
         <div>
-          <h3 className="font-semibold text-gray-800 mb-3">Últimos resultados</h3>
+          <h3 className="font-semibold text-foreground mb-3">Últimos resultados</h3>
           <div className="space-y-2">
             {completed.map((s) => (
               <ResultCard key={s.id} series={s} />
