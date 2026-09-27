@@ -24,7 +24,10 @@ export default async function CircuitoTorneoPage({
   const edition = await getCircuitoEditionBySlug(editionSlug)
   if (!edition) notFound()
 
-  const categories = await getCircuitoCategoriesForEdition(edition.id)
+  // Solo las categorías que se juegan este mes (tienen cuadro armado). Las
+  // que no, no se muestran; y si no queda ninguna de un tipo, su recuadro
+  // tampoco (CategoryGroup devuelve null con la lista vacía).
+  const categories = (await getCircuitoCategoriesForEdition(edition.id)).filter((c) => c.draw_size)
   const singles = categories.filter((c) => c.type === "single")
   const dobles = categories.filter((c) => c.type === "dobles")
 
@@ -37,6 +40,9 @@ export default async function CircuitoTorneoPage({
 
       <h1 className="mb-6 font-heading text-2xl font-bold text-foreground sm:text-3xl">{edition.name}</h1>
 
+      {categories.length === 0 && (
+        <p className="text-sm text-muted-foreground">Todavía no hay categorías con cuadro armado para este torneo.</p>
+      )}
       <CategoryGroup title="Single" categories={singles} editionSlug={editionSlug} />
       <CategoryGroup title="Dobles" categories={dobles} editionSlug={editionSlug} />
     </main>
@@ -57,26 +63,19 @@ function CategoryGroup({
     <div className="mb-8">
       <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">{title}</p>
       <div className="space-y-px overflow-hidden rounded-lg border border-border">
-        {categories.map((cat) =>
-          cat.draw_size ? (
-            <Link
-              key={cat.id}
-              href={`/circuito-del-parque/torneos/${editionSlug}/${cat.slug}`}
-              className="group flex items-center justify-between bg-card px-4 py-3 transition-colors hover:bg-muted"
-            >
-              <div>
-                <p className="text-sm font-medium text-foreground">{cat.name}</p>
-                <p className="text-xs text-muted-foreground">{cat.draw_size} inscriptos</p>
-              </div>
-              <ArrowRight className="size-4 text-muted-foreground transition-colors group-hover:text-foreground" />
-            </Link>
-          ) : (
-            <div key={cat.id} className="flex items-center justify-between bg-card px-4 py-3 opacity-60">
-              <p className="text-sm text-foreground">{cat.name}</p>
-              <p className="text-xs text-muted-foreground">No se juega este mes</p>
+        {categories.map((cat) => (
+          <Link
+            key={cat.id}
+            href={`/circuito-del-parque/torneos/${editionSlug}/${cat.slug}`}
+            className="group flex items-center justify-between bg-card px-4 py-3 transition-colors hover:bg-muted"
+          >
+            <div>
+              <p className="text-sm font-medium text-foreground">{cat.name}</p>
+              <p className="text-xs text-muted-foreground">{cat.draw_size} inscriptos</p>
             </div>
-          ),
-        )}
+            <ArrowRight className="size-4 text-muted-foreground transition-colors group-hover:text-foreground" />
+          </Link>
+        ))}
       </div>
     </div>
   )
