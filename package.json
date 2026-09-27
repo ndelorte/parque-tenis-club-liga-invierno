@@ -13,7 +13,8 @@
     "import:fixture": "tsx scripts/import-fixture.ts",
     "import:challonge": "tsx scripts/import-challonge.ts",
     "import:circuito-sheet": "tsx scripts/import-circuito-ranking-sheet.ts",
-    "validate:data": "tsx scripts/validate-data.ts"
+    "validate:data": "tsx scripts/validate-data.ts",
+    "diagnose:brackets": "tsx scripts/diagnose-circuito-brackets.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

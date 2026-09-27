@@ -1,14 +1,25 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
 import { getCircuitoEditionBySlug } from "@/lib/data/circuito/editions"
 import { getCircuitoCategoryBySlug } from "@/lib/data/circuito/categories"
 import { getCircuitoParticipants } from "@/lib/data/circuito/participants"
 import { getCircuitoMatches } from "@/lib/data/circuito/matches"
-import { BracketView } from "@/components/circuito/BracketView"
-import { RepechajeView } from "@/components/circuito/RepechajeView"
-import { classifyMainBracketSections } from "@/lib/circuito/bracketDisplay"
+import type { CircuitoMatchRow, CircuitoParticipantRow } from "@/lib/data/circuito/types"
+import type { CircuitoCategoryRow } from "@/lib/data/circuito/types"
+import { selectDrawRule } from "@/lib/circuito/generateBracket"
+import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
+import { classifyMainBracketSections, type DisplayMatch } from "@/lib/circuito/bracketDisplay"
+import { buildBracketTree, type BracketTreeParticipant } from "@/lib/circuito/bracketTree"
+import { calculateZoneStandings } from "@/lib/circuito/calculateZoneStandings"
+import { parseCircuitoScore } from "@/lib/circuito/parseCircuitoScore"
+import { isGrandSlamMonth, pointsForInstance } from "@/lib/circuito/pointsTable"
+import type { CircuitoParticipant } from "@/lib/circuito/types"
+import { BracketTreeView } from "@/components/circuito/bracket-tree"
+import { RoundsView } from "@/components/circuito/rounds-view"
+import { ChampionCard } from "@/components/circuito/champion-card"
+import { BracketMatchCard } from "@/components/circuito/bracket-match-card"
+import { ZoneStandingsTable, type ZoneMatchRow, type ZoneStandingsRow } from "@/components/circuito/zone-standings-table"
 
 export async function generateMetadata({
   params,
@@ -19,6 +30,92 @@ export async function generateMetadata({
   const ed = await getCircuitoEditionBySlug(edition)
   const cat = ed ? await getCircuitoCategoryBySlug(ed.id, categoria) : null
   return { title: cat ? `${cat.name} — ${ed!.name} | Circuito del Parque` : "Circuito del Parque" }
+}
+
+// "Campeón"/"Campeona"/"Campeones" — dato de presentación (no una regla
+// deportiva): dobles siempre es una pareja ("Campeones"), single femenino
+// "Campeona", el resto "Campeón".
+function championWord(category: Pick<CircuitoCategoryRow, "type" | "name">): string {
+  if (category.type === "dobles") return "Campeones"
+  return category.name.includes("Damas") ? "Campeona" : "Campeón"
+}
+
+function toParticipantsMap(participants: CircuitoParticipantRow[]): Record<string, BracketTreeParticipant> {
+  return Object.fromEntries(participants.map((p) => [p.id, { name: p.display_name, seed: p.seed }]))
+}
+
+// Re-numera round_number para que un tramo del cuadro (p. ej. semis+final, a
+// partir de round 2) se pueda pasar a buildBracketTree como un cuadro propio
+// (que siempre espera que la 1ª ronda sea la 1).
+function knockoutTail(matches: CircuitoMatchRow[], fromRound: number): CircuitoMatchRow[] {
+  return matches.filter((m) => m.round_number >= fromRound).map((m) => ({ ...m, round_number: m.round_number - fromRound + 1 }))
+}
+
+function formatDiff(n: number): string {
+  return n > 0 ? `+${n}` : `${n}`
+}
+
+// Tabla de posiciones + partidos de una zona ya jugada — usa
+// calculateZoneStandings (mismo criterio de desempate que el motor) para el
+// orden; PJ/PG/Sets/Games son solo aritmética de presentación.
+function buildZoneDisplay(
+  zoneParticipants: CircuitoParticipant[],
+  zoneMatches: CircuitoMatchRow[],
+  names: Record<string, BracketTreeParticipant>,
+  qualifiesCount: number,
+): { rows: ZoneStandingsRow[]; matches: ZoneMatchRow[] } {
+  const completed = zoneMatches.filter((m) => m.winner_id && m.score && m.participant_a_id && m.participant_b_id)
+  const results = completed.map((m) => ({
+    participantAId: m.participant_a_id!,
+    participantBId: m.participant_b_id!,
+    winnerId: m.winner_id!,
+    score: m.score!,
+  }))
+
+  const stats = new Map(
+    zoneParticipants.map((p) => [p.id, { played: 0, wins: 0, setsWon: 0, setsLost: 0, gamesWon: 0, gamesLost: 0 }]),
+  )
+  for (const m of completed) {
+    const parsed = parseCircuitoScore(m.score!, { isFinal: false })
+    const a = stats.get(m.participant_a_id!)
+    const b = stats.get(m.participant_b_id!)
+    if (!a || !b) continue
+    a.played++
+    b.played++
+    a.setsWon += parsed.setsWonA
+    a.setsLost += parsed.setsWonB
+    b.setsWon += parsed.setsWonB
+    b.setsLost += parsed.setsWonA
+    a.gamesWon += parsed.gamesWonA
+    a.gamesLost += parsed.gamesWonB
+    b.gamesWon += parsed.gamesWonB
+    b.gamesLost += parsed.gamesWonA
+    if (m.winner_id === m.participant_a_id) a.wins++
+    else b.wins++
+  }
+
+  const order = calculateZoneStandings(zoneParticipants, results)
+  const rows: ZoneStandingsRow[] = order.map((p, i) => {
+    const s = stats.get(p.id)!
+    return {
+      id: p.id,
+      name: names[p.id]?.name ?? "?",
+      played: s.played,
+      wins: s.wins,
+      setsDiff: formatDiff(s.setsWon - s.setsLost),
+      gamesDiff: formatDiff(s.gamesWon - s.gamesLost),
+      qualifies: i < qualifiesCount,
+    }
+  })
+
+  const matchRows: ZoneMatchRow[] = completed.map((m) => ({
+    id: m.id,
+    winnerName: names[m.winner_id!]?.name ?? "?",
+    loserName: names[m.winner_id === m.participant_a_id ? m.participant_b_id! : m.participant_a_id!]?.name ?? "?",
+    score: m.score!,
+  }))
+
+  return { rows, matches: matchRows }
 }
 
 export default async function CircuitoTorneoCategoriaPage({
@@ -37,28 +134,302 @@ export default async function CircuitoTorneoCategoriaPage({
     getCircuitoParticipants(category.id),
     getCircuitoMatches(category.id),
   ])
-  const participantNames = Object.fromEntries(participants.map((p) => [p.id, p.display_name]))
+  const names = toParticipantsMap(participants)
+  const circuitoParticipants: CircuitoParticipant[] = participants.map((p) => ({ id: p.id, seed: p.seed }))
+
+  const grandSlam = isGrandSlamMonth(edition.month)
+  const championPoints = pointsForInstance("champion", grandSlam)
+  const label = championWord(category)
 
   const mainMatches = matches.filter((m) => m.bracket === "main")
   const repechajeMatches = matches.filter((m) => m.bracket === "repechaje")
+  const rule = selectDrawRule(category.draw_size, CIRCUITO_FORMAT_SPEC)
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
       <Link
         href={`/circuito-del-parque/torneos/${editionSlug}`}
-        className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        className="mb-3 inline-block text-sm font-semibold text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="size-3.5" />
         {edition.name}
       </Link>
-
-      <h1 className="mb-1 font-heading text-2xl font-bold text-foreground sm:text-3xl">{category.name}</h1>
-      <p className="mb-6 text-sm text-muted-foreground">
-        {category.type === "single" ? "Single" : "Dobles"} · {category.draw_size} inscriptos
+      <h1 className="font-heading text-4xl font-extrabold uppercase leading-[0.95] text-foreground sm:text-5xl lg:text-6xl">
+        {category.name}
+      </h1>
+      <p className="mt-2 mb-8 text-base text-muted-foreground">
+        {category.type === "single" ? "Single" : "Dobles"}, {category.draw_size}{" "}
+        {category.type === "single" ? "inscriptos" : "parejas"}
+        {grandSlam && ". Grand Slam: puntos dobles para el ranking."}
       </p>
 
-      <BracketView sections={classifyMainBracketSections(mainMatches)} participantNames={participantNames} />
-      <RepechajeView matches={repechajeMatches} participantNames={participantNames} />
+      {rule?.format === "single_elimination" && (
+        <EliminationSections
+          mainMatches={mainMatches}
+          repechajeMatches={repechajeMatches}
+          names={names}
+          championLabel={label}
+          championPoints={championPoints}
+        />
+      )}
+
+      {rule?.format === "round_robin_pure" && (
+        <PureZoneSection participants={circuitoParticipants} matches={mainMatches} names={names} championLabel={label} championPoints={championPoints} />
+      )}
+
+      {rule?.format === "round_robin_with_final" && (
+        <ZoneWithFinalSection
+          participants={circuitoParticipants}
+          matches={mainMatches}
+          names={names}
+          championLabel={label}
+          championPoints={championPoints}
+        />
+      )}
+
+      {rule?.format === "groups_then_knockout" && (
+        <GroupsThenKnockoutSection
+          participants={circuitoParticipants}
+          matches={mainMatches}
+          names={names}
+          championLabel={label}
+          championPoints={championPoints}
+        />
+      )}
     </main>
+  )
+}
+
+// ── Eliminación directa (N≥8) ────────────────────────────────────────────
+
+function EliminationSections({
+  mainMatches,
+  repechajeMatches,
+  names,
+  championLabel,
+  championPoints,
+}: {
+  mainMatches: CircuitoMatchRow[]
+  repechajeMatches: CircuitoMatchRow[]
+  names: Record<string, BracketTreeParticipant>
+  championLabel: string
+  championPoints: number
+}) {
+  const mainTree = buildBracketTree(mainMatches, names)
+  const repechajeTree = repechajeMatches.length > 0 ? buildBracketTree(repechajeMatches, names) : null
+
+  return (
+    <div>
+      {mainTree ? (
+        <>
+          <div className="hidden lg:block">
+            <BracketTreeView
+              tree={mainTree}
+              championLabel={championLabel}
+              championPoints={championPoints}
+              idPrefix="principal"
+              scrollAreaLabel="Cuadro principal"
+            />
+          </div>
+          <div className="lg:hidden">
+            <RoundsView tree={mainTree} championLabel={championLabel} />
+          </div>
+        </>
+      ) : (
+        <FallbackSections matches={mainMatches} names={names} />
+      )}
+
+      {repechajeMatches.length > 0 && (
+        <section className="mt-14 border-t border-border pt-8">
+          <h2 className="mb-2 font-heading text-3xl font-extrabold uppercase text-foreground">Repechaje</h2>
+          <p className="mb-6 max-w-2xl text-sm text-muted-foreground">
+            Para quienes perdieron en la primera ronda: asegura un segundo partido. No suma puntos al ranking.
+          </p>
+          {repechajeTree ? (
+            <>
+              <div className="hidden lg:block">
+                <BracketTreeView
+                  tree={repechajeTree}
+                  championLabel="Ganó el repechaje"
+                  idPrefix="repechaje"
+                  scrollAreaLabel="Repechaje"
+                />
+              </div>
+              <div className="lg:hidden">
+                <RoundsView tree={repechajeTree} championLabel="Ganó el repechaje" />
+              </div>
+            </>
+          ) : (
+            <FallbackSections matches={repechajeMatches} names={names} />
+          )}
+        </section>
+      )}
+    </div>
+  )
+}
+
+// Cuando buildBracketTree no puede armar un árbol válido (cuadros
+// importados, ver bracketDisplay.ts): listas por ronda con el mismo estilo
+// de tarjeta, sin conectores.
+function FallbackSections({ matches, names }: { matches: CircuitoMatchRow[]; names: Record<string, BracketTreeParticipant> }) {
+  const sections = classifyMainBracketSections(matches as DisplayMatch[])
+  if (sections.length === 0) return null
+
+  return (
+    <div className="flex flex-col gap-8">
+      {sections.map((section) => (
+        <div key={section.label}>
+          <h2 className="mb-3 font-heading text-2xl font-extrabold uppercase text-foreground">{section.label}</h2>
+          <ol className="grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
+            {section.matches.map((m) => (
+              <li key={m.id}>
+                <BracketMatchCard
+                  compact
+                  match={{
+                    id: m.id,
+                    position: 0,
+                    a: m.participant_a_id ? { id: m.participant_a_id, name: names[m.participant_a_id]?.name ?? "?", seed: names[m.participant_a_id]?.seed ?? null } : null,
+                    b: m.participant_b_id ? { id: m.participant_b_id, name: names[m.participant_b_id]?.name ?? "?", seed: names[m.participant_b_id]?.seed ?? null } : null,
+                    score: m.score,
+                    winnerId: m.winner_id,
+                    isBye: !!m.participant_a_id && !m.participant_b_id,
+                    isWalkover: m.status === "walkover",
+                    status: m.status,
+                  }}
+                />
+              </li>
+            ))}
+          </ol>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── N=5: todos contra todos puro, sin final ─────────────────────────────
+
+function PureZoneSection({
+  participants,
+  matches,
+  names,
+  championPoints,
+}: {
+  participants: CircuitoParticipant[]
+  matches: CircuitoMatchRow[]
+  names: Record<string, BracketTreeParticipant>
+  championLabel: string
+  championPoints: number
+}) {
+  const { rows, matches: matchRows } = buildZoneDisplay(participants, matches, names, 0)
+  const champion = rows[0] ? { name: rows[0].name } : null
+
+  return (
+    <div className="flex flex-col gap-8">
+      <ZoneStandingsTable zoneName="Todos contra todos" rows={rows} matches={matchRows} />
+      <p className="text-xs text-muted-foreground">
+        Sin final: el campeón/la campeona es el 1° de la tabla. Desempate: partidos ganados, diferencia de sets,
+        diferencia de games, partido entre ellos.
+      </p>
+      <ChampionCard champion={champion} points={champion ? championPoints : undefined} />
+    </div>
+  )
+}
+
+// ── N=4: zona única + final entre los 2 primeros ────────────────────────
+
+function ZoneWithFinalSection({
+  participants,
+  matches,
+  names,
+  championLabel,
+  championPoints,
+}: {
+  participants: CircuitoParticipant[]
+  matches: CircuitoMatchRow[]
+  names: Record<string, BracketTreeParticipant>
+  championLabel: string
+  championPoints: number
+}) {
+  const zoneMatches = matches.filter((m) => m.round_number === 1)
+  const { rows, matches: matchRows } = buildZoneDisplay(participants, zoneMatches, names, 2)
+  const finalTree = buildBracketTree(knockoutTail(matches, 2), names)
+
+  return (
+    <div className="flex flex-col gap-10">
+      <ZoneStandingsTable zoneName="Todos contra todos" rows={rows} matches={matchRows} />
+      <p className="text-xs text-muted-foreground">
+        Barra de color: clasifica a la final. Desempate: partidos ganados, diferencia de sets, diferencia de games,
+        partido entre ellos.
+      </p>
+      {finalTree && (
+        <div className="hidden lg:block">
+          <BracketTreeView
+            tree={finalTree}
+            championLabel={championLabel}
+            championPoints={championPoints}
+            idPrefix="final"
+          />
+        </div>
+      )}
+      {finalTree && (
+        <div className="lg:hidden">
+          <RoundsView tree={finalTree} championLabel={championLabel} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── N=6-7: dos zonas + semifinales cruzadas + final ─────────────────────
+
+function GroupsThenKnockoutSection({
+  participants,
+  matches,
+  names,
+  championLabel,
+  championPoints,
+}: {
+  participants: CircuitoParticipant[]
+  matches: CircuitoMatchRow[]
+  names: Record<string, BracketTreeParticipant>
+  championLabel: string
+  championPoints: number
+}) {
+  const zoneMatches = matches.filter((m) => m.round_number === 1)
+  const zones = (["A", "B"] as const).map((zone) => {
+    const inZone = zoneMatches.filter((m) => m.zone === zone)
+    const ids = new Set(inZone.flatMap((m) => [m.participant_a_id, m.participant_b_id]).filter((id): id is string => !!id))
+    const zoneParticipants = participants.filter((p) => ids.has(p.id))
+    return { zone, ...buildZoneDisplay(zoneParticipants, inZone, names, 2) }
+  })
+
+  const knockoutTree = buildBracketTree(knockoutTail(matches, 2), names)
+
+  return (
+    <div className="flex flex-col gap-10">
+      <div className="grid gap-10 sm:grid-cols-2">
+        {zones.map(({ zone, rows, matches: matchRows }) => (
+          <ZoneStandingsTable key={zone} zoneName={`Zona ${zone}`} rows={rows} matches={matchRows} />
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Barra de color: clasifica a semifinales. Desempate: partidos ganados, diferencia de sets, diferencia de games,
+        partido entre ellos.
+      </p>
+      {knockoutTree && (
+        <div className="hidden lg:block">
+          <BracketTreeView
+            tree={knockoutTree}
+            championLabel={championLabel}
+            championPoints={championPoints}
+            idPrefix="semifinales"
+          />
+        </div>
+      )}
+      {knockoutTree && (
+        <div className="lg:hidden">
+          <RoundsView tree={knockoutTree} championLabel={championLabel} />
+        </div>
+      )}
+    </div>
   )
 }

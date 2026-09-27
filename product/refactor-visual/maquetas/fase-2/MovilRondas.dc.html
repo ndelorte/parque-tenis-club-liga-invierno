@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Cuadro en celular, por ronda</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:Barlow,system-ui,sans-serif;background:#f4f6f2;color:#13241a}
+a{color:#af5122}a:hover{color:#8a3f1a}
+a:focus-visible,button:focus-visible{outline:3px solid #af5122;outline-offset:2px}
+h1,h2,h3{text-wrap:balance}
+.cond{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase}
+.tab{flex:1;min-height:48px;border:0;background:transparent;font-family:Barlow,sans-serif;font-size:15px;font-weight:600;color:#4f5f55;box-shadow:inset 0 -2px 0 #d3dbd2;transition:box-shadow 200ms cubic-bezier(0.23,1,0.32,1),color 150ms ease}
+.tab[aria-pressed="true"]{color:#13241a;box-shadow:inset 0 -4px 0 #d4622a}
+.tab:active{transform:scale(0.97)}
+.p{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px 0 14px;font-size:16px}
+.p+.p{border-top:1px solid #d3dbd2}
+.seed{width:24px;font-size:13px;color:#4f5f55;font-variant-numeric:tabular-nums}
+.nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc{font-variant-numeric:tabular-nums;font-weight:600;font-size:15px}
+.p.w{box-shadow:inset 4px 0 0 #d4622a}
+.p.w .nm{font-weight:700}
+.p.l .nm{color:#4f5f55}
+@media (prefers-reduced-motion: reduce){.tab{transition:none}.tab:active{transform:none}}
+</style>
+</helmet>
+<div style="width: 390px; height: 1500px; box-sizing: border-box; display: flex; flex-direction: column">
+<header style="height: 60px; flex-shrink: 0; background: #1c3a2a; color: #f4f6f2; display: flex; align-items: center; gap: 10px; padding: 0 16px">
+<img width="36" height="36" src="/_blob/f459cbd1221abee4b0d2d03875ae3f12" alt="" style="width: 36px; height: 36px">
+<span class="cond" style="font-size: 20px; font-weight: 800">Parque Tenis Club</span>
+</header>
+<div style="height: 48px; flex-shrink: 0; background: #141414; color: #f4f6f2; display: flex; align-items: center; gap: 10px; padding: 0 16px">
+<span style="width: 30px; height: 30px; background: #ffffff; border-radius: 4px; display: flex; align-items: center; justify-content: center"><img width="26" height="26" src="/_blob/be2908ee62ce7c3172c7d38183621bc9" alt="" style="width: 26px; height: 26px"></span>
+<span class="cond" style="font-size: 18px; font-weight: 800">Circuito del Parque</span>
+</div>
+<section style="padding: 24px 16px 0; display: flex; flex-direction: column; gap: 6px">
+<a href="#" style="align-self: flex-start; font-weight: 600; font-size: 15px; min-height: 32px; display: flex; align-items: center">Us Open, septiembre 2026</a>
+<h1 class="cond" style="margin: 0; font-size: 48px; line-height: .9; font-weight: 800">Damas Segunda</h1>
+<p style="margin: 4px 0 0; font-size: 15px; color: #4f5f55">Single, 8 inscriptas. Grand Slam: puntos dobles.</p>
+</section>
+
+<div style="margin: 20px 16px 0; background: #1c3a2a; color: #f4f6f2; border-radius: 6px; padding: 14px 16px; display: flex; align-items: center; gap: 14px">
+<svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#d4e04a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg>
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; color: rgba(244,246,242,.8)">Campeona</span><span class="cond" style="font-size: 26px; font-weight: 800; line-height: 1">Rodriguez Cecilia</span></span>
+</div>
+
+<div role="group" aria-label="Ronda" style="margin: 20px 16px 0; display: flex">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<button type="button" class="tab" aria-pressed="{{t.pressed}}" onClick="{{t.pick}}">{{t.label}}</button>
+</sc-for>
+</div>
+
+<ol style="list-style: none; margin: 16px 16px 0; padding: 0; display: flex; flex-direction: column; gap: 14px">
+<sc-for list="{{matches}}" as="m" hint-placeholder-count="4">
+<li style="display: flex; flex-direction: column; gap: 6px">
+<div style="background: #ffffff; border: 1.5px solid #141414; border-radius: 4px">
+<div class="p {{m.a.cls}}"><span class="seed">{{m.a.seed}}</span><span class="nm">{{m.a.name}}</span><span class="sc">{{m.a.score}}</span></div>
+<div class="p {{m.b.cls}}"><span class="seed">{{m.b.seed}}</span><span class="nm">{{m.b.name}}</span><span class="sc">{{m.b.score}}</span></div>
+</div>
+<span style="font-size: 13px; color: #4f5f55; padding-left: 2px">{{m.next}}</span>
+</li>
+</sc-for>
+</ol>
+
+<section style="margin: 36px 16px 0; padding-top: 20px; border-top: 1px solid #d3dbd2">
+<a href="#" style="display: flex; justify-content: space-between; align-items: center; min-height: 48px; text-decoration: none; color: #13241a"><span style="display: flex; flex-direction: column"><span class="cond" style="font-size: 26px; font-weight: 800">Repechaje</span><span style="font-size: 14px; color: #4f5f55">Ganó Baum Fernanda. No suma puntos.</span></span><span style="font-weight: 600; color: #af5122">Ver</span></a>
+</section>
+<p style="margin: 24px 16px 0; font-size: 13px; color: #4f5f55">Tocá una ronda para ver sus partidos. Resultados de ejemplo.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1500}}'>
+class Component extends DCLogic {
+renderVals() {
+const P = (seed, name) => ({ seed, name });
+const rounds = [
+{ label: 'Cuartos', next: ['Semifinal 1', 'Semifinal 1', 'Semifinal 2', 'Semifinal 2'], m: [
+[P(1,'Rodriguez Cecilia'), P(8,'Staffolani Laura'), 'a', '6-2 6-3'],
+[P(4,'Baum Fernanda'), P(5,'Moreno Karina'), 'b', '4-6 6-3 7-6'],
+[P(3,'Gerez Carla'), P(6,'Zanetti Cecilia'), 'a', '6-4 6-4'],
+[P(2,'Banegas Daiana'), P(7,'Feininger Laura'), 'a', '6-1 6-2']] },
+{ label: 'Semis', next: ['la final', 'la final'], m: [
+[P(1,'Rodriguez Cecilia'), P(5,'Moreno Karina'), 'a', '6-3 7-5'],
+[P(3,'Gerez Carla'), P(2,'Banegas Daiana'), 'b', '7-6 6-4']] },
+{ label: 'Final', next: [null], m: [
+[P(1,'Rodriguez Cecilia'), P(2,'Banegas Daiana'), 'a', '6-4 3-6 10-8']] }
+];
+const sel = (this.state && this.state.sel) || 0;
+const r = rounds[sel];
+return {
+tabs: rounds.map((x, i) => ({ label: x.label, pressed: i === sel ? 'true' : 'false', pick: () => this.setState({ sel: i }) })),
+matches: r.m.map(([a, b, w, score], i) => {
+const side = (p, isW) => ({ seed: '[' + p.seed + ']', name: p.name, score: isW ? score : '', cls: isW ? 'w' : 'l' });
+const winner = w === 'a' ? a : b;
+return {
+a: side(a, w === 'a'), b: side(b, w === 'b'),
+next: r.next[i] ? winner.name + ' pasa a ' + r.next[i] + '.' : winner.name + ' es la campeona.'
+};
+})
+};
+}
+}
+</script>
+</body>
+</html>

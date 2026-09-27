@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Cuadro de 16</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:Barlow,system-ui,sans-serif;background:#f4f6f2;color:#13241a}
+a{color:#af5122}a:hover{color:#8a3f1a}
+a:focus-visible,button:focus-visible{outline:3px solid #af5122;outline-offset:2px}
+h1,h2,h3{text-wrap:balance}
+.cond{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase}
+.num{font-variant-numeric:tabular-nums}
+.draw{display:flex;align-items:stretch}
+.col{display:flex;flex-direction:column;width:210px;padding-right:32px;flex-shrink:0;box-sizing:content-box}
+.rl{height:40px;display:flex;align-items:flex-end;padding-bottom:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;font-size:19px;border-bottom:2px solid #141414;margin:0 0 10px}
+.cb{flex:1;display:flex;flex-direction:column;list-style:none;margin:0;padding:0}
+.g{flex:1;display:flex;flex-direction:column;justify-content:space-around;position:relative}
+.g.pair::after{content:"";position:absolute;right:-16px;top:25%;bottom:25%;width:16px;border:2px solid #141414;border-left:0;border-radius:0 3px 3px 0}
+.m{position:relative;background:#ffffff;border:1.5px solid #141414;border-radius:4px;margin:5px 0}
+.feed .m::before{content:"";position:absolute;left:-17.5px;top:50%;width:16px;border-top:2px solid #141414}
+.p{display:flex;align-items:center;gap:8px;height:30px;padding:0 10px 0 12px;font-size:14px}
+.p+.p{border-top:1px solid #d3dbd2}
+.seed{width:22px;font-size:12px;color:#4f5f55;font-variant-numeric:tabular-nums}
+.nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc{font-variant-numeric:tabular-nums;font-weight:600;font-size:13px;white-space:nowrap}
+.p.w{box-shadow:inset 4px 0 0 #d4622a}
+.p.w .nm{font-weight:700}
+.p.l .nm{color:#4f5f55}
+.p.tbd .nm{color:#4f5f55;font-style:italic}
+</style>
+</helmet>
+<div style="width: 1280px; height: 1150px; box-sizing: border-box; display: flex; flex-direction: column; padding: 40px 48px">
+<a href="#" style="align-self: flex-start; font-weight: 600; font-size: 15px">Us Open, septiembre 2026</a>
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; margin-top: 10px">
+<h1 class="cond" style="margin: 0; font-size: 72px; line-height: .9; font-weight: 800">Caballeros Primera</h1>
+<p style="margin: 0 0 6px; font-size: 16px; color: #4f5f55; max-width: 460px; text-align: right">Single, 13 inscriptos. Los cabezas de serie 1, 2 y 3 pasan directo a cuartos.</p>
+</div>
+<section aria-label="Cuadro principal" style="margin-top: 32px">
+<div class="draw" style="height: 760px">
+<sc-for list="{{draw.rounds}}" as="r" hint-placeholder-count="4">
+<div class="col {{r.cls}}">
+<h2 class="rl">{{r.label}}</h2>
+<ol class="cb">
+<sc-for list="{{r.groups}}" as="g" hint-placeholder-count="4">
+<li class="g {{g.cls}}">
+<sc-for list="{{g.matches}}" as="m" hint-placeholder-count="2">
+<div class="m">
+<div class="p {{m.a.cls}}"><span class="seed">{{m.a.seed}}</span><span class="nm">{{m.a.name}}</span><span class="sc">{{m.a.score}}</span></div>
+<div class="p {{m.b.cls}}"><span class="seed">{{m.b.seed}}</span><span class="nm">{{m.b.name}}</span><span class="sc">{{m.b.score}}</span></div>
+</div>
+</sc-for>
+</li>
+</sc-for>
+</ol>
+</div>
+</sc-for>
+<div style="display: flex; flex-direction: column; width: 200px; flex-shrink: 0">
+<h2 class="rl">Campeón</h2>
+<div style="flex: 1; display: flex; align-items: center">
+<div style="width: 100%; border: 2px dashed #b8c3b7; border-radius: 6px; padding: 20px 18px; display: flex; flex-direction: column; gap: 6px; color: #4f5f55">
+<svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg>
+<span class="cond" style="font-size: 24px; font-weight: 800">Por definir</span>
+<span style="font-size: 14px">La final se juega a fin de mes.</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<p style="margin: 24px 0 0; font-size: 13px; color: #4f5f55">Estructura de ejemplo con 13 inscriptos. Nombres y resultados de ejemplo.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1150}}'>
+class Component extends DCLogic {
+order(n) {
+let a = [1, 2];
+while (a.length < n) { const m = a.length * 2; a = a.flatMap((s) => [s, m + 1 - s]); }
+return a;
+}
+build(entrants, playedRounds, labels) {
+const R = Math.log2(entrants.length);
+const scores = ['6-3 6-4', '6-2 7-5', '4-6 6-3 7-6', '6-1 6-4', '7-6 6-3', '6-4 6-4'];
+let cur = entrants;
+const rounds = [];
+let k = 0;
+for (let r = 0; r < R; r++) {
+const ms = [];
+const next = [];
+for (let i = 0; i < cur.length; i += 2) {
+const a = cur[i], b = cur[i + 1];
+let w = null, score = '';
+if (r === 0 && a && !b) w = a;
+else if (a && b && r < playedRounds) {
+const upset = (i / 2) % 3 === 2;
+w = (a.seed < b.seed) !== upset ? a : b;
+score = scores[k++ % scores.length];
+}
+const side = (p) => ({
+seed: p ? '[' + p.seed + ']' : '',
+name: p ? p.name : (r === 0 ? 'Pase libre' : 'Por definir'),
+score: w && w === p ? score : '',
+cls: !p ? 'tbd' : (w && score) ? (w === p ? 'w' : 'l') : ''
+});
+ms.push({ a: side(a), b: side(b) });
+next.push(w);
+}
+const groups = [];
+if (ms.length === 1) groups.push({ cls: '', matches: ms });
+else for (let i = 0; i < ms.length; i += 2) groups.push({ cls: 'pair', matches: [ms[i], ms[i + 1]] });
+rounds.push({ label: labels[R - 1 - r], cls: r > 0 ? 'feed' : '', groups });
+cur = next;
+}
+return { rounds };
+}
+renderVals() {
+const L = ['Final', 'Semifinales', 'Cuartos de final', 'Octavos de final', '16avos de final'];
+const inscriptos = 13;
+const entrants = this.order(16).map((s) => (s <= inscriptos ? { seed: s, name: '[Jugador ' + s + ']' } : null));
+return { draw: this.build(entrants, 1, L) };
+}
+}
+</script>
+</body>
+</html>
