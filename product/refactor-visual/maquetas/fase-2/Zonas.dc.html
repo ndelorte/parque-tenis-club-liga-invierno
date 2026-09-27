@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Zonas y final</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:Barlow,system-ui,sans-serif;background:#f4f6f2;color:#13241a}
+a{color:#af5122}a:hover{color:#8a3f1a}
+a:focus-visible{outline:3px solid #af5122;outline-offset:2px}
+h1,h2,h3{text-wrap:balance}
+.cond{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase}
+.num{font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;background:#ffffff;border:1.5px solid #141414}
+th{font-size:13px;font-weight:600;color:#4f5f55;text-align:right;padding:10px 12px;border-bottom:2px solid #141414}
+th:first-child,td:first-child{text-align:left}
+td{padding:11px 12px;border-bottom:1px solid #d3dbd2;text-align:right;font-variant-numeric:tabular-nums;font-size:15px}
+tr.q td:first-child{box-shadow:inset 4px 0 0 #d4622a;font-weight:700}
+.mlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.mlist li{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:8px 2px;border-bottom:1px dashed #d3dbd2}
+.draw{display:flex;align-items:stretch}
+.col{display:flex;flex-direction:column;width:250px;padding-right:32px;flex-shrink:0;box-sizing:content-box}
+.rl{height:40px;display:flex;align-items:flex-end;padding-bottom:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;font-size:19px;border-bottom:2px solid #141414;margin:0 0 10px}
+.cb{flex:1;display:flex;flex-direction:column;list-style:none;margin:0;padding:0}
+.g{flex:1;display:flex;flex-direction:column;justify-content:space-around;position:relative}
+.g.pair::after{content:"";position:absolute;right:-16px;top:25%;bottom:25%;width:16px;border:2px solid #141414;border-left:0;border-radius:0 3px 3px 0}
+.m{position:relative;background:#ffffff;border:1.5px solid #141414;border-radius:4px;margin:7px 0}
+.feed .m::before{content:"";position:absolute;left:-17.5px;top:50%;width:16px;border-top:2px solid #141414}
+.p{display:flex;align-items:center;gap:8px;height:34px;padding:0 10px 0 12px;font-size:15px}
+.p+.p{border-top:1px solid #d3dbd2}
+.tag{width:34px;font-size:12px;color:#4f5f55}
+.nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc{font-variant-numeric:tabular-nums;font-weight:600;font-size:14px}
+.p.w{box-shadow:inset 4px 0 0 #d4622a}
+.p.w .nm{font-weight:700}
+.p.l .nm{color:#4f5f55}
+</style>
+</helmet>
+<div style="width: 1280px; height: 1500px; box-sizing: border-box; display: flex; flex-direction: column; padding: 40px 48px">
+<a href="#" style="align-self: flex-start; font-weight: 600; font-size: 15px">Roland Garros, mayo 2026</a>
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; margin-top: 10px">
+<h1 class="cond" style="margin: 0; font-size: 80px; line-height: .9; font-weight: 800">Damas Segunda</h1>
+<p style="margin: 0 0 6px; font-size: 16px; color: #4f5f55; max-width: 480px; text-align: right">Single, 6 inscriptas. Dos zonas de 3; las dos primeras de cada zona juegan semifinales cruzadas.</p>
+</div>
+
+<div style="margin-top: 36px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px">
+<sc-for list="{{zones}}" as="z" hint-placeholder-count="2">
+<section style="display: flex; flex-direction: column; gap: 16px">
+<h2 class="cond" style="margin: 0; font-size: 40px; font-weight: 800">{{z.name}}</h2>
+<table>
+<caption style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Posiciones de la {{z.name}}</caption>
+<thead><tr><th scope="col">Jugadora</th><th scope="col">PJ</th><th scope="col">PG</th><th scope="col">Sets</th><th scope="col">Games</th></tr></thead>
+<tbody>
+<tr class="q"><td>{{z.r1.name}}</td><td>2</td><td>{{z.r1.pg}}</td><td>{{z.r1.sets}}</td><td>{{z.r1.games}}</td></tr>
+<tr class="q"><td>{{z.r2.name}}</td><td>2</td><td>{{z.r2.pg}}</td><td>{{z.r2.sets}}</td><td>{{z.r2.games}}</td></tr>
+<tr><td>{{z.r3.name}}</td><td>2</td><td>{{z.r3.pg}}</td><td>{{z.r3.sets}}</td><td>{{z.r3.games}}</td></tr>
+</tbody>
+</table>
+<ul class="mlist" aria-label="Partidos de la {{z.name}}">
+<sc-for list="{{z.matches}}" as="m" hint-placeholder-count="3">
+<li><span><strong>{{m.w}}</strong> le ganó a {{m.l}}</span><span class="num" style="font-weight: 600">{{m.s}}</span></li>
+</sc-for>
+</ul>
+</section>
+</sc-for>
+</div>
+<p style="margin: 14px 0 0; font-size: 13px; color: #4f5f55">Borde naranja: clasifica a semifinales. Desempate: partidos ganados, diferencia de sets, de games, partido entre ellas.</p>
+
+<section aria-label="Semifinales y final" style="margin-top: 40px">
+<div class="draw" style="height: 250px">
+<sc-for list="{{rounds}}" as="r" hint-placeholder-count="2">
+<div class="col {{r.cls}}">
+<h2 class="rl">{{r.label}}</h2>
+<ol class="cb">
+<sc-for list="{{r.groups}}" as="g" hint-placeholder-count="1">
+<li class="g {{g.cls}}">
+<sc-for list="{{g.matches}}" as="m" hint-placeholder-count="2">
+<div class="m">
+<div class="p {{m.a.cls}}"><span class="tag">{{m.a.tag}}</span><span class="nm">{{m.a.name}}</span><span class="sc">{{m.a.score}}</span></div>
+<div class="p {{m.b.cls}}"><span class="tag">{{m.b.tag}}</span><span class="nm">{{m.b.name}}</span><span class="sc">{{m.b.score}}</span></div>
+</div>
+</sc-for>
+</li>
+</sc-for>
+</ol>
+</div>
+</sc-for>
+<div style="display: flex; flex-direction: column; width: 280px; flex-shrink: 0">
+<h2 class="rl">Campeona</h2>
+<div style="flex: 1; display: flex; align-items: center">
+<div style="width: 100%; background: #1c3a2a; color: #f4f6f2; border-radius: 6px; border: 3px solid #141414; padding: 20px; display: flex; align-items: center; gap: 14px">
+<svg aria-hidden="true" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#d4e04a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg>
+<span style="display: flex; flex-direction: column; gap: 4px"><span class="cond" style="font-size: 30px; font-weight: 800; line-height: .95">Banegas Daiana</span><span style="font-size: 14px; color: rgba(244,246,242,.8)">2000 puntos para el ranking</span></span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<p style="margin: 24px 0 0; font-size: 13px; color: #4f5f55">Nombres reales del seed de prueba; resultados de ejemplo.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1500}}'>
+class Component extends DCLogic {
+renderVals() {
+const R = (name, pg, sets, games, q) => ({ name, pg, sets, games, cls: q ? 'q' : '' });
+const M = (w, l, s) => ({ w, l, s });
+const S = (tag, name, score, cls) => ({ tag, name, score, cls });
+return {
+zones: [
+{ name: 'Zona A', r1: R('Rodriguez Cecilia', 2, '+4', '+14', true), r2: R('Moreno Karina', 1, '−1', '−5', true), r3: R('Baum Fernanda', 0, '−3', '−9', false),
+matches: [M('Rodriguez Cecilia', 'Baum Fernanda', '6-2 6-1'), M('Rodriguez Cecilia', 'Moreno Karina', '6-3 6-4'), M('Moreno Karina', 'Baum Fernanda', '6-4 3-6 7-6')] },
+{ name: 'Zona B', r1: R('Banegas Daiana', 2, '+4', '+13', true), r2: R('Gerez Carla', 1, '0', '+2', true), r3: R('Zanetti Cecilia', 0, '−4', '−15', false),
+matches: [M('Banegas Daiana', 'Gerez Carla', '7-5 6-4'), M('Banegas Daiana', 'Zanetti Cecilia', '6-1 6-2'), M('Gerez Carla', 'Zanetti Cecilia', '6-3 6-3')] }
+],
+rounds: [
+{ label: 'Semifinales', cls: '', groups: [{ cls: 'pair', matches: [
+{ a: S('1.° A', 'Rodriguez Cecilia', '6-2 6-4', 'w'), b: S('2.° B', 'Gerez Carla', '', 'l') },
+{ a: S('1.° B', 'Banegas Daiana', '6-3 6-3', 'w'), b: S('2.° A', 'Moreno Karina', '', 'l') }
+] }] },
+{ label: 'Final', cls: 'feed', groups: [{ cls: '', matches: [
+{ a: S('', 'Rodriguez Cecilia', '', 'l'), b: S('', 'Banegas Daiana', '7-5 6-4', 'w') }
+] }] }
+]
+};
+}
+}
+</script>
+</body>
+</html>

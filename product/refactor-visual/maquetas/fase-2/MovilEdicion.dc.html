@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Us Open en celular</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:Barlow,system-ui,sans-serif;background:#f4f6f2;color:#13241a}
+a{color:#af5122}a:hover{color:#8a3f1a}
+a:focus-visible,button:focus-visible{outline:3px solid #af5122;outline-offset:2px}
+.cond{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase}
+.seg{flex:1;min-height:48px;border:0;border-radius:4px;background:transparent;font-family:Barlow,sans-serif;font-size:16px;font-weight:600;color:#4f5f55;display:flex;align-items:center;justify-content:center;gap:8px;transition:background-color 200ms cubic-bezier(0.23,1,0.32,1),color 150ms ease}
+.seg[aria-pressed="true"]{background:#141414;color:#f4f6f2}
+.seg:active{transform:scale(0.97)}
+.cat{display:flex;flex-direction:column;gap:4px;padding:16px 2px;border-bottom:1px solid #d3dbd2;color:#13241a;text-decoration:none;min-height:44px}
+.court-stripe{background-color:#af5122;box-shadow:inset 0 -6px 0 #141414}
+@media (prefers-reduced-motion: reduce){.seg{transition:none}.seg:active{transform:none}}
+</style>
+</helmet>
+<div style="width: 390px; height: 1400px; box-sizing: border-box; display: flex; flex-direction: column">
+<header style="height: 60px; flex-shrink: 0; background: #1c3a2a; color: #f4f6f2; display: flex; align-items: center; gap: 10px; padding: 0 16px">
+<img width="36" height="36" src="/_blob/f459cbd1221abee4b0d2d03875ae3f12" alt="" style="width: 36px; height: 36px">
+<span class="cond" style="font-size: 20px; font-weight: 800">Parque Tenis Club</span>
+</header>
+<div style="height: 48px; flex-shrink: 0; background: #141414; color: #f4f6f2; display: flex; align-items: center; gap: 10px; padding: 0 16px">
+<span style="width: 30px; height: 30px; background: #ffffff; border-radius: 4px; display: flex; align-items: center; justify-content: center"><img width="26" height="26" src="/_blob/be2908ee62ce7c3172c7d38183621bc9" alt="" style="width: 26px; height: 26px"></span>
+<span class="cond" style="font-size: 18px; font-weight: 800">Circuito del Parque</span>
+</div>
+<section class="court-stripe" style="color: #ffffff; padding: 28px 16px 26px; display: flex; flex-direction: column; gap: 8px">
+<h1 class="cond" style="margin: 0; font-size: 76px; line-height: .85; font-weight: 800">Us Open</h1>
+<p style="margin: 0; font-size: 15px">Septiembre 2026. Grand Slam: puntos dobles.</p>
+</section>
+<div role="group" aria-label="Modalidad" style="margin: 20px 16px 0; display: flex; gap: 4px; padding: 4px; border: 1.5px solid #141414; border-radius: 6px">
+<sc-for list="{{segs}}" as="s" hint-placeholder-count="2">
+<button type="button" class="seg" aria-pressed="{{s.pressed}}" onClick="{{s.pick}}">{{s.label}}<span style="font-size: 13px; opacity: .8">{{s.count}}</span></button>
+</sc-for>
+</div>
+<ul style="list-style: none; margin: 8px 16px 0; padding: 0">
+<sc-for list="{{cats}}" as="c" hint-placeholder-count="7">
+<li><a href="#" class="cat">
+<span style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px"><span class="cond" style="font-size: 25px; font-weight: 800">{{c.name}}</span><span style="font-size: 14px; font-weight: 600; color: {{c.stateColor}}">{{c.state}}</span></span>
+<span style="font-size: 14px; color: #4f5f55">{{c.format}}. {{c.extra}}</span>
+</a></li>
+</sc-for>
+</ul>
+<p style="margin: 20px 16px 0; font-size: 13px; color: #4f5f55">Tocá Single o Dobles. Estados de ejemplo.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1400}}'>
+class Component extends DCLogic {
+renderVals() {
+const live = '#af5122', done = '#1f6b37';
+const C = (name, format, state, extra, isDone) => ({ name, format, state, extra, stateColor: isDone ? done : live });
+const data = {
+single: [
+C('Caballeros Primera', 'Cuadro de 16, 13 inscriptos', 'En juego', 'Cuartos de final', false),
+C('Caballeros Intermedia', 'Cuadro de 16, 10 inscriptos', 'En juego', 'Octavos de final', false),
+C('Caballeros Segunda', 'Dos zonas y final, 6 inscriptos', 'En juego', 'Zonas', false),
+C('Caballeros Tercera', 'Cuadro de 32, 32 inscriptos', 'En juego', 'Octavos de final', false),
+C('Caballeros +50', 'Todos contra todos, 5 inscriptos', 'En juego', '6 de 10 partidos', false),
+C('Damas Primera', 'Todos contra todos y final, 4 inscriptas', 'En juego', 'Final', false),
+C('Damas Segunda', 'Cuadro de 8, 8 inscriptas', 'Terminado', 'Campeona: Rodriguez Cecilia', true)
+],
+dobles: [
+C('Caballeros Primera', 'Cuadro de 8, 8 parejas', 'En juego', 'Semifinales', false),
+C('Caballeros Intermedia', 'Cuadro de 16, 11 parejas', 'En juego', 'Cuartos de final', false),
+C('Caballeros Segunda', 'Dos zonas y final, 7 parejas', 'En juego', 'Semifinales', false),
+C('Damas Primera', 'Todos contra todos, 5 parejas', 'En juego', '8 de 10 partidos', false),
+C('Mixto Intermedia', 'Cuadro de 8, 8 parejas', 'Terminado', 'Campeones: [Pareja]', true),
+C('Mixto Segunda', 'Cuadro de 16, 9 parejas', 'En juego', 'Octavos de final', false)
+]
+};
+const mode = (this.state && this.state.mode) || 'single';
+return {
+segs: [
+{ label: 'Single', count: String(data.single.length), pressed: mode === 'single' ? 'true' : 'false', pick: () => this.setState({ mode: 'single' }) },
+{ label: 'Dobles', count: String(data.dobles.length), pressed: mode === 'dobles' ? 'true' : 'false', pick: () => this.setState({ mode: 'dobles' }) }
+],
+cats: data[mode]
+};
+}
+}
+</script>
+</body>
+</html>

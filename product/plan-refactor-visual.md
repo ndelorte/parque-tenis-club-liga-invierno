@@ -502,6 +502,8 @@ Se cierran en la maqueta de cada fase y se anotan acá con la fecha.
 - [x] Tipografía → **Barlow Condensed + Barlow** (2026-09-27). Queda abierto si Mid Master sigue con Playfair.
 - [ ] Valores finales de la paleta (verde y naranja del logo, acentos de estación). → Maqueta F1.
 - [ ] ¿La home lleva carrusel en el hero o foto fija? → Maqueta F1, según las fotos que lleguen.
-- [ ] ¿Cómo se diferencian single y dobles en el Circuito? → Maqueta F2.
-- [ ] Cuadro de 32 en el celular: ¿columnas con snap o vista por ronda? → Maqueta F2.
+- [x] Single y dobles en el Circuito → **dos columnas con ícono (una o dos raquetas) en escritorio; selector Single | Dobles en celular** (2026-09-27, maqueta F2).
+- [x] Cuadros en el celular → **vista por ronda** (botones de ronda; cada partido dice a dónde pasa el ganador) para todos los tamaños; en escritorio, cuadro horizontal (2026-09-27).
+- [x] Landing del Circuito → **calendario de la temporada**: Grand Slam en polvo fuerte con líneas de cancha, jugados en polvo suave, próximos con línea punteada; meses sin torneo cargado dicen "A confirmar" (2026-09-27).
+- [x] Lógica nueva del Circuito (árbol del cuadro, ronda en juego, campeón por categoría) → **funciones puras en `lib/circuito/` con tests**, excepción aprobada (2026-09-27).
 - [ ] Sub-identidad de Interparque. → Maqueta F4.

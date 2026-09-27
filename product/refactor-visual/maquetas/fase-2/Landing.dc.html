@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Circuito del Parque</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:Barlow,system-ui,sans-serif;background:#f4f6f2;color:#13241a}
+a{color:#af5122}a:hover{color:#8a3f1a}
+a:focus-visible,button:focus-visible{outline:3px solid #af5122;outline-offset:2px}
+h1,h2,h3{text-wrap:balance}
+.cond{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase}
+.num{font-variant-numeric:tabular-nums}
+.gs{background-color:#af5122;background-image:linear-gradient(90deg,transparent calc(50% - 1px),rgba(20,20,20,.9) calc(50% - 1px),rgba(20,20,20,.9) calc(50% + 1px),transparent calc(50% + 1px)),linear-gradient(transparent 12px,rgba(255,255,255,.75) 12px,rgba(255,255,255,.75) 14px,transparent 14px)}
+.subnav a{color:#f4f6f2;text-decoration:none}
+.subnav a[aria-current]{box-shadow:inset 0 -4px 0 #d4622a}
+.row-link{color:#13241a;text-decoration:none}
+ol a:hover{outline:2px solid #141414;outline-offset:2px}
+.row-link:hover .rl-title{text-decoration:underline;text-underline-offset:5px}
+</style>
+</helmet>
+<div style="width: 1280px; height: 1560px; box-sizing: border-box; display: flex; flex-direction: column">
+
+<header style="height: 72px; flex-shrink: 0; background: #1c3a2a; color: #f4f6f2; display: flex; align-items: center; gap: 12px; padding: 0 48px">
+<img width="44" height="44" src="/_blob/f459cbd1221abee4b0d2d03875ae3f12" alt="" style="width: 44px; height: 44px">
+<span class="cond" style="font-size: 24px; font-weight: 800">Parque Tenis Club</span>
+</header>
+
+<nav class="subnav" aria-label="Circuito del Parque" style="height: 56px; flex-shrink: 0; background: #141414; color: #f4f6f2; display: flex; align-items: stretch; gap: 32px; padding: 0 48px; font-weight: 600; font-size: 15px">
+<span style="display: flex; align-items: center; gap: 10px; margin-right: 16px"><span style="width: 36px; height: 36px; background: #ffffff; border-radius: 4px; display: flex; align-items: center; justify-content: center"><img width="30" height="30" src="/_blob/be2908ee62ce7c3172c7d38183621bc9" alt="" style="width: 30px; height: 30px"></span><span class="cond" style="font-size: 20px; font-weight: 800">Circuito del Parque</span></span>
+<a href="#" aria-current="page" style="display: flex; align-items: center">Torneos</a>
+<a href="#" style="display: flex; align-items: center">Ranking 2026</a>
+<a href="#" style="display: flex; align-items: center">Final Master</a>
+<a href="#" style="display: flex; align-items: center">Mid Master</a>
+</nav>
+
+<section style="padding: 64px 48px 40px; display: grid; grid-template-columns: 7fr 5fr; gap: 48px; align-items: end">
+<h1 class="cond" style="margin: 0; font-size: 104px; line-height: .88; font-weight: 800">Temporada 2026</h1>
+<p style="margin: 0; font-size: 18px; line-height: 1.55; color: #4f5f55">Un torneo por categoría cada mes, con el nombre de un torneo del circuito profesional. Los puntos suman al ranking anual y los 8 mejores de cada categoría juegan la Final Master.</p>
+</section>
+
+<section aria-label="Calendario de la temporada" style="padding: 0 48px">
+<ol style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{months}}" as="m" hint-placeholder-count="12">
+<li>
+<a href="#" class="{{m.cls}}" style="{{m.style}}">
+<span style="display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; font-weight: 600"><span>{{m.month}}</span><span class="num" style="opacity: .75">{{m.n}}</span></span>
+<span class="cond" style="font-size: 30px; font-weight: 800; line-height: .95; margin-top: auto">{{m.name}}</span>
+<span style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px"><sc-if value="{{m.live}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="width: 9px; height: 9px; border-radius: 50%; background: #d4e04a; box-shadow: 0 0 0 2px #141414"></span></sc-if>{{m.status}}</span>
+</a>
+</li>
+</sc-for>
+</ol>
+<p style="margin: 14px 0 0; font-size: 14px; color: #4f5f55; display: flex; align-items: center; gap: 10px"><span aria-hidden="true" class="gs" style="width: 28px; height: 18px; border-radius: 3px; display: inline-block"></span>Grand Slam: puntos dobles para el ranking.</p>
+</section>
+
+<section style="margin: 72px 48px 0; border-top: 2px solid #141414">
+<a href="#" class="row-link" style="display: grid; grid-template-columns: 5fr 6fr 1fr; gap: 32px; align-items: center; padding: 28px 0; border-bottom: 1px solid #d3dbd2">
+<span class="cond rl-title" style="font-size: 44px; font-weight: 800; line-height: 1">Ranking 2026</span>
+<span style="font-size: 16px; line-height: 1.5; color: #4f5f55">La tabla de cada categoría, torneo por torneo. Los 8 primeros clasifican a la Final Master.</span>
+<span style="font-weight: 600; color: #af5122; text-align: right">Ver ranking</span>
+</a>
+<a href="#" class="row-link" style="display: grid; grid-template-columns: 5fr 6fr 1fr; gap: 32px; align-items: center; padding: 28px 0; border-bottom: 1px solid #d3dbd2">
+<span class="cond rl-title" style="font-size: 44px; font-weight: 800; line-height: 1">Final Master</span>
+<span style="font-size: 16px; line-height: 1.5; color: #4f5f55">El cierre de la temporada. Hoy, la clasificación provisoria de cada categoría.</span>
+<span style="font-weight: 600; color: #af5122; text-align: right">Ver clasificados</span>
+</a>
+<a href="#" class="row-link" style="display: grid; grid-template-columns: 5fr 6fr 1fr; gap: 32px; align-items: center; padding: 28px 0; border-bottom: 1px solid #d3dbd2">
+<span class="cond rl-title" style="font-size: 44px; font-weight: 800; line-height: 1">Mid Master</span>
+<span style="font-size: 16px; line-height: 1.5; color: #4f5f55">El torneo especial de mitad de año, con zonas y cuadro final.</span>
+<span style="font-weight: 600; color: #af5122; text-align: right">Ver torneo</span>
+</a>
+</section>
+
+<footer style="margin-top: auto; height: 120px; flex-shrink: 0; background: #1c3a2a; color: rgba(244,246,242,.8); display: flex; align-items: center; padding: 0 48px; font-size: 15px">Parque Tenis Club, Primera Junta 726, Quilmes</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1560}}'>
+class Component extends DCLogic {
+renderVals() {
+const names = ['Australia Open','Argentina Open','Miami Open','Monte Carlo','Roland Garros','Halle Open','Wimbledon','Cincinnati Open','Us Open','China Open','Paris Open','Belgrado Open'];
+const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const gs = [1,5,7,9];
+const current = 9;
+const base = 'height: 168px; box-sizing: border-box; padding: 14px 14px 12px; border-radius: 4px; display: flex; flex-direction: column; gap: 8px; text-decoration: none;';
+return {
+months: names.map((name, i) => {
+const n = i + 1;
+const isGs = gs.includes(n);
+const live = n === current;
+const done = n < current;
+let style = base;
+if (isGs) style += ' color: #ffffff; border: 2px solid #141414;';
+else if (done) style += ' background: #f6e3d7; color: #13241a; border: 1.5px solid #e9c4ad;';
+else style += ' background: transparent; color: #4f5f55; border: 1.5px dashed #b8c3b7;';
+if (live) style += ' box-shadow: 0 0 0 3px #f4f6f2, 0 0 0 6px #141414;';
+return {
+n: String(n).padStart(2, '0'), month: months[i], name, live,
+cls: isGs ? 'gs' : '', style,
+status: live ? 'En juego' : done ? 'Finalizado' : 'Próximo'
+};
+})
+};
+}
+}
+</script>
+</body>
+</html>
