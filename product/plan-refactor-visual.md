@@ -199,6 +199,7 @@ Implementación con Tailwind v4:
 - El atributo `data-identity` lo pone el `layout.tsx` de cada sección, así que ninguna página lo repite. La Liga lo decide por edición con el helper de estación (§4, Fase 3).
 - Los tokens `mm-*` se migran a `[data-identity="especiales"]` en la Fase 4. Hasta entonces conviven sin cambios.
 - `winter` se reemplaza por `liga-invierno`.
+- **Dos tonos de acento**: `accent` (el naranja del logo, para franjas y decoración) y `accent-strong` (más oscuro, para botones con texto blanco y links). El naranja del logo con texto blanco da 3,4–3,8 de contraste y no llega a AA (auditoría de la maqueta F1).
 - **Regla de la fase**: un componente tocado no puede quedar con `gray-*`, `white`, `amber-*`, hex ni `rgba` sueltos. Se verifica con un grep en el checklist (§6).
 
 Punto de partida para la maqueta (a ajustar):
@@ -278,11 +279,12 @@ Viven en `components/shared/`. Toman el color de la sección desde `--section-*`
 ### 4.1 Cómo se trabaja cada fase
 
 1. **Maqueta** — HTML autocontenido con 2–3 variantes y datos reales (copiados de producción o del mock). Se publica como página privada para verla en el celular y se guarda en `product/refactor-visual/maquetas/fase-N/`.
-2. **Ida y vuelta** — el humano elige y corrige. Las decisiones se anotan en §8 de este archivo.
-3. **Capturas aprobadas** en `product/refactor-visual/aprobado/fase-N/` (escritorio + 375 px, claro + oscuro).
-4. **Implementación** en una rama `feat/visual-fN-<tema>` desde `main`.
-5. **Revisión en el navegador** (local o preview de Vercel) contra las capturas aprobadas + checklist §6.
-6. **PR** con capturas antes/después. Merge solo con aprobación del humano.
+2. **Auditoría** — antes de mostrarla, la maqueta se revisa con la skill `web-design-guidelines` (`.claude/skills/`, guías de interfaz de Vercel) + un chequeo de contraste AA de los pares de color. Se corrige lo que aplica a una maqueta; lo que es de implementación queda en el checklist §6.
+3. **Ida y vuelta** — el humano elige y corrige. Las decisiones se anotan en §8 de este archivo.
+4. **Capturas aprobadas** en `product/refactor-visual/aprobado/fase-N/` (escritorio + 375 px, claro + oscuro).
+5. **Implementación** en una rama `feat/visual-fN-<tema>` desde `main`.
+6. **Revisión en el navegador** (local o preview de Vercel) contra las capturas aprobadas + checklist §6. La skill `web-design-guidelines` se corre también sobre los componentes del PR.
+7. **PR** con capturas antes/después. Merge solo con aprobación del humano.
 
 Las capturas del estado actual (antes de cada fase) van en `product/refactor-visual/actual/`.
 
@@ -411,6 +413,10 @@ Las maquetas de F2–F4 se pueden adelantar mientras se programa la fase anterio
 [ ] sin scroll horizontal de página en 375 px
 [ ] contraste AA en texto y estados de resultado, en claro y oscuro
 [ ] con "reducir movimiento" activado no hay animaciones de entrada ni nieve/marquee
+[ ] skill web-design-guidelines sobre los archivos tocados, sin hallazgos pendientes
+[ ] foco visible (focus-visible) y hover en todo lo interactivo; skip link en el layout
+[ ] color-scheme y <meta name="theme-color"> acordes al tema; env(safe-area-inset-*) en el hero
+[ ] títulos con text-wrap: balance; números con tabular-nums; fechas con Intl.DateTimeFormat
 [ ] grep en los archivos tocados: sin gray-*, bg-white, amber-*, hex ni rgba sueltos
 [ ] grep: ningún href a /panel-* fuera de app/panel-* y components/admin
 [ ] no se muestran teléfonos en vistas públicas

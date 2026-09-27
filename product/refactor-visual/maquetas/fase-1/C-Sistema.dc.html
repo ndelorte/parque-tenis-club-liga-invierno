@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>C · Sistema</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&amp;family=Geist:wght@400;500;600&amp;family=Playfair+Display:wght@700&amp;display=swap">
+<style>
+body{margin:0;font-family:Geist,system-ui,sans-serif;background:#f3efe6;color:#1f3b2c}
+a{color:#9c4421}a:hover{color:#8f3c14}
+.cond{font-family:Fraunces,Georgia,serif;letter-spacing:-.01em}
+.num{font-family:Geist,sans-serif;font-variant-numeric:tabular-nums}
+.lbl{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#5d6b62}
+h1,h2,h3{text-wrap:balance}a:focus-visible,button:focus-visible{outline:3px solid #9c4421;outline-offset:2px}button:hover{filter:brightness(1.12)}a[style*="height"]:hover{filter:brightness(1.1)}
+</style>
+</helmet>
+<div style="width: 1280px; height: 1560px; box-sizing: border-box; background: #f3efe6; padding: 48px; display: flex; flex-direction: column; gap: 40px">
+<div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #1f3b2c; padding-bottom: 16px">
+<h1 class="cond" style="margin: 0; font-size: 56px; font-weight: 600; line-height: .9">Sistema · Club clásico</h1>
+<span style="font-size: 13px; color: #5d6b62">Fraunces + Geist · tabla y partido con datos de ejemplo</span>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<span class="lbl">Paleta base</span>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 6px"><div style="height: 72px; background: #1f3b2c; border-radius: 2px"></div><span style="font-size: 13px; font-weight: 600">Verde profundo</span><span class="num" style="font-size: 14px; color: #5d6b62">#1F3B2C</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><div style="height: 72px; background: #2c5a41; border-radius: 2px"></div><span style="font-size: 13px; font-weight: 600">Verde medio</span><span class="num" style="font-size: 14px; color: #5d6b62">#2C5A41</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><div style="height: 72px; background: #4e7a3d; border-radius: 2px"></div><span style="font-size: 13px; font-weight: 600">Verde logo</span><span class="num" style="font-size: 14px; color: #5d6b62">#4E7A3D</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><div style="height: 72px; background: #b9532a; border-radius: 2px"></div><span style="font-size: 13px; font-weight: 600">Polvo de ladrillo</span><span class="num" style="font-size: 14px; color: #5d6b62">#B9532A</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><div style="height: 72px; background: #f3efe6; border: 1px solid #d9d3c5; border-radius: 2px; box-sizing: border-box"></div><span style="font-size: 13px; font-weight: 600">Hueso</span><span class="num" style="font-size: 14px; color: #5d6b62">#F3EFE6</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><div style="height: 72px; background: #d4e04a; border-radius: 2px"></div><span style="font-size: 13px; font-weight: 600">Pelota (detalle)</span><span class="num" style="font-size: 14px; color: #5d6b62">#D4E04A</span></div>
+</div>
+<span class="lbl" style="margin-top: 12px">Estados de resultado</span>
+<div style="display: flex; gap: 10px; flex-wrap: wrap">
+<span style="padding: 8px 14px; border-radius: 2px; background: #e2f0e5; color: #1f6b37; font-weight: 600; font-size: 14px">Ganó</span>
+<span style="padding: 8px 14px; border-radius: 2px; background: #f8e0dd; color: #a3231b; font-weight: 600; font-size: 14px">Perdió</span>
+<span style="padding: 8px 14px; border-radius: 2px; background: #faefcc; color: #7d5700; font-weight: 600; font-size: 14px">Pendiente</span>
+<span style="padding: 8px 14px; border-radius: 2px; background: #e5e7e5; color: #46514b; font-weight: 600; font-size: 14px">WO</span>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 14px">
+<span class="lbl">Tipografía</span>
+<div class="cond" style="font-size: 64px; font-weight: 600; line-height: 1">Final · <em>Damas A</em></div>
+<div class="cond" style="font-size: 40px; font-weight: 700; line-height: 1">Tabla de posiciones</div>
+<div class="cond" style="font-size: 26px; font-weight: 700">Fecha 4 · Cancha 3</div>
+<p style="margin: 0; font-size: 16px; line-height: 1.55; max-width: 520px">Texto en Geist 16 px. Un torneo por categoría cada mes del año; los puntos se acumulan en el ranking anual.</p>
+<div style="display: flex; align-items: baseline; gap: 20px"><span class="num" style="font-size: 50px; font-weight: 600; line-height: 1">6-3 4-6 7-6</span><span style="font-size: 13px; color: #5d6b62">marcador tabular</span></div>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: 7fr 5fr; gap: 48px">
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; gap: 6px; border-bottom: 1px solid #1f3b2c">
+<a href="#" style="padding: 10px 14px; font-size: 14px; font-weight: 600; color: #5d6b62; text-decoration: none">Caballeros A</a>
+<a href="#" style="padding: 10px 14px; font-size: 14px; font-weight: 600; color: #5d6b62; text-decoration: none">Caballeros B</a>
+<a href="#" aria-current="page" style="padding: 10px 14px; font-size: 14px; font-weight: 700; color: #1f3b2c; text-decoration: none; box-shadow: inset 0 -4px 0 #b9532a">Damas A</a>
+<a href="#" style="padding: 10px 14px; font-size: 14px; font-weight: 600; color: #5d6b62; text-decoration: none">Damas B</a>
+<a href="#" style="padding: 10px 14px; font-size: 14px; font-weight: 600; color: #5d6b62; text-decoration: none">Mixto A</a>
+<a href="#" style="padding: 10px 14px; font-size: 14px; font-weight: 600; color: #5d6b62; text-decoration: none">Mixto B</a>
+</div>
+<table style="width: 100%; border-collapse: collapse; font-size: 15px; background: #ffffff">
+<thead><tr style="background: #1f3b2c; color: #f4f1ea; font-size: 12px; text-transform: uppercase; letter-spacing: .08em"><th style="text-align: left; padding: 10px 12px; font-weight: 600">#</th><th style="text-align: left; padding: 10px 12px; font-weight: 600">Equipo</th><th style="text-align: right; padding: 10px 12px; font-weight: 600">PJ</th><th style="text-align: right; padding: 10px 12px; font-weight: 600">PG</th><th style="text-align: right; padding: 10px 12px; font-weight: 600">PP</th><th style="text-align: right; padding: 10px 12px; font-weight: 600">Δ canchas</th><th style="text-align: right; padding: 10px 12px; font-weight: 600">Pts</th></tr></thead>
+<tbody>
+<tr style="border-bottom: 1px solid #ddd6c6; box-shadow: inset 4px 0 0 #b9532a"><td class="num" style="padding: 10px 12px; font-size: 20px; font-weight: 600; color: #9c4421">1</td><td style="padding: 10px 12px; font-weight: 600">Gin Tonic</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">4</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">4</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">0</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px; color: #1f6b37">+7</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 22px; font-weight: 600">8</td></tr>
+<tr style="border-bottom: 1px solid #ddd6c6; box-shadow: inset 4px 0 0 #b9532a"><td class="num" style="padding: 10px 12px; font-size: 20px; font-weight: 600; color: #9c4421">2</td><td style="padding: 10px 12px; font-weight: 600">Fifteen love</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">4</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">3</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">1</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px; color: #1f6b37">+4</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 22px; font-weight: 600">7</td></tr>
+<tr style="border-bottom: 1px solid #ddd6c6"><td class="num" style="padding: 10px 12px; font-size: 20px; font-weight: 600">3</td><td style="padding: 10px 12px; font-weight: 600">Red de Amigas</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">4</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">2</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">2</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px; color: #1f6b37">+1</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 22px; font-weight: 600">6</td></tr>
+<tr style="border-bottom: 1px solid #ddd6c6"><td class="num" style="padding: 10px 12px; font-size: 20px; font-weight: 600">4</td><td style="padding: 10px 12px; font-weight: 600">Las Juan Carlas</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">4</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">2</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">2</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px; color: #5d6b62">0</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 22px; font-weight: 600">6</td></tr>
+<tr style="border-bottom: 1px solid #ddd6c6"><td class="num" style="padding: 10px 12px; font-size: 20px; font-weight: 600">5</td><td style="padding: 10px 12px; font-weight: 600">E.U.M.</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">4</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">1</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">3</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px; color: #a3231b">−4</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 22px; font-weight: 600">5</td></tr>
+<tr><td class="num" style="padding: 10px 12px; font-size: 20px; font-weight: 600">6</td><td style="padding: 10px 12px; font-weight: 600">Ese no es el pique</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">4</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">0</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px">4</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 18px; color: #a3231b">−8</td><td class="num" style="padding: 10px 12px; text-align: right; font-size: 22px; font-weight: 600">4</td></tr>
+</tbody>
+</table>
+<span style="font-size: 12px; color: #5d6b62">Borde naranja: clasificados a playoffs (ejemplo).</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 14px">
+<span class="lbl">Tarjeta de serie</span>
+<article style="background: #ffffff; border: 1px solid #1f3b2c; border-radius: 2px; overflow: hidden">
+<div style="display: flex; justify-content: space-between; padding: 10px 16px; background: #1f3b2c; color: #f4f1ea; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase"><span>Fecha 4 · Damas A</span><span style="color: #7fcf8f">Jugado</span></div>
+<div style="padding: 14px 16px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; gap: 10px"><span style="flex-grow: 1; font-size: 18px; font-weight: 700">Gin Tonic</span><span class="num" style="font-size: 40px; font-weight: 600; line-height: 1; color: #9c4421">2</span></div>
+<div style="display: flex; align-items: center; gap: 10px; color: #5d6b62"><span style="flex-grow: 1; font-size: 18px; font-weight: 500">Fifteen love</span><span class="num" style="font-size: 40px; font-weight: 700; line-height: 1">1</span></div>
+</div>
+<div style="border-top: 1px solid #ddd6c6; padding: 6px 16px 12px; display: flex; flex-direction: column">
+<div style="display: flex; align-items: center; gap: 12px; padding: 7px 0; font-size: 14px"><span style="width: 70px; color: #5d6b62">Cancha 1</span><span class="num" style="font-size: 20px; font-weight: 700; flex-grow: 1">6-4 6-3</span><span style="padding: 3px 8px; background: #e2f0e5; color: #1f6b37; font-size: 12px; font-weight: 600; border-radius: 2px">Gin Tonic</span></div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 7px 0; font-size: 14px; border-top: 1px dashed #ddd6c6"><span style="width: 70px; color: #5d6b62">Cancha 2</span><span class="num" style="font-size: 20px; font-weight: 700; flex-grow: 1">4-6 3-6</span><span style="padding: 3px 8px; background: #e5e7e5; color: #46514b; font-size: 12px; font-weight: 600; border-radius: 2px">Fifteen love</span></div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 7px 0; font-size: 14px; border-top: 1px dashed #ddd6c6"><span style="width: 70px; color: #5d6b62">Cancha 3</span><span class="num" style="font-size: 20px; font-weight: 700; flex-grow: 1">6-3 4-6 7-6</span><span style="padding: 3px 8px; background: #e2f0e5; color: #1f6b37; font-size: 12px; font-weight: 600; border-radius: 2px">Gin Tonic</span></div>
+</div>
+</article>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 16px">
+<span class="lbl">Sub-identidades sobre la base</span>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px">
+<div style="background: #ffffff; border: 1px solid #1f3b2c; border-radius: 2px; overflow: hidden; height: 300px; display: flex; flex-direction: column">
+<div style="height: 90px; background: #dcebf6; position: relative; display: flex; align-items: center; justify-content: center"><svg width="100%" height="90" viewBox="0 0 220 90" style="position: absolute; inset: 0" aria-hidden="true"><g fill="#ffffff"><circle cx="20" cy="18" r="3"/><circle cx="60" cy="52" r="2"/><circle cx="96" cy="14" r="2.5"/><circle cx="150" cy="40" r="3"/><circle cx="196" cy="20" r="2"/><circle cx="180" cy="70" r="2.5"/><circle cx="34" cy="72" r="2"/></g></svg><img width="70" height="70" src="/_blob/8f06007d511164c9f9c3e4070f8f57a0" alt="" style="width: 70px; height: 70px; position: relative"></div>
+<div style="padding: 14px; display: flex; flex-direction: column; gap: 8px; flex-grow: 1"><span class="cond" style="font-size: 22px; font-weight: 600">Liga de Invierno</span><span style="font-size: 12px; color: #5d6b62; line-height: 1.4">Base del logo + azul hielo. Nieve sutil.</span><div style="display: flex; gap: 4px; margin-top: auto"><span style="width: 28px; height: 28px; background: #2c5a41; border-radius: 2px"></span><span style="width: 28px; height: 28px; background: #b9532a; border-radius: 2px"></span><span style="width: 28px; height: 28px; background: #6fa8d6; border-radius: 2px"></span></div></div>
+</div>
+<div style="background: #ffffff; border: 1px solid #1f3b2c; border-radius: 2px; overflow: hidden; height: 300px; display: flex; flex-direction: column">
+<div style="height: 90px; background: #fbeccc; position: relative; display: flex; align-items: center; justify-content: center"><svg width="100%" height="90" viewBox="0 0 220 90" style="position: absolute; inset: 0" aria-hidden="true"><g stroke="#f0b429" stroke-width="3" stroke-linecap="round"><line x1="190" y1="10" x2="206" y2="0"/><line x1="170" y1="6" x2="172" y2="-8"/><line x1="196" y1="30" x2="214" y2="32"/></g><circle cx="186" cy="12" r="12" fill="#f0b429"/></svg><img width="70" height="70" src="/_blob/9da5f4e805de4977221fa9b542360c3d" alt="" style="width: 70px; height: 70px; position: relative"></div>
+<div style="padding: 14px; display: flex; flex-direction: column; gap: 8px; flex-grow: 1"><span class="cond" style="font-size: 22px; font-weight: 600">Liga de Verano</span><span style="font-size: 12px; color: #5d6b62; line-height: 1.4">Base del logo + amarillo sol. Luz cálida.</span><div style="display: flex; gap: 4px; margin-top: auto"><span style="width: 28px; height: 28px; background: #2c5a41; border-radius: 2px"></span><span style="width: 28px; height: 28px; background: #b9532a; border-radius: 2px"></span><span style="width: 28px; height: 28px; background: #f0b429; border-radius: 2px"></span></div></div>
+</div>
+<div style="background: #ffffff; border: 1px solid #1f3b2c; border-radius: 2px; overflow: hidden; height: 300px; display: flex; flex-direction: column">
+<div style="height: 90px; background: #b9532a; display: flex; align-items: center; justify-content: center; border-bottom: 2px solid #141414"><span style="width: 76px; height: 76px; background: #ffffff; border-radius: 2px; display: flex; align-items: center; justify-content: center"><img width="66" height="66" src="/_blob/5b5c40de234367e6b48a5203959caf33" alt="" style="width: 66px; height: 66px"></span></div>
+<div style="padding: 14px; display: flex; flex-direction: column; gap: 8px; flex-grow: 1"><span class="cond" style="font-size: 22px; font-weight: 600">Circuito del Parque</span><span style="font-size: 12px; color: #5d6b62; line-height: 1.4">Polvo + negro, formal. Líneas de cancha.</span><div style="display: flex; gap: 4px; margin-top: auto"><span style="width: 28px; height: 28px; background: #c8532a; border-radius: 2px"></span><span style="width: 28px; height: 28px; background: #141414; border-radius: 2px"></span><span style="width: 28px; height: 28px; background: #f3efe6; border: 1px solid #d9d3c5; border-radius: 2px; box-sizing: border-box"></span></div></div>
+</div>
+<div style="background: #0d0f0d; border: 2px solid #0d0f0d; border-radius: 2px; overflow: hidden; height: 300px; display: flex; flex-direction: column; color: #f0ebe0">
+<div style="height: 90px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #2a2f29"><span style="font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 700; color: #c9a84c">Mid Master</span></div>
+<div style="padding: 14px; display: flex; flex-direction: column; gap: 8px; flex-grow: 1"><span class="cond" style="font-size: 22px; font-weight: 600; color: #e5c97a">Especiales</span><span style="font-size: 12px; color: #8a8679; line-height: 1.4">Mid Master y Final Master. Siempre oscuro.</span><div style="display: flex; gap: 4px; margin-top: auto"><span style="width: 28px; height: 28px; background: #161a15; border: 1px solid #2a2f29; border-radius: 2px; box-sizing: border-box"></span><span style="width: 28px; height: 28px; background: #c9a84c; border-radius: 2px"></span><span style="width: 28px; height: 28px; background: #f0ebe0; border-radius: 2px"></span></div></div>
+</div>
+<div style="background: #ffffff; border: 1px solid #1f3b2c; border-radius: 2px; overflow: hidden; height: 300px; display: flex; flex-direction: column">
+<div style="height: 90px; background: #2c5a41; display: flex; align-items: center; justify-content: center"><span class="cond" style="width: 64px; height: 64px; border: 3px solid #d4e04a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #d4e04a; font-size: 26px; font-weight: 600; box-sizing: border-box">IP</span></div>
+<div style="padding: 14px; display: flex; flex-direction: column; gap: 8px; flex-grow: 1"><span class="cond" style="font-size: 22px; font-weight: 600">Interparque</span><span style="font-size: 12px; color: #5d6b62; line-height: 1.4">Provisorio: verde club + pelota. Se define en F4.</span><div style="display: flex; gap: 4px; margin-top: auto"><span style="width: 28px; height: 28px; background: #2c5a41; border-radius: 2px"></span><span style="width: 28px; height: 28px; background: #d4e04a; border-radius: 2px"></span><span style="width: 28px; height: 28px; background: #1f3b2c; border-radius: 2px"></span></div></div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1560}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
