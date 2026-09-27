@@ -15,8 +15,12 @@ function hasAdminRole(metadata: unknown) {
   return false
 }
 
-export function isAdminUser(user: Pick<User, "app_metadata" | "user_metadata"> | null | undefined) {
+// Solo app_metadata: ese campo lo escriben únicamente el service role y el
+// dashboard de Supabase. user_metadata NO se usa a propósito — cualquier
+// usuario logueado puede editar el suyo con supabase.auth.updateUser() y
+// darse el rol admin a sí mismo.
+export function isAdminUser(user: Pick<User, "app_metadata"> | null | undefined) {
   if (!user) return false
 
-  return hasAdminRole(user.user_metadata) || hasAdminRole(user.app_metadata)
+  return hasAdminRole(user.app_metadata)
 }
