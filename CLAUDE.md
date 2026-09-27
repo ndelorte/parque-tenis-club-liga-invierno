@@ -146,6 +146,10 @@ Esta regla está reforzada por un test (`lib/data/__tests__/standings-write-boun
 
 No mostrar teléfonos en vistas públicas. No commitear `.env`. No exponer `SUPABASE_SERVICE_ROLE_KEY` al cliente.
 
+### Server actions validan admin
+
+`proxy.ts` protege las páginas `/panel-*`, no las server actions (son endpoints POST invocables desde cualquier ruta). Toda action exportada en `app/actions/` que escribe tiene que validar el rol admin en su primera línea (`isRequestFromAdmin()` de `lib/auth/requireAdmin.ts`, o `isAdminUser` como en `admin.ts`). Reforzado por `app/actions/__tests__/admin-guard.test.ts`.
+
 ---
 
 ## Rutas públicas

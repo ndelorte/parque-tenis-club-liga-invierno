@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { isRequestFromAdmin } from "@/lib/auth/requireAdmin"
 import { redirect } from "next/navigation"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
@@ -9,6 +10,8 @@ import { calculateInterparqueMatchResult } from "@/lib/interparque/calculateInte
 
 type ActionResult = { ok: true } | { ok: false; error: string }
 type ActionResultWithId = { ok: true; id: string } | { ok: false; error: string }
+
+const UNAUTHORIZED = { ok: false, error: "No autorizado." } as const
 
 function revalidateInterparque() {
   revalidatePath("/interparque")
@@ -27,6 +30,7 @@ export async function createInterparquePlayer(
   firstName: string,
   lastName: string,
 ): Promise<ActionResultWithId> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const first_name = firstName.trim()
   const last_name = lastName.trim()
   if (!first_name || !last_name) {
@@ -55,6 +59,7 @@ export async function createInterparqueMatch(
   playerBId: string,
   matchDate: string,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   if (!playerAId || !playerBId) {
     return { ok: false, error: "Seleccioná los dos jugadores." }
   }
@@ -85,6 +90,7 @@ export async function updateInterparqueMatchResult(
   matchId: string,
   score: string,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   let result: ReturnType<typeof calculateInterparqueMatchResult>
   try {
     const parsed = parseInterparqueScore(score)
@@ -124,6 +130,7 @@ export async function updateInterparqueMatchResult(
 }
 
 export async function deleteInterparqueMatch(matchId: string): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const supabase = createAdminClient()
   const { error } = await supabase.from("interparque_matches").delete().eq("id", matchId)
 

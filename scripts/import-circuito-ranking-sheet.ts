@@ -9,8 +9,10 @@
  * simple y confiable que reconstruir puntos desde la API de Challonge (que
  * además pasó a pedir OAuth2 client id/secret en vez de una API key simple).
  *
- * Fuente: planilla pública (solo lectura) de Google Sheets, exportada como
- * CSV por gid — no necesita credenciales.
+ * Fuente: planilla de Google Sheets compartida por link (solo lectura),
+ * exportada como CSV por gid — no necesita credenciales. Su id va en
+ * `CIRCUITO_RANKING_SHEET_ID` (.env.local), no en el código: cualquiera con
+ * el id puede leer la planilla completa.
  *
  * Uso:
  *   npm run import:circuito-sheet -- --dry-run
@@ -46,7 +48,10 @@ import { CIRCUITO_FIXED_CATEGORIES } from "../lib/data/circuito/categories"
 import { upsertCircuitoRankingPoints, type CircuitoRankingPointsInput } from "../lib/data/circuito/ranking"
 import { statusForMonth } from "../lib/circuito/editionStatus"
 
-const SHEET_ID = "1HN39ZznWLlVsW8WkkD1aEbwr_h-xsIBpO9zxp9NfvGc"
+const SHEET_ID = process.env.CIRCUITO_RANKING_SHEET_ID
+if (!SHEET_ID) {
+  throw new Error("Falta CIRCUITO_RANKING_SHEET_ID en .env.local (id de la planilla de ranking del circuito).")
+}
 const YEAR = 2026
 
 const GID_TO_CATEGORY: Record<string, string> = {

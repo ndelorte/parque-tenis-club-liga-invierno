@@ -114,8 +114,15 @@ function MatchRow({
           </label>
           <Input value={score} onChange={(e) => setScore(e.target.value)} placeholder="6-4 6-2" className="font-mono" />
           <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            <input type="checkbox" checked={isWalkover} onChange={(e) => setIsWalkover(e.target.checked)} />
-            Walkover (registrar igual como 6-0 6-0)
+            <input
+              type="checkbox"
+              checked={isWalkover}
+              onChange={(e) => {
+                setIsWalkover(e.target.checked)
+                if (e.target.checked && !score.trim()) setScore("6-0 6-0")
+              }}
+            />
+            Walkover (6-0 6-0 si gana el de arriba, 0-6 0-6 si gana el de abajo)
           </label>
           <Button onClick={handleSubmit} disabled={loading} size="sm" className="w-full">
             {loading ? "Guardando..." : "Cargar resultado"}

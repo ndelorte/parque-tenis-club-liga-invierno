@@ -1,15 +1,30 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { generateBracket, selectDrawRule } from "@/lib/circuito/generateBracket"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
-import type { CircuitoBracket, CircuitoParticipant } from "@/lib/circuito/types"
+import { computeSlotUpdates, type BracketSlotMatch } from "@/lib/circuito/syncBracketSlots"
+import type { CircuitoBracket, CircuitoParticipant, DrawFormatKind } from "@/lib/circuito/types"
 import type { CircuitoMatchRow } from "./types"
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
+export function toBracketSlotMatch(row: CircuitoMatchRow): BracketSlotMatch {
+  return {
+    id: row.id,
+    bracket: row.bracket,
+    round: row.round_number,
+    position: row.position,
+    zone: row.zone,
+    participantAId: row.participant_a_id,
+    participantBId: row.participant_b_id,
+    winnerId: row.winner_id,
+    score: row.score,
+  }
+}
+
 // Vuelca un CircuitoBracket (lib/circuito/generateBracket.ts) a filas de
-// circuito_matches. Los byes de la 1ª ronda ya tienen ganador conocido —
-// se avanzan solos a la ronda siguiente, sin esperar carga de resultado.
-export async function persistCircuitoBracket(
+// circuito_matches. Solo inserta: los lugares derivados (byes que avanzan,
+// ganadores, clasificados de zona) los completa syncCircuitoBracketSlots.
+export async function insertCircuitoBracket(
   supabase: AdminClient,
   categoryId: string,
   bracketType: "main" | "repechaje",
@@ -30,41 +45,44 @@ export async function persistCircuitoBracket(
 
   const { error } = await supabase.from("circuito_matches").insert(rows)
   if (error) throw new Error(`Error al generar el cuadro: ${error.message}`)
-
-  const { data: round1 } = await supabase
-    .from("circuito_matches")
-    .select("*")
-    .eq("category_id", categoryId)
-    .eq("bracket", bracketType)
-    .eq("round_number", 1)
-
-  for (const row of (round1 ?? []) as CircuitoMatchRow[]) {
-    // Bye: un solo participante, sin rival — avanza automático.
-    if (row.participant_a_id && !row.participant_b_id) {
-      await advanceWinnerInDb(supabase, row, row.participant_a_id)
-    }
-  }
 }
 
-// Propaga un ganador a su lugar en la ronda siguiente usando `position`
-// (mismo criterio que lib/circuito/advanceWinner.ts, pero contra la DB en
-// vez de contra el CircuitoBracket en memoria).
-export async function advanceWinnerInDb(
+// Aplica contra la DB lo que calcula lib/circuito/syncBracketSlots.ts:
+// recalcula todos los lugares derivados del cuadro (main + repechaje) desde
+// los resultados cargados. Idempotente — ver comentario en computeSlotUpdates.
+export async function syncCircuitoBracketSlots(
   supabase: AdminClient,
-  match: Pick<CircuitoMatchRow, "category_id" | "bracket" | "round_number" | "position">,
-  winnerId: string,
+  categoryId: string,
+  format: DrawFormatKind,
 ): Promise<void> {
-  const nextRound = match.round_number + 1
-  const nextPosition = Math.floor(match.position / 2)
-  const slot = match.position % 2 === 0 ? "participant_a_id" : "participant_b_id"
+  const [{ data: participantRows, error: participantsError }, { data: matchRows, error: matchesError }] =
+    await Promise.all([
+      supabase.from("circuito_participants").select("id, seed").eq("category_id", categoryId),
+      supabase.from("circuito_matches").select("*").eq("category_id", categoryId),
+    ])
+  if (participantsError) throw new Error(`Error al leer participantes: ${participantsError.message}`)
+  if (matchesError) throw new Error(`Error al leer el cuadro: ${matchesError.message}`)
 
-  await supabase
-    .from("circuito_matches")
-    .update({ [slot]: winnerId })
-    .eq("category_id", match.category_id)
-    .eq("bracket", match.bracket)
-    .eq("round_number", nextRound)
-    .eq("position", nextPosition)
+  const participants: CircuitoParticipant[] = (participantRows ?? []).map((p) => ({ id: p.id, seed: p.seed }))
+  const rows = (matchRows ?? []) as CircuitoMatchRow[]
+  const rowsById = new Map(rows.map((r) => [r.id, r]))
+
+  for (const update of computeSlotUpdates(format, participants, rows.map(toBracketSlotMatch))) {
+    const row = rowsById.get(update.matchId)
+    const resultReset = update.clearResult
+      ? {
+          score: null,
+          winner_id: null,
+          is_walkover: false,
+          status: row?.scheduled_date ? ("scheduled" as const) : ("pending" as const),
+        }
+      : {}
+    const { error } = await supabase
+      .from("circuito_matches")
+      .update({ participant_a_id: update.participantAId, participant_b_id: update.participantBId, ...resultReset })
+      .eq("id", update.matchId)
+    if (error) throw new Error(`Error al actualizar el cuadro: ${error.message}`)
+  }
 }
 
 export async function generateAndPersistCircuitoBracket(categoryId: string): Promise<void> {
@@ -93,13 +111,26 @@ export async function generateAndPersistCircuitoBracket(categoryId: string): Pro
 
   const bracket = generateBracket(participants, CIRCUITO_FORMAT_SPEC)
 
-  const { error: updateError } = await supabase
-    .from("circuito_categories")
-    .update({ draw_size: participants.length })
-    .eq("id", categoryId)
-  if (updateError) throw new Error(`Error al fijar draw_size: ${updateError.message}`)
+  // Si esto falla (ej. otro admin generó el mismo cuadro en paralelo y chocó
+  // con el índice único de position) no hay nada propio que deshacer.
+  await insertCircuitoBracket(supabase, categoryId, "main", bracket)
 
-  await persistCircuitoBracket(supabase, categoryId, "main", bracket)
+  // Supabase JS no tiene transacciones: si falla algún paso posterior, se
+  // deshace a mano lo insertado para no dejar un cuadro a medio armar (que
+  // además bloquearía volver a generarlo).
+  try {
+    const { error: updateError } = await supabase
+      .from("circuito_categories")
+      .update({ draw_size: participants.length })
+      .eq("id", categoryId)
+    if (updateError) throw new Error(`Error al fijar draw_size: ${updateError.message}`)
+
+    await syncCircuitoBracketSlots(supabase, categoryId, bracket.format)
+  } catch (e) {
+    await supabase.from("circuito_matches").delete().eq("category_id", categoryId)
+    await supabase.from("circuito_categories").update({ draw_size: null }).eq("id", categoryId)
+    throw e
+  }
 }
 
 export async function getCircuitoDrawFormat(categoryId: string) {

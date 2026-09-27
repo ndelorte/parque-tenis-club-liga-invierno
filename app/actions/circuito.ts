@@ -1,12 +1,15 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { isRequestFromAdmin } from "@/lib/auth/requireAdmin"
 import { createCircuitoEdition } from "@/lib/data/circuito/editions"
 import { addCircuitoParticipant, removeCircuitoParticipant } from "@/lib/data/circuito/participants"
 import { generateAndPersistCircuitoBracket } from "@/lib/data/circuito/bracket"
 import { submitCircuitoMatchResult } from "@/lib/data/circuito/matches"
 
 type ActionResult = { ok: true } | { ok: false; error: string }
+
+const UNAUTHORIZED: ActionResult = { ok: false, error: "No autorizado." }
 
 function errorMessage(e: unknown, fallback: string): string {
   return e instanceof Error ? e.message : fallback
@@ -18,6 +21,7 @@ export async function createCircuitoEditionAction(
   month: number,
   year: number,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   if (!slug.trim() || !name.trim()) return { ok: false, error: "Slug y nombre son obligatorios." }
   if (month < 1 || month > 12) return { ok: false, error: "El mes debe estar entre 1 y 12." }
 
@@ -38,6 +42,7 @@ export async function addCircuitoParticipantAction(
   editionSlug: string,
   categorySlug: string,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   if (!playerId) return { ok: false, error: "Elegí un jugador." }
 
   try {
@@ -55,6 +60,7 @@ export async function removeCircuitoParticipantAction(
   editionSlug: string,
   categorySlug: string,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   try {
     await removeCircuitoParticipant(participantId)
   } catch (e) {
@@ -70,6 +76,7 @@ export async function generateCircuitoBracketAction(
   editionSlug: string,
   categorySlug: string,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   try {
     await generateAndPersistCircuitoBracket(categoryId)
   } catch (e) {
@@ -87,6 +94,7 @@ export async function submitCircuitoMatchResultAction(
   editionSlug: string,
   categorySlug: string,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   if (!score.trim()) return { ok: false, error: "Ingresá el score." }
 
   try {

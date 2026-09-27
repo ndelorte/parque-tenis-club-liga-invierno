@@ -20,6 +20,16 @@ describe("calculateCircuitoMatchResult", () => {
     expect(result.setsWonA).toBe(2)
   })
 
+  it("un WO marcado como tal acepta 6-0 6-0 (gana A) y 0-6 0-6 (gana B)", () => {
+    expect(calculateCircuitoMatchResult("6-0 6-0", false, true).winnerSide).toBe("A")
+    expect(calculateCircuitoMatchResult("0-6 0-6", false, true).winnerSide).toBe("B")
+  })
+
+  it("un WO marcado como tal rechaza cualquier otro score", () => {
+    expect(() => calculateCircuitoMatchResult("6-4 6-2", false, true)).toThrow(/walkover/)
+    expect(() => calculateCircuitoMatchResult("6-0 0-6 7-6", false, true)).toThrow(/walkover/)
+  })
+
   it("propaga el error de parseo si el score es inválido", () => {
     expect(() => calculateCircuitoMatchResult("6-4 3-6 6-3", false)).toThrow(/Tercer set inválido/)
   })

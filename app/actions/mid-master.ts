@@ -1,12 +1,15 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { isRequestFromAdmin } from "@/lib/auth/requireAdmin"
 import { redirect } from "next/navigation"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { parseMmScore, determineWinner } from "@/lib/mid-master/parseMmScore"
 
 type ActionResult = { ok: true } | { ok: false; error: string }
+
+const UNAUTHORIZED: ActionResult = { ok: false, error: "No autorizado." }
 
 // Helper: Supabase sin tipado estricto para tablas mid_master_*
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,6 +30,7 @@ export async function updateMmMatchSchedule(
   scheduledDate: string,
   scheduledTime: string,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const status = scheduledDate ? "scheduled" : "pending"
   const { error } = await db()
     .from("mid_master_matches")
@@ -50,6 +54,7 @@ export async function updateMmMatchResult(
   score: string,
   isFinal: boolean,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   let setsA: number, setsB: number
   try {
     const parsed = parseMmScore(score, isFinal)
@@ -120,6 +125,7 @@ export async function updateMmMatchResult(
 // ── Match: clear result ───────────────────────────────────────
 
 export async function clearMmMatchResult(matchId: string): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const { error } = await db()
     .from("mid_master_matches")
     .update({ score: null, winner_participant_id: null, status: "pending" })
@@ -139,6 +145,7 @@ export async function addMmParticipant(
   groupName: string,
   displayName: string,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const name = displayName.trim()
   if (!name) return { ok: false, error: "El nombre no puede estar vacío." }
 
@@ -199,6 +206,7 @@ export async function updateMmParticipant(
   participantId: string,
   displayName: string,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const name = displayName.trim()
   if (!name) return { ok: false, error: "El nombre no puede estar vacío." }
 
@@ -219,6 +227,7 @@ export async function updateMmParticipant(
 export async function resolveKnockoutParticipants(
   categoryId: string,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const supabase = db()
 
   // Fetch groups
@@ -322,6 +331,7 @@ export async function assignMmMatchParticipants(
   participant1Id: string,
   participant2Id: string,
 ): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   if (!participant1Id || !participant2Id) {
     return { ok: false, error: "Seleccioná los dos participantes." }
   }
@@ -341,6 +351,7 @@ export async function assignMmMatchParticipants(
 // ── Trigger revalidation (standings computed on-the-fly) ──────
 
 export async function revalidateMmCategory(slug: string): Promise<void> {
+  if (!(await isRequestFromAdmin())) return
   revalidatePath(`/panel-circuito/categorias/${slug}`)
   revalidatePath(`/circuito-del-parque/especiales/mid-master-2026/categorias/${slug}`)
 }

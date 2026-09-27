@@ -51,6 +51,17 @@ export async function addCircuitoParticipant(input: {
 }): Promise<CircuitoParticipantRow> {
   const supabase = createAdminClient()
 
+  // Con el cuadro ya armado, un inscripto nuevo no tiene lugar: habría que
+  // regenerarlo (y el panel dejaría de reconocerlo como propio).
+  const { data: existingMatches } = await supabase
+    .from("circuito_matches")
+    .select("id")
+    .eq("category_id", input.categoryId)
+    .limit(1)
+  if (existingMatches && existingMatches.length > 0) {
+    throw new Error("El cuadro de esta categoría ya fue generado: no se pueden agregar participantes.")
+  }
+
   const playerIds = input.player2Id ? [input.playerId, input.player2Id] : [input.playerId]
   const { data: players, error: playersError } = await supabase
     .from("players")

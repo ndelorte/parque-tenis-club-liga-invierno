@@ -66,8 +66,6 @@ export async function recalculateAndPersistCircuitRanking(categoryId: string): P
     if (p.player_2_id) pointsByPlayer.set(p.player_2_id, points)
   }
 
-  if (pointsByPlayer.size === 0) return
-
   const rows = [...pointsByPlayer.entries()].map(([playerId, points]) => ({
     playerId,
     categoryId,
@@ -76,6 +74,16 @@ export async function recalculateAndPersistCircuitRanking(categoryId: string): P
   }))
 
   await upsertCircuitoRankingPoints(rows)
+
+  // El snapshot de la categoría es exactamente lo que da el recálculo: quien
+  // ya no suma (se corrigió un resultado y quedó en 0, o dejó de estar en la
+  // categoría) no puede conservar una fila vieja con puntos.
+  let staleQuery = supabase.from("circuito_ranking_points").delete().eq("category_id", categoryId)
+  if (pointsByPlayer.size > 0) {
+    staleQuery = staleQuery.not("player_id", "in", `(${[...pointsByPlayer.keys()].join(",")})`)
+  }
+  const { error: staleError } = await staleQuery
+  if (staleError) throw new Error(`Error al limpiar el ranking del circuito: ${staleError.message}`)
 }
 
 export interface CircuitoRankingPointsInput {
