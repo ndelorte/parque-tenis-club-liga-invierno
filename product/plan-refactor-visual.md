@@ -1,7 +1,7 @@
 # Plan — Refactor visual del sitio
 
 > **Estado:** Aprobado para arrancar (2026-09-27). Las decisiones de diseño concretas se cierran fase por fase con maquetas.
-> **Rama del plan:** `docs/plan-refactor-visual`. Cada fase de implementación va en su propio PR (la Fase 1 en dos).
+> **Ramas:** todo el refactor se integra en la rama `refactor-visual` (sale de `main`). Cada fase va en un sub-PR contra `refactor-visual` (la Fase 1 en dos); cuando están todas, un único PR `refactor-visual` → `main` lo lleva a producción.
 > Antecedente: sección "Refactor visual del sitio" de `backlog.md` (pendientes relevados el 2026-09-08/09).
 
 ---
@@ -327,9 +327,9 @@ Viven en `components/shared/`. Toman el color de la sección desde `--section-*`
 2. **Revisión y auditoría** — antes de mostrarla, la maqueta pasa por las skills de criterio (`frontend-design` y UI UX Pro Max para la dirección visual, las de Emil Kowalski para el movimiento; se leen de sus repositorios porque no están instaladas) y después se audita con la skill `web-design-guidelines` (`.claude/skills/`, guías de interfaz de Vercel) + un chequeo de contraste AA de los pares de color. Se corrige lo que aplica a una maqueta; lo que es de implementación queda en el checklist §6.
 3. **Ida y vuelta** — el humano elige y corrige. Las decisiones se anotan en §8 de este archivo.
 4. **Capturas aprobadas** en `product/refactor-visual/aprobado/fase-N/` (escritorio + 375 px, claro + oscuro).
-5. **Implementación** en una rama `feat/visual-fN-<tema>` desde `main`.
+5. **Implementación** en una rama `feat/visual-fN-<tema>` desde `refactor-visual`.
 6. **Revisión en el navegador** (local o preview de Vercel) contra las capturas aprobadas + checklist §6. La skill `web-design-guidelines` se corre también sobre los componentes del PR.
-7. **PR** con capturas antes/después. Merge solo con aprobación del humano.
+7. **Sub-PR contra `refactor-visual`** con capturas antes/después. Merge solo con aprobación del humano. Si `main` avanza (fixes funcionales), se trae a `refactor-visual` con un merge antes del siguiente sub-PR.
 
 Las capturas del estado actual (antes de cada fase) van en `product/refactor-visual/actual/`.
 
