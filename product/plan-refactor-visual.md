@@ -310,6 +310,19 @@ Viven en `components/shared/`. Toman el color de la sección desde `--section-*`
 
 ### 4.1 Cómo se trabaja cada fase
 
+**Skills por parte del trabajo:**
+
+| Parte | Skill | Para qué |
+|---|---|---|
+| Dirección visual de cada maqueta | `frontend-design` | Evitar las señales de diseño generado; un solo elemento audaz por pantalla |
+| Paleta, tipografía, patrones de UX | UI UX Pro Max (`ui-ux-pro-max`) | Sistema de diseño por tipo de producto y reglas de UX puntuales |
+| Qué animar y cómo | Emil Kowalski: `find-animation-opportunities`, `animate`, `review-animations` | Decidir si algo se anima, con qué herramienta, curva y duración |
+| Auditoría de cada propuesta y de cada PR | `web-design-guidelines` (Vercel) | Accesibilidad, foco, formularios, animación, tipografía, contenido |
+
+**Hook:** `.claude/settings.local.json` tiene un hook `PostToolUse` sobre `Write|Edit`. Cuando se toca un archivo visual (`components/**/*.tsx`, `app/**/*.tsx`, `app/**/*.css` o una maqueta `.dc.html`, excluyendo `app/actions`, `lib` y tests) le recuerda al agente auditar con `web-design-guidelines` antes de mostrar o dar por terminada la propuesta. `.claude/` está en el `.gitignore`, así que el hook vive en la máquina de desarrollo.
+
+**Sub-identidades:** en la maqueta F1 son una muestra. Cada una se diseña en profundidad en la fase de su sección (Circuito en F2, Liga en F3, Especiales e Interparque en F4).
+
 1. **Maqueta** — HTML autocontenido con 2–3 variantes y datos reales (copiados de producción o del mock). Se publica como página privada para verla en el celular y se guarda en `product/refactor-visual/maquetas/fase-N/`.
 2. **Revisión y auditoría** — antes de mostrarla, la maqueta pasa por las skills de criterio (`frontend-design` y UI UX Pro Max para la dirección visual, las de Emil Kowalski para el movimiento; se leen de sus repositorios porque no están instaladas) y después se audita con la skill `web-design-guidelines` (`.claude/skills/`, guías de interfaz de Vercel) + un chequeo de contraste AA de los pares de color. Se corrige lo que aplica a una maqueta; lo que es de implementación queda en el checklist §6.
 3. **Ida y vuelta** — el humano elige y corrige. Las decisiones se anotan en §8 de este archivo.
@@ -344,7 +357,9 @@ Las capturas del estado actual (antes de cada fase) van en `product/refactor-vis
 - Una tarjeta por actividad (Liga, Circuito, Interparque, clases/escuela) con el logo de cada una como "escudo" y un toque de su sub-identidad: reemplaza a `activities`, `winter-league`, `CircuitoPromo`, `InterparquePromo`. **`winter-league` deja de ser solo invierno**: muestra la edición de Liga activa (o la próxima) con su estación.
 - Opcionales, según la maqueta: bloque "el club en números", galería, sponsors, línea de tiempo de campeones.
 - `location-contact` y `whatsapp-fab` rediseñados.
-- Tablero del hero con el último resultado cargado de la Liga (dato real del servidor) y su animación de entrada (§3.5); el resto de la home sin animaciones de entrada.
+- Tablero **"En juego"** en el hero, con lo que se está jugando en cada competencia: Liga (edición y fecha actual), Circuito (torneo del mes y cantidad de categorías) e Interparque (jugadores compitiendo y partidos jugados). Cada fila lleva a su sección. Datos reales del servidor, con su animación de entrada (§3.5); el resto de la home sin animaciones de entrada.
+  - Si alguno de esos números no se puede leer con las funciones que ya existen en `lib/data/`, hace falta una función de solo lectura nueva: es una excepción a "`lib/` no se toca" que se consulta con el humano antes de programarla.
+- Tarjeta de la Liga con una cancha de fondo y los logos LI y LV en cada mitad, "enfrentados" como rivales. Circuito e Interparque mantienen su cancha propia.
 
 *Terminado*: home aprobada por el humano; en 375 px el CTA de WhatsApp está visible sin scrollear; LCP con la foto del hero optimizada (`next/image`, `priority`, `sizes`); checklist §6.
 
