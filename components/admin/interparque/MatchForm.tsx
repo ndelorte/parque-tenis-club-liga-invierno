@@ -121,6 +121,23 @@ export function MatchForm({ match, players }: Props) {
               <p className="mt-1 text-xs text-gray-400">
                 Super tie-break: gana quien llega a 10+ puntos con 2 de diferencia (ej. 10-8, 11-9).
               </p>
+              {/* WO (reglas-interparque.md): el ausente pierde 6-0 6-0 */}
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setScore("6-0 6-0")}
+                  className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                >
+                  WO a favor de {nameA}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScore("0-6 0-6")}
+                  className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                >
+                  WO a favor de {nameB}
+                </button>
+              </div>
             </div>
             <button
               onClick={handleResult}

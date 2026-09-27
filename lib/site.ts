@@ -5,6 +5,8 @@ export const CLUB = {
   phoneDisplay: "+54 9 11 5728-7851",
   whatsapp: "+54 9 11 5728-7851",
   email: "parquetenisclub@gmail.com",
+  // Dominio de producción (sale desde main) — OQ-11.
+  url: "https://www.parquetenisclub.com.ar",
   address: "Primera junta 726, Quilmes, Buenos Aires",
   hours: "Lun a Vier · 8:00 a 23:00 - Sab a Dom · 8:00 a 20:00",
   mapsEmbed:

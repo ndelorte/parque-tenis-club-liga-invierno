@@ -38,6 +38,40 @@ describe("calculateZoneStandings", () => {
     expect(standings.map((s) => s.id)).toEqual(["B", "A"]) // seed 1 < seed 3
   })
 
+  // Orden de criterios de OQ-37: ganados → dif. de sets → dif. de games → partido entre ellos.
+  it("la diferencia de sets pesa antes que la diferencia de games", () => {
+    // A y B ganan 1 cada uno. A: sets +1, games +1. B: sets 0, games +10.
+    const participants = [p("A"), p("B"), p("C"), p("D")]
+    const matches: ZoneMatchResult[] = [
+      { participantAId: "A", participantBId: "C", winnerId: "A", score: "7-6 7-6" },
+      { participantAId: "A", participantBId: "D", winnerId: "D", score: "0-6 6-0 6-7" },
+      { participantAId: "B", participantBId: "C", winnerId: "B", score: "6-0 6-0" },
+      { participantAId: "B", participantBId: "D", winnerId: "D", score: "6-7 6-7" },
+    ]
+    expect(calculateZoneStandings(participants, matches).map((s) => s.id)).toEqual(["D", "A", "B", "C"])
+  })
+
+  it("con victorias, sets y games iguales, decide el partido entre ellos (antes que el seed)", () => {
+    // A y B: 1 ganado, sets 0, games 0. A le ganó a B, aunque B tiene mejor seed.
+    const participants = [p("A", 2), p("B", 1), p("C", 3), p("D", 4)]
+    const matches: ZoneMatchResult[] = [
+      { participantAId: "A", participantBId: "B", winnerId: "A", score: "6-4 6-4" },
+      { participantAId: "A", participantBId: "C", winnerId: "C", score: "4-6 4-6" },
+      { participantAId: "B", participantBId: "D", winnerId: "B", score: "6-4 6-4" },
+    ]
+    expect(calculateZoneStandings(participants, matches).map((s) => s.id)).toEqual(["C", "A", "B", "D"])
+  })
+
+  it("un triple empate circular (cada uno le ganó a otro) queda por seed", () => {
+    const participants = [p("A", 3), p("B", 1), p("C", 2)]
+    const matches: ZoneMatchResult[] = [
+      { participantAId: "A", participantBId: "B", winnerId: "A", score: "6-4 6-4" },
+      { participantAId: "B", participantBId: "C", winnerId: "B", score: "6-4 6-4" },
+      { participantAId: "C", participantBId: "A", winnerId: "C", score: "6-4 6-4" },
+    ]
+    expect(calculateZoneStandings(participants, matches).map((s) => s.id)).toEqual(["B", "C", "A"])
+  })
+
   it("rechaza un partido con un participante que no está en la lista", () => {
     const participants = [p("A"), p("B")]
     const matches: ZoneMatchResult[] = [

@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Geist, Playfair_Display } from "next/font/google"
 import "./globals.css"
 import { site } from "@/content/site"
+import { CLUB } from "@/lib/site"
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -15,6 +16,8 @@ const playfair = Playfair_Display({
 })
 
 export const metadata: Metadata = {
+  // Base para las URLs absolutas de metadata (links al compartir, íconos).
+  metadataBase: new URL(CLUB.url),
   title: site.seo.home.title,
   description: site.seo.home.description,
   icons: {

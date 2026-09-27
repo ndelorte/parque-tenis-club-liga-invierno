@@ -7,34 +7,6 @@
 
 ## Pendientes
 
-### OQ-IP-01: ¿Cuál es el criterio de desempate en la tabla de Interparque?
-
-**Contexto**: `reglas-interparque.md` define cómo se suman los puntos, pero
-no hay ninguna regla de desempate cuando dos o más jugadores quedan con los
-mismos puntos.
-
-**Preguntar**: ¿Desempata partidos ganados? ¿Diferencia de games?
-¿Enfrentamiento directo? ¿Orden alfabético está bien como fallback final?
-
-**Impacto**: `calculateInterparqueStandings` (`lib/interparque/`) — hoy
-ordena por puntos y, a igualdad, por nombre (sin significado deportivo).
-
----
-
-### OQ-IP-02: ¿Qué pasa con un jugador ausente en Interparque?
-
-**Contexto**: Los flyers no mencionan walkover ni ausencias — a diferencia
-de Liga Invierno (que sí tiene WO general y de cancha), Interparque no
-define este caso.
-
-**Preguntar**: ¿Un jugador ausente pierde el partido automáticamente?
-¿Se anota como partido jugado? ¿Suma puntos el rival?
-
-**Impacto**: No implementado. El panel admin de Interparque solo permite
-cargar un score real; no hay opción de "walkover" hasta tener respuesta.
-
----
-
 ### OQ-IP-03: ¿Cómo se van a separar los "dos niveles" de Interparque?
 
 **Contexto**: El flyer dice "Los niveles serán por categorías pero estarán
@@ -49,6 +21,9 @@ con columna de nivel?
 **Impacto**: Cuando se implemente, probablemente agregue una columna
 `level` a `interparque_players` y filtre `calculateInterparqueStandings`
 por nivel. No implementar hasta tener respuesta.
+
+**Estado** (2026-09-27): el club confirmó que por ahora no se implementa — sigue una sola tabla
+general.
 
 ---
 
@@ -65,16 +40,6 @@ por nivel. No implementar hasta tener respuesta.
 
 ---
 
-### OQ-03b: ¿Qué pasa si sigue el empate después de todos los criterios H2H?
-
-**Contexto**: Se definieron los criterios 5a–5c para enfrentamiento directo (diferencia de canchas, sets y games en H2H). Pero no está definido qué pasa si dos o más equipos siguen exactamente empatados después de 5c.
-
-**Preguntar**: ¿Hay algún criterio de desempate final (sorteo, orden alfabético, etc.)?
-
-**Impacto**: Afecta el caso borde final de `sortStandings()`.
-
----
-
 ### OQ-06: ¿Un jugador de Caballeros A puede también jugar en Caballeros B?
 
 **Contexto**: El PRD dice "A y B cuentan como categorías diferentes", lo que implicaría que sí puede.
@@ -84,19 +49,6 @@ por nivel. No implementar hasta tener respuesta.
 - ¿Hay alguna restricción de nivel entre A y B?
 
 **Impacto**: Afecta la restricción en `team_players` y las validaciones del admin.
-
----
-
-### OQ-08: ¿Qué pasa si un resultado cargado necesita convertirse en WO general?
-
-**Contexto**: El PRD permite editar resultados (sección 16.7) y cargar WO general (sección 16.6), pero no describe el flujo de conversión.
-
-**Preguntar**:
-- ¿Se borran los `court_matches` existentes?
-- ¿Se reemplazan por los valores de WO (3-0, 6-0, 36-0)?
-- ¿O se mantienen los resultados reales y solo se agrega el flag `is_general_walkover`?
-
-**Impacto**: Afecta el admin de resultados y el recálculo de standings.
 
 ---
 
@@ -113,14 +65,6 @@ por nivel. No implementar hasta tener respuesta.
 **Contexto**: El home tiene una sección "Ubicación / Cómo llegar".
 
 **Preguntar**: ¿Cuál es la dirección del club? ¿Hay un link de Google Maps?
-
----
-
-### OQ-11: ¿Cuál es el dominio actual del club?
-
-**Contexto**: El PRD dice "el dominio actual del club debe apuntar a esta nueva web".
-
-**Preguntar**: ¿Cuál es el dominio? ¿parquetenis.com.ar? ¿Otro?
 
 ---
 
@@ -159,41 +103,7 @@ por nivel. No implementar hasta tener respuesta.
 
 ---
 
-### OQ-37: Circuito — desempate dentro de una zona (round robin)
-
-**Contexto**: En los formatos de zona (4, 5 y 6-7 inscriptos, `reglas-circuito-del-parque.md`) el
-campeón/subcampeón/clasificados a semifinal salen de la tabla de posiciones de la zona (todos
-contra todos). El documento define cómo se traducen esas posiciones a puntos de ranking, pero no
-define el **criterio de desempate** cuando 2 o más participantes terminan con la misma cantidad de
-partidos ganados dentro de la zona.
-
-**Preguntar**: Para desempatar dentro de una zona, ¿el criterio es diferencia de games ganados/perdidos
-(como en el desempate de equipos de Liga), con enfrentamiento directo como siguiente criterio? ¿O hay
-otro orden preferido?
-
-**Impacto**: `lib/circuito/calculateZoneStandings.ts` — mientras no se confirme, implementado con
-el default: 1) partidos ganados, 2) diferencia de games, 3) games ganados, 4) cabeza de serie (más
-bajo primero) como último desempate estable. Ajustar el orden de criterios si la respuesta es otra.
-
----
-
-### OQ-38: Circuito — desempate del ranking anual (y del corte de la Final Master)
-
-**Contexto**: `reglas-circuito-del-parque.md` dice que el ranking anual suma los puntos de todos
-los torneos del año y que a la Final Master clasifican los 8 mejores por categoría, pero no dice
-qué pasa si 2 o más jugadores terminan con los **mismos puntos**. Con la escala de puntos (valores
-redondos y repetidos) los empates son frecuentes, y un empate en el 8° puesto decide quién
-clasifica.
-
-**Preguntar**: ¿Cómo se desempata? Opciones habituales: más torneos ganados (o mejor resultado
-individual), más torneos jugados/menos jugados, puntos del último torneo, enfrentamiento directo,
-o comparten puesto (y en el corte de 8 entran todos los empatados).
-
-**Impacto**: `lib/data/circuito/ranking.ts` (`getAnnualCircuitRanking`) ordena solo por puntos:
-entre empatados el orden es arbitrario. Mientras no se responda no se implementa ningún
-desempate.
-
----
+## Resueltas — 2026-09-27
 
 ### ~~OQ-39~~: Circuito — ubicación de los cabezas de serie en el cuadro (8+)
 
@@ -202,6 +112,48 @@ todo, los primeros 8 seeds en lados contrarios, y los byes se enfrentan a los me
 Detalle (líneas fijas, sin sorteo) en `reglas-circuito-del-parque.md`, "Ubicación en el cuadro".
 Antes el motor ponía los byes en orden de seed uno al lado del otro y el 1 y el 2 se cruzaban
 en la 2ª ronda.
+
+---
+
+### ~~OQ-IP-01~~: ¿Cuál es el criterio de desempate en la tabla de Interparque?
+
+**Respuesta** (2026-09-27): Menos partidos jugados (a igualdad de puntos queda arriba quien jugó menos). Documentado en `reglas-interparque.md`.
+
+---
+
+### ~~OQ-IP-02~~: ¿Qué pasa con un jugador ausente en Interparque?
+
+**Respuesta** (2026-09-27): El ausente pierde por walkover, registrado como 6-0 6-0 para el rival. Documentado en `reglas-interparque.md`.
+
+---
+
+### ~~OQ-03b~~: ¿Qué pasa si sigue el empate después de todos los criterios H2H?
+
+**Respuesta** (2026-09-27): Sorteo. Documentado en `reglas-liga-invierno.md`.
+
+---
+
+### ~~OQ-08~~: ¿Qué pasa si un resultado cargado necesita convertirse en WO general?
+
+**Respuesta** (2026-09-27): El WO general transforma todo en 6-0 6-0: las 3 canchas se reemplazan por 6-0 6-0 a favor del presente. Documentado en `reglas-liga-invierno.md`.
+
+---
+
+### ~~OQ-11~~: ¿Cuál es el dominio actual del club?
+
+**Respuesta** (2026-09-27): `www.parquetenisclub.com.ar` (dominio que sale desde `main`). Configurado en `lib/site.ts`.
+
+---
+
+### ~~OQ-37~~: Circuito — desempate dentro de una zona (round robin)
+
+**Respuesta** (2026-09-27): 1) Partidos ganados, 2) diferencia de sets, 3) diferencia de games, 4) partido entre ellos. Documentado en `reglas-circuito-del-parque.md`.
+
+---
+
+### ~~OQ-38~~: Circuito — desempate del ranking anual (y del corte de la Final Master)
+
+**Respuesta** (2026-09-27): 1) Menos torneos jugados, 2) más torneos ganados (1er puesto). Documentado en `reglas-circuito-del-parque.md`.
 
 ---
 

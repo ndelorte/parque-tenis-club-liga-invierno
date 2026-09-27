@@ -74,6 +74,8 @@ El armado del cuadro **cambia según N** (cantidad de inscriptos ese mes). Esto 
     fijas (orden clásico de cuadro: con 8 lugares 1-8, 4-5, 3-6, 2-7 de arriba abajo), así el
     mismo listado de inscriptos genera siempre el mismo cuadro. Del 9 en adelante se sigue el
     mismo orden según el ranking.
+- **Desempate dentro de una zona** (formatos 4, 5 y 6-7) — respuesta a OQ-37 (2026-09-27):
+  1. Partidos ganados. 2. Diferencia de sets. 3. Diferencia de games. 4. Partido entre ellos.
 - **Armado de las 2 zonas (formato 6-7 inscriptos)**: mismo criterio de ranking que las byes,
   repartido en **serpentina** para equilibrar el nivel de cada zona — 1° al ranking → Zona A, 2° y
   3° → Zona B, 4° y 5° → Zona A, 6° (y 7° si lo hay) → Zona B.
@@ -143,6 +145,10 @@ comprimen así:
   los peores resultados — no hay esquema "mejores N").
 - **No hay mínimo de torneos jugados** para figurar en el ranking ni para clasificar a la Final
   Master.
+- **Desempate** (a igualdad de puntos, también para el corte de 8 de la Final Master) — respuesta
+  a OQ-38 (2026-09-27):
+  1. **Menos torneos jugados** en el año (mismos puntos con menos torneos = mejor promedio).
+  2. **Más torneos ganados** (1er puesto) en el año.
 
 ---
 

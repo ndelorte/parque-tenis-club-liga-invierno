@@ -1,5 +1,13 @@
 interface Props {
-  entries: Array<{ playerId: string; playerName: string; points: number }>
+  // tournamentsPlayed/Won: criterios de desempate del ranking anual (OQ-38),
+  // se muestran para que se entienda el orden entre empatados en puntos.
+  entries: Array<{
+    playerId: string
+    playerName: string
+    points: number
+    tournamentsPlayed?: number
+    tournamentsWon?: number
+  }>
   highlightTop?: number
 }
 
@@ -18,7 +26,15 @@ export function RankingTable({ entries, highlightTop }: Props) {
           }`}
         >
           <span className="w-6 shrink-0 font-mono text-muted-foreground">{i + 1}</span>
-          <span className="flex-1 text-foreground">{entry.playerName}</span>
+          <span className="flex-1 text-foreground">
+            {entry.playerName}
+            {entry.tournamentsPlayed !== undefined && (
+              <span className="block text-xs text-muted-foreground">
+                {entry.tournamentsPlayed} {entry.tournamentsPlayed === 1 ? "torneo" : "torneos"}
+                {entry.tournamentsWon ? ` · ${entry.tournamentsWon} ${entry.tournamentsWon === 1 ? "ganado" : "ganados"}` : ""}
+              </span>
+            )}
+          </span>
           <span className="font-mono font-semibold text-foreground">{entry.points}</span>
         </div>
       ))}

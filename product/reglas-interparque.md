@@ -84,9 +84,9 @@ Se calcula en vivo a partir de los partidos `completed` — nunca se persiste
 un snapshot ni se edita a mano (ver ADR-006). Columnas: jugador, partidos
 jugados, puntos.
 
-**Desempate**: no definido por el club todavía (ver OQ-IP-01). Implementación
-actual: a igualdad de puntos, orden alfabético por nombre (estable, sin
-significado deportivo).
+**Desempate** (respuesta a OQ-IP-01, 2026-09-27): a igualdad de puntos queda
+arriba quien jugó **menos partidos**. Si sigue el empate, orden alfabético por
+nombre (solo para que el orden sea estable, sin significado deportivo).
 
 ---
 
@@ -99,9 +99,10 @@ adultos, dos veces por semana durante el mes de noviembre.
 
 ## Walkover / ausencias
 
-**No definido.** Los flyers no mencionan qué pasa si un jugador no se
-presenta. No implementar nada al respecto hasta tener respuesta — ver
-OQ-IP-02.
+Respuesta a OQ-IP-02 (2026-09-27): si un jugador no se presenta, pierde por
+walkover y el partido se registra como **6-0 6-0** para el rival. Con el
+puntaje normal eso da 15 puntos al ganador (12 games + 3 de bonus por ganar)
+y 0 al ausente.
 
 ---
 

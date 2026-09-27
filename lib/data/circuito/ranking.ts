@@ -5,6 +5,7 @@ import { selectDrawRule } from "@/lib/circuito/generateBracket"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
 import { isGrandSlamMonth } from "@/lib/circuito/pointsTable"
 import { CIRCUITO_FIXED_CATEGORIES } from "@/lib/circuito/fixedCategories"
+import { buildAnnualRanking, type AnnualRankingEntry } from "@/lib/circuito/buildAnnualRanking"
 import type { CircuitoParticipant } from "@/lib/circuito/types"
 import type { CircuitoParticipantRow } from "./types"
 
@@ -155,32 +156,40 @@ export async function getCircuitRanking(editionId: string, categoryId?: string):
 // sentido competitivo (no existe un ranking "general" cruzando categorías).
 // Filtra por slug porque cada edición mensual crea sus propias filas de
 // circuito_categories (incluso con el mismo slug) — no hay una categoría
-// "canónica" única.
+// "canónica" única. El orden y el desempate (OQ-38) los resuelve
+// lib/circuito/buildAnnualRanking.ts.
 export async function getAnnualCircuitRanking(
   year: number,
   categorySlug: string,
-): Promise<CircuitoRankingEntry[]> {
+): Promise<AnnualRankingEntry[]> {
   const supabase = await createClient()
-  const query = supabase
+  const { data, error } = await supabase
     .from("circuito_ranking_points")
-    .select("player_id, points, players(display_name), circuito_categories!inner(slug), circuito_editions!inner(year)")
+    .select(
+      "player_id, edition_id, points, players(display_name), circuito_categories!inner(slug), circuito_editions!inner(year, month)",
+    )
     .eq("circuito_editions.year", year)
     .eq("circuito_categories.slug", categorySlug)
     .gt("points", 0)
 
-  const { data, error } = await query
   if (error || !data) return []
 
-  const totals = new Map<string, { name: string; points: number }>()
-  for (const row of data as unknown as Array<{ player_id: string; points: number; players: { display_name: string } | null }>) {
-    const current = totals.get(row.player_id)
-    const name = row.players?.display_name ?? "—"
-    totals.set(row.player_id, { name, points: (current?.points ?? 0) + row.points })
+  type Row = {
+    player_id: string
+    edition_id: string
+    points: number
+    players: { display_name: string } | null
+    circuito_editions: { month: number } | null
   }
-
-  return [...totals.entries()]
-    .map(([playerId, v]) => ({ playerId, playerName: v.name, points: v.points }))
-    .sort((a, b) => b.points - a.points)
+  return buildAnnualRanking(
+    (data as unknown as Row[]).map((r) => ({
+      playerId: r.player_id,
+      playerName: r.players?.display_name ?? "—",
+      editionId: r.edition_id,
+      month: r.circuito_editions?.month ?? 0,
+      points: r.points,
+    })),
+  )
 }
 
 // Slugs de las categorías que tienen al menos un jugador con puntos en el

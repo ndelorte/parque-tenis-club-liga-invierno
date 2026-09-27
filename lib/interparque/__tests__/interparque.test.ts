@@ -100,7 +100,18 @@ describe("calculateInterparqueStandings", () => {
     expect(standings[2]).toMatchObject({ playerId: "p2", played: 1, points: 0 })
   })
 
-  it("a igualdad de puntos, ordena por nombre para que el orden sea estable", () => {
+  it("a igualdad de puntos, queda arriba quien jugó menos partidos (OQ-IP-01)", () => {
+    // Ana: 15 en 2 partidos. Caro: 15 en 1 partido → Caro arriba aunque alfabéticamente va después.
+    const matches: InterparqueMatchRow[] = [
+      { status: "completed", player_a_id: "p1", player_b_id: "p2", points_a: 8, points_b: 5 },
+      { status: "completed", player_a_id: "p1", player_b_id: "p2", points_a: 7, points_b: 9 },
+      { status: "completed", player_a_id: "p3", player_b_id: "p2", points_a: 15, points_b: 0 },
+    ]
+    const standings = calculateInterparqueStandings(players, matches)
+    expect(standings.map((r) => r.playerId)).toEqual(["p3", "p1", "p2"])
+  })
+
+  it("con mismos puntos y partidos jugados, ordena por nombre para que el orden sea estable", () => {
     const matches: InterparqueMatchRow[] = [
       { status: "completed", player_a_id: "p1", player_b_id: "p2", points_a: 10, points_b: 10 },
     ]

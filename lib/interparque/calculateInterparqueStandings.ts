@@ -22,9 +22,9 @@ export interface InterparqueStandingRow {
 /**
  * Tabla de posiciones de Interparque, calculada en vivo a partir de los
  * partidos completados (nunca se persiste un snapshot — ver ADR-006).
- * No hay una regla de desempate definida por el club todavía (ver
- * product/open-questions.md); a igualdad de puntos se ordena por nombre
- * para que el orden sea estable.
+ * Desempate (reglas-interparque.md, respuesta a OQ-IP-01): a igualdad de
+ * puntos queda arriba quien jugó menos partidos. Si sigue el empate, el
+ * nombre solo deja un orden estable (no es criterio deportivo).
  */
 export function calculateInterparqueStandings(
   players: InterparquePlayer[],
@@ -63,6 +63,7 @@ export function calculateInterparqueStandings(
 
   return rows.sort((rowA, rowB) => {
     if (rowB.points !== rowA.points) return rowB.points - rowA.points
+    if (rowA.played !== rowB.played) return rowA.played - rowB.played
     return rowA.displayName.localeCompare(rowB.displayName)
   })
 }
