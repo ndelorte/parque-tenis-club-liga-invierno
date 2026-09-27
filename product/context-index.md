@@ -22,6 +22,7 @@ tener que abrirlos todos para saber cuál corresponde antes de tocar código.
 | Qué construir, features, prioridad | `PRD_PARQUE_TENIS_LIGA_INVIERNO.md` |
 | Objetivos, usuarios, alcance del MVP | `vision.md` |
 | Qué falta, próximos sprints | `backlog.md` |
+| Refactor visual del sitio (sistema visual, fases, relevamiento de pantallas) | `plan-refactor-visual.md` |
 | Un gap o una duda sobre una regla existente | `open-questions.md` |
 
 ## Arquitectura y decisiones
