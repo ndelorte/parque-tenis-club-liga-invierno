@@ -428,7 +428,10 @@ function ZoneWithFinalSection({
   if (!group) return <FallbackSections matches={matches} names={names} />
 
   const groupMatches = group.matches as CircuitoMatchRow[]
-  const { rows, matches: matchRows } = buildZoneDisplay(participants, groupMatches, names, 0)
+  // qualifiesCount=2: los primeros 2 de la zona clasifican a la Final (la
+  // barra de color de ZoneStandingsTable marca justamente eso). Si por algo
+  // no se pudo reconstruir la Final, no hay a quién marcar como clasificado.
+  const { rows, matches: matchRows } = buildZoneDisplay(participants, groupMatches, names, finalSection ? 2 : 0)
   const reconstructedFinalTree = finalSection
     ? buildBracketTree(
         (finalSection.matches as CircuitoMatchRow[]).map((m) => ({ ...m, round_number: 1 })),
