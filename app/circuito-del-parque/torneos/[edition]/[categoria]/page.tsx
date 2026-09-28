@@ -9,12 +9,12 @@ import type { CircuitoMatchRow, CircuitoParticipantRow } from "@/lib/data/circui
 import type { CircuitoCategoryRow } from "@/lib/data/circuito/types"
 import { selectDrawRule } from "@/lib/circuito/generateBracket"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
-import { classifyMainBracketSections, type DisplayMatch } from "@/lib/circuito/bracketDisplay"
+import { classifyMainBracketSections, eliminationSections, type DisplayMatch } from "@/lib/circuito/bracketDisplay"
 import { buildBracketTree, type BracketTreeParticipant } from "@/lib/circuito/bracketTree"
 import { calculateZoneStandings } from "@/lib/circuito/calculateZoneStandings"
 import { parseCircuitoScore } from "@/lib/circuito/parseCircuitoScore"
 import { isGrandSlamMonth, pointsForInstance } from "@/lib/circuito/pointsTable"
-import type { CircuitoParticipant } from "@/lib/circuito/types"
+import type { CircuitoParticipant, DrawFormatKind } from "@/lib/circuito/types"
 import { BracketTreeView } from "@/components/circuito/bracket-tree"
 import { RoundsView } from "@/components/circuito/rounds-view"
 import { ChampionCard } from "@/components/circuito/champion-card"
@@ -76,22 +76,35 @@ function buildZoneDisplay(
     zoneParticipants.map((p) => [p.id, { played: 0, wins: 0, setsWon: 0, setsLost: 0, gamesWon: 0, gamesLost: 0 }]),
   )
   for (const m of completed) {
-    const parsed = parseCircuitoScore(m.score!, { isFinal: false })
     const a = stats.get(m.participant_a_id!)
     const b = stats.get(m.participant_b_id!)
     if (!a || !b) continue
     a.played++
     b.played++
-    a.setsWon += parsed.setsWonA
-    a.setsLost += parsed.setsWonB
-    b.setsWon += parsed.setsWonB
-    b.setsLost += parsed.setsWonA
-    a.gamesWon += parsed.gamesWonA
-    a.gamesLost += parsed.gamesWonB
-    b.gamesWon += parsed.gamesWonB
-    b.gamesLost += parsed.gamesWonA
+
+    // Datos importados (Challonge) pueden traer un score con un formato
+    // atípico que parseCircuitoScore no puede interpretar (ver
+    // lib/circuito/parseCircuitoScore.ts). En vez de tirar abajo toda la
+    // página con una excepción sin capturar, se loguea y ese partido
+    // puntual queda sin sumar a sets/games — el resto de la zona se sigue
+    // mostrando normalmente.
+    try {
+      const parsed = parseCircuitoScore(m.score!, { isFinal: false })
+      a.setsWon += parsed.setsWonA
+      a.setsLost += parsed.setsWonB
+      b.setsWon += parsed.setsWonB
+      b.setsLost += parsed.setsWonA
+      a.gamesWon += parsed.gamesWonA
+      a.gamesLost += parsed.gamesWonB
+      b.gamesWon += parsed.gamesWonB
+      b.gamesLost += parsed.gamesWonA
+    } catch (err) {
+      console.error(`[buildZoneDisplay] score no interpretable "${m.score}" para el partido ${m.id}: no se suman sets/games`, err)
+    }
+
     if (m.winner_id === m.participant_a_id) a.wins++
-    else b.wins++
+    else if (m.winner_id === m.participant_b_id) b.wins++
+    else console.error(`[buildZoneDisplay] winner_id "${m.winner_id}" no coincide con ninguno de los 2 participantes del partido ${m.id}`)
   }
 
   const order = calculateZoneStandings(zoneParticipants, results)
@@ -144,6 +157,12 @@ export default async function CircuitoTorneoCategoriaPage({
   const mainMatches = matches.filter((m) => m.bracket === "main")
   const repechajeMatches = matches.filter((m) => m.bracket === "repechaje")
   const rule = selectDrawRule(category.draw_size, CIRCUITO_FORMAT_SPEC)
+  // draw_size fuera de todo drawRule conocido (ej. cargado a mano o por un
+  // import con menos del mínimo de 4 inscriptos) — reglas-circuito-del-parque.md:
+  // "con menos de 4 inscriptos la categoría no se disputa ese mes". Sin esto,
+  // la página seguía de largo y renderizaba solo el encabezado, sin ninguna
+  // sección de contenido (pantalla en blanco sin explicación).
+  if (!rule) notFound()
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
@@ -259,7 +278,14 @@ function EliminationSections({
               </div>
             </>
           ) : (
-            <FallbackSections matches={repechajeMatches} names={names} />
+            // El repechaje SIEMPRE es eliminación directa (generateRepechaje.ts,
+            // formatSpec.ts sección `repechaje`) — no hay que inferir el formato
+            // por cantidad de jugadores como hace classifyMainBracketSections
+            // (esa inferencia es para el cuadro PRINCIPAL). El repechaje suele
+            // tener 4-7 jugadores (perdedores de 1ª ronda), que classify... lee
+            // como round robin/zonas y muestra como "fase de grupos" — por eso
+            // se fuerza acá el formato en vez de dejarlo inferir.
+            <FallbackSections matches={repechajeMatches} names={names} format="single_elimination" />
           )}
         </section>
       )}
@@ -269,9 +295,22 @@ function EliminationSections({
 
 // Cuando buildBracketTree no puede armar un árbol válido (cuadros
 // importados, ver bracketDisplay.ts): listas por ronda con el mismo estilo
-// de tarjeta, sin conectores.
-function FallbackSections({ matches, names }: { matches: CircuitoMatchRow[]; names: Record<string, BracketTreeParticipant> }) {
-  const sections = classifyMainBracketSections(matches as DisplayMatch[])
+// de tarjeta, sin conectores. `format`: si se pasa, fuerza esa clasificación
+// en vez de inferirla por cantidad de participantes (el repechaje ya sabe su
+// formato de antemano, no hay que inferirlo).
+function FallbackSections({
+  matches,
+  names,
+  format,
+}: {
+  matches: CircuitoMatchRow[]
+  names: Record<string, BracketTreeParticipant>
+  format?: DrawFormatKind
+}) {
+  const sections =
+    format === "single_elimination"
+      ? eliminationSections(matches as DisplayMatch[])
+      : classifyMainBracketSections(matches as DisplayMatch[])
   if (sections.length === 0) return null
 
   return (
@@ -324,12 +363,12 @@ function PureZoneSection({
 
   return (
     <div className="flex flex-col gap-8">
+      <ChampionCard champion={champion} points={champion ? championPoints : undefined} />
       <ZoneStandingsTable zoneName="Todos contra todos" rows={rows} matches={matchRows} />
       <p className="text-xs text-muted-foreground">
-        Sin final: el campeón/la campeona es el 1° de la tabla. Desempate: partidos ganados, diferencia de sets,
-        diferencia de games, partido entre ellos.
+        Sin final: el campeón/la campeona es el 1° de la tabla de arriba. Desempate: partidos ganados, diferencia de
+        sets, diferencia de games, partido entre ellos.
       </p>
-      <ChampionCard champion={champion} points={champion ? championPoints : undefined} />
     </div>
   )
 }
@@ -350,31 +389,81 @@ function ZoneWithFinalSection({
   championPoints: number
 }) {
   const zoneMatches = matches.filter((m) => m.round_number === 1)
-  const { rows, matches: matchRows } = buildZoneDisplay(participants, zoneMatches, names, 2)
-  const finalTree = buildBracketTree(knockoutTail(matches, 2), names)
+  const nativeFinalTree = buildBracketTree(knockoutTail(matches, 2), names)
 
-  return (
-    <div className="flex flex-col gap-10">
-      <ZoneStandingsTable zoneName="Todos contra todos" rows={rows} matches={matchRows} />
-      <p className="text-xs text-muted-foreground">
-        Barra de color: clasifica a la final. Desempate: partidos ganados, diferencia de sets, diferencia de games,
-        partido entre ellos.
-      </p>
-      {finalTree && (
+  // Camino nativo: round_number del motor propio (1=zona, 2=final) es
+  // confiable y ya arma el árbol. Se usa tal cual, sin cambios.
+  if (nativeFinalTree) {
+    const { rows, matches: matchRows } = buildZoneDisplay(participants, zoneMatches, names, 2)
+    return (
+      <div className="flex flex-col gap-10">
         <div className="hidden lg:block">
           <BracketTreeView
-            tree={finalTree}
+            tree={nativeFinalTree}
             championLabel={championLabel}
             championPoints={championPoints}
             idPrefix="final"
           />
         </div>
-      )}
-      {finalTree && (
         <div className="lg:hidden">
-          <RoundsView tree={finalTree} championLabel={championLabel} />
+          <RoundsView tree={nativeFinalTree} championLabel={championLabel} />
         </div>
+        <ZoneStandingsTable zoneName="Todos contra todos" rows={rows} matches={matchRows} />
+        <p className="text-xs text-muted-foreground">
+          Barra de color: clasifica a la final. Desempate: partidos ganados, diferencia de sets, diferencia de games,
+          partido entre ellos.
+        </p>
+      </div>
+    )
+  }
+
+  // Cuadro importado de Challonge: round_number no separa zona/final de
+  // forma confiable (ver GroupsThenKnockoutSection). Se reconstruye
+  // buscando el par que se repite — la final es siempre una revancha del
+  // mismo par que ya se enfrentó en la fase de grupos (mismo criterio que
+  // classifyMainBracketSections usa para N=4, con tests que lo cubren).
+  const sections = classifyMainBracketSections(matches as DisplayMatch[])
+  const group = sections.find((s) => s.label.startsWith("Fase de grupos"))
+  const finalSection = sections.find((s) => s.label === "Final")
+  if (!group) return <FallbackSections matches={matches} names={names} />
+
+  const groupMatches = group.matches as CircuitoMatchRow[]
+  // qualifiesCount=2: los primeros 2 de la zona clasifican a la Final (la
+  // barra de color de ZoneStandingsTable marca justamente eso). Si por algo
+  // no se pudo reconstruir la Final, no hay a quién marcar como clasificado.
+  const { rows, matches: matchRows } = buildZoneDisplay(participants, groupMatches, names, finalSection ? 2 : 0)
+  const reconstructedFinalTree = finalSection
+    ? buildBracketTree(
+        (finalSection.matches as CircuitoMatchRow[]).map((m) => ({ ...m, round_number: 1 })),
+        names,
+      )
+    : null
+  const champion = rows[0] ? { name: rows[0].name } : null
+
+  return (
+    <div className="flex flex-col gap-10">
+      {reconstructedFinalTree ? (
+        <>
+          <div className="hidden lg:block">
+            <BracketTreeView
+              tree={reconstructedFinalTree}
+              championLabel={championLabel}
+              championPoints={championPoints}
+              idPrefix="final"
+            />
+          </div>
+          <div className="lg:hidden">
+            <RoundsView tree={reconstructedFinalTree} championLabel={championLabel} />
+          </div>
+        </>
+      ) : (
+        <ChampionCard champion={champion} points={champion ? championPoints : undefined} />
       )}
+      <ZoneStandingsTable zoneName="Todos contra todos" rows={rows} matches={matchRows} />
+      <p className="text-xs text-muted-foreground">
+        Barra de color: clasifica a la final. Desempate: partidos ganados, diferencia de sets, diferencia de games,
+        partido entre ellos.
+      </p>
     </div>
   )
 }
@@ -394,42 +483,119 @@ function GroupsThenKnockoutSection({
   championLabel: string
   championPoints: number
 }) {
-  const zoneMatches = matches.filter((m) => m.round_number === 1)
-  const zones = (["A", "B"] as const).map((zone) => {
-    const inZone = zoneMatches.filter((m) => m.zone === zone)
-    const ids = new Set(inZone.flatMap((m) => [m.participant_a_id, m.participant_b_id]).filter((id): id is string => !!id))
+  // La columna `zone` (A/B) y el round_number con semántica "1=zona,
+  // 2+=cruce" solo los persiste el motor propio (torneos armados desde el
+  // panel). Los cuadros importados de Challonge no traen `zone` (ver
+  // bracketDisplay.ts) y su round numérico crudo tampoco respeta esa
+  // semántica.
+  const hasZoneColumn = matches.some((m) => m.zone)
+
+  if (hasZoneColumn) {
+    const zoneMatches = matches.filter((m) => m.round_number === 1)
+    const zones = (["A", "B"] as const).map((zone) => {
+      const inZone = zoneMatches.filter((m) => m.zone === zone)
+      const ids = new Set(inZone.flatMap((m) => [m.participant_a_id, m.participant_b_id]).filter((id): id is string => !!id))
+      const zoneParticipants = participants.filter((p) => ids.has(p.id))
+      return { zone, ...buildZoneDisplay(zoneParticipants, inZone, names, 2) }
+    })
+    const knockoutTree = buildBracketTree(knockoutTail(matches, 2), names)
+
+    return (
+      <div className="flex flex-col gap-10">
+        {knockoutTree && (
+          <>
+            <div className="hidden lg:block">
+              <BracketTreeView
+                tree={knockoutTree}
+                championLabel={championLabel}
+                championPoints={championPoints}
+                idPrefix="semifinales"
+              />
+            </div>
+            <div className="lg:hidden">
+              <RoundsView tree={knockoutTree} championLabel={championLabel} />
+            </div>
+          </>
+        )}
+        <div className="grid gap-10 sm:grid-cols-2">
+          {zones.map(({ zone, rows, matches: matchRows }) => (
+            <ZoneStandingsTable key={zone} zoneName={`Zona ${zone}`} rows={rows} matches={matchRows} />
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Barra de color: clasifica a semifinales. Desempate: partidos ganados, diferencia de sets, diferencia de
+          games, partido entre ellos.
+        </p>
+      </div>
+    )
+  }
+
+  // Cuadro importado de Challonge, sin columna `zone`: se reconstruyen las
+  // 2 zonas por el grafo de resultados (reconstructTwoZonesFromGraph en
+  // bracketDisplay.ts, sin mirar round_number ni zone), y se arma la misma
+  // vista pulida (2 tablas de zona + árbol de semis/final) que el camino
+  // nativo, en vez de la lista plana de FallbackSections.
+  const sections = classifyMainBracketSections(matches as DisplayMatch[])
+  const zoneASection = sections.find((s) => s.label === "Zona A")
+  const zoneBSection = sections.find((s) => s.label === "Zona B")
+  const semisSection = sections.find((s) => s.label === "Semifinales")
+  const finalSection = sections.find((s) => s.label === "Final")
+
+  if (!zoneASection || !zoneBSection) {
+    // No se pudo reconstruir con confianza (zonas ambiguas): mostrar los
+    // partidos reales sin ocultar nada, en vez de arriesgar una zona
+    // incorrecta.
+    return <FallbackSections matches={matches} names={names} />
+  }
+
+  const zoneSections = [
+    { label: "Zona A", matches: zoneASection.matches as CircuitoMatchRow[] },
+    { label: "Zona B", matches: zoneBSection.matches as CircuitoMatchRow[] },
+  ].map(({ label, matches: zoneMatches }) => {
+    const ids = new Set(zoneMatches.flatMap((m) => [m.participant_a_id, m.participant_b_id]).filter((id): id is string => !!id))
     const zoneParticipants = participants.filter((p) => ids.has(p.id))
-    return { zone, ...buildZoneDisplay(zoneParticipants, inZone, names, 2) }
+    return { label, ...buildZoneDisplay(zoneParticipants, zoneMatches, names, 2) }
   })
 
-  const knockoutTree = buildBracketTree(knockoutTail(matches, 2), names)
+  const knockoutMatches: CircuitoMatchRow[] = [
+    ...(semisSection ? (semisSection.matches as CircuitoMatchRow[]).map((m) => ({ ...m, round_number: 1 })) : []),
+    ...(finalSection ? (finalSection.matches as CircuitoMatchRow[]).map((m) => ({ ...m, round_number: 2 })) : []),
+  ]
+  const reconstructedKnockoutTree = knockoutMatches.length > 0 ? buildBracketTree(knockoutMatches, names) : null
 
   return (
     <div className="flex flex-col gap-10">
+      {reconstructedKnockoutTree ? (
+        <>
+          <div className="hidden lg:block">
+            <BracketTreeView
+              tree={reconstructedKnockoutTree}
+              championLabel={championLabel}
+              championPoints={championPoints}
+              idPrefix="semifinales"
+            />
+          </div>
+          <div className="lg:hidden">
+            <RoundsView tree={reconstructedKnockoutTree} championLabel={championLabel} />
+          </div>
+        </>
+      ) : (
+        semisSection && (
+          <FallbackSections
+            matches={[...semisSection.matches, ...(finalSection?.matches ?? [])] as CircuitoMatchRow[]}
+            names={names}
+          />
+        )
+      )}
       <div className="grid gap-10 sm:grid-cols-2">
-        {zones.map(({ zone, rows, matches: matchRows }) => (
-          <ZoneStandingsTable key={zone} zoneName={`Zona ${zone}`} rows={rows} matches={matchRows} />
+        {zoneSections.map(({ label, rows, matches: matchRows }) => (
+          <ZoneStandingsTable key={label} zoneName={label} rows={rows} matches={matchRows} />
         ))}
       </div>
       <p className="text-xs text-muted-foreground">
         Barra de color: clasifica a semifinales. Desempate: partidos ganados, diferencia de sets, diferencia de games,
         partido entre ellos.
       </p>
-      {knockoutTree && (
-        <div className="hidden lg:block">
-          <BracketTreeView
-            tree={knockoutTree}
-            championLabel={championLabel}
-            championPoints={championPoints}
-            idPrefix="semifinales"
-          />
-        </div>
-      )}
-      {knockoutTree && (
-        <div className="lg:hidden">
-          <RoundsView tree={knockoutTree} championLabel={championLabel} />
-        </div>
-      )}
     </div>
   )
 }

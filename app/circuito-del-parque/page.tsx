@@ -25,7 +25,7 @@ export default async function CircuitoDelParquePage() {
         </h1>
         <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
           Un torneo por categoría cada mes, con el nombre de un torneo del circuito profesional. Los puntos suman al
-          ranking anual y los 8 mejores de cada categoría juegan la Final Master.
+          ranking anual y los 8 mejores de cada categoría juegan el Final Master.
         </p>
       </div>
 
@@ -36,7 +36,7 @@ export default async function CircuitoDelParquePage() {
       <div className="mt-16 border-t-2 border-draw-line">
         <LandingRow
           title="Ranking"
-          description="La tabla de cada categoría, torneo por torneo. Los 8 primeros clasifican a la Final Master."
+          description="La tabla de cada categoría, torneo por torneo. Los 8 primeros clasifican al Final Master."
           cta="Ver ranking"
           href="/circuito-del-parque/ranking"
         />

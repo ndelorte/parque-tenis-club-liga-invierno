@@ -6,6 +6,7 @@
 // existen para decidir cuándo termina cada formato.
 
 import { calculateZoneStandings } from "./calculateZoneStandings"
+import { classifyMainBracketSections, type DisplayMatch } from "./bracketDisplay"
 import { CIRCUITO_FORMAT_SPEC } from "./formatSpec"
 import { selectDrawRule, nextPowerOfTwo } from "./generateBracket"
 import { bracketRoundLabel } from "./bracketTree"
@@ -56,6 +57,31 @@ function completedZoneMatches(matches: CategoryStatusMatch[]) {
   return matches.filter((m) => m.winner_id && m.score && m.participant_a_id && m.participant_b_id)
 }
 
+// classifyMainBracketSections (bracketDisplay.ts) pide `id`/`status`, que
+// CategoryStatusMatch no tiene (el llamador real siempre pasa filas
+// completas de circuito_matches, pero el tipo público de esta función se
+// mantiene mínimo por los tests). Se sintetizan acá — ninguna de las
+// funciones de clasificación lee `status`, y el `id` solo necesita ser
+// único dentro de este llamado, no coincidir con el id real en la base.
+function toDisplayMatches(matches: CategoryStatusMatch[]): DisplayMatch[] {
+  return matches.map((m, i) => ({ ...m, id: String(i), status: m.winner_id ? "played" : "pending" }))
+}
+
+// Busca la Final por el partido que se repite (round_robin_with_final) o
+// por reconstrucción del grafo de zonas (groups_then_knockout) — ver
+// bracketDisplay.ts. A diferencia de filtrar por round_number, funciona
+// igual con datos importados de Challonge, donde el round numérico crudo no
+// separa zona/semis/final con la semántica que espera el motor propio.
+function championFromGraph(
+  mainMatches: CategoryStatusMatch[],
+  participants: Record<string, CategoryStatusParticipant>,
+): CategoryStatus | null {
+  const sections = classifyMainBracketSections(toDisplayMatches(mainMatches))
+  const finalMatch = sections.find((s) => s.label === "Final")?.matches[0]
+  if (finalMatch?.winner_id) return { kind: "finished", champion: championName(finalMatch.winner_id, participants) }
+  return null
+}
+
 function toZoneMatchResults(matches: CategoryStatusMatch[]) {
   return completedZoneMatches(matches).map((m) => ({
     participantAId: m.participant_a_id!,
@@ -90,11 +116,17 @@ function withFinalStatus(
   const totalPossible = (drawSize * (drawSize - 1)) / 2
   const zoneMatches = mainMatches.filter((m) => m.round_number === 1)
   const completedZone = completedZoneMatches(zoneMatches)
+  if (completedZone.length >= totalPossible) {
+    const final = mainMatches.find((m) => m.round_number === 2)
+    if (final?.winner_id) return { kind: "finished", champion: championName(final.winner_id, participants) }
+  }
+
+  const fromGraph = championFromGraph(mainMatches, participants)
+  if (fromGraph) return fromGraph
+
   if (completedZone.length < totalPossible) {
     return { kind: "live", label: `${completedZone.length} de ${totalPossible} partidos` }
   }
-  const final = mainMatches.find((m) => m.round_number === 2)
-  if (final?.winner_id) return { kind: "finished", champion: championName(final.winner_id, participants) }
   return { kind: "live", label: "Final" }
 }
 
@@ -111,14 +143,26 @@ function groupsStatus(
     const totalPossible = (ids.size * (ids.size - 1)) / 2
     return completedZoneMatches(inZone).length >= totalPossible
   })
+
+  if (zonesDone) {
+    const semis = mainMatches.filter((m) => m.round_number === 2)
+    const semisDone = semis.length === 2 && semis.every((m) => m.winner_id)
+    if (semisDone) {
+      const final = mainMatches.find((m) => m.round_number === 3)
+      if (final?.winner_id) return { kind: "finished", champion: championName(final.winner_id, participants) }
+    }
+  }
+
+  // round_number/zone no separan zona/semis/final de forma confiable en
+  // datos importados de Challonge (no traen la columna `zone`, ver
+  // bracketDisplay.ts) — se intenta la reconstrucción por grafo antes de
+  // asumir que sigue en juego.
+  const fromGraph = championFromGraph(mainMatches, participants)
+  if (fromGraph) return fromGraph
+
   if (!zonesDone) return { kind: "live", label: "Zonas" }
-
   const semis = mainMatches.filter((m) => m.round_number === 2)
-  const semisDone = semis.length === 2 && semis.every((m) => m.winner_id)
-  if (!semisDone) return { kind: "live", label: "Semifinales" }
-
-  const final = mainMatches.find((m) => m.round_number === 3)
-  if (final?.winner_id) return { kind: "finished", champion: championName(final.winner_id, participants) }
+  if (!(semis.length === 2 && semis.every((m) => m.winner_id))) return { kind: "live", label: "Semifinales" }
   return { kind: "live", label: "Final" }
 }
 

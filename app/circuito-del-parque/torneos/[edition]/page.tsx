@@ -6,6 +6,8 @@ import { getCircuitoCategoriesForEdition } from "@/lib/data/circuito/categories"
 import { getCircuitoParticipants } from "@/lib/data/circuito/participants"
 import { getCircuitoMatches } from "@/lib/data/circuito/matches"
 import { categoryStatus, formatLabel } from "@/lib/circuito/categoryStatus"
+import { selectDrawRule } from "@/lib/circuito/generateBracket"
+import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
 import { isGrandSlamMonth } from "@/lib/circuito/pointsTable"
 import { MONTH_NAMES } from "@/lib/circuito/seasonCalendar"
 import { CategoryColumn, DoubleRacquetIcon, SingleRacquetIcon, type CategoryListItem } from "@/components/circuito/category-list"
@@ -65,8 +67,15 @@ export default async function CircuitoTorneoPage({
   const edition = await getCircuitoEditionBySlug(editionSlug)
   if (!edition) notFound()
 
-  // Solo las categorías que se juegan este mes (tienen cuadro armado).
-  const categories = (await getCircuitoCategoriesForEdition(edition.id)).filter((c) => c.draw_size)
+  // Solo las categorías que se juegan este mes (tienen cuadro armado con un
+  // formato válido). No alcanza con chequear que draw_size no sea null: un
+  // draw_size cargado a mano o por un import con menos del mínimo de 4
+  // inscriptos (reglas-circuito-del-parque.md) no matchea ningún drawRule y
+  // esa categoría tampoco se jugó ese mes — se trata igual que "sin cuadro
+  // armado" en vez de listarla y romper al entrar.
+  const categories = (await getCircuitoCategoriesForEdition(edition.id)).filter(
+    (c) => c.draw_size && selectDrawRule(c.draw_size, CIRCUITO_FORMAT_SPEC),
+  )
   const [singleItems, doblesItems] = await Promise.all([
     Promise.all(categories.filter((c) => c.type === "single").map(toListItem)),
     Promise.all(categories.filter((c) => c.type === "dobles").map(toListItem)),

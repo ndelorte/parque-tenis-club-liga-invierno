@@ -37,24 +37,46 @@ export function calculateZoneStandings(
   )
 
   for (const match of matches) {
-    const parsed = parseCircuitoScore(match.score, { isFinal: false })
     const recordA = records.get(match.participantAId)
     const recordB = records.get(match.participantBId)
     if (!recordA || !recordB) {
-      throw new Error(`Partido de zona con participante fuera de la lista: ${match.participantAId} / ${match.participantBId}`)
+      // Dato inconsistente (ej. import histórico con una zona mal armada):
+      // no se puede sumar el partido a ningún registro. Se ignora para esta
+      // tabla en vez de tirar abajo la página — no es una regla deportiva,
+      // es una salvaguarda de datos.
+      console.error(
+        `[calculateZoneStandings] partido de zona con participante fuera de la lista (${match.participantAId} / ${match.participantBId}): se ignora en la tabla`,
+      )
+      continue
     }
 
-    recordA.setsWon += parsed.setsWonA
-    recordA.setsLost += parsed.setsWonB
-    recordB.setsWon += parsed.setsWonB
-    recordB.setsLost += parsed.setsWonA
-    recordA.gamesWon += parsed.gamesWonA
-    recordA.gamesLost += parsed.gamesWonB
-    recordB.gamesWon += parsed.gamesWonB
-    recordB.gamesLost += parsed.gamesWonA
+    // Datos importados (Challonge) pueden tener un score con un formato
+    // atípico (ver parseCircuitoScore.ts). No se inventa un resultado: se
+    // loguea y ese partido puntual no suma sets/games, pero el resto de la
+    // tabla se sigue calculando igual.
+    try {
+      const parsed = parseCircuitoScore(match.score, { isFinal: false })
+      recordA.setsWon += parsed.setsWonA
+      recordA.setsLost += parsed.setsWonB
+      recordB.setsWon += parsed.setsWonB
+      recordB.setsLost += parsed.setsWonA
+      recordA.gamesWon += parsed.gamesWonA
+      recordA.gamesLost += parsed.gamesWonB
+      recordB.gamesWon += parsed.gamesWonB
+      recordB.gamesLost += parsed.gamesWonA
+    } catch (err) {
+      console.error(
+        `[calculateZoneStandings] score no interpretable "${match.score}" (partido ${match.participantAId} vs ${match.participantBId}): no se suman sets/games para este partido`,
+        err,
+      )
+    }
 
     if (match.winnerId === match.participantAId) recordA.wins++
-    else recordB.wins++
+    else if (match.winnerId === match.participantBId) recordB.wins++
+    else
+      console.error(
+        `[calculateZoneStandings] winnerId "${match.winnerId}" no coincide con ninguno de los 2 participantes del partido`,
+      )
   }
 
   const mainKey = (r: ZoneRecord) => [r.wins, r.setsWon - r.setsLost, r.gamesWon - r.gamesLost]
