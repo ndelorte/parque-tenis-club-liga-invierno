@@ -143,7 +143,143 @@ function classifyRoundRobinWithFinal(matches: DisplayMatch[]): BracketSection[] 
   return [{ label: "Fase de grupos (todos contra todos)", matches }]
 }
 
+function pairsWithin(ids: string[]): [string, string][] {
+  const pairs: [string, string][] = []
+  for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) pairs.push([ids[i], ids[j]])
+  return pairs
+}
+
+function combinations3(ids: string[]): string[][] {
+  const out: string[][] = []
+  for (let i = 0; i < ids.length; i++)
+    for (let j = i + 1; j < ids.length; j++) for (let k = j + 1; k < ids.length; k++) out.push([ids[i], ids[j], ids[k]])
+  return out
+}
+
+function* cartesian<T>(options: T[][]): Generator<T[]> {
+  if (options.length === 0) {
+    yield []
+    return
+  }
+  const [first, ...rest] = options
+  for (const item of first) for (const tail of cartesian(rest)) yield [item, ...tail]
+}
+
+/**
+ * Reconstruye "2 zonas de 3 + semis cruzadas + final" a partir del grafo de
+ * quién jugó contra quién, SIN depender de round_number ni de la columna
+ * `zone` (los cuadros importados de Challonge no traen ninguna de las 2 con
+ * la semántica que espera este formato, ver comentario de archivo). Solo
+ * aplica con exactamente 6 participantes reales — el formato de 7 reparte
+ * 4+3, no es simétrico, y acá no se intenta.
+ *
+ * Puede haber un par que jugó 2 veces: se cruzaron en zona Y de nuevo en la
+ * final (pasa cuando el 1° y el 2° de una misma zona ganan los 2 su semi
+ * cruzada y se reencuentran). Se prueban las 2 ocurrencias como "el partido
+ * de zona" y se valida cuál arma una estructura consistente.
+ *
+ * Solo devuelve una reconstrucción cuando es la ÚNICA forma de partir los 6
+ * jugadores en 2 grupos de 3 que jugaron todos contra todos + 2 semis
+ * cruzadas (1° de una zona vs 2° de la otra) + 1 final entre los 2 ganadores
+ * de semi. Si hay más de una forma posible, o ninguna, no arriesga: devuelve
+ * `null` para que el llamador use el fallback existente (round_number o
+ * lista plana) en vez de mostrar una zona/semifinal que podría ser incorrecta.
+ */
+function reconstructTwoZonesFromGraph(matches: DisplayMatch[]): BracketSection[] | null {
+  const ids = [...realParticipantIds(matches)]
+  if (ids.length !== 6) return null
+
+  const byPair = new Map<string, DisplayMatch[]>()
+  for (const m of matches) {
+    if (!m.participant_a_id || !m.participant_b_id) continue
+    const key = pairKey(m.participant_a_id, m.participant_b_id)
+    if (!byPair.has(key)) byPair.set(key, [])
+    byPair.get(key)!.push(m)
+  }
+
+  interface Solution {
+    zoneA: string[]
+    zoneAMatches: DisplayMatch[]
+    zoneBMatches: DisplayMatch[]
+    semis: DisplayMatch[]
+    final: DisplayMatch
+  }
+  // key: zoneA (ordenada) + "|" + par de la final — agrupa las soluciones
+  // que reconstruyen el MISMO resultado (misma zona, mismo campeón) aunque
+  // difieran en cuál de 2 ocurrencias idénticas de un par (zona + revancha
+  // en la final) quedó etiquetada como cada cosa.
+  const solutionsByShape = new Map<string, Solution[]>()
+
+  // Fijar ids[0] en zoneA evita generar cada partición 2 veces (A/B y B/A).
+  const zoneACandidates = combinations3(ids).filter((z) => z.includes(ids[0]))
+
+  for (const zoneA of zoneACandidates) {
+    const zoneB = ids.filter((id) => !zoneA.includes(id))
+    const zoneAPairs = pairsWithin(zoneA)
+    const zoneBPairs = pairsWithin(zoneB)
+    const zonePairs = [...zoneAPairs, ...zoneBPairs]
+    if (!zonePairs.every(([a, b]) => byPair.has(pairKey(a, b)))) continue
+
+    const choiceOptions = zonePairs.map(([a, b]) => byPair.get(pairKey(a, b))!)
+
+    for (const chosenZoneMatches of cartesian(choiceOptions)) {
+      const usedIds = new Set(chosenZoneMatches.map((m) => m.id))
+      const leftover = matches.filter((m) => m.participant_a_id && m.participant_b_id && !usedIds.has(m.id))
+      if (leftover.length !== 3) continue
+
+      const isCrossZone = (m: DisplayMatch) => {
+        const a = m.participant_a_id!
+        const b = m.participant_b_id!
+        return (zoneA.includes(a) && zoneB.includes(b)) || (zoneB.includes(a) && zoneA.includes(b))
+      }
+
+      for (let finalIdx = 0; finalIdx < leftover.length; finalIdx++) {
+        const finalMatch = leftover[finalIdx]
+        const semis = leftover.filter((_, i) => i !== finalIdx)
+        if (!semis.every(isCrossZone)) continue
+        const semiWinnerIds = new Set(semis.map((s) => s.winner_id))
+        const finalParticipantIds = new Set([finalMatch.participant_a_id, finalMatch.participant_b_id])
+        if (semiWinnerIds.size !== 2 || finalParticipantIds.size !== 2) continue
+        if (![...semiWinnerIds].every((w) => w && finalParticipantIds.has(w))) continue
+
+        const zoneAPairKeys = new Set(zoneAPairs.map(([a, b]) => pairKey(a, b)))
+        const shapeKey =
+          [...zoneA].sort().join(",") + "|" + pairKey(finalMatch.participant_a_id!, finalMatch.participant_b_id!)
+        const solution: Solution = {
+          zoneA,
+          zoneAMatches: chosenZoneMatches.filter((m) => zoneAPairKeys.has(pairKey(m.participant_a_id!, m.participant_b_id!))),
+          zoneBMatches: chosenZoneMatches.filter((m) => !zoneAPairKeys.has(pairKey(m.participant_a_id!, m.participant_b_id!))),
+          semis,
+          final: finalMatch,
+        }
+        if (!solutionsByShape.has(shapeKey)) solutionsByShape.set(shapeKey, [])
+        solutionsByShape.get(shapeKey)!.push(solution)
+      }
+    }
+  }
+
+  if (solutionsByShape.size !== 1) return null // distintas particiones/campeón posibles: ambiguo de verdad, no arriesgar
+
+  const candidates = [...solutionsByShape.values()][0]
+  // Puede haber 2 candidatas cuando el par de la final jugó 2 veces (zona +
+  // revancha en la final, con el mismo ganador las 2 veces — no cambia quién
+  // gana la zona ni quién es campeón). Desempate determinístico: la que
+  // aparece más tarde en el orden de los partidos queda como "Final".
+  const solution = candidates.reduce((latest, cur) =>
+    matches.indexOf(cur.final) > matches.indexOf(latest.final) ? cur : latest,
+  )
+  return [
+    { label: "Zona A", matches: solution.zoneAMatches },
+    { label: "Zona B", matches: solution.zoneBMatches },
+    { label: "Semifinales", matches: solution.semis },
+    { label: "Final", matches: [solution.final] },
+  ]
+}
+
 function classifyGroupsThenKnockout(matches: DisplayMatch[]): BracketSection[] {
+  const graphReconstruction = reconstructTwoZonesFromGraph(matches)
+  if (graphReconstruction) return graphReconstruction
+
   const roundsDesc = [...new Set(matches.map((m) => m.round_number))].sort((a, b) => b - a)
   const finalRound = roundsDesc.find((r) => roundOf(matches, r).length === 1)
   const semisRound = roundsDesc.find((r) => r !== finalRound && roundOf(matches, r).length === 2)

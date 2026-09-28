@@ -116,6 +116,51 @@ describe("classifyMainBracketSections", () => {
     expect(sections.find((s) => s.label === "Final")!.matches).toHaveLength(1)
   })
 
+  it("N=6 (groups_then_knockout) importado de Challonge: sin round_number ni zone confiables, reconstruye por grafo — incluye el caso real de una revancha zona/final", () => {
+    // Caso real (Monte Carlo, Caballeros +50, 2026-04, anonimizado P1..P6):
+    // round_number crudo de Challonge no separa zona/semis/final (4/3/2
+    // partidos por ronda, ninguna ronda con exactamente 1 partido) y el par
+    // P1/P5 se cruza en zona Y en la final (P5 le ganó las 2 veces).
+    // Zona A real: P1, P2, P5 · Zona B real: P3, P4, P6.
+    const matches: DisplayMatch[] = [
+      m("1", 1, "P1", "P2", "P1"), // zona A: P1 vs P2
+      m("2", 1, "P3", "P4", "P3"), // zona B: P3 vs P4
+      m("3", 1, "P5", "P6", "P5"), // semi cruzada: 1°A(P5) vs 2°B(P6)
+      m("4", 1, "P3", "P1", "P1"), // semi cruzada: 1°B(P3) vs 2°A(P1)
+      m("5", 2, "P5", "P1", "P5"), // zona A: P5 vs P1 (se repite en la final)
+      m("6", 2, "P6", "P3", "P3"), // zona B: P6 vs P3
+      m("7", 2, "P5", "P1", "P5"), // FINAL: revancha P5 vs P1
+      m("8", 3, "P2", "P5", "P5"), // zona A: P2 vs P5
+      m("9", 3, "P4", "P6", "P6"), // zona B: P4 vs P6
+    ]
+    const sections = classifyMainBracketSections(matches)
+    const byLabel = Object.fromEntries(sections.map((s) => [s.label, s.matches]))
+    expect(Object.keys(byLabel).sort()).toEqual(["Final", "Semifinales", "Zona A", "Zona B"].sort())
+    expect(byLabel["Zona A"]).toHaveLength(3)
+    expect(byLabel["Zona B"]).toHaveLength(3)
+    expect(byLabel["Semifinales"]).toHaveLength(2)
+    expect(byLabel["Final"]).toHaveLength(1)
+    // La final queda como la ocurrencia más tardía del par P5/P1 (partido 7).
+    expect(byLabel["Final"][0].id).toBe("7")
+    expect(byLabel["Final"][0].winner_id).toBe("P5")
+  })
+
+  it("N=6 ambiguo (no debería pasar con datos reales, pero por las dudas): si hay más de una reconstrucción posible, no arriesga y cae al fallback por round_number", () => {
+    // Datos degenerados sin ninguna estructura de zona reconocible.
+    const matches: DisplayMatch[] = [
+      m("1", 1, "P1", "P2", "P1"),
+      m("2", 1, "P3", "P4", "P3"),
+      m("3", 1, "P5", "P6", "P5"),
+      m("4", 2, "P1", "P3", "P1"),
+      m("5", 2, "P5", "P2", "P5"),
+      m("6", 2, "P4", "P6", "P4"),
+    ]
+    // Ni siquiera arma 9 partidos / 6 zone + 2 semis + 1 final — no debería
+    // reventar, solo no encontrar una reconstrucción válida.
+    const sections = classifyMainBracketSections(matches)
+    expect(sections.length).toBeGreaterThan(0)
+  })
+
   it("N=8+ (single_elimination): mantiene las etiquetas clásicas de eliminación directa", () => {
     const matches: DisplayMatch[] = [
       m("1", 1, "P1", "P2", "P1"),
