@@ -21,7 +21,6 @@
 
 import { selectDrawRule } from "./generateBracket"
 import { CIRCUITO_FORMAT_SPEC } from "./formatSpec"
-import type { DrawFormatKind } from "./types"
 
 export interface DisplayMatch {
   id: string
@@ -320,9 +319,16 @@ export function classifyMainBracketSections(matches: DisplayMatch[]): BracketSec
   if (matches.length === 0) return []
   const n = realParticipantIds(matches).size
   const rule = selectDrawRule(n, CIRCUITO_FORMAT_SPEC)
-  const format: DrawFormatKind = rule?.format ?? "single_elimination"
+  if (!rule) {
+    // n por debajo del mínimo de cualquier formato (ej. una categoría recién
+    // empezando, con solo 1-2 partidos jugados de una zona más grande —
+    // todavía no se ve la cantidad real de inscriptos). Antes esto caía por
+    // defecto a "single_elimination", que con pocos partidos etiqueta
+    // cualquier cosa como "Final" — mejor no arriesgar ninguna etiqueta.
+    return [{ label: "Fase de grupos", matches }]
+  }
 
-  switch (format) {
+  switch (rule.format) {
     case "single_elimination":
       return eliminationSections(matches)
     case "round_robin_pure":

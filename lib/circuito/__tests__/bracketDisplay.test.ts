@@ -178,6 +178,17 @@ describe("classifyMainBracketSections", () => {
   it("cuadro vacío devuelve sin secciones", () => {
     expect(classifyMainBracketSections([])).toEqual([])
   })
+
+  it("con muy pocos partidos (menos del mínimo de cualquier formato) no inventa una 'Final'", () => {
+    // Categoría recién empezando: solo se jugó 1 partido de una zona más
+    // grande (los otros inscriptos todavía no tienen partidos cargados).
+    // Antes esto caía por defecto a single_elimination y el único partido
+    // quedaba etiquetado "Final" — ver categoryStatus.test.ts, caso real
+    // que reventó con este bug.
+    const matches: DisplayMatch[] = [m("1", 1, "P1", "P2", "P1")]
+    const sections = classifyMainBracketSections(matches)
+    expect(sections.map((s) => s.label)).not.toContain("Final")
+  })
 })
 
 describe("eliminationSections (usado también por RepechajeView)", () => {

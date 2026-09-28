@@ -90,6 +90,15 @@ describe("categoryStatus", () => {
       matches.push(m({ round_number: 2, participant_a_id: "p1", participant_b_id: "p2", winner_id: "p1", score: "6-0 6-0" }))
       expect(categoryStatus(4, matches, names)).toEqual({ kind: "finished", champion: "Jugador 1" })
     })
+
+    it("terminado, importado de Challonge: round_number no separa zona/final (bug real: quedaba trabado en 'X de 6 partidos')", () => {
+      // Mismos 6 partidos de zona + la final (revancha p1/p2), pero con el
+      // round_number crudo de Challonge — todo en round 1, sin el "2" que
+      // el motor propio usa para marcar la final.
+      const matches = zonePairs.map(([a, b]) => m({ round_number: 1, participant_a_id: a, participant_b_id: b, winner_id: a, score: "6-0 6-0" }))
+      matches.push(m({ round_number: 1, participant_a_id: "p1", participant_b_id: "p2", winner_id: "p1", score: "6-0 6-0" }))
+      expect(categoryStatus(4, matches, names)).toEqual({ kind: "finished", champion: "Jugador 1" })
+    })
   })
 
   describe("N=6-7 (groups_then_knockout)", () => {
@@ -131,6 +140,25 @@ describe("categoryStatus", () => {
         m({ round_number: 3, participant_a_id: "p1", participant_b_id: "p1", winner_id: "p1", score: "6-0 6-0" }),
       ]
       expect(categoryStatus(6, matches, names)).toEqual({ kind: "finished", champion: "Jugador 1" })
+    })
+
+    it("terminado, importado de Challonge: sin columna zone y round_number crudo (bug real: quedaba trabado en 'Zonas' — caso Monte Carlo Caballeros +50)", () => {
+      const withP6 = { ...names, p6: { name: "Jugador 6", seed: 6 } }
+      // Mismos datos reales de bracketDisplay.test.ts (zona A: p1,p2,p5 ·
+      // zona B: p3,p4,p6), sin `zone` cargado y con el round_number crudo
+      // de Challonge (no separa zona/semis/final).
+      const matches: CategoryStatusMatch[] = [
+        m({ round_number: 1, participant_a_id: "p1", participant_b_id: "p2", winner_id: "p1", score: "6-4 6-4" }),
+        m({ round_number: 1, participant_a_id: "p3", participant_b_id: "p4", winner_id: "p3", score: "6-4 6-4" }),
+        m({ round_number: 1, participant_a_id: "p5", participant_b_id: "p6", winner_id: "p5", score: "6-4 6-4" }),
+        m({ round_number: 1, participant_a_id: "p3", participant_b_id: "p1", winner_id: "p1", score: "6-4 6-4" }),
+        m({ round_number: 2, participant_a_id: "p5", participant_b_id: "p1", winner_id: "p5", score: "6-4 6-4" }),
+        m({ round_number: 2, participant_a_id: "p6", participant_b_id: "p3", winner_id: "p3", score: "6-4 6-4" }),
+        m({ round_number: 2, participant_a_id: "p5", participant_b_id: "p1", winner_id: "p5", score: "6-4 6-4" }), // final: revancha
+        m({ round_number: 3, participant_a_id: "p2", participant_b_id: "p5", winner_id: "p5", score: "6-4 6-4" }),
+        m({ round_number: 3, participant_a_id: "p4", participant_b_id: "p6", winner_id: "p6", score: "6-4 6-4" }),
+      ]
+      expect(categoryStatus(6, matches, withP6)).toEqual({ kind: "finished", champion: "Jugador 5" })
     })
   })
 
