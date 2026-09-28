@@ -18,7 +18,7 @@ export function TeamSchedule({ team, series }: TeamScheduleProps) {
     <div className="space-y-6">
       {played.length > 0 && (
         <div>
-          <h3 className="font-semibold text-foreground mb-3">
+          <h3 className="mb-3 font-heading text-2xl font-bold text-foreground">
             Fechas jugadas ({played.length})
           </h3>
           <div className="space-y-2">
@@ -31,7 +31,7 @@ export function TeamSchedule({ team, series }: TeamScheduleProps) {
 
       {upcoming.length > 0 && (
         <div>
-          <h3 className="font-semibold text-foreground mb-3">
+          <h3 className="mb-3 font-heading text-2xl font-bold text-foreground">
             Fixture pendiente ({upcoming.length})
           </h3>
           <div className="space-y-2">
@@ -41,7 +41,7 @@ export function TeamSchedule({ team, series }: TeamScheduleProps) {
               return (
                 <div
                   key={s.id}
-                  className="bg-card border border-border rounded-lg px-4 py-3"
+                  className="min-h-16 rounded-md border border-border bg-card px-4 py-3"
                 >
                   <p className="text-xs text-muted-foreground mb-1">
                     {s.round?.name ?? ""}

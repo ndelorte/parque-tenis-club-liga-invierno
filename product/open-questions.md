@@ -105,6 +105,11 @@ general.
 
 ## Resueltas — 2026-09-27
 
+### ~~OQ-LI-01~~: ¿Los sponsors de Liga son por edición/torneo o globales del club?
+
+**Resuelto**: Son **por edición**. Se cargan desde `/panel-liga` para un torneo
+concreto y el carrusel de la edición activa muestra solo sus sponsors.
+
 ### ~~OQ-39~~: Circuito — ubicación de los cabezas de serie en el cuadro (8+)
 
 **Respuesta** (2026-09-27): como en el tenis profesional — el 1 arriba de todo, el 2 abajo de

@@ -6,7 +6,7 @@ const RULES = [
   "Cada serie enfrenta a dos equipos y se juega en 3 canchas.",
   "Gana la serie el equipo que se impone en 2 de las 3 canchas.",
   "Se otorgan 2 puntos por serie ganada y 1 punto por serie perdida.",
-  "En caso de igualdad de puntos, se define por diferencia de canchas.",
+  "Los desempates siguen puntos, diferencia de canchas, sets, games y enfrentamiento directo.",
 ]
 
 export function LigaReglamento() {
@@ -42,6 +42,7 @@ export function LigaReglamento() {
           >
             <FileText className="size-5" />
             Reglamento completo
+            <span className="sr-only">(abre en una pestaña nueva)</span>
           </a>
         </Button>
       </div>

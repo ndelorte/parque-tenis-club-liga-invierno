@@ -251,6 +251,25 @@ CF2: 4° vs 5°
 2° — BYE — Semifinal
 ```
 
+### Formato del cuadro con 5 equipos (Mixto B)
+
+Con 5 equipos reales:
+
+- **1°** → bye directo a semifinal
+- **2°** → bye directo a semifinal
+- **3°** → bye directo a semifinal
+- **CF**: 4° vs 5° → ganador juega semifinal contra 3°
+
+```
+1° — BYE ────┐
+             Semifinal 1
+2° — BYE ────┘
+
+CF: 4° vs 5°
+         ↓
+3° — BYE ── Semifinal 2
+```
+
 ### Reglas de playoffs
 
 - Los partidos de cuartos, semifinal y final siguen la misma lógica que la fase regular: **3 canchas, gana 2 de 3**.

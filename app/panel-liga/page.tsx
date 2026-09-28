@@ -9,6 +9,7 @@ import {
   CalendarClock,
   Swords,
   ImagePlus,
+  Megaphone,
   LogOut,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -20,6 +21,7 @@ import { FixtureManager } from "@/components/admin/fixture-manager"
 import { PlayoffManager } from "@/components/admin/playoff-manager"
 import { CloseTournamentButton } from "@/components/admin/close-tournament-button"
 import { PhotoManager } from "@/components/admin/photo-manager"
+import { SponsorManager } from "@/components/admin/sponsor-manager"
 import {
   getAdminCategories,
   getAdminActiveTournament,
@@ -126,6 +128,10 @@ export default async function PanelPage() {
               <ImagePlus className="size-4" />
               Fotos
             </TabsTrigger>
+            <TabsTrigger value="sponsors" className="h-9 gap-1.5 px-3">
+              <Megaphone className="size-4" />
+              Sponsors
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="resultados" className="mt-5">
@@ -142,6 +148,9 @@ export default async function PanelPage() {
           </TabsContent>
           <TabsContent value="fotos" className="mt-5">
             <PhotoManager tournaments={photoTournaments} />
+          </TabsContent>
+          <TabsContent value="sponsors" className="mt-5">
+            <SponsorManager tournaments={photoTournaments} />
           </TabsContent>
         </Tabs>
       </main>

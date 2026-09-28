@@ -1,0 +1,50 @@
+.viewport:focus-within .track,
+.viewport:hover .track,
+.track[data-paused="true"] {
+  animation-play-state: paused;
+}
+
+.viewport {
+  overflow: hidden;
+}
+
+.track {
+  display: flex;
+  width: max-content;
+  animation: sponsor-scroll 24s linear infinite;
+}
+
+.group {
+  display: flex;
+  flex: none;
+}
+
+.copy {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 1rem;
+  padding-inline-start: 1rem;
+}
+
+@keyframes sponsor-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motionControl,
+  .duplicate,
+  .extraCopy {
+    display: none;
+  }
+
+  .viewport {
+    overflow-x: auto;
+  }
+
+  .track {
+    animation: none;
+  }
+}

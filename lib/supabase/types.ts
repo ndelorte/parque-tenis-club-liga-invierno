@@ -425,6 +425,31 @@ export type Database = {
           sort_order?: number
         }
       }
+      tournament_sponsors: {
+        Row: {
+          id: string
+          tournament_id: string
+          name: string
+          storage_path: string
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          tournament_id: string
+          name: string
+          storage_path: string
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          tournament_id?: string
+          name?: string
+          storage_path?: string
+          sort_order?: number
+        }
+      }
       interparque_players: {
         Row: {
           id: string
