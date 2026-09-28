@@ -19,9 +19,7 @@ export function seasonFromSlug(slug: string): Season {
 }
 
 export function getSeasonTheme(tournament: Pick<Tournament, "slug" | "name">): SeasonTheme {
-  const fromSlug = seasonFromSlug(tournament.slug)
-  const name = tournament.name.toLowerCase()
-  const season = fromSlug !== "neutro" ? fromSlug : /\binvierno\b/.test(name) ? "invierno" : /\bverano\b/.test(name) ? "verano" : "neutro"
+  const season = seasonFromSlug(tournament.slug)
 
   if (season === "invierno") return {
     season, identity: "liga-invierno", label: "Temporada de invierno", title: "Liga de Invierno",

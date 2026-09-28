@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Trophy } from "lucide-react"
+import { formatDate } from "@/lib/utils"
 import type { ProvisionalBracket, QuarterFinalMatchup, PlayoffSlot } from "@/lib/playoffs/types"
 
 type ScheduledMatch = {
@@ -22,9 +23,7 @@ interface Props {
 }
 
 function dateLabel(date?: string | null, time?: string | null) {
-  if (!date) return "Fecha a confirmar"
-  const formatted = new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`))
-  return time ? `${formatted} · ${time.slice(0, 5)} hs` : formatted
+  return formatDate(date ?? "", { weekday: false, month: "short", year: true, utc: true, time, emptyLabel: "Fecha a confirmar" })
 }
 
 function MatchCard({ label, home, away, date, time, status, winnerId, homeId, awayId, note }: {

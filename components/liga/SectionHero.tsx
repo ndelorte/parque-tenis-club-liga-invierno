@@ -21,7 +21,7 @@ export function SectionHero({ tournament }: { tournament: Tournament }) {
           <h1>{formatTournamentTitle(tournament)}</h1>
           <div className="liga-hero-meta"><span className={`liga-status liga-status-${tournament.status}`}>{STATUS_LABEL[tournament.status]}</span>{tournament.description && <p>{tournament.description}</p>}</div>
         </div>
-        <SeasonAtmosphere decoration={theme.decoration} />
+        <SeasonAtmosphere decoration={theme.decoration} animated={tournament.status !== "finished"} />
       </div>
     </header>
   )

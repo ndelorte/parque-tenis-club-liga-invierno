@@ -1,11 +1,20 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowLeft, ArrowUpRight, FileText } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
+import { ReglamentoNav } from "@/components/liga/ReglamentoNav"
 
 export const metadata: Metadata = {
   title: "Reglamento | Liga de Invierno y Verano | Parque Tenis Club",
   description: "Formato, puntos, desempates, WO y fase final de la Liga.",
 }
+
+// Números grandes de la sección "Puntos": valores exactos de la tabla de
+// puntos en product/reglas-liga-invierno.md (§Sistema de puntos).
+const POINTS_KEYNUMS = [
+  { value: "2", label: "Serie ganada" },
+  { value: "1", label: "Serie perdida" },
+  { value: "0", label: "WO general (ausente)" },
+]
 
 const sections = [
   { id: "formato", title: "Formato del torneo", items: [
@@ -18,13 +27,12 @@ const sections = [
     "Gana la serie el equipo que gana dos de las tres canchas.",
     "El tercer set, jugado como supertiebreak, se registra 7-6.",
   ] },
-  { id: "puntos", title: "Sistema de puntos", items: [
-    "Serie ganada: 2 puntos. Serie perdida: 1 punto. WO general: 0 puntos para el equipo ausente.",
+  { id: "puntos", title: "Sistema de puntos", keynums: POINTS_KEYNUMS, items: [
     "Los puntos se asignan por serie, no por cancha.",
   ] },
   { id: "desempates", title: "Desempates", items: [
     "Orden: puntos, diferencia de canchas, diferencia de sets y diferencia de games.",
-    "Si persiste el empate, se arma una mini-tabla entre los equipos empatados y se comparan sus diferencias de canchas, sets y games. Si continúa la igualdad, se define por sorteo.",
+    "Si persiste el empate, se arma una mini-tabla solo con los equipos empatados, considerando únicamente los resultados entre ellos, y se compara diferencia de canchas, de sets y de games dentro de esa mini-tabla. Si continúa la igualdad, se define por sorteo.",
   ] },
   { id: "wo", title: "Walkover", items: [
     "WO general: si un equipo no se presenta, el rival recibe 2 puntos y las tres canchas 6-0 6-0. El ausente recibe 0 puntos.",
@@ -33,7 +41,11 @@ const sections = [
   { id: "fase-final", title: "Fase final", items: [
     "Con seis equipos, 1.º y 2.º pasan directo a semifinales. En cuartos juegan 3.º contra 6.º y 4.º contra 5.º.",
     "En Mixto B, con cinco equipos, 1.º, 2.º y 3.º pasan directo. En cuartos juegan 4.º contra 5.º; las semifinales son 1.º contra 2.º y 3.º contra el ganador de cuartos.",
-    "Cada cruce se disputa en tres canchas. Los resultados de playoffs no modifican la tabla de fase regular.",
+    "Cada cruce se disputa en tres canchas. Los perdedores de semifinal juegan por el 3.º y 4.º puesto, con el mismo formato.",
+    "Los resultados de playoffs no modifican la tabla de fase regular.",
+  ] },
+  { id: "reprogramaciones", title: "Reprogramaciones", items: [
+    "Si una serie se reprograma (por ejemplo, por lluvia), la vista pública muestra la fecha actualizada con la etiqueta «Reprogramado por lluvia».",
   ] },
 ]
 
@@ -48,19 +60,25 @@ export default function ReglamentoPage() {
       </header>
       <div className="mt-8 grid gap-10 lg:grid-cols-[15rem_minmax(0,1fr)]">
         <nav aria-label="Índice del reglamento" className="self-start lg:sticky lg:top-28">
-          <p className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground">En esta página</p>
-          <ol className="flex gap-1 overflow-x-auto pb-2 lg:block lg:space-y-1">
-            {sections.map((section, index) => <li key={section.id}><a href={`#${section.id}`} className="flex min-h-11 shrink-0 items-center gap-3 whitespace-nowrap rounded-md px-3 text-sm font-medium text-foreground hover:bg-secondary focus-visible:outline-2 focus-visible:outline-primary"><span className="tabular-nums text-primary">{String(index + 1).padStart(2, "0")}</span>{section.title}</a></li>)}
-          </ol>
+          <ReglamentoNav sections={sections.map(({ id, title }) => ({ id, title }))} />
         </nav>
         <div className="min-w-0">
           {sections.map((section, index) => (
             <section id={section.id} key={section.id} className="scroll-mt-28 border-b border-border py-8 first:pt-0">
               <div className="flex items-baseline gap-4"><span className="font-heading text-2xl font-bold tabular-nums text-primary">{String(index + 1).padStart(2, "0")}</span><h2 className="font-heading text-2xl font-bold text-balance text-foreground sm:text-3xl">{section.title}</h2></div>
+              {"keynums" in section && section.keynums && (
+                <div className="mt-5 flex flex-wrap gap-3">
+                  {section.keynums.map((kn) => (
+                    <div key={kn.label} className="min-w-[7.5rem] rounded-md bg-board px-4 py-3 text-board-foreground">
+                      <p className="font-heading text-4xl font-extrabold leading-none tabular-nums">{kn.value}</p>
+                      <p className="mt-1 text-sm text-board-foreground/80">{kn.label}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
               <ul className="mt-5 space-y-3 pl-10">{section.items.map(item => <li key={item} className="relative leading-relaxed text-foreground before:absolute before:-left-5 before:top-[0.65em] before:size-1.5 before:rounded-full before:bg-primary">{item}</li>)}</ul>
             </section>
           ))}
-          <a href="/REGLAMENTO%20LIGA%20DE%20VERANO_INVIERNO.docx.pdf" target="_blank" rel="noopener noreferrer" className="mt-8 inline-flex min-h-12 items-center gap-3 rounded-md bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"><FileText aria-hidden="true" className="size-5" /> Reglamento completo en PDF <ArrowUpRight aria-hidden="true" className="size-4" /><span className="sr-only">(abre en una pestaña nueva)</span></a>
         </div>
       </div>
     </main>

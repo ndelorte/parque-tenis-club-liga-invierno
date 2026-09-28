@@ -39,7 +39,11 @@ export async function getTournamentSponsors(tournamentId: string): Promise<Tourn
     .order("sort_order")
     .order("created_at")
 
-  if (error || !data) return []
+  if (error) {
+    console.error("[tournament-sponsors] getTournamentSponsors:", JSON.stringify(error))
+    return []
+  }
+  if (!data) return []
   return data.map(sponsorFromRow)
 }
 
@@ -173,22 +177,24 @@ export async function reorderTournamentSponsors(
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("tournament_sponsors")
-    .select("id")
+    .select("id, name, storage_path")
     .eq("tournament_id", tournamentId)
   if (error) return { success: false, error: error.message }
-  const actualIds = (data ?? []).map((row) => row.id)
-  if (actualIds.length !== orderedIds.length ||
+  const actualRows = new Map((data ?? []).map((row) => [row.id, row]))
+  if (actualRows.size !== orderedIds.length ||
       new Set(orderedIds).size !== orderedIds.length ||
-      orderedIds.some((id) => !actualIds.includes(id))) {
+      orderedIds.some((id) => !actualRows.has(id))) {
     return { success: false, error: "La lista de sponsors cambió; actualizá la página" }
   }
-  for (const [sortOrder, id] of orderedIds.entries()) {
-    const { error: updateError } = await supabase
-      .from("tournament_sponsors")
-      .update({ sort_order: sortOrder })
-      .eq("id", id)
-      .eq("tournament_id", tournamentId)
-    if (updateError) return { success: false, error: updateError.message }
-  }
+  // Upsert de una sola llamada: todas las filas cambian de sort_order en la
+  // misma operación, así una falla no deja el orden a mitad de camino como
+  // pasaba con el loop de updates secuenciales.
+  const { error: upsertError } = await supabase.from("tournament_sponsors").upsert(
+    orderedIds.map((id, sortOrder) => {
+      const row = actualRows.get(id)!
+      return { id, tournament_id: tournamentId, name: row.name, storage_path: row.storage_path, sort_order: sortOrder }
+    }),
+  )
+  if (upsertError) return { success: false, error: upsertError.message }
   return { success: true }
 }

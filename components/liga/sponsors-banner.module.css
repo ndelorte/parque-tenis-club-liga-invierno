@@ -34,7 +34,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .motionControl,
   .duplicate,
   .extraCopy {
     display: none;

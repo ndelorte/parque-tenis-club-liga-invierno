@@ -1,8 +1,4 @@
-"use client"
-
-import { useState } from "react"
 import Image from "next/image"
-import { Pause, Play } from "lucide-react"
 import styles from "./sponsors-banner.module.css"
 
 export type SponsorBannerItem = {
@@ -16,8 +12,6 @@ type SponsorsBannerProps = {
 }
 
 export function SponsorsBanner({ sponsors }: SponsorsBannerProps) {
-  const [paused, setPaused] = useState(false)
-
   if (sponsors.length === 0) return null
 
   const hasMotion = sponsors.length > 1
@@ -36,16 +30,6 @@ export function SponsorsBanner({ sponsors }: SponsorsBannerProps) {
               Sponsors oficiales
             </h2>
           </div>
-          {hasMotion && (
-            <button
-              type="button"
-              className={`${styles.motionControl} inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-surface px-4 text-sm font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring`}
-              onClick={() => setPaused((current) => !current)}
-            >
-              {paused ? <Play aria-hidden="true" size={16} /> : <Pause aria-hidden="true" size={16} />}
-              {paused ? "Reanudar logos" : "Pausar logos"}
-            </button>
-          )}
         </div>
 
         <div
@@ -54,7 +38,7 @@ export function SponsorsBanner({ sponsors }: SponsorsBannerProps) {
           role="region"
           aria-label="Logos de sponsors"
         >
-          <div className={styles.track} data-paused={paused || !hasMotion}>
+          <div className={styles.track} data-paused={!hasMotion}>
             <div className={styles.group}>
               {Array.from({ length: copiesPerGroup }, (_, copyIndex) => (
                 <div

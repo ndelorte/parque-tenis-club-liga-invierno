@@ -2,27 +2,31 @@ import Link from "next/link"
 import { ArrowLeft, Crown } from "lucide-react"
 import type { TeamDetail } from "@/lib/team-detail-types"
 import { categoryHref } from "@/lib/tournament/seasonRoutes"
+import { formatDate } from "@/lib/utils"
 import { seasonFromSlug } from "./season-theme"
+import { PlayedDateCard } from "./PlayedDateCard"
 
 function dateLabel(value: string) {
-  if (!value) return "Fecha a confirmar"
-  return new Intl.DateTimeFormat("es-AR", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${value}T12:00:00Z`))
+  return formatDate(value, { month: "short", utc: true, emptyLabel: "Fecha a confirmar" })
 }
 
 export function TeamDetailView({ team }: { team: TeamDetail }) {
   const season = seasonFromSlug(team.seasonSlug)
+  const winRate = team.stats.played > 0 ? Math.round((team.stats.won / team.stats.played) * 100) : 0
   const stats = [
     ["Posición", team.stats.position ? `${team.stats.position}° / ${team.stats.totalTeams}` : "—"],
     ["Puntos", String(team.stats.points)],
     ["Jugados", String(team.stats.played)],
     ["Ganados", String(team.stats.won)],
+    ["Perdidos", String(team.stats.lost)],
+    ["Efectividad", `${winRate}%`],
     ["Canchas", `${team.stats.courtsFor}–${team.stats.courtsAgainst}`],
   ]
   return <main data-identity={season === "neutro" ? undefined : `liga-${season}`} className="min-h-screen bg-background">
-    <header className="border-b border-border bg-secondary/35">
+    <header className="liga-team-header" data-identity={season === "neutro" ? undefined : `liga-${season}`}>
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <Link href={categoryHref(team.seasonSlug, team.categorySlug)} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary"><ArrowLeft aria-hidden="true" className="size-4" /> {team.categoryLabel}</Link>
-        <p className="mt-5 text-xs font-bold uppercase tracking-[0.2em] text-primary">Temporada de {season === "neutro" ? "Liga" : season} · Equipo</p>
+        <p className="liga-team-kicker mt-5 text-xs font-bold uppercase tracking-[0.2em]">Temporada de {season === "neutro" ? "Liga" : season} · Equipo</p>
         <h1 className="mt-1 font-heading text-4xl font-extrabold text-balance text-foreground sm:text-6xl">{team.name}</h1>
         <p className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground"><Crown aria-hidden="true" className="size-4 text-primary" /> Capitán: <strong className="text-foreground">{team.captain}</strong></p>
       </div>
@@ -35,16 +39,7 @@ export function TeamDetailView({ team }: { team: TeamDetail }) {
         <div className="space-y-10">
           <section><h2 className="mb-4 border-b border-border pb-3 font-heading text-2xl font-bold">Fechas jugadas</h2>
             {team.played.length === 0 ? <p className="text-sm text-muted-foreground">Todavía no hay fechas jugadas.</p> : <div className="space-y-2">
-              {team.played.map((date, index) => <details key={`${date.round}-${index}`} className="group rounded-md border border-border bg-card">
-                <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 marker:hidden focus-visible:outline-2 focus-visible:outline-primary">
-                  <span><span className="block text-xs text-muted-foreground">{date.round} · {dateLabel(date.date)}</span><span className="font-heading font-bold text-foreground">vs {date.opponent}</span></span>
-                  <span className={date.result === "win" ? "shrink-0 font-bold tabular-nums text-primary" : "shrink-0 font-bold tabular-nums text-loss"}>{date.courtsWon}–{date.courtsLost} <span className="text-xs">{date.result === "win" ? "Ganó" : "Perdió"}</span></span>
-                </summary>
-                <div className="space-y-2 border-t border-border p-3">
-                  {date.courts.length === 0 && <p className="text-sm text-muted-foreground">Sin detalle de canchas disponible.</p>}
-                  {date.courts.map(court => <div key={court.court} className="rounded-md bg-secondary/40 p-3 text-sm"><p className="mb-2 text-xs font-bold uppercase tracking-wide text-primary">Cancha {court.court}{court.wo ? " · WO" : ""}</p><div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2"><span className={court.winner === "home" ? "font-bold" : "text-muted-foreground"}>{court.homePlayers.join(" / ")}</span><span className="font-bold tabular-nums">{court.score}</span><span className={court.winner === "away" ? "text-right font-bold" : "text-right text-muted-foreground"}>{court.awayPlayers.join(" / ")}</span></div></div>)}
-                </div>
-              </details>)}
+              {team.played.map((date, index) => <PlayedDateCard key={`${date.round}-${index}`} date={date} label={dateLabel(date.date)} />)}
             </div>}
           </section>
           <section><h2 className="mb-4 border-b border-border pb-3 font-heading text-2xl font-bold">Próximas fechas</h2>

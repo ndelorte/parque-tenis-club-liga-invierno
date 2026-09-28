@@ -11,9 +11,17 @@ const STATUS_LABEL = {
   finished: "Finalizada",
 } satisfies Record<Tournament["status"], string>
 
-export function SeasonCard({ tournament }: { tournament: Tournament }) {
+export function SeasonCard({
+  tournament,
+  championsSummary,
+}: {
+  tournament: Tournament
+  championsSummary?: string | null
+}) {
   const theme = getSeasonTheme(tournament)
   const featured = tournament.status !== "finished"
+  const goLabel =
+    tournament.status === "active" ? "Ver tabla y fixture" : tournament.status === "upcoming" ? "Ver edición" : "Ver podio"
 
   return (
     <li className={`liga-timeline-item${featured ? " liga-timeline-item-featured" : ""}`} data-identity={theme.identity}>
@@ -24,7 +32,8 @@ export function SeasonCard({ tournament }: { tournament: Tournament }) {
           <span className={`liga-status liga-status-${tournament.status}`}>{STATUS_LABEL[tournament.status]}</span>
         </span>
         {tournament.description && <span className="liga-season-description">{tournament.description}</span>}
-        {featured && <span className="liga-season-go">{tournament.status === "active" ? "Ver tabla y fixture" : "Ver edición"}<ArrowUpRight aria-hidden="true" size={16} /></span>}
+        {!featured && championsSummary && <span className="liga-season-description">{championsSummary}</span>}
+        <span className="liga-season-go">{goLabel}<ArrowUpRight aria-hidden="true" size={16} /></span>
       </Link>
     </li>
   )

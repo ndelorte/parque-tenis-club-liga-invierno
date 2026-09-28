@@ -8,6 +8,7 @@ import { ClosedSeasonView } from "@/components/liga/ClosedSeasonView"
 import { ComingSoonView } from "@/components/liga/ComingSoonView"
 import { getTournamentBySlug } from "@/lib/data/tournaments"
 import { getTournamentSponsors } from "@/lib/data/tournament-sponsors"
+import { getPhotos } from "@/lib/data/tournament-photos"
 import { getCategoriesForTournament } from "@/lib/data/categories"
 import { getTeamsByCategory } from "@/lib/data/teams"
 import { getStandingsSnapshot } from "@/lib/data/standings"
@@ -17,7 +18,6 @@ import { getSeasonTheme } from "@/components/liga/season-theme"
 import { buildBracketOrNull } from "@/lib/playoffs/generateProvisionalBracket"
 import { formatTournamentTitle } from "@/lib/tournament/formatTournamentTitle"
 import type { StandingsRow } from "@/lib/tournament/types"
-import "@/components/liga/season-views.css"
 
 export const dynamic = "force-dynamic"
 
@@ -58,22 +58,29 @@ export default async function SeasonPage({ params, searchParams }: Props) {
   const categories = await getCategoriesForTournament(tournament.id)
 
   if (tournament.status === "finished") {
-    const closedBundles = await Promise.all(
-      categories.map(async (category) => {
-        const podium = await getPodiumForCategory(category.id)
-        return {
-          category,
-          championName: podium.championName,
-          runnerUpName: podium.runnerUpName,
-          thirdPlaceName: podium.thirdPlaceName,
-        }
-      }),
-    )
+    const [closedBundles, generalPhotos] = await Promise.all([
+      Promise.all(
+        categories.map(async (category) => {
+          const [podium, photos] = await Promise.all([
+            getPodiumForCategory(category.id),
+            getPhotos(tournament.id, category.id),
+          ])
+          return {
+            category,
+            championName: podium.championName,
+            runnerUpName: podium.runnerUpName,
+            thirdPlaceName: podium.thirdPlaceName,
+            photos,
+          }
+        }),
+      ),
+      getPhotos(tournament.id, null),
+    ])
 
     return (
       <main className="min-h-dvh bg-background" data-identity={theme.identity}>
         <SectionHero tournament={tournament} />
-        <ClosedSeasonView bundles={closedBundles} />
+        <ClosedSeasonView tournament={tournament} bundles={closedBundles} generalPhotos={generalPhotos} />
         <WhatsappFab />
       </main>
     )

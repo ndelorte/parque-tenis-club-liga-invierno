@@ -18,6 +18,14 @@ export function SponsorManager({ tournaments }: { tournaments: AdminTournamentOp
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const fileRef = useRef<HTMLInputElement>(null)
+  // Siempre la edición seleccionada "ahora": lo consultamos al aplicar el
+  // resultado de una mutación disparada contra una edición que pudo haber
+  // cambiado mientras la mutación estaba en vuelo.
+  const currentTournamentIdRef = useRef(tournamentId)
+
+  useEffect(() => {
+    currentTournamentIdRef.current = tournamentId
+  }, [tournamentId])
 
   useEffect(() => {
     if (!tournamentId) return
@@ -28,8 +36,14 @@ export function SponsorManager({ tournaments }: { tournaments: AdminTournamentOp
     return () => { current = false }
   }, [tournamentId])
 
-  async function reload() {
-    setSponsors(await getSponsorsForAdmin(tournamentId))
+  // `forTournamentId` es la edición vigente en el momento en que se disparó
+  // la mutación (closure del handler que llama a reload). Si el admin ya
+  // cambió de edición en el dropdown cuando la mutación resuelve, se
+  // descarta el resultado en vez de pisar la pantalla con datos viejos.
+  async function reload(forTournamentId: string) {
+    const data = await getSponsorsForAdmin(forTournamentId)
+    if (currentTournamentIdRef.current !== forTournamentId) return
+    setSponsors(data)
   }
 
   function handleCreate() {
@@ -43,22 +57,24 @@ export function SponsorManager({ tournaments }: { tournaments: AdminTournamentOp
     data.set("name", name)
     data.set("file", file)
     setError(null)
+    const targetTournamentId = tournamentId
     startTransition(async () => {
       const result = await createSponsor(data)
       if (!result.success) return setError(result.error ?? "No se pudo agregar el sponsor")
       setName("")
       if (fileRef.current) fileRef.current.value = ""
-      await reload()
+      await reload(targetTournamentId)
     })
   }
 
   function handleRemove(id: string) {
     if (!window.confirm("¿Eliminar este sponsor de la edición?")) return
     setError(null)
+    const targetTournamentId = tournamentId
     startTransition(async () => {
-      const result = await removeSponsor(id, tournamentId)
+      const result = await removeSponsor(id, targetTournamentId)
       if (!result.success) return setError(result.error ?? "No se pudo eliminar el sponsor")
-      await reload()
+      await reload(targetTournamentId)
     })
   }
 
@@ -69,11 +85,12 @@ export function SponsorManager({ tournaments }: { tournaments: AdminTournamentOp
     ;[next[index], next[target]] = [next[target], next[index]]
     setSponsors(next)
     setError(null)
+    const targetTournamentId = tournamentId
     startTransition(async () => {
-      const result = await moveSponsors(tournamentId, next.map((sponsor) => sponsor.id))
+      const result = await moveSponsors(targetTournamentId, next.map((sponsor) => sponsor.id))
       if (!result.success) {
         setError(result.error ?? "No se pudo cambiar el orden")
-        await reload()
+        await reload(targetTournamentId)
       }
     })
   }
@@ -134,7 +151,7 @@ export function SponsorManager({ tournaments }: { tournaments: AdminTournamentOp
               last={index === sponsors.length - 1}
               onMove={(direction) => handleMove(index, direction)}
               onRemove={() => handleRemove(sponsor.id)}
-              onSaved={reload}
+              onSaved={() => reload(tournamentId)}
               onError={setError}
             />
           ))}

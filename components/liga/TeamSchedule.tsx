@@ -1,4 +1,5 @@
 import type { Series, Team } from "@/lib/tournament/types";
+import { formatDate } from "@/lib/utils";
 import { ResultCard } from "./ResultCard";
 
 interface TeamScheduleProps {
@@ -54,14 +55,7 @@ export function TeamSchedule({ team, series }: TeamScheduleProps) {
                   </p>
                   <p className="text-sm text-muted-foreground mt-0.5">
                     {isHome ? "Local" : "Visitante"} ·{" "}
-                    {s.scheduled_date
-                      ? new Date(`${s.scheduled_date}T00:00:00`).toLocaleDateString("es-AR", {
-                          weekday: "short",
-                          day: "numeric",
-                          month: "short",
-                        })
-                      : "Fecha a confirmar"}
-                    {s.scheduled_time && ` · ${s.scheduled_time}`}
+                    {formatDate(s.scheduled_date ?? "", { month: "short", utc: true, time: s.scheduled_time, emptyLabel: "Fecha a confirmar" })}
                   </p>
                 </div>
               );

@@ -1,4 +1,5 @@
 import type { Series } from "@/lib/tournament/types";
+import { formatDate } from "@/lib/utils";
 import { ResultCard } from "./ResultCard";
 
 interface FixtureListProps {
@@ -15,15 +16,8 @@ const statusLabel: Record<string, string> = {
   in_progress: "En curso",
 };
 
-function formatDate(dateStr?: string, timeStr?: string): string {
-  if (!dateStr) return "Fecha a confirmar";
-  const date = new Date(`${dateStr}T00:00:00`);
-  const d = date.toLocaleDateString("es-AR", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-  return timeStr ? `${d} · ${timeStr}` : d;
+function dateLabel(dateStr?: string, timeStr?: string): string {
+  return formatDate(dateStr ?? "", { month: "short", utc: true, time: timeStr, emptyLabel: "Fecha a confirmar" });
 }
 
 export function FixtureList({ series, title }: FixtureListProps) {
@@ -68,7 +62,7 @@ export function FixtureList({ series, title }: FixtureListProps) {
                 </div>
                 <div className="sm:text-right">
                   <p className="text-sm text-muted-foreground">
-                    {formatDate(s.scheduled_date, s.scheduled_time)}
+                    {dateLabel(s.scheduled_date, s.scheduled_time)}
                   </p>
                   <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                     {statusLabel[s.status] ?? s.status}
