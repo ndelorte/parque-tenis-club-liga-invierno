@@ -433,6 +433,23 @@ function GroupsThenKnockoutSection({
   championLabel: string
   championPoints: number
 }) {
+  // La columna `zone` (A/B) y el round_number con semántica "1=zona,
+  // 2+=cruce" solo los persiste el motor propio (torneos armados desde el
+  // panel). Los cuadros importados de Challonge no traen `zone` (ver
+  // bracketDisplay.ts) y su round numérico crudo tampoco respeta esa
+  // semántica — separar por round_number/zone ahí da 2 tablas vacías (0
+  // jugadores) en vez de romper con un error, que es peor: se ve "andando"
+  // pero sin ningún dato. Se detecta ese caso (ninguna fila con `zone`
+  // seteado) y se degrada a la misma reconstrucción por conteo de rondas +
+  // componentes conexas que ya usa el cuadro principal para este mismo
+  // problema (classifyMainBracketSections/classifyGroupsThenKnockout) —
+  // mismo dato, sin inventar una zona que no se puede confirmar.
+  const hasZoneColumn = matches.some((m) => m.zone)
+
+  if (!hasZoneColumn) {
+    return <FallbackSections matches={matches} names={names} />
+  }
+
   const zoneMatches = matches.filter((m) => m.round_number === 1)
   const zones = (["A", "B"] as const).map((zone) => {
     const inZone = zoneMatches.filter((m) => m.zone === zone)
