@@ -43,7 +43,7 @@ const COMPETITIONS: Competition[] = [
   },
   {
     title: "Circuito del Parque",
-    description: "Un torneo por categoría cada mes. Los puntos suman al ranking anual y los 8 mejores juegan la Final Master.",
+    description: "Un torneo por categoría cada mes. Los puntos suman al ranking anual y los 8 mejores juegan el Final Master.",
     href: "/circuito-del-parque",
     linkLabel: "Ver cuadros y ranking",
     court: (

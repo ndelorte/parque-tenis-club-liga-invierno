@@ -24,6 +24,55 @@ sin script de migración. No implementar un seed automático.
 
 **Estado**: sin acción pendiente en código — queda a cargo del club decidir qué sponsors van en
 qué edición activa y cargarlos a mano.
+### OQ-41: ¿Los puntos de la planilla histórica (enero-junio 2026) coinciden con lo que calcularía el código?
+
+**Contexto**: `scripts/import-circuito-ranking-sheet.ts` importó el ranking de enero a junio 2026
+directo desde la planilla de Google Sheets del club (puntos ya calculados a mano por el
+organizador). Aparte, `scripts/import-challonge.ts` trae para esos mismos meses el detalle
+partido por partido a `circuito_matches`. Desde el fix del 2026-09-28 (ver
+`reglas-circuito-del-parque.md` → "Import histórico 2026 (Sprint C7)"), el import de Challonge
+recalcula puntos por código (`lib/circuito/calculateRankingPoints.ts` + `pointsTable.ts`) para
+julio en adelante, pero **a propósito no lo hace para enero-junio** porque no se pudo confirmar
+que el cálculo por código reproduzca exactamente los números de la planilla (podría haber ajustes
+manuales del organizador, algún mes/categoría cargado con un criterio distinto, etc. — no hay
+acceso a los datos reales de Supabase para compararlo fila por fila).
+
+**Preguntar al organizador**: para enero-junio 2026, ¿los puntos de la planilla fueron siempre
+"puntos por instancia alcanzada" según la escala de la sección "Puntos y ranking" de este mismo
+documento, sin excepciones ni ajustes a mano? Si la respuesta es sí, se puede recalcular
+enero-junio por código igual que julio en adelante (quedaría todo el año en la misma fuente). Si
+hay algún mes/categoría con ajuste manual, hay que identificarlo antes de tocar esos datos.
+
+**Impacto**: mientras no haya respuesta, enero-junio sigue viniendo solo de la planilla y
+julio en adelante del cálculo por código — dos fuentes distintas conviviendo en la misma tabla
+`circuito_ranking_points`, sin manera de distinguirlas después de escritas (no hay columna de
+origen). No recalcular enero-junio "para probar" sin autorización explícita.
+
+---
+
+### OQ-40: Circuito — categorías con `draw_size` fuera de todo `drawRule` conocido (menos del mínimo, o dato cargado a mano/importado)
+
+**Contexto**: El dueño reportó que algunas categorías de meses de baja convocatoria (ej. +50 o
+dobles en "Monte Carlo") rompían la página en vez de no aparecer. La regla ya confirmada
+(`reglas-circuito-del-parque.md`, "Categorías 2026") es clara: con menos de 4 inscriptos la
+categoría **no se juega ese mes** — se corrigió el código para tratar esos casos como "categoría
+no disputada" (se excluye de la lista pública y su URL devuelve 404), sin inventar un formato
+alternativo.
+
+**Lo que queda sin confirmar**: no tuvimos acceso a los datos reales de Supabase para verificar
+si existe HOY alguna categoría con `draw_size` fuera de todos los `drawRules` (por ejemplo 2 o 3)
+que además tenga partidos reales cargados en `circuito_matches` — es decir, que sí se haya jugado
+en la práctica pese a no llegar al mínimo formal. El fix aplicado la trataría igual que "no
+jugada" (404), lo cual sería incorrecto si en realidad se jugó con algún criterio ad hoc no
+documentado.
+
+**Preguntar**: ¿Hay algún torneo/categoría de 2026 que se haya jugado con menos de 4 inscriptos
+(por ejemplo, un cuadro reducido armado a mano)? Si es así, ¿qué formato se usó realmente, para
+poder decidir si hace falta agregar un `drawRule` nuevo a `CircuitoFormatSpec` en vez de excluirla?
+
+**Impacto**: Si la respuesta es "sí, se jugó igual", hay que correr `npm run diagnose:brackets`
+contra la base real para ubicar el/los caso(s) exactos antes de decidir cómo mostrarlos — no
+implementar un formato nuevo sin esa confirmación (regla "no inferir reglas deportivas").
 
 ---
 
