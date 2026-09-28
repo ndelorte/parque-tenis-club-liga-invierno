@@ -363,12 +363,12 @@ function PureZoneSection({
 
   return (
     <div className="flex flex-col gap-8">
+      <ChampionCard champion={champion} points={champion ? championPoints : undefined} />
       <ZoneStandingsTable zoneName="Todos contra todos" rows={rows} matches={matchRows} />
       <p className="text-xs text-muted-foreground">
-        Sin final: el campeón/la campeona es el 1° de la tabla. Desempate: partidos ganados, diferencia de sets,
-        diferencia de games, partido entre ellos.
+        Sin final: el campeón/la campeona es el 1° de la tabla de arriba. Desempate: partidos ganados, diferencia de
+        sets, diferencia de games, partido entre ellos.
       </p>
-      <ChampionCard champion={champion} points={champion ? championPoints : undefined} />
     </div>
   )
 }
@@ -397,11 +397,6 @@ function ZoneWithFinalSection({
     const { rows, matches: matchRows } = buildZoneDisplay(participants, zoneMatches, names, 2)
     return (
       <div className="flex flex-col gap-10">
-        <ZoneStandingsTable zoneName="Todos contra todos" rows={rows} matches={matchRows} />
-        <p className="text-xs text-muted-foreground">
-          Barra de color: clasifica a la final. Desempate: partidos ganados, diferencia de sets, diferencia de games,
-          partido entre ellos.
-        </p>
         <div className="hidden lg:block">
           <BracketTreeView
             tree={nativeFinalTree}
@@ -413,6 +408,11 @@ function ZoneWithFinalSection({
         <div className="lg:hidden">
           <RoundsView tree={nativeFinalTree} championLabel={championLabel} />
         </div>
+        <ZoneStandingsTable zoneName="Todos contra todos" rows={rows} matches={matchRows} />
+        <p className="text-xs text-muted-foreground">
+          Barra de color: clasifica a la final. Desempate: partidos ganados, diferencia de sets, diferencia de games,
+          partido entre ellos.
+        </p>
       </div>
     )
   }
@@ -442,11 +442,6 @@ function ZoneWithFinalSection({
 
   return (
     <div className="flex flex-col gap-10">
-      <ZoneStandingsTable zoneName="Todos contra todos" rows={rows} matches={matchRows} />
-      <p className="text-xs text-muted-foreground">
-        Barra de color: clasifica a la final. Desempate: partidos ganados, diferencia de sets, diferencia de games,
-        partido entre ellos.
-      </p>
       {reconstructedFinalTree ? (
         <>
           <div className="hidden lg:block">
@@ -464,6 +459,11 @@ function ZoneWithFinalSection({
       ) : (
         <ChampionCard champion={champion} points={champion ? championPoints : undefined} />
       )}
+      <ZoneStandingsTable zoneName="Todos contra todos" rows={rows} matches={matchRows} />
+      <p className="text-xs text-muted-foreground">
+        Barra de color: clasifica a la final. Desempate: partidos ganados, diferencia de sets, diferencia de games,
+        partido entre ellos.
+      </p>
     </div>
   )
 }
@@ -502,15 +502,6 @@ function GroupsThenKnockoutSection({
 
     return (
       <div className="flex flex-col gap-10">
-        <div className="grid gap-10 sm:grid-cols-2">
-          {zones.map(({ zone, rows, matches: matchRows }) => (
-            <ZoneStandingsTable key={zone} zoneName={`Zona ${zone}`} rows={rows} matches={matchRows} />
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Barra de color: clasifica a semifinales. Desempate: partidos ganados, diferencia de sets, diferencia de
-          games, partido entre ellos.
-        </p>
         {knockoutTree && (
           <>
             <div className="hidden lg:block">
@@ -526,6 +517,15 @@ function GroupsThenKnockoutSection({
             </div>
           </>
         )}
+        <div className="grid gap-10 sm:grid-cols-2">
+          {zones.map(({ zone, rows, matches: matchRows }) => (
+            <ZoneStandingsTable key={zone} zoneName={`Zona ${zone}`} rows={rows} matches={matchRows} />
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Barra de color: clasifica a semifinales. Desempate: partidos ganados, diferencia de sets, diferencia de
+          games, partido entre ellos.
+        </p>
       </div>
     )
   }
@@ -565,15 +565,6 @@ function GroupsThenKnockoutSection({
 
   return (
     <div className="flex flex-col gap-10">
-      <div className="grid gap-10 sm:grid-cols-2">
-        {zoneSections.map(({ label, rows, matches: matchRows }) => (
-          <ZoneStandingsTable key={label} zoneName={label} rows={rows} matches={matchRows} />
-        ))}
-      </div>
-      <p className="text-xs text-muted-foreground">
-        Barra de color: clasifica a semifinales. Desempate: partidos ganados, diferencia de sets, diferencia de games,
-        partido entre ellos.
-      </p>
       {reconstructedKnockoutTree ? (
         <>
           <div className="hidden lg:block">
@@ -596,6 +587,15 @@ function GroupsThenKnockoutSection({
           />
         )
       )}
+      <div className="grid gap-10 sm:grid-cols-2">
+        {zoneSections.map(({ label, rows, matches: matchRows }) => (
+          <ZoneStandingsTable key={label} zoneName={label} rows={rows} matches={matchRows} />
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Barra de color: clasifica a semifinales. Desempate: partidos ganados, diferencia de sets, diferencia de games,
+        partido entre ellos.
+      </p>
     </div>
   )
 }
