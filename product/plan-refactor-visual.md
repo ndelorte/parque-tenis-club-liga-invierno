@@ -423,6 +423,16 @@ Es la pieza técnica más compleja; se construye en la Fase 2 y se reutiliza en 
 
 *Terminado*: Mid Master y Final Master se reconocen como la misma familia "Especiales" y a la vez del club; Interparque con diseño definitivo aprobado; checklist §6.
 
+**Decisiones de la maqueta F4 (aprobadas 2026-09-28)** — maqueta con 2 opciones en `product/refactor-visual/maquetas/fase-4/` (`Opcion1-*.dc.html` / `Opcion2-*.dc.html`), artifact https://claude.ai/artifact/VRjwBiRQw9xTf5bdhE3oJw:
+
+- **Mid Master: Opción 1 ("Trofeo")** — negro + dorado grabado, Playfair Display acotado a nombres propios (evento, categoría, campeón), el resto en Barlow Condensed/Barlow tabular. Líneas de cancha doradas como estructura; índice de categorías en filas (no cards); cuadro con semis a los lados y final al centro; sponsors en marquee infinito con botón "Pausar" (se mantiene el marquee que pedía el plan original, no la grilla fija que había propuesto la Opción 2).
+- **Final Master: layout de Opción 2 + piel de Opción 1** — se mantiene el contenido/estructura que propuso la Opción 2 (estado "próximamente" sin el hourglass genérico, clasificados top 8 por categoría, selector agrupado de categorías) pero renderizado con el lenguaje visual de la Opción 1 (Playfair en nombres propios, líneas de cancha, dorado grabado) para que se reconozca como la misma familia "Especiales" que Mid Master. **Al implementar**: no existe un `.dc.html` con esta combinación exacta — se arma directo en código combinando `Opcion2-FinalMaster.dc.html` (estructura) con los tokens/tipografía de `Opcion1-*` (piel).
+- **Interparque: Opción 2 ("Domingos")** — hero-calendario de las 8 fechas de la temporada (jugadas en amarillo pelota, próxima marcada); tabla de posiciones con 8 puntos mostrando qué domingos jugó cada uno (no es obligatorio jugar todas); partidos elegidos por fecha con botones. Sigue el tema del sistema (claro/oscuro), no fuerza oscuro como Especiales. Tokens nuevos: `--ip-ink`, `--ip-soft`, `--ip-line`, `--on-ball`, `--on-ball-muted` (el amarillo pelota nunca es texto sobre fondo claro).
+- **Tipografía de Especiales**: Playfair Display se mantiene, acotada a nombres propios — decisión ligada a elegir Mid Master = Opción 1.
+- **Auditoría**: `web-design-guidelines` + contraste AA corridos antes de mostrar la maqueta. Hallazgo pendiente de decidir al implementar: `--border-strong` en modo claro da 2,89:1 (por debajo de 3:1 para bordes de controles); la maqueta propone `#7b8a80` (3,34:1) — toca un token global de `app/globals.css`, evaluar impacto en las demás secciones.
+- **Gaps para `open-questions.md`**: fecha de la Final Master sin definir (fixture real); fechas de Mid Master 2026 sin definir (la maqueta usó julio como ejemplo); no hay flyers reales de Interparque en el repo para validar la sub-identidad contra ellos; niveles de Interparque por categoría (ya es OQ-IP-03 abierta).
+- No existe `components/shared/`: como en F2 y F3, los componentes de Especiales e Interparque quedan en sus propios módulos (`components/mid-master/*`, `components/interparque/*`).
+
 ### 4.7 Fase 5 — Paneles admin (`feat/visual-f5-paneles`)
 
 Sin rediseño: orden y usabilidad. Maqueta solo del shell.
@@ -515,4 +525,4 @@ Se cierran en la maqueta de cada fase y se anotan acá con la fecha.
 - [x] Cuadros en el celular → **vista por ronda** (botones de ronda; cada partido dice a dónde pasa el ganador) para todos los tamaños; en escritorio, cuadro horizontal (2026-09-27).
 - [x] Landing del Circuito → **calendario de la temporada**: Grand Slam en polvo fuerte con líneas de cancha, jugados en polvo suave, próximos con línea punteada; meses sin torneo cargado dicen "A confirmar" (2026-09-27).
 - [x] Lógica nueva del Circuito (árbol del cuadro, ronda en juego, campeón por categoría) → **funciones puras en `lib/circuito/` con tests**, excepción aprobada (2026-09-27).
-- [ ] Sub-identidad de Interparque. → Maqueta F4.
+- [x] Sub-identidad de Interparque → **Opción 2 "Domingos"** (hero-calendario de las 8 fechas de temporada, tokens `--ip-*`) (2026-09-28, maqueta F4).
