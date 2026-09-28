@@ -7,6 +7,23 @@
 
 ## Pendientes
 
+### OQ-37: Seed de `tournament_sponsors` — sponsors reales sin edición asignada
+
+**Contexto**: `content/sponsors.ts` tenía una lista estática de sponsors del club (Dental Sur,
+Kirchsbaum, Olivia, Retiel, Tourna, Volkl) que dejó de usarse con el refactor visual F3 de la Liga:
+los sponsors pasaron a ser editables por edición desde `/panel-liga`, guardados en
+`tournament_sponsors` (`supabase/migrations/011_liga_sponsors.sql`). La tabla nueva arranca vacía.
+
+No hay dato en el repo que diga "estos sponsors van en la edición X" (la lista vieja era un único
+carrusel para toda la Liga, invierno y verano juntos), y los logos viejos viven como assets del
+repo en `public/images/sponsors/*`, no como objetos en el bucket `liga-sponsors` de Supabase
+Storage — hace falta subirlos antes de poder asociarlos.
+
+**Decisión del club (2026-09-28)**: carga manual desde el formulario de sponsors de `/panel-liga`,
+sin script de migración. No implementar un seed automático.
+
+**Estado**: sin acción pendiente en código — queda a cargo del club decidir qué sponsors van en
+qué edición activa y cargarlos a mano.
 ### OQ-41: ¿Los puntos de la planilla histórica (enero-junio 2026) coinciden con lo que calcularía el código?
 
 **Contexto**: `scripts/import-circuito-ranking-sheet.ts` importó el ranking de enero a junio 2026
@@ -155,7 +172,29 @@ general.
 
 ---
 
+## Resueltas — 2026-09-28
+
+### ~~OQ-40~~: ¿Los perdedores de semifinal juegan por el 3.º y 4.º puesto en los playoffs de Liga?
+
+**Contexto**: `product/reglas-liga-invierno.md` (sección "Playoffs") describía cuartos, semifinal y
+final, pero no decía explícitamente qué pasa con los perdedores de semifinal. La implementación ya
+contemplaba una serie de fase `third_place` (`lib/data/playoffs.ts`,
+`components/liga/liga-board.tsx` → `BracketCard`, columna "3er y 4to Puesto" en el cuadro
+provisorio) y el modelo de datos ya usaba `series.phase = "third_place"` (ver OQ-19/OQ-35
+resueltas), pero esa regla deportiva no estaba escrita en el archivo canónico de reglas.
+
+**Respuesta** (2026-09-28): Confirmado por el club — se juega 3.º y 4.º puesto en la Liga de
+Invierno/Verano. Agregado a `product/reglas-liga-invierno.md` §Playoffs y a la sección "Fase final"
+de `app/ligas-invierno-verano/reglamento/page.tsx`.
+
+---
+
 ## Resueltas — 2026-09-27
+
+### ~~OQ-LI-01~~: ¿Los sponsors de Liga son por edición/torneo o globales del club?
+
+**Resuelto**: Son **por edición**. Se cargan desde `/panel-liga` para un torneo
+concreto y el carrusel de la edición activa muestra solo sus sponsors.
 
 ### ~~OQ-39~~: Circuito — ubicación de los cabezas de serie en el cuadro (8+)
 

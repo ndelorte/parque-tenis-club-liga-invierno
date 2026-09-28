@@ -389,6 +389,15 @@ Las capturas del estado actual (antes de cada fase) van en `product/refactor-vis
 
 *Terminado*: las dos estaciones bien marcadas y a la vez claramente la misma liga; ninguna pantalla de la Liga queda fija en invierno; aprobación del humano; checklist §6.
 
+**Decisiones de la maqueta F3 (aprobadas 2026-09-27)** — maqueta con 2 opciones en `product/refactor-visual/maquetas/fase-3/` (`Opcion1-*.dc.html` / `Opcion2-*.dc.html`), artifact https://claude.ai/artifact/4A5Kt4DgwWqBgjCqdt1dND:
+
+- **Dirección elegida: Opción 2 ("Línea de cancha")** para todas las pantallas — fondo claro, líneas de cancha como estructura, clima (nieve/luz) contenido en una banda para no saturar, selector en dos columnas con línea de tiempo, serie en diálogo (hoja desde abajo en celular).
+- **Excepción — Reglamento y Edición cerrada**: usar la *disposición* de la Opción 1 (reglamento con índice lateral fijo; edición cerrada como tarjeta de podio por categoría) pero manteniendo el lenguaje visual de la Opción 2 (fondo claro, tipografía, tokens).
+- **Nieve/luz de estación: loop continuo**, no la animación "se asienta y termina" que había propuesto la maqueta. Sigue respetando "reducir movimiento"; falta confirmar si necesita un control de pausa visible (WCAG 2.2.2 aplica a movimiento automático de más de 5 s que no puede detenerse) — evaluarlo al programar.
+- **Playoffs Mixto B (5 equipos)**, resuelve el gap que dejaba `lib/playoffs/generateProvisionalBracket.ts` (formato `five_team`): 1°, 2° y 3° tienen bye; cuartos = 4° vs 5°; semifinal 1 = 1° vs 2°; semifinal 2 = 3° vs ganador de (4° vs 5°). Documentado como regla canónica en `product/reglas-liga-invierno.md` §Playoffs.
+- **Galería de fotos**: se pospone a una fase posterior (no hay fotos de verano todavía); no maquetar por ahora.
+- **Sponsors**: pasan a ser **editables por edición desde `/panel-liga`** (logo y nombre de marca). El carrusel de la vista activa muestra únicamente los sponsors del torneo correspondiente. OQ-LI-01 resuelta por el club: relación con `tournaments` en Supabase.
+
 ### 4.5 El cuadro horizontal (`components/shared/bracket/`)
 
 Es la pieza técnica más compleja; se construye en la Fase 2 y se reutiliza en la Liga (playoffs) y en Mid Master.

@@ -1,22 +1,18 @@
-import { Trophy, Clock, CheckCircle2, AlertCircle, Medal } from "lucide-react"
-import { cn } from "@/lib/utils"
+"use client"
+
+import { useState } from "react"
+import { Trophy } from "lucide-react"
+import { formatDate } from "@/lib/utils"
 import type { ProvisionalBracket, QuarterFinalMatchup, PlayoffSlot } from "@/lib/playoffs/types"
 
-type ThirdPlace = {
-  homeTeamName?: string
-  awayTeamName?: string
-  scheduledDate?: string
-  scheduledTime?: string
-  status?: string
-}
-
-export type ScheduledMatch = {
+type ScheduledMatch = {
   homeTeamName: string
   awayTeamName: string
   scheduledDate?: string | null
   scheduledTime?: string | null
   status: string
 }
+type ThirdPlace = Partial<ScheduledMatch>
 
 interface Props {
   bracket: ProvisionalBracket
@@ -26,296 +22,62 @@ interface Props {
   provisional?: boolean
 }
 
-export function PlayoffBracket({ bracket, semifinals, final, thirdPlace, provisional = true }: Props) {
-  return (
-    <div>
-      <div className="mb-4">
-        <h3 className="font-semibold text-foreground">Fase Final</h3>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          {provisional ? "Con las posiciones actuales provisorias" : "Cuadro final"}
-        </p>
-      </div>
-
-      <div className="flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-10">
-        {/* Bracket principal */}
-        <div className="space-y-3 max-w-xl flex-1">
-          {bracket.byes.map((slot) => (
-            <ByeRow key={slot.seed} slot={slot} />
-          ))}
-          {bracket.quarterfinals.map((qf) => (
-            <QFRow key={qf.matchNumber} qf={qf} />
-          ))}
-
-          {/* Semifinales */}
-          {semifinals && semifinals.length > 0 && (
-            <>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-2">
-                Semifinales
-              </p>
-              {semifinals.map((sf, i) => (
-                <MatchRow key={i} label={`SF ${i + 1}`} match={sf} />
-              ))}
-            </>
-          )}
-
-          {/* Final */}
-          {final && (
-            <>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-2">
-                Final
-              </p>
-              <MatchRow label="Final" match={final} highlight />
-            </>
-          )}
-        </div>
-
-        {/* 3er y 4to puesto — desconectado del bracket principal */}
-        <div className="lg:w-72 lg:shrink-0">
-          <p className="text-xs text-muted-foreground mb-2 italic">Partido separado</p>
-          <ThirdPlaceCard thirdPlace={thirdPlace} />
-        </div>
-      </div>
-    </div>
-  )
+function dateLabel(date?: string | null, time?: string | null) {
+  return formatDate(date ?? "", { weekday: false, month: "short", year: true, utc: true, time, emptyLabel: "Fecha a confirmar" })
 }
 
-function ByeRow({ slot }: { slot: PlayoffSlot }) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
-      <SeedBadge seed={slot.seed} />
-      <span className="font-medium text-foreground flex-1 min-w-0 truncate">
-        {slot.team.name}
-      </span>
-      <span className="text-xs font-semibold uppercase tracking-wide text-primary bg-primary/10 rounded-md px-2 py-0.5">
-        BYE — Pasa a Semifinal
-      </span>
-    </div>
-  )
-}
-
-function QFRow({ qf }: { qf: QuarterFinalMatchup }) {
-  const isCompleted = qf.status === "completed" || qf.status === "walkover"
-  const isScheduled = qf.status === "scheduled"
-
-  return (
-    <div
-      className={cn(
-        "rounded-xl border px-4 py-3 space-y-2",
-        isCompleted
-          ? "border-primary/30 bg-primary/5"
-          : "border-border bg-card",
-      )}
-    >
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Cuartos de Final
-        </span>
-        <StatusPill status={qf.status} />
-      </div>
-
-      <div className="flex items-center gap-2 flex-wrap">
-        <TeamSlot slot={qf.home} winnerId={qf.winnerTeamId} />
-        <span className="text-muted-foreground font-medium text-sm">vs</span>
-        <TeamSlot slot={qf.away} winnerId={qf.winnerTeamId} />
-      </div>
-
-      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <Clock className="size-3.5 shrink-0" />
-        {qf.scheduledDate ? (
-          <span>
-            {formatDate(qf.scheduledDate)}
-            {qf.scheduledTime ? ` — ${formatTime(qf.scheduledTime)}` : ""}
-          </span>
-        ) : (
-          <span className="italic">Fecha a confirmar</span>
-        )}
-      </div>
-
-      {isScheduled && !isCompleted && (
-        <p className="text-xs text-muted-foreground italic">
-          Resultado pendiente
-        </p>
-      )}
-    </div>
-  )
-}
-
-function MatchRow({
-  label,
-  match,
-  highlight,
-}: {
-  label: string
-  match: ScheduledMatch
-  highlight?: boolean
+function MatchCard({ label, home, away, date, time, status, winnerId, homeId, awayId, note }: {
+  label: string; home: string; away: string; date?: string | null; time?: string | null
+  status?: string; winnerId?: string; homeId?: string; awayId?: string; note?: string
 }) {
-  const isCompleted = match.status === "completed" || match.status === "walkover"
-  const isScheduled = match.status === "scheduled" || match.status === "rescheduled"
+  const played = status === "completed" || status === "walkover"
+  return <li className="rounded-md border border-border bg-card p-3">
+    <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
+    <div className="space-y-1 font-heading text-base font-semibold">
+      <p className={winnerId && homeId === winnerId ? "text-primary" : "text-foreground"}>{home}{winnerId && homeId === winnerId && <span className="ml-2 text-xs">Ganó</span>}</p>
+      <p className={winnerId && awayId === winnerId ? "text-primary" : "text-foreground"}>{away}{winnerId && awayId === winnerId && <span className="ml-2 text-xs">Ganó</span>}</p>
+    </div>
+    <p className="mt-2 text-xs text-muted-foreground">{dateLabel(date, time)}{played ? " · Jugado" : ""}</p>
+    {note && <p className="mt-2 border-t border-border pt-2 text-xs font-medium text-primary">{note}</p>}
+  </li>
+}
 
-  return (
-    <div
-      className={cn(
-        "rounded-xl border px-4 py-3 space-y-2",
-        isCompleted
-          ? "border-primary/30 bg-primary/5"
-          : highlight
-          ? "border-accent/40 bg-card"
-          : "border-border bg-card",
-      )}
-    >
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <span
-          className={cn(
-            "text-xs font-semibold uppercase tracking-wide",
-            highlight ? "text-accent" : "text-muted-foreground",
-          )}
-        >
-          {label}
-        </span>
-        {isCompleted && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
-            <CheckCircle2 className="size-3.5" />
-            Jugado
-          </span>
-        )}
-        {isScheduled && !isCompleted && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-pending">
-            <AlertCircle className="size-3.5" />
-            Programado
-          </span>
-        )}
-      </div>
-      <div className="flex items-center gap-2 flex-wrap text-sm font-medium text-foreground">
-        <span className="truncate max-w-[120px] sm:max-w-none">{match.homeTeamName}</span>
-        <span className="text-muted-foreground">vs</span>
-        <span className="truncate max-w-[120px] sm:max-w-none">{match.awayTeamName}</span>
-      </div>
-      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <Clock className="size-3.5 shrink-0" />
-        {match.scheduledDate ? (
-          <span>
-            {formatDate(match.scheduledDate)}
-            {match.scheduledTime ? ` — ${formatTime(match.scheduledTime)}` : ""}
-          </span>
-        ) : (
-          <span className="italic">Fecha a confirmar</span>
-        )}
+function Quarterfinal({ qf, note }: { qf: QuarterFinalMatchup; note: string }) {
+  return <MatchCard label="Cuartos de final" home={`${qf.home.seed}° ${qf.home.team.name}`} away={`${qf.away.seed}° ${qf.away.team.name}`} homeId={qf.home.team.id} awayId={qf.away.team.id} winnerId={qf.winnerTeamId} date={qf.scheduledDate} time={qf.scheduledTime} status={qf.status} note={note} />
+}
+function Bye({ slot, note }: { slot: PlayoffSlot; note: string }) {
+  return <li className="rounded-md border border-primary/30 bg-primary/5 p-3"><p className="text-xs font-bold uppercase tracking-wide text-primary">Pasa directo a semifinal</p><p className="mt-2 font-heading text-base font-semibold text-foreground">{slot.seed}° {slot.team.name}</p><p className="mt-2 text-xs text-muted-foreground">{note}</p></li>
+}
+
+export function PlayoffBracket({ bracket, semifinals, final, thirdPlace, provisional = true }: Props) {
+  const [round, setRound] = useState(0)
+  const five = bracket.format === "five_team"
+  const first = bracket.byes[0]
+  const second = bracket.byes[1]
+  const third = bracket.byes[2]
+  return <div>
+    <div className="mb-5"><h3 className="font-heading text-2xl font-bold text-foreground">Fase Final</h3><p className="text-sm text-muted-foreground">{provisional ? "Con las posiciones actuales provisorias" : "Cuadro final"}</p></div>
+    <div className="mb-4 flex gap-2 md:hidden" role="group" aria-label="Ronda de fase final">{["Cuartos", "Semifinales", "Final"].map((label, index) => <button key={label} type="button" aria-pressed={round === index} onClick={() => setRound(index)} className={round === index ? "min-h-11 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" : "min-h-11 rounded-md border border-border bg-card px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-primary"}>{label}</button>)}</div>
+    <div className="max-w-full" role="region" aria-label="Cuadro de fase final">
+      <div className="grid gap-4 md:grid-cols-3">
+        <section className={round === 0 ? "" : "hidden md:block"}><h4 className="mb-3 border-b-2 border-primary pb-2 font-heading text-lg font-bold">Cuartos</h4><ol className="space-y-3">
+          {first && <Bye slot={first} note={five ? `Semifinal contra ${second?.team.name ?? "2°"}` : "Semifinal contra ganador de 3° vs 6°"} />}
+          {!five && bracket.quarterfinals[0] && <Quarterfinal qf={bracket.quarterfinals[0]} note={`Ganador contra ${first?.team.name ?? "1°"}`} />}
+          {five && second && <Bye slot={second} note={`Semifinal contra ${first?.team.name ?? "1°"}`} />}
+          {bracket.quarterfinals[five ? 0 : 1] && <Quarterfinal qf={bracket.quarterfinals[five ? 0 : 1]} note={`Ganador contra ${five ? third?.team.name ?? "3°" : second?.team.name ?? "2°"}`} />}
+          {five && third && <Bye slot={third} note="Semifinal contra ganador de 4° vs 5°" />}
+          {!five && second && <Bye slot={second} note="Semifinal contra ganador de 4° vs 5°" />}
+        </ol></section>
+        <section className={round === 1 ? "" : "hidden md:block"}><h4 className="mb-3 border-b-2 border-primary pb-2 font-heading text-lg font-bold">Semifinales</h4><ol className="space-y-3">
+          <MatchCard label="Cruce proyectado" home={first?.team.name ?? "1°"} away={five ? second?.team.name ?? "2°" : "Ganador 3° vs 6°"} note="Ganador a la final" />
+          <MatchCard label="Cruce proyectado" home={five ? third?.team.name ?? "3°" : second?.team.name ?? "2°"} away="Ganador de cuartos" note="Ganador a la final" />
+        </ol></section>
+        <section className={round === 2 ? "" : "hidden md:block"}><h4 className="mb-3 border-b-2 border-primary pb-2 font-heading text-lg font-bold">Final</h4><ol><MatchCard label="Final" home={final?.homeTeamName ?? "Ganador semifinal 1"} away={final?.awayTeamName ?? "Ganador semifinal 2"} date={final?.scheduledDate} time={final?.scheduledTime} status={final?.status} /></ol>
+          {final?.status === "completed" && <p className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary"><Trophy aria-hidden="true" className="size-4" /> Final disputada</p>}
+        </section>
       </div>
     </div>
-  )
-}
-
-function ThirdPlaceCard({ thirdPlace }: { thirdPlace?: ThirdPlace }) {
-  const isCompleted = thirdPlace?.status === "completed" || thirdPlace?.status === "walkover"
-  const isScheduled = thirdPlace?.status === "scheduled" || thirdPlace?.status === "rescheduled"
-
-  return (
-    <div
-      className={cn(
-        "rounded-xl border px-4 py-3 space-y-2",
-        isCompleted
-          ? "border-amber-300/60 bg-amber-50/60 dark:border-amber-700/50 dark:bg-amber-950/30"
-          : "border-border bg-card",
-      )}
-    >
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          <Medal className="size-3.5 text-amber-500" />
-          3er y 4to Puesto
-        </span>
-        {isCompleted && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-pending">
-            <CheckCircle2 className="size-3.5" />
-            Jugado
-          </span>
-        )}
-        {isScheduled && !isCompleted && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-pending">
-            <AlertCircle className="size-3.5" />
-            Programado
-          </span>
-        )}
-      </div>
-
-      <div className="flex items-center gap-2 flex-wrap text-sm font-medium text-foreground">
-        <span className="truncate max-w-[120px] sm:max-w-none">
-          {thirdPlace?.homeTeamName ?? <span className="italic font-normal text-muted-foreground">A definir</span>}
-        </span>
-        <span className="text-muted-foreground">vs</span>
-        <span className="truncate max-w-[120px] sm:max-w-none">
-          {thirdPlace?.awayTeamName ?? <span className="italic font-normal text-muted-foreground">A definir</span>}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <Clock className="size-3.5 shrink-0" />
-        {thirdPlace?.scheduledDate ? (
-          <span>
-            {formatDate(thirdPlace.scheduledDate)}
-            {thirdPlace.scheduledTime ? ` — ${formatTime(thirdPlace.scheduledTime)}` : ""}
-          </span>
-        ) : (
-          <span className="italic">Fecha a confirmar</span>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function TeamSlot({ slot, winnerId }: { slot: PlayoffSlot; winnerId?: string }) {
-  const isWinner = winnerId === slot.team.id
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5",
-        isWinner ? "font-bold text-primary" : "font-medium text-foreground",
-      )}
-    >
-      <SeedBadge seed={slot.seed} small />
-      <span className="truncate max-w-[120px] sm:max-w-none">{slot.team.name}</span>
-      {isWinner && <Trophy className="size-3.5 text-primary shrink-0" />}
-    </span>
-  )
-}
-
-function SeedBadge({ seed, small }: { seed: number; small?: boolean }) {
-  return (
-    <span
-      className={cn(
-        "shrink-0 inline-flex items-center justify-center rounded-full bg-muted font-bold text-muted-foreground",
-        small ? "size-5 text-[10px]" : "size-6 text-xs",
-      )}
-    >
-      {seed}°
-    </span>
-  )
-}
-
-function StatusPill({ status }: { status: QuarterFinalMatchup["status"] }) {
-  if (status === "completed" || status === "walkover") {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
-        <CheckCircle2 className="size-3.5" />
-        Jugado
-      </span>
-    )
-  }
-  if (status === "scheduled") {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-pending">
-        <AlertCircle className="size-3.5" />
-        Programado
-      </span>
-    )
-  }
-  return null
-}
-
-function formatDate(date: string): string {
-  const [year, month, day] = date.split("-")
-  return `${day}/${month}/${year}`
-}
-
-function formatTime(time: string): string {
-  return time.slice(0, 5) + " hs"
+    {semifinals && semifinals.length > 0 && <section className="mt-5"><h4 className="mb-2 font-heading text-lg font-bold">Semifinales programadas</h4><p className="mb-3 text-xs text-muted-foreground">Partidos cargados, mostrados por separado del cuadro proyectado.</p><ol className="grid gap-3 sm:grid-cols-2">{semifinals.map((match, index) => <MatchCard key={`${match.homeTeamName}-${match.awayTeamName}-${index}`} label="Semifinal" home={match.homeTeamName} away={match.awayTeamName} date={match.scheduledDate} time={match.scheduledTime} status={match.status} />)}</ol></section>}
+    {thirdPlace && <section className="mt-5 max-w-sm"><h4 className="mb-2 font-heading text-lg font-bold">3.º y 4.º puesto</h4><p className="mb-2 text-xs text-muted-foreground">Partido separado entre perdedores de semifinal.</p><ol><MatchCard label="3.º y 4.º puesto" home={thirdPlace.homeTeamName ?? "A definir"} away={thirdPlace.awayTeamName ?? "A definir"} date={thirdPlace.scheduledDate} time={thirdPlace.scheduledTime} status={thirdPlace.status} /></ol></section>}
+  </div>
 }

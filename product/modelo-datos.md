@@ -347,6 +347,29 @@ usan el admin client (service role) para el insert y para `storage.from("premiac
 
 ---
 
+## tournament_sponsors (Liga por edición)
+
+Sponsors visibles en el carrusel de la **edición activa** de Liga. Cada registro pertenece a un
+`tournament`; no se replica automáticamente a otras ediciones. El panel permite cargar, editar,
+reemplazar el logo, ordenar y eliminar sponsors de cualquier edición.
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | |
+| tournament_id | uuid FK → tournaments | Edición de Liga; borrado en cascada |
+| name | text | Nombre de marca, entre 1 y 100 caracteres |
+| storage_path | text | Path generado `{tournament_id}/{uuid}.{ext}` |
+| sort_order | integer | Orden del carrusel dentro de la edición |
+| created_at | timestamptz | |
+
+Storage usa el bucket público `liga-sponsors`; la lectura es pública y las escrituras se hacen
+solo desde server actions con rol admin verificado y cliente service role. Se aceptan logos PNG,
+JPG y WebP de hasta 5 MB, con tipo y firma comprobados en el servidor. La tabla tiene RLS con
+política pública solo de lectura. La vista pública consulta exclusivamente los sponsors del
+`tournament_id` activo y oculta el bloque si no hay sponsors cargados.
+
+---
+
 ## Circuito del Parque (Sprint C3)
 
 Módulo aislado (ver ADR-002/ADR-005) — torneos mensuales del circuito, prefijo `circuito_`,

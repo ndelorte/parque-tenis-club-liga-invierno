@@ -1,35 +1,19 @@
-import Image from "next/image";
-import { Hourglass } from "lucide-react";
-import { formatTournamentTitle } from "@/lib/tournament/formatTournamentTitle";
-import type { Tournament } from "@/lib/tournament/types";
+import Link from "next/link"
+import { CalendarDays, ArrowUpRight } from "lucide-react"
+import { getSeasonTheme } from "@/components/liga/season-theme"
+import { formatDate } from "@/lib/utils"
+import type { Tournament } from "@/lib/tournament/types"
 
 export function ComingSoonView({ tournament }: { tournament: Tournament }) {
-  const isVerano = tournament.name.toLowerCase().includes("verano");
-  const logoSrc = isVerano ? "/images/logoligaverano.png" : "/images/logoligadeinvierno.png";
-  const logoAlt = isVerano ? "Logo Liga de Verano" : "Logo Liga de Invierno";
-
+  const theme = getSeasonTheme(tournament)
   return (
-    <div className="flex min-h-[70vh] flex-col items-center justify-center px-4 py-16 text-center">
-      <Image
-        src={logoSrc}
-        alt={logoAlt}
-        width={128}
-        height={128}
-        className="size-28 rounded-3xl object-contain shadow-lg ring-4 ring-brand-light sm:size-32"
-      />
-
-      <Hourglass
-        aria-hidden="true"
-        className="mt-8 size-10 text-brand animate-hourglass motion-reduce:animate-none"
-      />
-
-      <h1 className="mt-6 font-heading text-2xl font-bold text-foreground sm:text-3xl">
-        {formatTournamentTitle(tournament)}
-      </h1>
-      <p className="mt-2 max-w-md text-muted-foreground">
-        Próximamente. Todavía no arrancó esta edición — volvé más adelante para ver categorías,
-        equipos y fixture.
-      </p>
-    </div>
-  );
+    <section className="liga-coming-soon liga-container" data-identity={theme.identity} aria-labelledby="liga-coming-title">
+      <div className="liga-coming-mark"><CalendarDays size={32} aria-hidden="true" /></div>
+      <p className="liga-eyebrow">{theme.label}</p>
+      <h2 id="liga-coming-title">Próximamente en la cancha</h2>
+      <p>Esta edición todavía no comenzó. Cuando arranque, vas a encontrar acá las categorías, los equipos, la tabla y el fixture.</p>
+      {tournament.start_date && <p className="liga-coming-date">Inicio previsto: <time dateTime={tournament.start_date}>{formatDate(tournament.start_date, { weekday: false, year: true, utc: true })}</time></p>}
+      <Link href="/ligas-invierno-verano" className="liga-solid-link">Ver todas las ediciones <ArrowUpRight size={17} aria-hidden="true" /></Link>
+    </section>
+  )
 }

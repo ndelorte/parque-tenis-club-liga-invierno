@@ -1,19 +1,20 @@
 import { notFound } from "next/navigation"
-import { LigaHeader } from "@/components/liga/liga-header"
+import { SectionHero } from "@/components/liga/SectionHero"
 import { LigaBoard } from "@/components/liga/liga-board"
 import { LigaReglamento } from "@/components/liga/liga-reglamento"
 import { SponsorsBanner } from "@/components/liga/sponsors-banner"
 import { WhatsappFab } from "@/components/whatsapp-fab"
-import { TournamentHeader } from "@/components/liga/TournamentHeader"
 import { ClosedSeasonView } from "@/components/liga/ClosedSeasonView"
 import { ComingSoonView } from "@/components/liga/ComingSoonView"
 import { getTournamentBySlug } from "@/lib/data/tournaments"
+import { getTournamentSponsors } from "@/lib/data/tournament-sponsors"
+import { getPhotos } from "@/lib/data/tournament-photos"
 import { getCategoriesForTournament } from "@/lib/data/categories"
 import { getTeamsByCategory } from "@/lib/data/teams"
 import { getStandingsSnapshot } from "@/lib/data/standings"
 import { getRoundsWithSeries } from "@/lib/data/series"
 import { getPlayoffSeries, getPodiumForCategory } from "@/lib/data/playoffs"
-import { getPhotos } from "@/lib/data/tournament-photos"
+import { getSeasonTheme } from "@/components/liga/season-theme"
 import { buildBracketOrNull } from "@/lib/playoffs/generateProvisionalBracket"
 import { formatTournamentTitle } from "@/lib/tournament/formatTournamentTitle"
 import type { StandingsRow } from "@/lib/tournament/types"
@@ -42,10 +43,12 @@ export default async function SeasonPage({ params, searchParams }: Props) {
 
   const tournament = await getTournamentBySlug(season)
   if (!tournament) notFound()
+  const theme = getSeasonTheme(tournament)
 
   if (tournament.status === "upcoming") {
     return (
-      <main className="min-h-dvh bg-background">
+      <main className="min-h-dvh bg-background" data-identity={theme.identity}>
+        <SectionHero tournament={tournament} />
         <ComingSoonView tournament={tournament} />
         <WhatsappFab />
       </main>
@@ -62,7 +65,6 @@ export default async function SeasonPage({ params, searchParams }: Props) {
             getPodiumForCategory(category.id),
             getPhotos(tournament.id, category.id),
           ])
-
           return {
             category,
             championName: podium.championName,
@@ -76,62 +78,65 @@ export default async function SeasonPage({ params, searchParams }: Props) {
     ])
 
     return (
-      <main className="min-h-dvh bg-background">
-        <TournamentHeader tournament={tournament} />
-        <ClosedSeasonView bundles={closedBundles} generalPhotos={generalPhotos} />
+      <main className="min-h-dvh bg-background" data-identity={theme.identity}>
+        <SectionHero tournament={tournament} />
+        <ClosedSeasonView tournament={tournament} bundles={closedBundles} generalPhotos={generalPhotos} />
         <WhatsappFab />
       </main>
     )
   }
 
-  const bundles = await Promise.all(
-    categories.map(async (category) => {
-      const [standings, rounds, teams, playoffSeries] = await Promise.all([
-        getStandingsSnapshot(category.id),
-        getRoundsWithSeries(category.id),
-        getTeamsByCategory(category.id),
-        getPlayoffSeries(category.id),
-      ])
+  const [bundles, sponsors] = await Promise.all([
+    Promise.all(
+      categories.map(async (category) => {
+        const [standings, rounds, teams, playoffSeries] = await Promise.all([
+          getStandingsSnapshot(category.id),
+          getRoundsWithSeries(category.id),
+          getTeamsByCategory(category.id),
+          getPlayoffSeries(category.id),
+        ])
 
-      const effectiveStandings: StandingsRow[] =
-        standings.length > 0
-          ? standings
-          : teams.map((t, i) => ({
-              team_id: t.id,
-              team: t,
-              played: 0,
-              won: 0,
-              lost: 0,
-              points: 0,
-              courts_won: 0,
-              courts_lost: 0,
-              courts_diff: 0,
-              sets_won: 0,
-              sets_lost: 0,
-              sets_diff: 0,
-              games_won: 0,
-              games_lost: 0,
-              games_diff: 0,
-              position: i + 1,
-            }))
+        const effectiveStandings: StandingsRow[] =
+          standings.length > 0
+            ? standings
+            : teams.map((t, i) => ({
+                team_id: t.id,
+                team: t,
+                played: 0,
+                won: 0,
+                lost: 0,
+                points: 0,
+                courts_won: 0,
+                courts_lost: 0,
+                courts_diff: 0,
+                sets_won: 0,
+                sets_lost: 0,
+                sets_diff: 0,
+                games_won: 0,
+                games_lost: 0,
+                games_diff: 0,
+                position: i + 1,
+              }))
 
-      return {
-        category,
-        standings,
-        rounds,
-        teams,
-        bracket: buildBracketOrNull(effectiveStandings, playoffSeries),
-        playoffSeries,
-      }
-    }),
-  )
+        return {
+          category,
+          standings,
+          rounds,
+          teams,
+          bracket: buildBracketOrNull(effectiveStandings, playoffSeries),
+          playoffSeries,
+        }
+      }),
+    ),
+    getTournamentSponsors(tournament.id),
+  ])
 
   return (
-    <main className="min-h-dvh bg-background">
-      <LigaHeader tournament={tournament} />
-      <LigaBoard bundles={bundles} initialCategory={categoria} seasonSlug={tournament.slug} />
+    <main className="min-h-dvh bg-background" data-identity={theme.identity}>
+      <SectionHero tournament={tournament} />
+      <LigaBoard bundles={bundles} initialCategory={categoria} seasonSlug={tournament.slug} season={theme.season} />
       <LigaReglamento />
-      <SponsorsBanner />
+      <SponsorsBanner sponsors={sponsors} />
       <WhatsappFab />
     </main>
   )

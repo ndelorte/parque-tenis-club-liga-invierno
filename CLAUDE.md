@@ -251,15 +251,17 @@ Ver `/product/reglas-interparque.md` para el detalle de Interparque.
 
 ## Modelo según el tipo de tarea
 
-| Tarea | Modelo |
-|-------|--------|
-| Razonar, planificar, decidir; diseñar maquetas o artefactos visuales para comparar alternativas; auditorías de diseño | **Opus** |
-| Implementación y código (escribir, editar, lint, tests, build) | **Sonnet** |
-| Búsquedas de archivos de solo lectura (relevar, ubicar, listar) | **Fable** |
+| Rol | Modelo | Tareas |
+|-----|--------|--------|
+| Orquestador principal | **Opus** | Mantiene el contexto global del proyecto, planifica y toma las decisiones críticas; modela maquetas o artefactos visuales para comparar alternativas |
+| Trabajador de bajo impacto (mecánicas/Git/APIs) | **Haiku** | git add/commit/push, abrir el PR (`gh`), extraer datos, dar formato, búsquedas de archivos de solo lectura (relevar, ubicar, listar) |
+| Trabajador técnico | **Sonnet** | Implementación y código: escribir, editar, lint, tests, build, refactor; auditorías de diseño/UX sobre código ya implementado (compliance contra una maqueta aprobada) y code review técnico |
+| Auditor especializado | **Fable** | Validación crítica de seguridad/criptografía antes de pasar a producción — solo lo invoca Opus cuando la tarea lo requiere |
 
 - La sesión principal no puede cambiar su propio `/model`: la tarea se delega a un subagente con el modelo de la tabla, o el usuario cambia `/model` a mano.
-- Commit, push y PR los hace la sesión principal (no se crea un subagente solo para eso).
+- La mecánica de git (`add`/`commit`/`push`, abrir el PR) se delega a un subagente Haiku; qué se commitea y la redacción del mensaje/PR las decide la sesión principal.
 - Las correcciones de código que salen de una auditoría las implementa Sonnet.
+- **Opus se reserva solo para modelar** (armar maquetas/artefactos visuales nuevos desde cero). Auditar diseño ya implementado no es "modelar": eso lo hace Sonnet.
 - Si no está claro qué modelo corresponde, **preguntar al usuario antes de arrancar**.
 
 ---

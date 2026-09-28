@@ -14,6 +14,7 @@ export function SiteFooter() {
               {CLUB.name}
             </p>
             <address className="not-italic">{CLUB.address}</address>
+            <p>Desarrollado por Nicolás Delorte</p>
             <p>© {new Date().getFullYear()}</p>
           </div>
         </div>

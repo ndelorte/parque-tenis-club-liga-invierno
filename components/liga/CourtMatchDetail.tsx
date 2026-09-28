@@ -16,7 +16,7 @@ export function CourtMatchDetail({
   const homeWon = courtMatch.winner_team_id === homeTeamId;
 
   return (
-    <div className="bg-card rounded border border-border px-3 py-2 text-sm">
+    <div className="rounded-md border border-border bg-card p-3 text-sm">
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           Cancha {courtMatch.court_number}
@@ -28,18 +28,18 @@ export function CourtMatchDetail({
         )}
       </div>
 
-      <div className="mt-1.5 flex items-center gap-2">
-        <span className={homeWon ? "font-semibold text-foreground" : "text-muted-foreground"}>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <span className={homeWon ? "min-w-0 font-semibold text-foreground" : "min-w-0 text-muted-foreground"}>
           {homeTeamName}
         </span>
-        <span className="text-xs text-muted-foreground font-mono">{courtMatch.score}</span>
-        <span className={!homeWon ? "font-semibold text-foreground" : "text-muted-foreground"}>
+        <span className="shrink-0 text-xs font-bold tabular-nums text-foreground">{courtMatch.score || "—"}</span>
+        <span className={!homeWon ? "min-w-0 text-right font-semibold text-foreground" : "min-w-0 text-right text-muted-foreground"}>
           {awayTeamName}
         </span>
       </div>
 
       {/* Jugadores */}
-      {(courtMatch.home_player_1 || courtMatch.home_player_2) && (
+      {(courtMatch.home_player_1 || courtMatch.home_player_2 || courtMatch.away_player_1 || courtMatch.away_player_2) && (
         <div className="mt-1.5 text-xs text-muted-foreground flex gap-4 flex-wrap">
           <span>
             {[courtMatch.home_player_1?.display_name, courtMatch.home_player_2?.display_name]

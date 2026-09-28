@@ -222,6 +222,15 @@
   Cloudflare devuelva contenido vacío a partir del 2º request — hay que lanzar
   un **browser nuevo por página** para que cada uno pase el challenge de cero.
 
+- **Sponsors de Liga editables desde el panel — implementado en F3** (decidido 2026-09-27, durante
+  la maqueta de la Fase 3 del refactor visual): hoy los sponsors de la Liga
+  son estáticos (`content/sponsors.ts` + `components/liga/sponsors-banner.tsx`).
+  Pasan a cargarse desde `/panel-liga` (foto y, probablemente, nombre de la
+  marca) y ese contenido alimenta un **carrusel de sponsors en la vista de
+  edición activa** (reemplaza el `sponsors-banner` estático). El club confirmó
+  que los sponsors son **por edición** (OQ-LI-01 resuelta); la tabla en Supabase
+  debe relacionarlos con `tournaments`.
+
 - **Deuda técnica — datos del import de Challonge** (Sprint C7,
   `scripts/import-challonge.ts`, corrido el 2026-09-09) — **auditoría completa
   realizada el 2026-09-23** (scraping de las 15 páginas del listado de la

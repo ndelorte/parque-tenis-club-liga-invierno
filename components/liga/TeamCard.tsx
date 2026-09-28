@@ -10,15 +10,16 @@ interface TeamCardProps {
 
 export function TeamCard({ team, categorySlug, seasonSlug }: TeamCardProps) {
   return (
-    <Link href={teamHref(seasonSlug, categorySlug, team.slug)}>
-      <div className="bg-card border border-border rounded-lg px-4 py-3 hover:border-brand hover:shadow-sm transition-all group">
-        <p className="font-semibold text-foreground group-hover:text-brand transition-colors">
+    <Link href={teamHref(seasonSlug, categorySlug, team.slug)} className="group flex min-h-16 items-center justify-between gap-3 border-b border-border py-3 focus-visible:outline-2 focus-visible:outline-primary">
+      <span>
+        <span className="block font-heading text-lg font-bold text-foreground transition-colors group-hover:text-primary">
           {team.name}
-        </p>
+        </span>
         {team.captain_name && (
-          <p className="text-xs text-muted-foreground mt-0.5">Cap: {team.captain_name}</p>
+          <span className="mt-0.5 block text-sm text-muted-foreground">Capitán: {team.captain_name}</span>
         )}
-      </div>
+      </span>
+      <span aria-hidden="true" className="text-primary">↗</span>
     </Link>
   );
 }

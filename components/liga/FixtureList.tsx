@@ -1,4 +1,5 @@
 import type { Series } from "@/lib/tournament/types";
+import { formatDate } from "@/lib/utils";
 import { ResultCard } from "./ResultCard";
 
 interface FixtureListProps {
@@ -15,15 +16,8 @@ const statusLabel: Record<string, string> = {
   in_progress: "En curso",
 };
 
-function formatDate(dateStr?: string, timeStr?: string): string {
-  if (!dateStr) return "Fecha a confirmar";
-  const date = new Date(`${dateStr}T00:00:00`);
-  const d = date.toLocaleDateString("es-AR", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-  return timeStr ? `${d} · ${timeStr}` : d;
+function dateLabel(dateStr?: string, timeStr?: string): string {
+  return formatDate(dateStr ?? "", { month: "short", utc: true, time: timeStr, emptyLabel: "Fecha a confirmar" });
 }
 
 export function FixtureList({ series, title }: FixtureListProps) {
@@ -40,17 +34,17 @@ export function FixtureList({ series, title }: FixtureListProps) {
   const pending = series.filter((s) => s.status !== "completed" && s.status !== "walkover");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {pending.length > 0 && (
         <div>
-          <h3 className="font-semibold text-foreground mb-3">
+          <h3 className="mb-3 font-heading text-2xl font-bold text-foreground">
             {title ?? "Próximas fechas"}
           </h3>
           <div className="space-y-2">
             {pending.map((s) => (
               <div
                 key={s.id}
-                className="bg-card border border-border rounded-lg px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                className="flex min-h-16 flex-col gap-2 rounded-md border border-border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <p className="text-xs text-muted-foreground font-medium mb-0.5">
@@ -61,14 +55,14 @@ export function FixtureList({ series, title }: FixtureListProps) {
                       </span>
                     )}
                   </p>
-                  <p className="font-semibold text-foreground">
+                  <p className="font-heading text-base font-bold text-foreground">
                     {s.home_team?.name ?? s.home_team_id} vs{" "}
                     {s.away_team?.name ?? s.away_team_id}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="sm:text-right">
                   <p className="text-sm text-muted-foreground">
-                    {formatDate(s.scheduled_date, s.scheduled_time)}
+                    {dateLabel(s.scheduled_date, s.scheduled_time)}
                   </p>
                   <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                     {statusLabel[s.status] ?? s.status}
@@ -82,7 +76,7 @@ export function FixtureList({ series, title }: FixtureListProps) {
 
       {completed.length > 0 && (
         <div>
-          <h3 className="font-semibold text-foreground mb-3">Últimos resultados</h3>
+          <h3 className="mb-3 font-heading text-2xl font-bold text-foreground">Últimos resultados</h3>
           <div className="space-y-2">
             {completed.map((s) => (
               <ResultCard key={s.id} series={s} />
