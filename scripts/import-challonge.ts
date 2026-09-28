@@ -2,13 +2,22 @@
  * Importador histórico de partidos 2026 del Circuito del Parque — Challonge.
  *
  * A diferencia de scripts/import-circuito-ranking-sheet.ts (que importa los
- * puntos ya calculados desde la planilla del club — sigue siendo la fuente
- * de circuito_ranking_points, no tocar), este script trae el detalle
- * partido por partido desde la API de Challonge y lo guarda en
- * circuito_matches, para poder navegar los cuadros históricos en la web
- * (/circuito-del-parque/torneos/...). NO recalcula ni escribe
- * circuito_ranking_points — esa tabla ya está poblada desde la planilla y
- * este import no debe pisarla.
+ * puntos ya calculados desde la planilla del club para enero-junio 2026),
+ * este script trae el detalle partido por partido desde la API de Challonge
+ * y lo guarda en circuito_matches, para poder navegar los cuadros históricos
+ * en la web (/circuito-del-parque/torneos/...).
+ *
+ * Ranking (Sprint C7-fix, 2026-09-28): para cada categoría cuyo bracket
+ * "main" termina de importarse, si esa categoría **todavía no tiene ninguna
+ * fila** en circuito_ranking_points, se recalculan y persisten sus puntos
+ * con la misma función que usa el panel (recalculateAndPersistCircuitRanking,
+ * lib/data/circuito/ranking.ts) a partir de los circuito_matches recién
+ * importados. Así el ranking anual refleja los torneos de julio en adelante
+ * sin depender de que la planilla histórica los tenga cargados. Las
+ * categorías de enero-junio YA tienen filas (de la planilla) y por eso el
+ * chequeo las salta — nunca se pisan esos puntos con lo que daría el cálculo
+ * por código (no hay forma de confirmar acá que coincidan 1:1 con los
+ * ajustes manuales que pueda tener la planilla, ver OQ-39).
  *
  * Alcance: solo torneos 2026 (mismo criterio que el ranking, ver
  * reglas-circuito-del-parque.md — "alcance ranking: solo 2026+"). Challonge
@@ -81,6 +90,7 @@ import {
 } from "./lib/challonge"
 import { CIRCUITO_FIXED_CATEGORIES } from "../lib/data/circuito/categories"
 import { statusForMonth } from "../lib/circuito/editionStatus"
+import { recalculateAndPersistCircuitRanking } from "../lib/data/circuito/ranking"
 
 const YEAR = 2026
 
@@ -212,6 +222,18 @@ async function findOrCreateEdition(db: AdminClient, month: number, dryRun: boole
   return data.id
 }
 
+// true si la categoría ya tiene AL MENOS UNA fila en circuito_ranking_points
+// — el caso normal para enero-junio (planilla histórica). Se usa para no
+// disparar el recálculo por código sobre esos meses.
+async function categoryHasRankingPoints(db: AdminClient, categoryId: string): Promise<boolean> {
+  const { count, error } = await db
+    .from("circuito_ranking_points")
+    .select("id", { count: "exact", head: true })
+    .eq("category_id", categoryId)
+  if (error) throw new Error(`Error chequeando ranking existente de categoría ${categoryId}: ${error.message}`)
+  return (count ?? 0) > 0
+}
+
 async function findOrCreateCategory(db: AdminClient, editionId: string, categorySlug: string, dryRun: boolean): Promise<string> {
   const fixed = CIRCUITO_FIXED_CATEGORIES.find((c) => c.slug === categorySlug)!
   const { data: existing } = await db
@@ -261,6 +283,8 @@ async function main() {
     matchesWritten: 0,
     participantsCreated: 0,
     unmatchedPlayers: new Set<string>(),
+    rankingRecalculated: [] as string[],
+    rankingSkippedExisting: [] as string[],
   }
 
   // Ya existente o nuevo por CATEGORÍA DE UNA EDICIÓN PUNTUAL (categoryId,
@@ -394,6 +418,22 @@ async function main() {
     }
     summary.matchesWritten += rows.length
     ok(`${rows.length} partidos ${dryRun ? "a escribir (dry-run)" : "guardados"}`)
+
+    // Ranking: solo para el bracket "main" (el repechaje nunca puntúa) y
+    // solo si la categoría todavía no tiene ninguna fila en
+    // circuito_ranking_points — así nunca se pisa lo que vino de la planilla
+    // histórica (enero-junio), y los meses sin planilla (julio en adelante)
+    // quedan cubiertos con el mismo cálculo por instancia que usa el panel.
+    if (bracket === "main" && !dryRun) {
+      const label = `${parsed.categorySlug} · mes ${parsed.month}`
+      if (await categoryHasRankingPoints(db, categoryId)) {
+        summary.rankingSkippedExisting.push(label)
+      } else {
+        await recalculateAndPersistCircuitRanking(categoryId)
+        summary.rankingRecalculated.push(label)
+        ok(`Ranking recalculado para ${label}`)
+      }
+    }
   }
 
   log("\n── Resumen ──────────────────────────────────")
@@ -402,10 +442,14 @@ async function main() {
   log(`  Participantes nuevos creados: ${summary.participantsCreated}`)
   log(`  Sin jugador vinculado en players: ${summary.unmatchedPlayers.size}`)
   for (const p of summary.unmatchedPlayers) log(`    - "${p}"`)
+  log(`  Ranking recalculado (categorías sin datos previos de la planilla): ${summary.rankingRecalculated.length}`)
+  for (const c of summary.rankingRecalculated) log(`    - ${c}`)
+  log(`  Ranking sin tocar (ya tenía datos de la planilla histórica): ${summary.rankingSkippedExisting.length}`)
+  for (const c of summary.rankingSkippedExisting) log(`    - ${c}`)
   log(
     dryRun
-      ? "\n  Dry run completado."
-      : "\n  Import completado. No se tocó circuito_ranking_points (sigue viniendo de la planilla).",
+      ? "\n  Dry run completado. No se tocó circuito_ranking_points (el chequeo de recálculo no se evalúa en dry-run)."
+      : "\n  Import completado.",
   )
 }
 

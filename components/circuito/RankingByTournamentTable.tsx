@@ -30,7 +30,7 @@ export function RankingByTournamentTable({ ranking, categoryLabel, highlightTop 
         <caption className="caption-top pb-3 text-left text-sm text-muted-foreground">
           {categoryLabel}
           {highlightTop !== undefined &&
-            `. Los ${highlightTop} primeros, arriba de la línea, clasifican a la Final Master.`}
+            `. Los ${highlightTop} primeros, arriba de la línea, clasifican al Final Master.`}
         </caption>
         <thead>
           <tr className="border-b-2 border-draw-line text-xs font-semibold text-muted-foreground">

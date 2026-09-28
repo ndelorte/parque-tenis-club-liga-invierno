@@ -187,8 +187,17 @@ Septiembre=Us Open, Octubre=China Open, Noviembre=Paris Open, Diciembre=Belgrado
 
 Además del ranking (arriba), `scripts/import-challonge.ts` trae el detalle partido por partido
 desde la API de Challonge (v2.1, OAuth2) y lo guarda en `circuito_matches`, para poder navegar los
-cuadros históricos en `/circuito-del-parque/torneos/...`. **No toca `circuito_ranking_points`**
-(esa tabla sigue viniendo solo de la planilla, arriba).
+cuadros históricos en `/circuito-del-parque/torneos/...`.
+
+**Ranking de julio en adelante (fix 2026-09-28)**: la planilla histórica (arriba) solo tenía
+datos hasta junio al momento de importarla. Para que el ranking anual no dependa de que alguien
+vuelva a correr un import de planilla, `import-challonge.ts` ahora recalcula y persiste los
+puntos de cada categoría con `recalculateAndPersistCircuitRanking` (la misma función que usa el
+panel, `lib/data/circuito/ranking.ts` → `lib/circuito/pointsTable.ts`) apenas termina de importar
+el bracket `main` de esa categoría — pero **solo si esa categoría todavía no tiene ninguna fila**
+en `circuito_ranking_points`. Las categorías de enero-junio ya tienen filas (de la planilla) y
+por eso el script nunca las toca; julio en adelante, al no tener filas previas, quedan cubiertas
+por el cálculo desde `circuito_matches`. El repechaje nunca puntúa (no cambia).
 
 Corrido y verificado el 2026-09-09: 67 torneos, 652 partidos, ~495 participantes nuevos en
 `players`. La cuota de 500 requests/30 días del plan gratuito de Challonge es **por aplicación

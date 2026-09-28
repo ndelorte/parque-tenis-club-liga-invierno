@@ -9,12 +9,12 @@ import type { CircuitoMatchRow, CircuitoParticipantRow } from "@/lib/data/circui
 import type { CircuitoCategoryRow } from "@/lib/data/circuito/types"
 import { selectDrawRule } from "@/lib/circuito/generateBracket"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
-import { classifyMainBracketSections, type DisplayMatch } from "@/lib/circuito/bracketDisplay"
+import { classifyMainBracketSections, eliminationSections, type DisplayMatch } from "@/lib/circuito/bracketDisplay"
 import { buildBracketTree, type BracketTreeParticipant } from "@/lib/circuito/bracketTree"
 import { calculateZoneStandings } from "@/lib/circuito/calculateZoneStandings"
 import { parseCircuitoScore } from "@/lib/circuito/parseCircuitoScore"
 import { isGrandSlamMonth, pointsForInstance } from "@/lib/circuito/pointsTable"
-import type { CircuitoParticipant } from "@/lib/circuito/types"
+import type { CircuitoParticipant, DrawFormatKind } from "@/lib/circuito/types"
 import { BracketTreeView } from "@/components/circuito/bracket-tree"
 import { RoundsView } from "@/components/circuito/rounds-view"
 import { ChampionCard } from "@/components/circuito/champion-card"
@@ -76,22 +76,35 @@ function buildZoneDisplay(
     zoneParticipants.map((p) => [p.id, { played: 0, wins: 0, setsWon: 0, setsLost: 0, gamesWon: 0, gamesLost: 0 }]),
   )
   for (const m of completed) {
-    const parsed = parseCircuitoScore(m.score!, { isFinal: false })
     const a = stats.get(m.participant_a_id!)
     const b = stats.get(m.participant_b_id!)
     if (!a || !b) continue
     a.played++
     b.played++
-    a.setsWon += parsed.setsWonA
-    a.setsLost += parsed.setsWonB
-    b.setsWon += parsed.setsWonB
-    b.setsLost += parsed.setsWonA
-    a.gamesWon += parsed.gamesWonA
-    a.gamesLost += parsed.gamesWonB
-    b.gamesWon += parsed.gamesWonB
-    b.gamesLost += parsed.gamesWonA
+
+    // Datos importados (Challonge) pueden traer un score con un formato
+    // atípico que parseCircuitoScore no puede interpretar (ver
+    // lib/circuito/parseCircuitoScore.ts). En vez de tirar abajo toda la
+    // página con una excepción sin capturar, se loguea y ese partido
+    // puntual queda sin sumar a sets/games — el resto de la zona se sigue
+    // mostrando normalmente.
+    try {
+      const parsed = parseCircuitoScore(m.score!, { isFinal: false })
+      a.setsWon += parsed.setsWonA
+      a.setsLost += parsed.setsWonB
+      b.setsWon += parsed.setsWonB
+      b.setsLost += parsed.setsWonA
+      a.gamesWon += parsed.gamesWonA
+      a.gamesLost += parsed.gamesWonB
+      b.gamesWon += parsed.gamesWonB
+      b.gamesLost += parsed.gamesWonA
+    } catch (err) {
+      console.error(`[buildZoneDisplay] score no interpretable "${m.score}" para el partido ${m.id}: no se suman sets/games`, err)
+    }
+
     if (m.winner_id === m.participant_a_id) a.wins++
-    else b.wins++
+    else if (m.winner_id === m.participant_b_id) b.wins++
+    else console.error(`[buildZoneDisplay] winner_id "${m.winner_id}" no coincide con ninguno de los 2 participantes del partido ${m.id}`)
   }
 
   const order = calculateZoneStandings(zoneParticipants, results)
@@ -144,6 +157,12 @@ export default async function CircuitoTorneoCategoriaPage({
   const mainMatches = matches.filter((m) => m.bracket === "main")
   const repechajeMatches = matches.filter((m) => m.bracket === "repechaje")
   const rule = selectDrawRule(category.draw_size, CIRCUITO_FORMAT_SPEC)
+  // draw_size fuera de todo drawRule conocido (ej. cargado a mano o por un
+  // import con menos del mínimo de 4 inscriptos) — reglas-circuito-del-parque.md:
+  // "con menos de 4 inscriptos la categoría no se disputa ese mes". Sin esto,
+  // la página seguía de largo y renderizaba solo el encabezado, sin ninguna
+  // sección de contenido (pantalla en blanco sin explicación).
+  if (!rule) notFound()
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
@@ -259,7 +278,14 @@ function EliminationSections({
               </div>
             </>
           ) : (
-            <FallbackSections matches={repechajeMatches} names={names} />
+            // El repechaje SIEMPRE es eliminación directa (generateRepechaje.ts,
+            // formatSpec.ts sección `repechaje`) — no hay que inferir el formato
+            // por cantidad de jugadores como hace classifyMainBracketSections
+            // (esa inferencia es para el cuadro PRINCIPAL). El repechaje suele
+            // tener 4-7 jugadores (perdedores de 1ª ronda), que classify... lee
+            // como round robin/zonas y muestra como "fase de grupos" — por eso
+            // se fuerza acá el formato en vez de dejarlo inferir.
+            <FallbackSections matches={repechajeMatches} names={names} format="single_elimination" />
           )}
         </section>
       )}
@@ -269,9 +295,22 @@ function EliminationSections({
 
 // Cuando buildBracketTree no puede armar un árbol válido (cuadros
 // importados, ver bracketDisplay.ts): listas por ronda con el mismo estilo
-// de tarjeta, sin conectores.
-function FallbackSections({ matches, names }: { matches: CircuitoMatchRow[]; names: Record<string, BracketTreeParticipant> }) {
-  const sections = classifyMainBracketSections(matches as DisplayMatch[])
+// de tarjeta, sin conectores. `format`: si se pasa, fuerza esa clasificación
+// en vez de inferirla por cantidad de participantes (el repechaje ya sabe su
+// formato de antemano, no hay que inferirlo).
+function FallbackSections({
+  matches,
+  names,
+  format,
+}: {
+  matches: CircuitoMatchRow[]
+  names: Record<string, BracketTreeParticipant>
+  format?: DrawFormatKind
+}) {
+  const sections =
+    format === "single_elimination"
+      ? eliminationSections(matches as DisplayMatch[])
+      : classifyMainBracketSections(matches as DisplayMatch[])
   if (sections.length === 0) return null
 
   return (
