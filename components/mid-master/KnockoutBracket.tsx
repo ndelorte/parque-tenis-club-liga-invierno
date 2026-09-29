@@ -1,10 +1,11 @@
 import type { MmKnockout, MmKnockoutMatch } from "@/lib/mid-master/types"
+import { parseSetScores } from "./parseSetScores"
 
-const DAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
-const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+const DAYS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"]
+const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
 
 function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + "T12:00:00")
+  const d = new Date(`${dateStr}T12:00:00`)
   return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`
 }
 
@@ -12,122 +13,145 @@ interface Props {
   knockout: MmKnockout
 }
 
+/**
+ * Cuadro final: semis a los lados, final al centro en desktop; en celular se
+ * apila semi 1, semi 2, final (ver Opcion1-EspecialesCategoria.dc.html). Los
+ * seeds ("1° Zona A", "Ganador semifinal 1", ...) son fijos por reglamento
+ * (product/reglas-mid-master.md) y no dependen de los datos: no se inventa
+ * nada, solo se hardcodea el texto documentado para el slot correspondiente.
+ */
 export function KnockoutBracket({ knockout }: Props) {
   const { semifinal1, semifinal2, final } = knockout
 
   return (
-    <div className="border border-mm-border bg-mm-surface">
-      <div className="border-b border-mm-border px-5 py-4">
-        <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-mm-text-faint">
-          Cuadro final
-        </p>
-      </div>
-
-      {/* Desktop: 3 columns — SF1 | Final | SF2 */}
-      <div className="hidden grid-cols-3 divide-x divide-mm-border md:grid">
-        <BracketColumn match={semifinal1} />
-        <BracketColumn match={final} center />
-        <BracketColumn match={semifinal2} />
-      </div>
-
-      {/* Mobile: stacked */}
-      <div className="divide-y divide-mm-border md:hidden">
-        <BracketColumn match={semifinal1} />
-        <BracketColumn match={semifinal2} />
-        <BracketColumn match={final} />
-      </div>
+    <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1.15fr_1fr] md:items-center md:gap-0">
+      <BracketMatch
+        match={semifinal1}
+        seedA="1° Zona A"
+        seedB="2° Zona B"
+        className="order-1 md:order-none md:relative md:mr-7 after:content-[''] after:absolute after:top-1/2 after:right-[-29px] after:hidden after:h-px after:w-7 after:bg-mm-gold md:after:block"
+      />
+      <BracketMatch match={final} seedA="Ganador semifinal 1" seedB="Ganador semifinal 2" isFinal className="order-3 md:order-none" />
+      <BracketMatch
+        match={semifinal2}
+        seedA="1° Zona B"
+        seedB="2° Zona A"
+        className="order-2 md:order-none md:relative md:ml-7 before:content-[''] before:absolute before:top-1/2 before:left-[-29px] before:hidden before:h-px before:w-7 before:bg-mm-gold md:before:block"
+      />
     </div>
   )
 }
 
-function BracketColumn({
+function BracketMatch({
   match,
-  center,
+  seedA,
+  seedB,
+  isFinal,
+  className = "",
 }: {
   match: MmKnockoutMatch
-  center?: boolean
+  seedA: string
+  seedB: string
+  isFinal?: boolean
+  className?: string
 }) {
-  const winnerA = match.status === "played" && match.winnerId === match.participantAId
-  const winnerB = match.status === "played" && match.winnerId === match.participantBId
-  const isFinal = match.phase === "final"
+  const isCompleted = match.status === "played" || match.status === "walkover"
+  const winnerA = isCompleted && match.winnerId === match.participantAId
+  const winnerB = isCompleted && match.winnerId === match.participantBId
+  const sets = isCompleted ? parseSetScores(match.score) : []
 
   return (
-    <div className={`px-5 py-6 ${center ? "flex flex-col items-center text-center" : ""}`}>
-      {/* Phase label */}
-      <p className="mb-4 text-[10px] font-medium uppercase tracking-[0.18em] text-mm-text-faint">
-        {match.label}
+    <article
+      className={`border bg-mm-surface ${isFinal ? "border-mm-gold" : "border-mm-border-strong"} ${className}`}
+      aria-label={match.label}
+    >
+      <p className="flex items-center justify-between gap-2 border-b border-mm-border-strong px-3.5 py-2.5 text-sm text-mm-text-muted">
+        <strong className="font-heading text-[17px] font-bold tracking-[0.01em] text-mm-gold">
+          {match.label}
+        </strong>
+        {match.scheduledDate && (
+          <span>
+            {formatDate(match.scheduledDate)}
+            {match.scheduledTime && `, ${match.scheduledTime} h`}
+          </span>
+        )}
       </p>
 
-      {/* Participant A */}
-      <BracketSlot
-        label={match.participantALabel}
+      <BracketSide
+        seed={seedA}
+        name={match.participantALabel}
         isWinner={winnerA}
         isPending={!match.participantAId}
-        center={center}
+        sets={sets}
+        side="a"
+        isFinal={isFinal}
       />
-
-      {/* Divider / Score */}
-      <div className="my-2 flex items-center gap-3">
-        <div className="flex-1 border-t border-mm-border" />
-        {match.score ? (
-          <span className="shrink-0 font-mono text-xs text-mm-gold">
-            {match.score}
-          </span>
-        ) : (
-          <span className="shrink-0 text-[10px] text-mm-text-faint">vs</span>
-        )}
-        <div className="flex-1 border-t border-mm-border" />
-      </div>
-
-      {/* Participant B */}
-      <BracketSlot
-        label={match.participantBLabel}
+      <BracketSide
+        seed={seedB}
+        name={match.participantBLabel}
         isWinner={winnerB}
         isPending={!match.participantBId}
-        center={center}
+        sets={sets}
+        side="b"
+        isFinal={isFinal}
       />
 
-      {/* Date */}
-      {match.scheduledDate && (
-        <p className="mt-3 text-[11px] text-mm-text-faint">
-          {formatDate(match.scheduledDate)}
-          {match.scheduledTime && ` · ${match.scheduledTime}`}
-        </p>
-      )}
-
-      {/* Status badge */}
-      {!match.scheduledDate && match.status !== "played" && match.status !== "walkover" && (
-        <p className="mt-3 text-[11px] text-mm-text-faint">
+      {!match.scheduledDate && !isCompleted && (
+        <p className="border-t border-mm-border-strong px-3.5 py-2 text-[11px] text-mm-text-muted">
           {isFinal ? "Se define al final de las semifinales" : "Por definir"}
         </p>
       )}
-    </div>
+    </article>
   )
 }
 
-function BracketSlot({
-  label,
+function BracketSide({
+  seed,
+  name,
   isWinner,
   isPending,
-  center,
+  sets,
+  side,
+  isFinal,
 }: {
-  label: string
+  seed: string
+  name: string
   isWinner: boolean
   isPending: boolean
-  center?: boolean
+  sets: ReturnType<typeof parseSetScores>
+  side: "a" | "b"
+  isFinal?: boolean
 }) {
   return (
     <div
-      className={`flex items-center gap-2 border border-mm-border px-3 py-2.5 ${center ? "justify-center" : ""} ${isWinner ? "border-mm-gold/50 bg-mm-green-deep" : "bg-mm-bg"}`}
+      className={`grid min-h-14 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border-t border-mm-border-strong px-3.5 py-2.5 first:border-t-0 ${
+        isWinner ? "bg-mm-green-deep" : ""
+      }`}
     >
-      {isWinner && (
-        <span className="size-1.5 shrink-0 rounded-full bg-mm-gold" />
+      <div className="min-w-0">
+        <p className="text-[12.5px] leading-tight text-mm-text-muted">{seed}</p>
+        <p
+          className={`truncate text-sm ${isFinal ? "font-mm-display text-[19px]" : ""} ${
+            isWinner ? "font-bold text-mm-gold-light" : isPending ? "italic text-mm-text-muted" : "text-mm-text"
+          }`}
+        >
+          {name}
+          {isWinner && <span className="sr-only"> (ganó)</span>}
+        </p>
+      </div>
+      {sets.length > 0 && (
+        <span className="flex gap-1 font-heading text-[22px] font-semibold tabular-nums text-mm-text-muted">
+          {sets.map((set, i) => {
+            const value = side === "a" ? set.a : set.b
+            const isSetWinner = side === "a" ? set.a > set.b : set.b > set.a
+            return (
+              <b key={i} className={`inline-block w-[22px] text-center font-semibold ${isSetWinner ? "text-mm-text" : ""}`}>
+                {value}
+              </b>
+            )
+          })}
+        </span>
       )}
-      <span
-        className={`text-sm ${isWinner ? "font-medium text-mm-gold-light" : isPending ? "italic text-mm-text-faint" : "text-mm-text"}`}
-      >
-        {label}
-      </span>
     </div>
   )
 }

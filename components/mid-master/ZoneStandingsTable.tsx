@@ -12,73 +12,69 @@ export function ZoneStandingsTable({ zone }: Props) {
   const hasResults = zone.standings.some((r) => r.played > 0)
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+    <div
+      className="overflow-x-auto"
+      role="region"
+      aria-label={`Tabla de la ${zone.name.toLowerCase()}`}
+      tabIndex={0}
+    >
+      <table className="w-full min-w-[480px] text-[15px]">
         <thead>
           <tr>
-            <th className="w-7 pb-3 text-left text-[10px] font-medium uppercase tracking-widest text-mm-text-faint">
-              #
+            <th scope="col" className="w-8 border-b border-mm-gold-muted py-2 text-left text-[13px] font-semibold text-mm-text-muted">
+              <span className="sr-only">Posición</span>#
             </th>
-            <th className="pb-3 text-left text-[10px] font-medium uppercase tracking-widest text-mm-text-faint">
-              Participante
+            <th scope="col" className="border-b border-mm-gold-muted py-2 pr-2 text-left text-[13px] font-semibold text-mm-text-muted">
+              Jugador
             </th>
-            <th className="hidden pb-3 text-center text-[10px] font-medium uppercase tracking-widest text-mm-text-faint sm:table-cell">
-              PJ
+            <th scope="col" className="border-b border-mm-gold-muted py-2 text-right text-[13px] font-semibold text-mm-text-muted">
+              <abbr title="Partidos jugados" className="no-underline">PJ</abbr>
             </th>
-            <th className="pb-3 text-center text-[10px] font-medium uppercase tracking-widest text-mm-text-faint">
-              PG
+            <th scope="col" className="border-b border-mm-gold-muted py-2 text-right text-[13px] font-semibold text-mm-text-muted">
+              <abbr title="Partidos ganados" className="no-underline">PG</abbr>
             </th>
-            <th className="hidden pb-3 text-center text-[10px] font-medium uppercase tracking-widest text-mm-text-faint sm:table-cell">
-              PP
+            <th scope="col" className="border-b border-mm-gold-muted py-2 text-right text-[13px] font-semibold text-mm-text-muted">
+              <abbr title="Partidos perdidos" className="no-underline">PP</abbr>
             </th>
-            <th className="pb-3 text-center text-[10px] font-medium uppercase tracking-widest text-mm-text-faint">
+            <th scope="col" className="border-b border-mm-gold-muted py-2 text-right text-[13px] font-semibold text-mm-text-muted">
               Sets
             </th>
-            <th className="hidden pb-3 text-center text-[10px] font-medium uppercase tracking-widest text-mm-text-faint md:table-cell">
-              Games
+            <th scope="col" className="border-b border-mm-gold-muted py-2 text-right text-[13px] font-semibold text-mm-text-muted">
+              <abbr title="Diferencia de games" className="no-underline">Dif. g</abbr>
             </th>
           </tr>
         </thead>
         <tbody>
           {zone.standings.map((row) => {
             const name = getParticipantName(zone, row.participantId)
-            const isLeader = row.position === 1
             return (
-              <tr
-                key={row.participantId}
-                className="border-t border-mm-border transition-colors hover:bg-mm-surface-2"
-              >
-                <td className="py-3 pr-2">
-                  <span
-                    className={`text-sm font-bold ${isLeader ? "text-mm-gold" : "text-mm-text-faint"}`}
-                  >
-                    {row.position}
-                  </span>
-                  {row.advances && (
-                    <span
-                      className="ml-1 inline-block size-1.5 rounded-full bg-mm-gold align-middle"
-                      title="Avanza a semifinales"
-                    />
-                  )}
+              <tr key={row.participantId} className="border-b border-mm-border-strong">
+                <td className={`h-12 py-0 pr-2 text-left font-heading text-[19px] font-semibold tabular-nums ${row.advances ? "text-mm-gold-light" : "text-mm-text-muted"}`}>
+                  {row.position}
                 </td>
-                <td className="py-3 pr-4">
-                  <span className={`text-sm ${row.advances && hasResults ? "font-medium text-mm-text" : "text-mm-text"}`}>
+                <td className="h-12 py-0 pr-2 text-left font-sans text-[15px]">
+                  <span className={row.advances ? "font-bold text-mm-text" : "font-medium text-mm-text"}>
                     {name}
                   </span>
+                  {row.advances && (
+                    <span className="ml-2 inline-block rounded-sm border border-mm-gold-muted px-1.5 py-px align-middle text-[12px] font-bold text-mm-gold-light">
+                      Semis
+                    </span>
+                  )}
                 </td>
-                <td className="hidden py-3 text-center text-sm text-mm-text-muted sm:table-cell">
+                <td className="h-12 py-0 text-right font-heading text-[19px] font-semibold tabular-nums text-mm-text">
                   {row.played}
                 </td>
-                <td className="py-3 text-center text-sm font-medium text-mm-text">
+                <td className="h-12 py-0 text-right font-heading text-[19px] font-semibold tabular-nums text-mm-text">
                   {row.won}
                 </td>
-                <td className="hidden py-3 text-center text-sm text-mm-text-muted sm:table-cell">
+                <td className="h-12 py-0 text-right font-heading text-[19px] font-semibold tabular-nums text-mm-text">
                   {row.lost}
                 </td>
-                <td className="py-3 text-center text-sm tabular-nums">
-                  <DiffCell value={row.setsDiff} />
+                <td className="h-12 py-0 text-right font-heading text-[19px] font-semibold tabular-nums text-mm-text">
+                  {row.setsWon}-{row.setsLost}
                 </td>
-                <td className="hidden py-3 text-center text-sm tabular-nums md:table-cell">
+                <td className="h-12 py-0 text-right font-heading text-[19px] font-semibold tabular-nums">
                   <DiffCell value={row.gamesDiff} />
                 </td>
               </tr>
@@ -88,23 +84,14 @@ export function ZoneStandingsTable({ zone }: Props) {
       </table>
 
       {!hasResults && (
-        <p className="mt-3 text-xs text-mm-text-faint">
-          Sin resultados cargados todavía.
-        </p>
+        <p className="mt-3 text-xs text-mm-text-muted">Sin resultados cargados todavía.</p>
       )}
-
-      <p className="mt-3 flex items-center gap-1.5 text-[10px] text-mm-text-faint">
-        <span className="inline-block size-1.5 rounded-full bg-mm-gold" />
-        Avanza a semifinales
-      </p>
     </div>
   )
 }
 
 function DiffCell({ value }: { value: number }) {
-  if (value > 0)
-    return <span className="text-mm-gold-light">+{value}</span>
-  if (value < 0)
-    return <span className="text-mm-text-faint">{value}</span>
+  if (value > 0) return <span className="text-mm-win">+{value}</span>
+  if (value < 0) return <span className="text-mm-loss">{value}</span>
   return <span className="text-mm-text-muted">0</span>
 }

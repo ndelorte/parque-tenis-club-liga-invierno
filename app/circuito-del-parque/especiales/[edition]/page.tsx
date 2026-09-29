@@ -28,11 +28,20 @@ export default async function EdicionEspecialPage({ params }: Props) {
   if (!ed) notFound()
 
   const categories = await getMmCategoriesForPublic(ed.id)
+  const participantsCount = categories.reduce(
+    (sum, cat) => sum + cat.zones[0].participants.length + cat.zones[1].participants.length,
+    0,
+  )
 
   return (
     <>
-      <MidMasterHero year={ed.year} />
-      <CategoryGrid categories={categories} />
+      <MidMasterHero
+        name={ed.name}
+        year={ed.year}
+        categoriesCount={categories.length}
+        participantsCount={participantsCount}
+      />
+      <CategoryGrid editionSlug={ed.slug} categories={categories} />
       <MmSponsorsBanner />
     </>
   )

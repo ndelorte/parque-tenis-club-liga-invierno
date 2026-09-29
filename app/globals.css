@@ -27,6 +27,7 @@
   --secondary: #e8ede6;
   --secondary-foreground: #13241a;
   --border: #d3dbd2;
+  --border-strong: #7b8a80; /* bordes de controles (AA 3:1); #d3dbd2 solo alcanza 2.89:1 */
   --input: #c7d1c6;
 
   --primary: #1c3a2a; /* tablero */
@@ -97,6 +98,7 @@
   --secondary: #1d3025;
   --secondary-foreground: #eef1ec;
   --border: #25392d;
+  --border-strong: #5f7a69;
   --input: #2f4638;
 
   --primary: #7fb08a;
@@ -149,6 +151,17 @@
 }
 [data-identity="interparque"] {
   --section-accent: var(--ball);
+  /* La pelota (--ball) es decoración/fondo, nunca texto sobre claro. */
+  --ip-ink: #5a6100;
+  --ip-soft: #f3f6d2;
+  --ip-line: #b9c43a;
+  --on-ball: #13241a;
+  --on-ball-muted: #3d4a12;
+}
+.dark [data-identity="interparque"] {
+  --ip-ink: #d4e04a;
+  --ip-soft: #262a10;
+  --ip-line: #8e9831;
 }
 
 /* ── Mapeo a Tailwind ─────────────────────────────────────────────────────── */
@@ -165,6 +178,7 @@
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
@@ -205,6 +219,13 @@
   --color-section-foreground: var(--section-foreground);
   --color-section-accent: var(--section-accent);
 
+  /* Interparque (data-identity="interparque"): --ball nunca es texto sobre claro. */
+  --color-ip-ink: var(--ip-ink);
+  --color-ip-soft: var(--ip-soft);
+  --color-ip-line: var(--ip-line);
+  --color-on-ball: var(--on-ball);
+  --color-on-ball-muted: var(--on-ball-muted);
+
   --font-sans: var(--font-barlow), system-ui, sans-serif;
   --font-heading: var(--font-barlow-condensed), var(--font-barlow), system-ui, sans-serif;
   --font-mm-display: var(--font-playfair), Georgia, serif;
@@ -215,27 +236,35 @@
   --color-winter: #4d90c4;
   --color-winter-foreground: #ffffff;
 
-  /* Mid Master — siempre oscuro, identidad propia (se migra en la Fase 4) */
+  /* Mid Master / Especiales — siempre oscuro, identidad propia (Fase 4).
+     Valores extraídos de product/refactor-visual/maquetas/fase-4/Opcion1-*.dc.html
+     (bloque .esp del :root/<style>), compartidos por Mid Master y Final Master. */
   --color-mm-bg: #0d0f0d;
   --color-mm-surface: #161a15;
   --color-mm-surface-2: #1e2520;
   --color-mm-border: #2a2f29;
+  --color-mm-border-strong: #5b6258;
   --color-mm-gold: #c9a84c;
   --color-mm-gold-light: #e5c97a;
   --color-mm-gold-muted: #6b5520;
+  --color-mm-gold-wash: #1c1a10;
   --color-mm-text: #f0ebe0;
-  --color-mm-text-muted: #8a8679;
+  --color-mm-text-muted: #a39e90; /* auditoría F4: #8a8679 daba 4.84:1 sobre surface, al límite */
   --color-mm-text-faint: #4a4740;
   --color-mm-green-deep: #1a2e1f;
+  --color-mm-clay: #e8844f;
+  --color-mm-clay-deep: #3a1f12;
+  --color-mm-win: #7fcf8f;
+  --color-mm-loss: #ff8f85;
+  --color-mm-plaque: #f0ebe0; /* placa clara detrás de logos de sponsors (mix-blend-mode: multiply) */
 
   /* Movimiento (§3.5): criterio de Emil Kowalski. No inventar otras curvas. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 
-  --animate-bob: bob 3s ease-in-out infinite;
   --animate-snow: snow-fall 12s linear infinite;
-  --animate-hourglass: hourglass-flip 4s ease-in-out infinite;
+  --animate-mm-court-draw: mm-court-draw 900ms var(--ease-out) both;
 }
 
 /* ── Base ─────────────────────────────────────────────────────────────────── */
@@ -403,15 +432,30 @@ h3 {
 }
 
 /* ── Animaciones existentes (se revisan en la fase de cada pantalla) ──────── */
-@keyframes bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+
+/* Líneas de cancha decorativas de Especiales (componente CourtLines,
+   components/mid-master/CourtLines.tsx): se dibujan una sola vez al montar.
+   pathLength="1" en el SVG normaliza el trazo a 0–1, por eso el dashoffset
+   va de 1 (invisible) a 0 (dibujado). Sin animate-mm-court-draw (p. ej. con
+   motion-reduce:animate-none) el trazo ya se ve completo por defecto. */
+@keyframes mm-court-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
 }
 
-@keyframes hourglass-flip {
-  0%, 40% { transform: rotate(0deg); }
-  50%, 90% { transform: rotate(180deg); }
-  100% { transform: rotate(360deg); }
+.mm-court-line {
+  fill: none;
+  stroke: var(--color-mm-gold);
+  stroke-width: 2;
+  opacity: 0.55;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+.mm-court-line-net {
+  stroke: var(--color-mm-gold-light);
+  stroke-width: 2.5;
+  opacity: 0.9;
 }
 
 @keyframes mm-fade-up {
@@ -451,6 +495,10 @@ h3 {
   }
 }
 
+.group:focus-within .sponsors-marquee-track {
+  animation-play-state: paused;
+}
+
 @keyframes snow-fall {
   0% { transform: translateY(-24px) translateX(0); opacity: 0; }
   10% { opacity: 1; }
@@ -466,9 +514,7 @@ h3 {
     transform: none;
   }
   .sponsors-marquee-track,
-  .animate-snow,
-  .animate-bob,
-  .animate-hourglass {
+  .animate-snow {
     animation: none;
   }
   .mm-fade-up {

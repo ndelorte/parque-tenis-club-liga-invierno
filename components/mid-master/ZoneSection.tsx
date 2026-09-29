@@ -6,34 +6,25 @@ interface Props {
   zone: MmZone
 }
 
+const PLAYED_STATUSES = new Set(["played", "walkover"])
+
 export function ZoneSection({ zone }: Props) {
+  const total = zone.matches.length
+  const played = zone.matches.filter((m) => PLAYED_STATUSES.has(m.status)).length
+
   return (
-    <div className="rounded-none border border-mm-border bg-mm-surface">
-      {/* Zone header */}
-      <div className="border-b border-mm-border px-5 py-4">
-        <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-mm-text-faint">
-          Zona
-        </p>
-        <h3 className="mt-0.5 text-base font-semibold text-mm-text">
-          {zone.name}
-        </h3>
-      </div>
-
-      {/* Standings */}
-      <div className="border-b border-mm-border px-5 py-5">
-        <p className="mb-4 text-[10px] font-medium uppercase tracking-widest text-mm-text-faint">
-          Posiciones
-        </p>
-        <ZoneStandingsTable zone={zone} />
-      </div>
-
-      {/* Fixture */}
-      <div className="px-5 py-5">
-        <p className="mb-4 text-[10px] font-medium uppercase tracking-widest text-mm-text-faint">
-          Fixture
-        </p>
-        <ZoneFixture zone={zone} />
-      </div>
+    <div>
+      <h3 className="mb-2.5 flex items-baseline gap-3 font-mm-display text-[26px] text-mm-text">
+        {zone.name}
+        {total > 0 && (
+          <span className="font-sans text-sm font-medium text-mm-text-muted">
+            <span className="tabular-nums">{played}</span> de <span className="tabular-nums">{total}</span> partidos
+            jugados
+          </span>
+        )}
+      </h3>
+      <ZoneStandingsTable zone={zone} />
+      <ZoneFixture zone={zone} />
     </div>
   )
 }
