@@ -15,7 +15,7 @@ export function CategoryTabs({ categories, seasonSlug }: CategoryTabsProps) {
   const pathname = usePathname();
 
   return (
-    <div className="bg-white border-b border-border sticky top-16 z-40">
+    <nav aria-label="Categorías de la liga" className="sticky top-16 z-30 border-b border-border bg-background/95 backdrop-blur">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex overflow-x-auto gap-1 py-1 no-scrollbar">
           {categories.map((cat) => {
@@ -26,11 +26,12 @@ export function CategoryTabs({ categories, seasonSlug }: CategoryTabsProps) {
                 key={cat.id}
                 href={href}
                 className={cn(
-                  "whitespace-nowrap px-4 py-2.5 text-sm font-medium rounded-t transition-colors",
+                  "inline-flex min-h-11 items-center whitespace-nowrap border-b-2 px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary",
                   active
-                    ? "text-brand border-b-2 border-brand bg-brand-light"
-                    : "text-gray-600 hover:text-brand hover:bg-gray-50"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:border-primary/40 hover:text-foreground"
                 )}
+                aria-current={active ? "page" : undefined}
               >
                 {cat.name}
               </Link>
@@ -38,6 +39,6 @@ export function CategoryTabs({ categories, seasonSlug }: CategoryTabsProps) {
           })}
         </div>
       </div>
-    </div>
+    </nav>
   );
 }

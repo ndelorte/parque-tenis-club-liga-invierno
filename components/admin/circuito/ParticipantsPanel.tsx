@@ -114,7 +114,7 @@ export function ParticipantsPanel({
                 <button
                   onClick={() => handleRemove(p.id)}
                   disabled={loading}
-                  className="rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500"
+                  className="rounded p-1 text-muted-foreground hover:bg-loss-soft hover:text-loss"
                   title="Quitar"
                 >
                   <Trash2 className="size-3.5" />
@@ -165,7 +165,7 @@ export function ParticipantsPanel({
         </>
       )}
 
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-3 text-sm text-loss">{error}</p>}
     </div>
   )
 }

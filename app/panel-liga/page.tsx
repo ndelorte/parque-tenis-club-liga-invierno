@@ -1,32 +1,20 @@
 import type { Metadata } from "next"
-import Link from "next/link"
-import {
-  Snowflake,
-  ArrowLeft,
-  ClipboardList,
-  Trophy,
-  Users,
-  CalendarClock,
-  Swords,
-  ImagePlus,
-  LogOut,
-} from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ResultLoader } from "@/components/admin/result-loader"
 import { TeamManager } from "@/components/admin/team-manager"
 import { FixtureManager } from "@/components/admin/fixture-manager"
 import { PlayoffManager } from "@/components/admin/playoff-manager"
 import { CloseTournamentButton } from "@/components/admin/close-tournament-button"
 import { PhotoManager } from "@/components/admin/photo-manager"
+import { SponsorManager } from "@/components/admin/sponsor-manager"
+import { AdminShell, AdminPageHeader } from "@/components/admin/admin-shell"
+import { LIGA_SECTION_KEYS } from "@/components/admin/panels"
 import {
   getAdminCategories,
   getAdminActiveTournament,
   getMissingFinalsForTournament,
   getTournamentsForPhotoAdmin,
 } from "@/app/actions/admin"
-import { signOut } from "@/app/actions/auth"
+import { getActiveTournament } from "@/lib/data/tournaments"
 
 export const metadata: Metadata = {
   title: "Panel de carga | Liga de Invierno",
@@ -34,117 +22,84 @@ export const metadata: Metadata = {
     "Dashboard interno para cargar resultados de la Liga de Invierno de Parque Tenis Club.",
 }
 
-export default async function PanelPage() {
+const SECTION_HEADERS: Record<string, { title: string; lede: string }> = {
+  resultados: {
+    title: "Resultados",
+    lede: "Elegí la categoría y la fecha para cargar el resultado de cada serie.",
+  },
+  jugadores: {
+    title: "Jugadores",
+    lede: "Administrá los planteles de cada equipo.",
+  },
+  fixture: {
+    title: "Fixture",
+    lede: "Cargá el fixture y reprogramá las fechas de las series.",
+  },
+  playoffs: {
+    title: "Playoffs",
+    lede: "Cuadro de playoffs por categoría: cargá los cruces y sus resultados.",
+  },
+  fotos: {
+    title: "Fotos",
+    lede: "Fotos de cada edición para el sitio público.",
+  },
+  sponsors: {
+    title: "Sponsors",
+    lede: "Sponsors de cada edición para el sitio público.",
+  },
+}
+
+export default async function PanelPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ seccion?: string }>
+}) {
+  const { seccion } = await searchParams
+  const section = seccion && LIGA_SECTION_KEYS.includes(seccion) ? seccion : "resultados"
+
   const categories = await getAdminCategories()
   const activeTournament = await getAdminActiveTournament()
   const missingFinals = activeTournament
     ? await getMissingFinalsForTournament(activeTournament.id)
     : []
   const photoTournaments = await getTournamentsForPhotoAdmin()
+  // El slug de la edición es el `[season]` de la ruta pública.
+  const publicTournament = await getActiveTournament()
+
+  const header = SECTION_HEADERS[section]
 
   return (
-    <div className="min-h-dvh bg-background">
-      <header className="sticky top-0 z-30 border-b border-border bg-primary text-primary-foreground">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3 sm:px-6">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-foreground/15">
-            <ClipboardList className="size-5" />
-          </span>
-          <div className="min-w-0">
-            <p className="truncate font-heading text-base font-bold leading-tight">
-              Panel de carga
-            </p>
-            <p className="flex items-center gap-1 text-xs text-primary-foreground/70">
-              <Snowflake className="size-3 text-winter" />
-              Liga de Invierno
-            </p>
-          </div>
-          <Badge className="ml-auto bg-accent text-accent-foreground hover:bg-accent">
-            Admin
-          </Badge>
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors"
-            >
-              <LogOut className="size-3.5" />
-              <span className="hidden sm:inline">Cerrar sesión</span>
-            </button>
-          </form>
-          <Button
-            asChild
-            variant="secondary"
-            size="sm"
-            className="hidden bg-primary-foreground text-primary hover:bg-primary-foreground/90 sm:inline-flex"
-          >
-            <Link href="/ligas-invierno-verano">
-              <ArrowLeft className="size-4" />
-              Ver liga
-            </Link>
-          </Button>
-        </div>
-      </header>
+    <AdminShell
+      panel="liga"
+      context={activeTournament ? `${activeTournament.name} ${activeTournament.season}` : "Sin edición activa"}
+      currentSection={section}
+      publicHref={
+        publicTournament
+          ? `/ligas-invierno-verano/${publicTournament.slug}`
+          : "/ligas-invierno-verano"
+      }
+    >
+      <AdminPageHeader title={header.title} lede={header.lede} />
 
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="mb-5">
-          <h1 className="font-heading text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
-            Gestión de la liga
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Cargá resultados, administrá los planteles de cada equipo y reprogramá las fechas del fixture.
-          </p>
-        </div>
-
-        {activeTournament && (
-          <div className="mb-5">
-            <CloseTournamentButton
-              tournamentId={activeTournament.id}
-              tournamentName={`${activeTournament.name} ${activeTournament.season}`}
-              missingCategories={missingFinals}
-            />
-          </div>
-        )}
-
-        <Tabs defaultValue="resultados">
-          <TabsList className="h-auto w-full flex-wrap gap-1 bg-muted p-1 sm:w-auto">
-            <TabsTrigger value="resultados" className="h-9 gap-1.5 px-3">
-              <Trophy className="size-4" />
-              Resultados
-            </TabsTrigger>
-            <TabsTrigger value="jugadores" className="h-9 gap-1.5 px-3">
-              <Users className="size-4" />
-              Jugadores
-            </TabsTrigger>
-            <TabsTrigger value="fixture" className="h-9 gap-1.5 px-3">
-              <CalendarClock className="size-4" />
-              Fixture
-            </TabsTrigger>
-            <TabsTrigger value="playoffs" className="h-9 gap-1.5 px-3">
-              <Swords className="size-4" />
-              Playoffs
-            </TabsTrigger>
-            <TabsTrigger value="fotos" className="h-9 gap-1.5 px-3">
-              <ImagePlus className="size-4" />
-              Fotos
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="resultados" className="mt-5">
-            <ResultLoader categories={categories} />
-          </TabsContent>
-          <TabsContent value="jugadores" className="mt-5">
-            <TeamManager categories={categories} />
-          </TabsContent>
-          <TabsContent value="fixture" className="mt-5">
-            <FixtureManager categories={categories} />
-          </TabsContent>
-          <TabsContent value="playoffs" className="mt-5">
-            <PlayoffManager categories={categories} />
-          </TabsContent>
-          <TabsContent value="fotos" className="mt-5">
-            <PhotoManager tournaments={photoTournaments} />
-          </TabsContent>
-        </Tabs>
-      </main>
-    </div>
+      {section === "resultados" && (
+        <>
+          {activeTournament && (
+            <div className="mb-4">
+              <CloseTournamentButton
+                tournamentId={activeTournament.id}
+                tournamentName={`${activeTournament.name} ${activeTournament.season}`}
+                missingCategories={missingFinals}
+              />
+            </div>
+          )}
+          <ResultLoader categories={categories} />
+        </>
+      )}
+      {section === "jugadores" && <TeamManager categories={categories} />}
+      {section === "fixture" && <FixtureManager categories={categories} />}
+      {section === "playoffs" && <PlayoffManager categories={categories} />}
+      {section === "fotos" && <PhotoManager tournaments={photoTournaments} />}
+      {section === "sponsors" && <SponsorManager tournaments={photoTournaments} />}
+    </AdminShell>
   )
 }

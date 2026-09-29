@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Cuadro en celular, columnas</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:Barlow,system-ui,sans-serif;background:#f4f6f2;color:#13241a}
+a{color:#af5122}a:hover{color:#8a3f1a}
+a:focus-visible{outline:3px solid #af5122;outline-offset:2px}
+.cond{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase}
+.scroller{overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;padding:0 16px 12px;scroll-padding:0 16px}
+.draw{display:flex;align-items:stretch;height:560px;width:max-content}
+.col{display:flex;flex-direction:column;width:236px;padding-right:28px;flex-shrink:0;box-sizing:content-box;scroll-snap-align:start}
+.rl{height:36px;display:flex;align-items:flex-end;padding-bottom:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;font-size:18px;border-bottom:2px solid #141414;margin:0 0 8px}
+.cb{flex:1;display:flex;flex-direction:column;list-style:none;margin:0;padding:0}
+.g{flex:1;display:flex;flex-direction:column;justify-content:space-around;position:relative}
+.g.pair::after{content:"";position:absolute;right:-14px;top:25%;bottom:25%;width:14px;border:2px solid #141414;border-left:0;border-radius:0 3px 3px 0}
+.m{position:relative;background:#ffffff;border:1.5px solid #141414;border-radius:4px;margin:6px 0}
+.feed .m::before{content:"";position:absolute;left:-15.5px;top:50%;width:14px;border-top:2px solid #141414}
+.p{display:flex;align-items:center;gap:8px;height:40px;padding:0 10px 0 12px;font-size:15px}
+.p+.p{border-top:1px solid #d3dbd2}
+.seed{width:22px;font-size:12px;color:#4f5f55}
+.nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc{font-variant-numeric:tabular-nums;font-weight:600;font-size:14px;white-space:nowrap}
+.p.w{box-shadow:inset 4px 0 0 #d4622a}
+.p.w .nm{font-weight:700}
+.p.l .nm{color:#4f5f55}
+</style>
+</helmet>
+<div style="width: 390px; height: 1000px; box-sizing: border-box; display: flex; flex-direction: column">
+<header style="height: 60px; flex-shrink: 0; background: #1c3a2a; color: #f4f6f2; display: flex; align-items: center; gap: 10px; padding: 0 16px">
+<img width="36" height="36" src="/_blob/f459cbd1221abee4b0d2d03875ae3f12" alt="" style="width: 36px; height: 36px">
+<span class="cond" style="font-size: 20px; font-weight: 800">Parque Tenis Club</span>
+</header>
+<div style="height: 48px; flex-shrink: 0; background: #141414; color: #f4f6f2; display: flex; align-items: center; gap: 10px; padding: 0 16px">
+<span style="width: 30px; height: 30px; background: #ffffff; border-radius: 4px; display: flex; align-items: center; justify-content: center"><img width="26" height="26" src="/_blob/be2908ee62ce7c3172c7d38183621bc9" alt="" style="width: 26px; height: 26px"></span>
+<span class="cond" style="font-size: 18px; font-weight: 800">Circuito del Parque</span>
+</div>
+<section style="padding: 24px 16px 0; display: flex; flex-direction: column; gap: 6px">
+<a href="#" style="align-self: flex-start; font-weight: 600; font-size: 15px">Us Open, septiembre 2026</a>
+<h1 class="cond" style="margin: 0; font-size: 48px; line-height: .9; font-weight: 800">Damas Segunda</h1>
+<p style="margin: 4px 0 0; font-size: 15px; color: #4f5f55">Deslizá para ver las rondas siguientes.</p>
+</section>
+<div class="scroller" tabindex="0" aria-label="Cuadro principal, desplazable" style="margin-top: 20px">
+<div class="draw">
+<sc-for list="{{rounds}}" as="r" hint-placeholder-count="3">
+<div class="col {{r.cls}}">
+<h2 class="rl">{{r.label}}</h2>
+<ol class="cb">
+<sc-for list="{{r.groups}}" as="g" hint-placeholder-count="2">
+<li class="g {{g.cls}}">
+<sc-for list="{{g.matches}}" as="m" hint-placeholder-count="2">
+<div class="m">
+<div class="p {{m.a.cls}}"><span class="seed">{{m.a.seed}}</span><span class="nm">{{m.a.name}}</span><span class="sc">{{m.a.score}}</span></div>
+<div class="p {{m.b.cls}}"><span class="seed">{{m.b.seed}}</span><span class="nm">{{m.b.name}}</span><span class="sc">{{m.b.score}}</span></div>
+</div>
+</sc-for>
+</li>
+</sc-for>
+</ol>
+</div>
+</sc-for>
+</div>
+</div>
+<p style="margin: 20px 16px 0; font-size: 13px; color: #4f5f55">Resultados de ejemplo.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+const L = ['Final', 'Semifinales', 'Cuartos de final'];
+const P = (seed, name) => ({ seed, name });
+let cur = [P(1,'Rodriguez Cecilia'), P(8,'Staffolani Laura'), P(4,'Baum Fernanda'), P(5,'Moreno Karina'), P(3,'Gerez Carla'), P(6,'Zanetti Cecilia'), P(2,'Banegas Daiana'), P(7,'Feininger Laura')];
+const results = [[['a','6-2 6-3'], ['b','4-6 6-3 7-6'], ['a','6-4 6-4'], ['a','6-1 6-2']], [['a','6-3 7-5'], ['b','7-6 6-4']], [['a','6-4 3-6 10-8']]];
+const rounds = [];
+for (let r = 0; r < 3; r++) {
+const ms = [], next = [];
+for (let i = 0; i < cur.length; i += 2) {
+const a = cur[i], b = cur[i + 1], res = results[r][i / 2];
+const w = res[0] === 'a' ? a : b;
+const side = (p) => ({ seed: '[' + p.seed + ']', name: p.name, score: p === w ? res[1] : '', cls: p === w ? 'w' : 'l' });
+ms.push({ a: side(a), b: side(b) });
+next.push(w);
+}
+const groups = ms.length === 1 ? [{ cls: '', matches: ms }] : [];
+if (ms.length > 1) for (let i = 0; i < ms.length; i += 2) groups.push({ cls: 'pair', matches: [ms[i], ms[i + 1]] });
+rounds.push({ label: L[2 - r], cls: r > 0 ? 'feed' : '', groups });
+cur = next;
+}
+return { rounds };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Cuadro de 8</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:Barlow,system-ui,sans-serif;background:#f4f6f2;color:#13241a}
+a{color:#af5122}a:hover{color:#8a3f1a}
+a:focus-visible,button:focus-visible{outline:3px solid #af5122;outline-offset:2px}
+h1,h2,h3{text-wrap:balance}
+.cond{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase}
+.num{font-variant-numeric:tabular-nums}
+.subnav a{color:#f4f6f2;text-decoration:none}
+.subnav a[aria-current]{box-shadow:inset 0 -4px 0 #d4622a}
+.draw{display:flex;align-items:stretch}
+.col{display:flex;flex-direction:column;width:250px;padding-right:32px;flex-shrink:0;box-sizing:content-box}
+.rl{height:40px;display:flex;align-items:flex-end;padding-bottom:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;font-size:19px;border-bottom:2px solid #141414;margin-bottom:10px}
+.cb{flex:1;display:flex;flex-direction:column}
+.g{flex:1;display:flex;flex-direction:column;justify-content:space-around;position:relative}
+.g.pair::after{content:"";position:absolute;right:-16px;top:25%;bottom:25%;width:16px;border:2px solid #141414;border-left:0;border-radius:0 3px 3px 0}
+.m{position:relative;background:#ffffff;border:1.5px solid #141414;border-radius:4px;margin:7px 0}
+.feed .m::before{content:"";position:absolute;left:-17.5px;top:50%;width:16px;border-top:2px solid #141414}
+.p{display:flex;align-items:center;gap:8px;height:34px;padding:0 10px 0 12px;font-size:15px}
+.p+.p{border-top:1px solid #d3dbd2}
+.seed{width:20px;font-size:12px;color:#4f5f55;font-variant-numeric:tabular-nums}
+.nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc{font-variant-numeric:tabular-nums;font-weight:600;font-size:14px;white-space:nowrap}
+.p.w{box-shadow:inset 4px 0 0 #d4622a}
+.p.w .nm{font-weight:700}
+.p.l .nm{color:#4f5f55}
+.p.tbd .nm{color:#4f5f55;font-style:italic}
+.champ-col{display:flex;flex-direction:column;width:260px;flex-shrink:0}
+</style>
+</helmet>
+<div style="width: 1280px; height: 1500px; box-sizing: border-box; display: flex; flex-direction: column">
+
+<header style="height: 72px; flex-shrink: 0; background: #1c3a2a; color: #f4f6f2; display: flex; align-items: center; gap: 12px; padding: 0 48px">
+<img width="44" height="44" src="/_blob/f459cbd1221abee4b0d2d03875ae3f12" alt="" style="width: 44px; height: 44px">
+<span class="cond" style="font-size: 24px; font-weight: 800">Parque Tenis Club</span>
+</header>
+<nav class="subnav" aria-label="Circuito del Parque" style="height: 56px; flex-shrink: 0; background: #141414; color: #f4f6f2; display: flex; align-items: stretch; gap: 32px; padding: 0 48px; font-weight: 600; font-size: 15px">
+<span style="display: flex; align-items: center; gap: 10px; margin-right: 16px"><span style="width: 36px; height: 36px; background: #ffffff; border-radius: 4px; display: flex; align-items: center; justify-content: center"><img width="30" height="30" src="/_blob/be2908ee62ce7c3172c7d38183621bc9" alt="" style="width: 30px; height: 30px"></span><span class="cond" style="font-size: 20px; font-weight: 800">Circuito del Parque</span></span>
+<a href="#" aria-current="page" style="display: flex; align-items: center">Torneos</a>
+<a href="#" style="display: flex; align-items: center">Ranking 2026</a>
+<a href="#" style="display: flex; align-items: center">Final Master</a>
+<a href="#" style="display: flex; align-items: center">Mid Master</a>
+</nav>
+
+<section style="padding: 40px 48px 0; display: flex; flex-direction: column; gap: 10px">
+<a href="#" style="align-self: flex-start; font-weight: 600; font-size: 15px">Us Open, septiembre 2026</a>
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 32px">
+<h1 class="cond" style="margin: 0; font-size: 80px; line-height: .9; font-weight: 800">Damas Segunda</h1>
+<p style="margin: 0 0 6px; font-size: 16px; color: #4f5f55">Single, 8 inscriptas. Grand Slam: puntos dobles.</p>
+</div>
+</section>
+
+<section aria-label="Cuadro principal" style="padding: 36px 48px 0">
+<div class="draw" style="height: 560px">
+<sc-for list="{{draw.rounds}}" as="r" hint-placeholder-count="3">
+<div class="col {{r.cls}}">
+<h2 class="rl" style="margin: 0 0 10px">{{r.label}}</h2>
+<ol class="cb" style="list-style: none; margin: 0; padding: 0">
+<sc-for list="{{r.groups}}" as="g" hint-placeholder-count="2">
+<li class="g {{g.cls}}">
+<sc-for list="{{g.matches}}" as="m" hint-placeholder-count="2">
+<div class="m">
+<div class="p {{m.a.cls}}"><span class="seed">{{m.a.seed}}</span><span class="nm">{{m.a.name}}</span><span class="sc">{{m.a.score}}</span></div>
+<div class="p {{m.b.cls}}"><span class="seed">{{m.b.seed}}</span><span class="nm">{{m.b.name}}</span><span class="sc">{{m.b.score}}</span></div>
+</div>
+</sc-for>
+</li>
+</sc-for>
+</ol>
+</div>
+</sc-for>
+<div class="champ-col">
+<h2 class="rl" style="margin: 0 0 10px">Campeona</h2>
+<div style="flex: 1; display: flex; align-items: center">
+<div style="width: 100%; background: #1c3a2a; color: #f4f6f2; border-radius: 6px; border: 3px solid #141414; padding: 22px 20px; display: flex; flex-direction: column; gap: 10px; position: relative">
+<svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d4e04a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg>
+<span class="cond" style="font-size: 34px; font-weight: 800; line-height: .95">{{draw.champion}}</span>
+<span style="font-size: 14px; color: rgba(244,246,242,.8)">Final: {{draw.finalScore}}</span>
+<span class="num" style="font-size: 14px; color: rgba(244,246,242,.8)">2000 puntos para el ranking</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section aria-label="Repechaje" style="margin: 56px 48px 0; padding-top: 28px; border-top: 1px solid #d3dbd2; display: grid; grid-template-columns: 300px 1fr; gap: 40px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<h2 class="cond" style="margin: 0; font-size: 40px; font-weight: 800; line-height: 1">Repechaje</h2>
+<p style="margin: 0; font-size: 15px; line-height: 1.55; color: #4f5f55">Para quienes perdieron en la primera ronda: asegura un segundo partido. No suma puntos al ranking.</p>
+</div>
+<div class="draw" style="height: 190px">
+<sc-for list="{{rep.rounds}}" as="r" hint-placeholder-count="2">
+<div class="col {{r.cls}}">
+<h3 class="rl" style="margin: 0 0 10px; font-size: 16px">{{r.label}}</h3>
+<ol class="cb" style="list-style: none; margin: 0; padding: 0">
+<sc-for list="{{r.groups}}" as="g" hint-placeholder-count="1">
+<li class="g {{g.cls}}">
+<sc-for list="{{g.matches}}" as="m" hint-placeholder-count="2">
+<div class="m">
+<div class="p {{m.a.cls}}"><span class="seed">{{m.a.seed}}</span><span class="nm">{{m.a.name}}</span><span class="sc">{{m.a.score}}</span></div>
+<div class="p {{m.b.cls}}"><span class="seed">{{m.b.seed}}</span><span class="nm">{{m.b.name}}</span><span class="sc">{{m.b.score}}</span></div>
+</div>
+</sc-for>
+</li>
+</sc-for>
+</ol>
+</div>
+</sc-for>
+</div>
+</section>
+
+<p style="margin: 28px 48px 0; font-size: 13px; color: #4f5f55">Nombres reales del seed de prueba; resultados de ejemplo.</p>
+
+<footer style="margin-top: auto; height: 96px; flex-shrink: 0; background: #1c3a2a; color: rgba(244,246,242,.8); display: flex; align-items: center; padding: 0 48px; font-size: 15px">Parque Tenis Club, Primera Junta 726, Quilmes</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1500}}'>
+class Component extends DCLogic {
+build(entrants, results, labels) {
+const R = Math.log2(entrants.length);
+let cur = entrants;
+const rounds = [];
+let finalScore = '';
+for (let r = 0; r < R; r++) {
+const ms = [];
+const next = [];
+for (let i = 0; i < cur.length; i += 2) {
+const a = cur[i], b = cur[i + 1];
+const res = (results[r] || [])[i / 2];
+const w = res && a && b ? (res[0] === 'a' ? a : b) : null;
+if (r === R - 1 && res) finalScore = res[1];
+const side = (p) => ({
+seed: p && p.seed ? '[' + p.seed + ']' : '',
+name: p ? p.name : 'Por definir',
+score: w && w === p ? res[1] : '',
+cls: !p ? 'tbd' : w ? (w === p ? 'w' : 'l') : ''
+});
+ms.push({ a: side(a), b: side(b) });
+next.push(w);
+}
+const groups = [];
+if (ms.length === 1) groups.push({ cls: '', matches: ms });
+else for (let i = 0; i < ms.length; i += 2) groups.push({ cls: 'pair', matches: [ms[i], ms[i + 1]] });
+rounds.push({ label: labels[R - 1 - r] || 'Ronda ' + (r + 1), cls: r > 0 ? 'feed' : '', groups });
+cur = next;
+}
+return { rounds, champion: cur[0] ? cur[0].name : 'Por definir', finalScore };
+}
+renderVals() {
+const L = ['Final', 'Semifinales', 'Cuartos de final', 'Octavos de final', '16avos de final'];
+const P = (seed, name) => ({ seed, name });
+const main = [P(1,'Rodriguez Cecilia'), P(8,'Staffolani Laura'), P(4,'Baum Fernanda'), P(5,'Moreno Karina'), P(3,'Gerez Carla'), P(6,'Zanetti Cecilia'), P(2,'Banegas Daiana'), P(7,'Feininger Laura')];
+const results = [
+[['a','6-2 6-3'], ['b','4-6 6-3 7-6'], ['a','6-4 6-4'], ['a','6-1 6-2']],
+[['a','6-3 7-5'], ['b','7-6 6-4']],
+[['a','6-4 3-6 10-8']]
+];
+const rep = [P(null,'Baum Fernanda'), P(null,'Staffolani Laura'), P(null,'Zanetti Cecilia'), P(null,'Feininger Laura')];
+const repResults = [[['a','6-3 6-2'], ['b','7-5 6-4']], [['a','6-4 6-4']]];
+return {
+draw: this.build(main, results, L),
+rep: this.build(rep, repResults, ['Final del repechaje', 'Primera ronda'])
+};
+}
+}
+</script>
+</body>
+</html>

@@ -249,7 +249,7 @@ export function ResultLoader({ categories }: { categories: CategoryForAdmin[] })
           Recalcular tabla
         </Button>
         {recalcMsg && (
-          <span className={cn("text-sm", recalcMsg.startsWith("Error") ? "text-red-600" : "text-green-700")}>
+          <span className={cn("text-sm", recalcMsg.startsWith("Error") ? "text-loss" : "text-win")}>
             {recalcMsg}
           </span>
         )}

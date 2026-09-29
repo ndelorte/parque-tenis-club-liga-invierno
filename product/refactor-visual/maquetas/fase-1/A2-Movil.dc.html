@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>A refinada · Celular oscuro</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;font-family:Barlow,system-ui,sans-serif;background:#0e1a13;color:#eef1ec}
+a{color:#f08a55}a:hover{color:#ffab80}
+h1,h2,h3{text-wrap:balance}
+a:focus-visible,button:focus-visible{outline:3px solid #f08a55;outline-offset:2px}
+.hero{background-image:linear-gradient(rgba(10,20,14,.55),rgba(10,20,14,.9)),url(/_blob/87b0aaa4e630c051dc8491c72e972556);background-size:cover;background-position:center 35%}
+.skip{position:absolute;left:16px;top:-60px;z-index:5;background:#eef1ec;color:#0e1a13;padding:10px 14px;border-radius:6px;font-weight:600}.skip:focus{top:12px}nav a:hover,footer a:hover{text-decoration:underline !important;text-underline-offset:4px}html{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.cond{font-family:'Barlow Condensed',sans-serif}
+.num{font-family:'Barlow Condensed',sans-serif;font-variant-numeric:tabular-nums}
+.press{transition:transform 160ms cubic-bezier(0.23,1,0.32,1)}
+.press:active{transform:scale(0.97)}
+@keyframes board-in{from{clip-path:inset(0 0 100% 0);transform:translateY(-8px)}to{clip-path:inset(0 0 0 0);transform:translateY(0)}}
+@keyframes fade-in{from{opacity:0}to{opacity:1}}
+.flip{display:inline-block;animation:board-in 360ms cubic-bezier(0.23,1,0.32,1) both}
+.d1{animation-delay:120ms}.d2{animation-delay:180ms}
+@media (prefers-reduced-motion:reduce){.flip{animation:fade-in 200ms ease both}.press{transition:none}}
+</style>
+</helmet>
+<div style="width: 390px; height: 1640px; box-sizing: border-box; background: #0e1a13; display: flex; flex-direction: column; position: relative">
+<a href="#contenido" class="skip">Saltar al contenido</a>
+<header style="height: 60px; flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 0 16px; background: #13241a; border-bottom: 1px solid #25392d">
+<img width="36" height="36" src="/_blob/813d30d11c7d07d294eb7a9801c40c41" alt="Parque Tenis Club" style="width: 36px; height: 36px">
+<span class="cond" style="font-size: 20px; font-weight: 800; flex-grow: 1; text-transform: uppercase">Parque Tenis Club</span>
+<button type="button" class="press" aria-label="Cambiar a modo claro" style="width: 44px; height: 44px; border: 1px solid #25392d; border-radius: 6px; background: transparent; color: #eef1ec; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+<button type="button" class="press" aria-label="Abrir menú" style="width: 44px; height: 44px; border: 1px solid #25392d; border-radius: 6px; background: transparent; color: #eef1ec; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+</header>
+<section id="contenido" class="hero" style="flex-shrink: 0; padding: 200px 16px 28px; display: flex; flex-direction: column; gap: 16px">
+<h1 class="cond" style="margin: 0; font-size: 60px; line-height: .88; font-weight: 800; text-transform: uppercase">Viví el tenis en Parque Tenis Club</h1>
+<p style="margin: 0; font-size: 17px; line-height: 1.5; color: rgba(238,241,236,.88)">Canchas de polvo de ladrillo en Quilmes, entrenamientos, escuela y torneos todo el año.</p>
+<a href="#" class="press" style="height: 54px; display: flex; align-items: center; justify-content: center; background: #e0703a; color: #140c07; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 17px">Consultar por WhatsApp</a>
+<a href="#" style="align-self: center; color: #eef1ec; font-weight: 600; font-size: 16px; text-underline-offset: 5px; padding: 8px 0">Ver las competencias</a>
+</section>
+<section style="padding: 0 16px; margin-top: -4px">
+<figure style="margin: 0; background: #183325; border: 3px solid #eef1ec; border-radius: 6px; padding: 5px"><div style="border: 1px solid rgba(238,241,236,.3); border-radius: 3px; padding: 12px 14px 8px; display: flex; flex-direction: column; gap: 4px"><figcaption style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 4px"><span class="cond" style="font-size: 24px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 50%; background: #d4e04a"></span>En juego</span><span style="font-size: 12px; color: rgba(238,241,236,.65)">Datos de ejemplo</span></figcaption><ul style="list-style: none; margin: 0; padding: 0"><li style=""><a href="#" class="press" style="display: flex; align-items: center; gap: 12px; padding: 11px 0; color: #eef1ec; text-decoration: none"><span aria-hidden="true" style="width: 4px; align-self: stretch; border-radius: 2px; background: #6fa8d6"></span><span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0"><span class="cond" style="font-size: 19px; font-weight: 800; text-transform: uppercase; line-height: 1.05">Liga de Invierno</span><span style="font-size: 13px; color: rgba(238,241,236,.78); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Temporada 2026</span></span><span style="display: flex; gap: 14px"><span style="display: flex; flex-direction: column; align-items: flex-end"><span class="num" style="font-size: 32px; font-weight: 800; line-height: .95; color: #d4e04a"><span class="flip d1">1</span></span><span style="font-size: 12px; color: rgba(238,241,236,.72)">fecha</span></span></span></a></li><li style="border-top: 1px solid rgba(238,241,236,.2); "><a href="#" class="press" style="display: flex; align-items: center; gap: 12px; padding: 11px 0; color: #eef1ec; text-decoration: none"><span aria-hidden="true" style="width: 4px; align-self: stretch; border-radius: 2px; background: #d4622a"></span><span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0"><span class="cond" style="font-size: 19px; font-weight: 800; text-transform: uppercase; line-height: 1.05">Circuito del Parque</span><span style="font-size: 13px; color: rgba(238,241,236,.78); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">US Open</span></span><span style="display: flex; gap: 14px"><span style="display: flex; flex-direction: column; align-items: flex-end"><span class="num" style="font-size: 32px; font-weight: 800; line-height: .95; color: #eef1ec"><span class="flip d2">6</span></span><span style="font-size: 12px; color: rgba(238,241,236,.72)">categorías</span></span></span></a></li><li style="border-top: 1px solid rgba(238,241,236,.2); "><a href="#" class="press" style="display: flex; align-items: center; gap: 12px; padding: 11px 0; color: #eef1ec; text-decoration: none"><span aria-hidden="true" style="width: 4px; align-self: stretch; border-radius: 2px; background: #4e7a3d"></span><span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0"><span class="cond" style="font-size: 19px; font-weight: 800; text-transform: uppercase; line-height: 1.05">Interparque</span><span style="font-size: 13px; color: rgba(238,241,236,.78); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Alumnos del club</span></span><span style="display: flex; gap: 14px"><span style="display: flex; flex-direction: column; align-items: flex-end"><span class="num" style="font-size: 32px; font-weight: 800; line-height: .95; color: #eef1ec"><span class="flip d1">10+</span></span><span style="font-size: 12px; color: rgba(238,241,236,.72)">jugadores</span></span><span style="display: flex; flex-direction: column; align-items: flex-end"><span class="num" style="font-size: 32px; font-weight: 800; line-height: .95; color: #eef1ec"><span class="flip d2">20+</span></span><span style="font-size: 12px; color: rgba(238,241,236,.72)">partidos</span></span></span></a></li></ul></div></figure>
+</section>
+<section style="padding: 44px 16px 0; display: flex; flex-direction: column; gap: 14px">
+<h2 class="cond" style="margin: 0 0 4px; font-size: 44px; line-height: .9; font-weight: 800; text-transform: uppercase">Competí todo el año</h2>
+<a href="#" class="press" style="display: flex; flex-direction: column; background: #15241b; border: 1px solid #25392d; border-radius: 6px; overflow: hidden; text-decoration: none; color: #eef1ec">
+<span style="height: 80px; position: relative; overflow: hidden; background: linear-gradient(90deg, #9cc4e4 50%, #f3c969 50%); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; justify-items: center"><svg aria-hidden="true" width="100%" height="80" viewBox="0 0 400 80" preserveAspectRatio="none" style="position: absolute; inset: 0"><g fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2"><rect x="30" y="10" width="340" height="61"/><line x1="30" y1="17" x2="370" y2="17"/><line x1="30" y1="63" x2="370" y2="63"/><line x1="110" y1="17" x2="110" y2="63"/><line x1="290" y1="17" x2="290" y2="63"/><line x1="110" y1="40" x2="290" y2="40"/><line x1="200" y1="4" x2="200" y2="76" stroke="#1c3a2a" stroke-width="3"/></g></svg><img width="56" height="56" src="/_blob/8f06007d511164c9f9c3e4070f8f57a0" alt="" style="position: relative; width: 56px; height: 56px"><img width="56" height="56" src="/_blob/9da5f4e805de4977221fa9b542360c3d" alt="" style="position: relative; width: 56px; height: 56px"></span>
+<span style="padding: 14px 16px; display: flex; flex-direction: column; gap: 4px"><span class="cond" style="font-size: 26px; font-weight: 800; text-transform: uppercase">Liga Invierno/Verano</span><span style="font-size: 14px; color: #a3b0a7">Equipos de dobles, tablas y fixture</span></span>
+</a>
+<a href="#" class="press" style="display: flex; flex-direction: column; background: #15241b; border: 1px solid #25392d; border-radius: 6px; overflow: hidden; text-decoration: none; color: #eef1ec">
+<span style="height: 72px; background: #d4622a; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden"><svg aria-hidden="true" width="100%" height="72" viewBox="0 0 360 72" preserveAspectRatio="xMidYMid slice" style="position: absolute; inset: 0"><g fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2"><rect x="20" y="8" width="320" height="56"/><line x1="100" y1="8" x2="100" y2="64"/><line x1="260" y1="8" x2="260" y2="64"/><line x1="100" y1="36" x2="260" y2="36"/><line x1="180" y1="2" x2="180" y2="70" stroke="#141414" stroke-width="3"/></g></svg><span style="position: relative; width: 56px; height: 56px; background: #ffffff; border: 2px solid #141414; border-radius: 6px; display: flex; align-items: center; justify-content: center"><img width="48" height="48" src="/_blob/5b5c40de234367e6b48a5203959caf33" alt="" style="width: 48px; height: 48px"></span></span>
+<span style="padding: 14px 16px; display: flex; flex-direction: column; gap: 4px"><span class="cond" style="font-size: 26px; font-weight: 800; text-transform: uppercase">Circuito del Parque</span><span style="font-size: 14px; color: #a3b0a7">Torneo mensual y ranking anual</span></span>
+</a>
+<a href="#" class="press" style="display: flex; flex-direction: column; background: #15241b; border: 1px solid #25392d; border-radius: 6px; overflow: hidden; text-decoration: none; color: #eef1ec">
+<span style="height: 72px; background: #2c5a41; display: flex; align-items: center; justify-content: center"><span class="cond" style="width: 52px; height: 52px; border: 3px solid #d4e04a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #d4e04a; font-size: 22px; font-weight: 800; box-sizing: border-box">IP</span></span>
+<span style="padding: 14px 16px; display: flex; flex-direction: column; gap: 4px"><span class="cond" style="font-size: 26px; font-weight: 800; text-transform: uppercase">Interparque</span><span style="font-size: 14px; color: #a3b0a7">Single para alumnos, game a game</span></span>
+</a>
+</section>
+<footer style="margin-top: auto; padding: 24px 16px; border-top: 1px solid #25392d; display: flex; gap: 12px; align-items: center; font-size: 14px; color: #a3b0a7">
+<img width="40" height="40" src="/_blob/813d30d11c7d07d294eb7a9801c40c41" alt="" style="width: 40px; height: 40px">
+<span>Primera Junta 726, Quilmes<br>© 2026</span>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1640}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,7 +1,8 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowRight, LogOut, Trophy, ExternalLink } from "lucide-react"
-import { signOutMaster } from "@/app/actions/mid-master"
+import { ArrowRight, Trophy } from "lucide-react"
+import { AdminShell, AdminPageHeader } from "@/components/admin/admin-shell"
+import { EmptyState } from "@/components/admin/states"
 import { getMmActiveEdition, getMmCategories } from "@/lib/data/mid-master"
 import type { DbMmCategory } from "@/lib/data/mid-master/types"
 import { getZoneSize, normalizeType } from "@/lib/data/mid-master/types"
@@ -18,15 +19,15 @@ function CategoryCard({ cat }: { cat: DbMmCategory }) {
   return (
     <Link
       href={`/panel-circuito/categorias/${cat.slug}`}
-      className="group flex items-center justify-between border border-mm-border bg-mm-surface px-5 py-4 transition-colors hover:border-mm-gold/40 hover:bg-mm-surface-2"
+      className="press group flex min-h-14 items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-2.5 text-foreground transition-colors hover:border-border-strong hover:bg-surface focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent"
     >
-      <div>
-        <p className="text-[10px] font-medium uppercase tracking-widest text-mm-text-faint">
+      <span className="grid min-w-0">
+        <span className="text-sm text-muted-foreground">
           {typeLabel} · 2 zonas de {zoneSize}
-        </p>
-        <p className="mt-0.5 text-sm font-medium text-mm-text">{cat.name}</p>
-      </div>
-      <ArrowRight className="size-4 text-mm-text-faint transition-colors group-hover:text-mm-gold" />
+        </span>
+        <span className="truncate font-bold">{cat.name}</span>
+      </span>
+      <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
     </Link>
   )
 }
@@ -38,103 +39,68 @@ export default async function PanelMasterPage() {
   const doubles = categories.filter((c) => normalizeType(c.type) === "doubles")
 
   return (
-    <div className="min-h-dvh bg-mm-bg text-mm-text">
-      <header className="sticky top-0 z-30 border-b border-mm-border bg-mm-surface">
-        <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3 sm:px-6">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded border border-mm-gold/30 bg-mm-bg">
-            <Trophy className="size-4 text-mm-gold" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold text-mm-text">Panel Circuito del Parque</p>
-            <p className="text-xs text-mm-text-muted">
-              Mid Master · {activeEdition ? `${activeEdition.name} ${activeEdition.year}` : "Sin edición activa"}
-            </p>
-          </div>
-          <Link
-            href="/panel-circuito/mensual"
-            className="hidden items-center gap-1.5 rounded border border-mm-border px-3 py-1.5 text-xs text-mm-text-muted transition-colors hover:border-mm-gold/40 hover:text-mm-gold sm:flex"
-          >
-            Circuito mensual
-          </Link>
-          {activeEdition && (
-            <Link
-              href={`/circuito-del-parque/especiales/${activeEdition.slug}`}
-              target="_blank"
-              className="hidden items-center gap-1.5 rounded border border-mm-border px-3 py-1.5 text-xs text-mm-text-muted transition-colors hover:border-mm-gold/40 hover:text-mm-gold sm:flex"
-            >
-              <ExternalLink className="size-3.5" />
-              Ver público
-            </Link>
+    <AdminShell
+      panel="circuito"
+      context={
+        activeEdition
+          ? `${activeEdition.name} ${activeEdition.year} · torneos mensuales`
+          : "Sin edición activa"
+      }
+      currentSection="mid-master"
+      publicHref={
+        activeEdition
+          ? `/circuito-del-parque/especiales/${activeEdition.slug}`
+          : "/circuito-del-parque"
+      }
+    >
+      <AdminPageHeader
+        title="Gestión del Mid Master"
+        lede="Elegí una categoría para cargar resultados, editar participantes y programar partidos."
+      />
+
+      {!activeEdition ? (
+        <EmptyState title="No hay ninguna edición activa" icon={Trophy}>
+          Para cargar resultados, la edición tiene que figurar como activa en{" "}
+          <code className="rounded border border-border bg-surface px-1 text-[0.9em]">mid_master_editions</code>{" "}
+          (status{" "}
+          <code className="rounded border border-border bg-surface px-1 text-[0.9em]">active</code>).
+        </EmptyState>
+      ) : categories.length === 0 ? (
+        <EmptyState title="No se encontraron categorías para esta edición" icon={Trophy}>
+          Verificá que la tabla{" "}
+          <code className="rounded border border-border bg-surface px-1 text-[0.9em]">mid_master_categories</code>{" "}
+          tenga datos con este{" "}
+          <code className="rounded border border-border bg-surface px-1 text-[0.9em]">edition_id</code>.
+        </EmptyState>
+      ) : (
+        <>
+          {singles.length > 0 && (
+            <section>
+              <h2 className="mb-2 mt-[22px] font-heading text-xl font-bold uppercase">Singles</h2>
+              <ul role="list" className="grid gap-2 md:grid-cols-2">
+                {singles.map((cat) => (
+                  <li key={cat.id}>
+                    <CategoryCard cat={cat} />
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
-          <form action={signOutMaster}>
-            <button
-              type="submit"
-              className="flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs text-mm-text-muted transition-colors hover:bg-mm-surface-2 hover:text-mm-text"
-            >
-              <LogOut className="size-3.5" />
-              <span className="hidden sm:inline">Salir</span>
-            </button>
-          </form>
-        </div>
-      </header>
 
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-        {!activeEdition ? (
-          <div className="border border-mm-border bg-mm-surface p-8 text-center">
-            <p className="text-mm-text-muted">No hay ninguna edición activa.</p>
-            <p className="mt-2 text-xs text-mm-text-faint">
-              Verificá que la tabla <code>mid_master_editions</code> tenga una fila con status
-              &quot;active&quot;.
-            </p>
-          </div>
-        ) : categories.length === 0 ? (
-          <div className="border border-mm-border bg-mm-surface p-8 text-center">
-            <p className="text-mm-text-muted">
-              No se encontraron categorías para esta edición.
-            </p>
-            <p className="mt-2 text-xs text-mm-text-faint">
-              Verificá que la tabla <code>mid_master_categories</code> tenga datos con este{" "}
-              <code>edition_id</code>.
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="mb-8">
-              <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-mm-gold">
-                {activeEdition.name} · {activeEdition.year}
-              </p>
-              <h1 className="mt-1 font-mm-display text-2xl font-bold text-mm-text sm:text-3xl">
-                Gestión del torneo
-              </h1>
-              <p className="mt-2 text-sm text-mm-text-muted">
-                Seleccioná una categoría para cargar resultados, editar participantes y programar partidos.
-              </p>
-            </div>
-
-            {singles.length > 0 && (
-              <section className="mb-8">
-                <p className="mb-3 text-[10px] font-medium uppercase tracking-widest text-mm-text-faint">
-                  Singles
-                </p>
-                <div className="grid gap-px border border-mm-border sm:grid-cols-2">
-                  {singles.map((cat) => <CategoryCard key={cat.id} cat={cat} />)}
-                </div>
-              </section>
-            )}
-
-            {doubles.length > 0 && (
-              <section>
-                <p className="mb-3 text-[10px] font-medium uppercase tracking-widest text-mm-text-faint">
-                  Dobles
-                </p>
-                <div className="grid gap-px border border-mm-border sm:grid-cols-2">
-                  {doubles.map((cat) => <CategoryCard key={cat.id} cat={cat} />)}
-                </div>
-              </section>
-            )}
-          </>
-        )}
-      </main>
-    </div>
+          {doubles.length > 0 && (
+            <section>
+              <h2 className="mb-2 mt-[22px] font-heading text-xl font-bold uppercase">Dobles</h2>
+              <ul role="list" className="grid gap-2 md:grid-cols-2">
+                {doubles.map((cat) => (
+                  <li key={cat.id}>
+                    <CategoryCard cat={cat} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </>
+      )}
+    </AdminShell>
   )
 }

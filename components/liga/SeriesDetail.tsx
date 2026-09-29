@@ -6,28 +6,22 @@ interface SeriesDetailProps {
 }
 
 export function SeriesDetail({ series }: SeriesDetailProps) {
-  if (series.is_general_walkover) {
-    return (
-      <div className="text-sm text-gray-600">
-        <span className="inline-block bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-semibold mr-2">
+  const courts = series.court_matches ?? [];
+  return (
+    <div className="space-y-3">
+      {series.is_general_walkover && <p className="text-sm text-muted-foreground">
+        <span className="inline-block bg-loss-soft text-loss px-2 py-0.5 rounded text-xs font-semibold mr-2">
           WO General
         </span>
-        {series.home_team?.name ?? series.home_team_id} no se presentó.
-        Ganador: <strong>{series.away_team?.name ?? series.away_team_id}</strong>
-      </div>
-    );
-  }
-
-  const courts = series.court_matches ?? [];
-
-  if (courts.length === 0) {
-    return (
-      <p className="text-sm text-gray-500">Sin detalle de canchas disponible.</p>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
+        {series.walkover_winner_team_id === series.home_team_id
+          ? series.away_team?.name ?? "Visitante"
+          : series.home_team?.name ?? "Local"} no se presentó.{" "}
+        Ganador: <strong>{series.walkover_winner_team_id === series.home_team_id
+          ? series.home_team?.name ?? "Local"
+          : series.away_team?.name ?? "Visitante"}</strong>
+      </p>}
+      {courts.length === 0 && <p className="text-sm text-muted-foreground">Sin detalle de canchas disponible.</p>}
+      <div className="grid gap-3 sm:grid-cols-3">
       {courts.map((cm) => (
         <CourtMatchDetail
           key={cm.id}
@@ -37,6 +31,7 @@ export function SeriesDetail({ series }: SeriesDetailProps) {
           homeTeamId={series.home_team_id}
         />
       ))}
+      </div>
     </div>
   );
 }

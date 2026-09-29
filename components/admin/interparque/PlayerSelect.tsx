@@ -45,13 +45,13 @@ export function PlayerSelect({ players, value, onChange, onPlayerCreated, exclud
 
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-gray-500">{label}</label>
+      <label className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
       {!adding ? (
         <div className="flex gap-2">
           <select
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand/30"
+            className="w-full rounded border border-border-strong bg-card px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/30"
           >
             <option value="">— Seleccionar jugador —</option>
             {players.map((p) => (
@@ -69,21 +69,21 @@ export function PlayerSelect({ players, value, onChange, onPlayerCreated, exclud
           </button>
         </div>
       ) : (
-        <div className="space-y-2 rounded border border-gray-200 bg-gray-50 p-2">
+        <div className="space-y-2 rounded border border-border bg-surface p-2">
           <div className="grid grid-cols-2 gap-2">
             <input
               type="text"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               placeholder="Nombre"
-              className="rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand/30"
+              className="rounded border border-border-strong bg-card px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/30"
             />
             <input
               type="text"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="Apellido"
-              className="rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand/30"
+              className="rounded border border-border-strong bg-card px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/30"
             />
           </div>
           <div className="flex gap-2">
@@ -91,19 +91,19 @@ export function PlayerSelect({ players, value, onChange, onPlayerCreated, exclud
               type="button"
               onClick={handleAdd}
               disabled={loading || !firstName.trim() || !lastName.trim()}
-              className="flex-1 rounded bg-brand py-1.5 text-xs font-semibold text-white hover:bg-brand/90 disabled:opacity-50"
+              className="flex-1 rounded bg-brand py-1.5 text-xs font-semibold text-brand-foreground hover:bg-brand/90 disabled:opacity-50"
             >
               {loading ? "Guardando..." : "Agregar jugador"}
             </button>
             <button
               type="button"
               onClick={() => { setAdding(false); setError("") }}
-              className="rounded border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-100"
+              className="rounded border border-border-strong px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted"
             >
               Cancelar
             </button>
           </div>
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {error && <p className="text-xs text-loss">{error}</p>}
         </div>
       )}
     </div>

@@ -1,16 +1,6 @@
-import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
+import { SectionShell } from "@/components/layout/section-shell"
+import "@/components/liga/season-views.css"
 
-export default function LigaInviernoLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <>
-      <SiteHeader />
-      {children}
-      <SiteFooter />
-    </>
-  )
+export default function LigasLayout({ children }: { children: React.ReactNode }) {
+  return <SectionShell>{children}</SectionShell>
 }

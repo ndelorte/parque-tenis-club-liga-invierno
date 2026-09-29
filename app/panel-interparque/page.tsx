@@ -1,10 +1,9 @@
 import type { Metadata } from "next"
-import Link from "next/link"
-import { ArrowLeft, ClipboardList, LogOut } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { ClipboardList } from "lucide-react"
+import { buttonVariants } from "@/components/ui/button"
+import { AdminShell, AdminPageHeader } from "@/components/admin/admin-shell"
+import { EmptyState } from "@/components/admin/states"
 import { getInterparqueMatches, getInterparquePlayers } from "@/lib/data/interparque"
-import { signOutInterparque } from "@/app/actions/interparque"
 import { MatchForm } from "@/components/admin/interparque/MatchForm"
 import { NewMatchForm } from "@/components/admin/interparque/NewMatchForm"
 import type { InterparqueMatch } from "@/lib/data/interparque"
@@ -39,71 +38,46 @@ export default async function PanelInterparquePage() {
   const groups = groupByDate(matches)
 
   return (
-    <div className="min-h-dvh bg-background">
-      <header className="sticky top-0 z-30 border-b border-border bg-brand text-white">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3 sm:px-6">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/15">
-            <ClipboardList className="size-5" />
-          </span>
-          <div className="min-w-0">
-            <p className="truncate font-heading text-base font-bold leading-tight">
-              Panel de carga
-            </p>
-            <p className="text-xs text-white/70">Interparque</p>
-          </div>
-          <Badge className="ml-auto bg-accent text-accent-foreground hover:bg-accent">
-            Admin
-          </Badge>
-          <form action={signOutInterparque}>
-            <button
-              type="submit"
-              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-white/70 hover:bg-white/10 hover:text-white transition-colors"
-            >
-              <LogOut className="size-3.5" />
-              <span className="hidden sm:inline">Cerrar sesión</span>
-            </button>
-          </form>
-          <Button
-            asChild
-            variant="secondary"
-            size="sm"
-            className="hidden bg-white text-brand hover:bg-white/90 sm:inline-flex"
-          >
-            <Link href="/interparque">
-              <ArrowLeft className="size-4" />
-              Ver Interparque
-            </Link>
-          </Button>
-        </div>
-      </header>
+    <AdminShell
+      panel="interparque"
+      context="Partidos entre alumnos"
+      currentSection="nuevo-partido"
+      publicHref="/interparque"
+    >
+      <AdminPageHeader
+        title="Partidos de Interparque"
+        lede="Cargá jugadores nuevos, partidos y resultados. La tabla de posiciones se calcula sola a partir de los resultados cargados."
+      />
 
-      <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="mb-5">
-          <h1 className="font-heading text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
-            Partidos de Interparque
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Cargá jugadores nuevos, partidos y resultados. La tabla de posiciones se
-            calcula sola a partir de los resultados cargados.
-          </p>
-        </div>
+      <section id="nuevo-partido" aria-labelledby="nuevo-partido-titulo" className="scroll-mt-32">
+        <h2 id="nuevo-partido-titulo" className="mb-2 mt-[22px] font-heading text-xl font-bold uppercase">
+          Nuevo partido
+        </h2>
+        <NewMatchForm initialPlayers={players} />
+      </section>
 
-        <div className="mb-6">
-          <NewMatchForm initialPlayers={players} />
-        </div>
-
+      <section id="partidos" aria-labelledby="partidos-titulo" className="scroll-mt-32">
+        <h2 id="partidos-titulo" className="mb-2 mt-[22px] font-heading text-xl font-bold uppercase">
+          Partidos cargados
+        </h2>
         {matches.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
-            Todavía no hay partidos cargados.
-          </p>
+          <EmptyState
+            title="Todavía no hay partidos cargados"
+            icon={ClipboardList}
+            action={
+              <a href="#nuevo-partido" className={buttonVariants({ className: "min-h-11 bg-accent px-4 text-[15px] font-bold text-accent-foreground hover:bg-accent-dark" })}>
+                Cargar partido
+              </a>
+            }
+          >
+            Cuando cargues el primero aparece acá, agrupado por fecha. La tabla de posiciones se calcula sola.
+          </EmptyState>
         ) : (
           <div className="space-y-5">
             {Array.from(groups.entries()).map(([dateKey, dateMatches]) => (
-              <div key={dateKey} className="overflow-hidden rounded-lg border border-border bg-white">
-                <div className="border-b border-border bg-muted/50 px-4 py-2">
-                  <p className="text-sm font-semibold capitalize text-foreground">
-                    {fmtGroupDate(dateKey)}
-                  </p>
+              <div key={dateKey} className="overflow-hidden rounded-lg border border-border bg-card">
+                <div className="border-b border-border bg-surface px-4 py-2">
+                  <p className="font-bold capitalize text-foreground">{fmtGroupDate(dateKey)}</p>
                 </div>
                 {dateMatches.map((match) => (
                   <MatchForm key={match.id} match={match} players={players} />
@@ -112,7 +86,7 @@ export default async function PanelInterparquePage() {
             ))}
           </div>
         )}
-      </main>
-    </div>
+      </section>
+    </AdminShell>
   )
 }

@@ -251,9 +251,29 @@ CF2: 4° vs 5°
 2° — BYE — Semifinal
 ```
 
+### Formato del cuadro con 5 equipos (Mixto B)
+
+Con 5 equipos reales:
+
+- **1°** → bye directo a semifinal
+- **2°** → bye directo a semifinal
+- **3°** → bye directo a semifinal
+- **CF**: 4° vs 5° → ganador juega semifinal contra 3°
+
+```
+1° — BYE ────┐
+             Semifinal 1
+2° — BYE ────┘
+
+CF: 4° vs 5°
+         ↓
+3° — BYE ── Semifinal 2
+```
+
 ### Reglas de playoffs
 
 - Los partidos de cuartos, semifinal y final siguen la misma lógica que la fase regular: **3 canchas, gana 2 de 3**.
+- **Los perdedores de semifinal juegan por el 3.º y 4.º puesto**, con el mismo formato (3 canchas, gana 2 de 3). Confirmado por el club, 2026-09-28.
 - Los resultados de playoffs **no modifican** la tabla de posiciones de fase regular.
 - Los playoffs usan las mismas tablas `rounds` (phase ≠ "regular"), `series` y `court_matches`.
 - El bracket provisorio se calcula desde los standings actuales de la fase regular.
@@ -275,3 +295,4 @@ CF2: 4° vs 5°
   - Cargar o editar fecha y hora.
   - Cargar resultado con detalle de 3 canchas (igual que fase regular).
 - Semifinal y final se crean cuando se conozcan los ganadores de cuartos.
+- El partido por el 3.º y 4.º puesto se crea cuando se conozcan los perdedores de semifinal.

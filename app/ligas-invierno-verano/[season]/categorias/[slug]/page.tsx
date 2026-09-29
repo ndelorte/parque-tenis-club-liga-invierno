@@ -6,7 +6,7 @@ import { getTeamsByCategory } from "@/lib/data/teams"
 import { getStandingsSnapshot } from "@/lib/data/standings"
 import { getRoundsWithSeries } from "@/lib/data/series"
 import { getPlayoffSeries, getChampionForCategory } from "@/lib/data/playoffs"
-import { TournamentHeader } from "@/components/liga/TournamentHeader"
+import { SectionHero } from "@/components/liga/SectionHero"
 import { StandingsTable } from "@/components/liga/StandingsTable"
 import { FixtureList } from "@/components/liga/FixtureList"
 import { TeamCard } from "@/components/liga/TeamCard"
@@ -15,6 +15,7 @@ import { PlayoffBracket } from "@/components/liga/PlayoffBracket"
 import { ChampionBanner } from "@/components/liga/ChampionBanner"
 import { buildBracketOrNull } from "@/lib/playoffs/generateProvisionalBracket"
 import { formatTournamentTitle } from "@/lib/tournament/formatTournamentTitle"
+import { getSeasonTheme } from "@/components/liga/season-theme"
 
 export const dynamic = "force-dynamic"
 
@@ -44,33 +45,49 @@ export default async function CategoriaPage({ params }: Props) {
   if (!category) notFound()
 
   if (tournament.status === "finished") {
-    const [categories, standings, playoffSeries, champion] = await Promise.all([
+    const [categories, teams, standings, playoffSeries, champion] = await Promise.all([
       getCategoriesForTournament(tournament.id),
+      getTeamsByCategory(category.id),
       getStandingsSnapshot(category.id),
       getPlayoffSeries(category.id),
       getChampionForCategory(category.id),
     ])
     const bracket = buildBracketOrNull(standings, playoffSeries)
+    const semifinalMatches = playoffSeries.filter((s) => s.phase === "semifinal").map((s) => ({
+      homeTeamName: teams.find((t) => t.id === s.home_team_id)?.name ?? "A definir",
+      awayTeamName: teams.find((t) => t.id === s.away_team_id)?.name ?? "A definir",
+      scheduledDate: s.scheduled_date,
+      scheduledTime: s.scheduled_time,
+      status: s.status,
+    }))
+    const finalSeries = playoffSeries.find((s) => s.phase === "final")
+    const finalMatch = finalSeries ? {
+      homeTeamName: teams.find((t) => t.id === finalSeries.home_team_id)?.name ?? "A definir",
+      awayTeamName: teams.find((t) => t.id === finalSeries.away_team_id)?.name ?? "A definir",
+      scheduledDate: finalSeries.scheduled_date,
+      scheduledTime: finalSeries.scheduled_time,
+      status: finalSeries.status,
+    } : undefined
 
     return (
-      <div>
-        <TournamentHeader tournament={tournament} />
+      <main data-identity={getSeasonTheme(tournament).identity}>
+        <SectionHero tournament={tournament} />
         <CategoryTabs categories={categories} seasonSlug={tournament.slug} />
 
-        <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-          <h2 className="text-xl font-bold text-gray-900">{category.name}</h2>
+        <div className="max-w-6xl mx-auto space-y-8 px-4 py-8 sm:px-6">
+          <div className="border-b border-border pb-5"><p className="text-xs font-bold uppercase tracking-widest text-primary">Categoría · Tabla final</p><h2 className="font-heading text-3xl font-extrabold text-balance text-foreground sm:text-4xl">{category.name}</h2></div>
           <ChampionBanner champion={champion} />
           <section>
-            <h3 className="font-semibold text-gray-800 mb-3">Tabla final</h3>
+            <h3 className="mb-3 font-heading text-2xl font-bold text-foreground">Tabla final</h3>
             <StandingsTable standings={standings} />
           </section>
           {bracket && (
             <section>
-              <PlayoffBracket bracket={bracket} provisional={false} />
+              <PlayoffBracket bracket={bracket} semifinals={semifinalMatches} final={finalMatch} provisional={false} />
             </section>
           )}
         </div>
-      </div>
+      </main>
     )
   }
 
@@ -170,15 +187,15 @@ export default async function CategoriaPage({ params }: Props) {
     : undefined
 
   return (
-    <div>
-      <TournamentHeader tournament={tournament} />
+    <main data-identity={getSeasonTheme(tournament).identity}>
+      <SectionHero tournament={tournament} />
       <CategoryTabs categories={categories} seasonSlug={tournament.slug} />
 
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-10">
-        <h2 className="text-xl font-bold text-gray-900">{category.name}</h2>
+      <div className="max-w-6xl mx-auto space-y-10 px-4 py-8 sm:px-6">
+        <div className="border-b border-border pb-5"><p className="text-xs font-bold uppercase tracking-widest text-primary">Categoría · En juego</p><h2 className="font-heading text-3xl font-extrabold text-balance text-foreground sm:text-4xl">{category.name}</h2></div>
 
         <section>
-          <h3 className="font-semibold text-gray-800 mb-3">Tabla de posiciones</h3>
+          <h3 className="mb-3 font-heading text-2xl font-bold text-foreground">Tabla de posiciones</h3>
           <StandingsTable standings={effectiveStandings} />
         </section>
 
@@ -199,8 +216,8 @@ export default async function CategoriaPage({ params }: Props) {
 
         {teams.length > 0 && (
           <section>
-            <h3 className="font-semibold text-gray-800 mb-3">Equipos</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <h3 className="mb-3 font-heading text-2xl font-bold text-foreground">Equipos</h3>
+            <div className="grid grid-cols-1 gap-x-10 sm:grid-cols-2">
               {teams.map((team) => (
                 <TeamCard key={team.id} team={team} categorySlug={slug} seasonSlug={tournament.slug} />
               ))}
@@ -208,6 +225,6 @@ export default async function CategoriaPage({ params }: Props) {
           </section>
         )}
       </div>
-    </div>
+    </main>
   )
 }

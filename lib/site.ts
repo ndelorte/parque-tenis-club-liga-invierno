@@ -2,13 +2,16 @@ export const CLUB = {
   name: "Parque Tenis Club",
   shortName: "Parque Tenis",
   tagline: "Viví el club",
+  // Descripción para buscadores y para compartir el link.
+  description:
+    "Club de tenis en Quilmes: canchas de polvo de ladrillo, entrenamientos, escuela, Liga Invierno/Verano, Circuito del Parque e Interparque.",
   phoneDisplay: "+54 9 11 5728-7851",
   whatsapp: "+54 9 11 5728-7851",
   email: "parquetenisclub@gmail.com",
   // Dominio de producción (sale desde main) — OQ-11.
   url: "https://www.parquetenisclub.com.ar",
   address: "Primera junta 726, Quilmes, Buenos Aires",
-  hours: "Lun a Vier · 8:00 a 23:00 - Sab a Dom · 8:00 a 20:00",
+  hours: "Lunes a viernes de 8 a 23, sábados y domingos de 8 a 20",
   mapsEmbed:
     "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4094.6364414014197!2d-58.24266628780437!3d-34.72724576392108!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95a32e5223b0926f%3A0x468799f47d90418a!2sParque%20Tenis!5e1!3m2!1ses!2sar!4v1782056640642!5m2!1ses!2sar",
 } as const
@@ -33,7 +36,7 @@ export const ACTIVITIES = [
     title: "Alquiler de canchas",
     description:
       "Canchas de polvo de ladrillo en excelente estado. Reservá tu horario y vení a jugar con amigos.",
-    image: "/images/cancha horizontal.jpeg",
+    image: "/images/cancha-horizontal.jpeg",
     points: ["Polvo de ladrillo", "Iluminación nocturna", "Vestuarios"],
     waMessage:
       "Hola! Quiero consultar por el alquiler de canchas en Parque Tenis Club.",

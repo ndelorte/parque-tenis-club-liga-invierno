@@ -72,11 +72,26 @@ describe("calculateZoneStandings", () => {
     expect(calculateZoneStandings(participants, matches).map((s) => s.id)).toEqual(["B", "C", "A"])
   })
 
-  it("rechaza un partido con un participante que no está en la lista", () => {
-    const participants = [p("A"), p("B")]
+  it("ignora (sin tirar excepción) un partido con un participante que no está en la lista", () => {
+    const participants = [p("A", 1), p("B", 2)]
     const matches: ZoneMatchResult[] = [
       { participantAId: "A", participantBId: "X", winnerId: "A", score: "6-0 6-0" },
     ]
-    expect(() => calculateZoneStandings(participants, matches)).toThrow()
+    // El partido inconsistente se ignora por completo: ninguno de los 2 suma
+    // la victoria, así que el orden queda por seed (A antes que B).
+    expect(() => calculateZoneStandings(participants, matches)).not.toThrow()
+    expect(calculateZoneStandings(participants, matches).map((s) => s.id)).toEqual(["A", "B"])
+  })
+
+  it("ignora (sin tirar excepción) un score no interpretable, sin perder el resto de la tabla", () => {
+    const participants = [p("A"), p("B"), p("C")]
+    const matches: ZoneMatchResult[] = [
+      // Score inválido: no suma sets/games, pero A igual gana el partido.
+      { participantAId: "A", participantBId: "B", winnerId: "A", score: "no-es-un-score" },
+      { participantAId: "A", participantBId: "C", winnerId: "A", score: "6-2 6-2" },
+    ]
+    expect(() => calculateZoneStandings(participants, matches)).not.toThrow()
+    // A ganó los 2 partidos que jugó → 1°.
+    expect(calculateZoneStandings(participants, matches)[0].id).toBe("A")
   })
 })

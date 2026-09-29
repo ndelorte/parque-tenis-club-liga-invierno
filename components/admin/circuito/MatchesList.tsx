@@ -75,7 +75,7 @@ function MatchRow({
       <div className="flex items-center gap-2 px-3 py-2.5">
         <span
           className={`size-2 shrink-0 rounded-full ${
-            isPlayed ? "bg-green-500" : isReady ? "bg-amber-400" : "bg-muted-foreground/30"
+            isPlayed ? "bg-win-soft0" : isReady ? "bg-pending" : "bg-muted-foreground/30"
           }`}
         />
         <div className="min-w-0 flex-1 text-sm">
@@ -127,7 +127,7 @@ function MatchRow({
           <Button onClick={handleSubmit} disabled={loading} size="sm" className="w-full">
             {loading ? "Guardando..." : "Cargar resultado"}
           </Button>
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {error && <p className="text-xs text-loss">{error}</p>}
         </div>
       )}
     </div>

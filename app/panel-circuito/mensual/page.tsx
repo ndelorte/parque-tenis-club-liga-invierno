@@ -1,8 +1,10 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowLeft, ArrowRight } from "lucide-react"
+import { ArrowRight, CalendarDays } from "lucide-react"
 import { getCircuitoEditions } from "@/lib/data/circuito/editions"
 import { CreateEditionForm } from "@/components/admin/circuito/CreateEditionForm"
+import { AdminShell, AdminPageHeader } from "@/components/admin/admin-shell"
+import { EmptyState } from "@/components/admin/states"
 
 export const metadata: Metadata = { title: "Circuito mensual | Panel Circuito del Parque" }
 export const dynamic = "force-dynamic"
@@ -16,42 +18,45 @@ export default async function CircuitoMensualPage() {
   const editions = await getCircuitoEditions()
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <Link href="/panel-circuito" className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="size-3.5" />
-        Panel Circuito del Parque
-      </Link>
-
-      <h1 className="mb-1 text-2xl font-bold text-foreground">Circuito mensual</h1>
-      <p className="mb-6 text-sm text-muted-foreground">
-        Torneos mensuales por categoría. Cada edición crea automáticamente las 14 categorías fijas.
-      </p>
+    <AdminShell
+      panel="circuito"
+      context="Mid Master y torneos mensuales"
+      currentSection="mensual"
+      publicHref="/circuito-del-parque"
+    >
+      <AdminPageHeader
+        title="Circuito mensual"
+        lede="Torneos mensuales por categoría. Cada edición crea automáticamente las 14 categorías fijas."
+      />
 
       <div className="mb-8">
         <CreateEditionForm />
       </div>
 
       {editions.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Todavía no hay ninguna edición creada.</p>
+        <EmptyState title="Todavía no hay ninguna edición creada" icon={CalendarDays}>
+          Cuando crees la primera aparece acá, con sus 14 categorías.
+        </EmptyState>
       ) : (
-        <div className="space-y-px overflow-hidden rounded-lg border border-border">
+        <ul role="list" className="divide-y divide-border overflow-hidden rounded-lg border border-border">
           {editions.map((edition) => (
-            <Link
-              key={edition.id}
-              href={`/panel-circuito/mensual/${edition.slug}`}
-              className="group flex items-center justify-between bg-card px-4 py-3 transition-colors hover:bg-muted"
-            >
-              <div>
-                <p className="text-sm font-medium text-foreground">{edition.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {MONTHS[edition.month - 1]} {edition.year} · {edition.status}
-                </p>
-              </div>
-              <ArrowRight className="size-4 text-muted-foreground transition-colors group-hover:text-foreground" />
-            </Link>
+            <li key={edition.id}>
+              <Link
+                href={`/panel-circuito/mensual/${edition.slug}`}
+                className="press group flex min-h-14 items-center justify-between gap-3 bg-card px-4 py-2.5 text-foreground transition-colors hover:bg-surface focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-accent"
+              >
+                <span className="grid min-w-0">
+                  <span className="truncate font-bold">{edition.name}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {MONTHS[edition.month - 1]} {edition.year} · {edition.status}
+                  </span>
+                </span>
+                <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
-    </div>
+    </AdminShell>
   )
 }

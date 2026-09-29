@@ -29,7 +29,16 @@ export function MmSponsorsBanner() {
           </p>
         </div>
 
-        <div className="group relative overflow-hidden border border-mm-border bg-mm-bg py-4">
+        {/* .group habilita la pausa del marquee vía :hover/:focus-within
+            (ver .sponsors-marquee-track en app/globals.css). Sin control
+            visible: es el mecanismo elegido para WCAG 2.2.2. tabIndex acá
+            (no en cada logo) da un solo punto de foco para pausar con
+            teclado, en vez de forzar 18 paradas de tab. */}
+        <div
+          tabIndex={0}
+          aria-label="Sponsors del torneo. La animación se pausa al enfocar."
+          className="group relative overflow-hidden border border-mm-border bg-mm-bg py-4 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-mm-gold-light"
+        >
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-mm-bg to-transparent"
@@ -44,7 +53,7 @@ export function MmSponsorsBanner() {
               <div
                 key={`${sponsor.name}-${index}`}
                 aria-hidden={index >= sponsors.length ? true : undefined}
-                className="flex h-20 w-32 shrink-0 items-center justify-center border border-mm-border bg-white p-3 sm:h-24 sm:w-40"
+                className="flex h-20 w-32 shrink-0 items-center justify-center border border-mm-border bg-card p-3 sm:h-24 sm:w-40"
               >
                 <Image
                   src={sponsor.image}

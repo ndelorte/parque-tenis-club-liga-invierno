@@ -69,11 +69,11 @@ export function KnockoutAdmin({ knockoutMatches, participants, categoryId }: Pro
 
       {/* Champion */}
       {championMatch?.winner_participant_id && (
-        <div className="border-t border-mm-gold/30 bg-mm-green-deep px-4 py-4 text-center">
-          <p className="text-[10px] font-medium uppercase tracking-widest text-mm-gold">
+        <div className="border-t border-clay/40 bg-board px-4 py-4 text-center">
+          <p className="text-[10px] font-medium uppercase tracking-widest text-clay-light">
             Campeón
           </p>
-          <p className="mt-1 font-mm-display text-lg font-bold text-mm-gold-light">
+          <p className="mt-1 font-heading text-lg font-bold text-board-foreground">
             {participants.find((p) => p.id === championMatch.winner_participant_id)?.name ?? "Campeón"}
           </p>
         </div>

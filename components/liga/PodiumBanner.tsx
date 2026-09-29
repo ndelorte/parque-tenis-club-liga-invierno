@@ -1,55 +1,38 @@
-import { Trophy, Medal, Award } from "lucide-react";
-
-type Place = {
-  label: string;
-  name: string | null;
-  icon: typeof Trophy;
-  wrapperClass: string;
-  iconClass: string;
-};
+import { Trophy } from "lucide-react"
 
 export function PodiumBanner({
+  categoryName,
   championName,
   runnerUpName,
   thirdPlaceName,
 }: {
-  championName: string | null;
-  runnerUpName: string | null;
-  thirdPlaceName: string | null;
+  categoryName: string
+  championName: string | null
+  runnerUpName: string | null
+  thirdPlaceName: string | null
 }) {
-  const places: Place[] = [
-    {
-      label: "Campeón",
-      name: championName,
-      icon: Trophy,
-      wrapperClass: "bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200",
-      iconClass: "text-amber-500",
-    },
-    {
-      label: "Subcampeón",
-      name: runnerUpName,
-      icon: Medal,
-      wrapperClass: "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200",
-      iconClass: "text-gray-400",
-    },
-    {
-      label: "Tercer puesto",
-      name: thirdPlaceName,
-      icon: Award,
-      wrapperClass: "bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200",
-      iconClass: "text-orange-400",
-    },
-  ];
+  const hasPodium = Boolean(championName || runnerUpName || thirdPlaceName)
 
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
-      {places.map(({ label, name, icon: Icon, wrapperClass, iconClass }) => (
-        <div key={label} className={`rounded-xl border p-6 text-center ${wrapperClass}`}>
-          <Icon className={`mx-auto size-9 ${iconClass}`} aria-hidden="true" />
-          <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</p>
-          <h3 className="font-heading text-xl font-bold text-gray-900">{name ?? "A confirmar"}</h3>
-        </div>
-      ))}
+    <div className="liga-podium">
+      <div className="liga-podium-champion">
+        <span className="liga-podium-cat">{categoryName}</span>
+        {hasPodium ? (
+          <>
+            <strong>{championName ?? "A confirmar"}</strong>
+            <span className="sr-only">Campeón</span>
+            <Trophy size={22} strokeWidth={1.8} aria-hidden="true" className="liga-podium-trophy" />
+          </>
+        ) : (
+          <span className="liga-podium-tbd">Podio a confirmar</span>
+        )}
+      </div>
+      {hasPodium && (
+        <ol className="liga-podium-places" start={2}>
+          <li><span className="liga-podium-medal liga-podium-silver" aria-hidden="true">2</span><span><small>Subcampeón</small><strong>{runnerUpName ?? "A confirmar"}</strong></span></li>
+          <li><span className="liga-podium-medal liga-podium-bronze" aria-hidden="true">3</span><span><small>Tercer puesto</small><strong>{thirdPlaceName ?? "A confirmar"}</strong></span></li>
+        </ol>
+      )}
     </div>
-  );
+  )
 }

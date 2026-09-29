@@ -5,6 +5,7 @@ import Image from "next/image"
 import { ArrowDown, ArrowUp, ImagePlus, Loader2, Trash2, Upload } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { EmptyState, InlineError } from "@/components/admin/states"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -115,7 +116,7 @@ export function PhotoManager({ tournaments }: { tournaments: AdminTournamentOpti
   }
 
   if (tournaments.length === 0) {
-    return <p className="text-sm text-muted-foreground">No hay temporadas cargadas.</p>
+    return <EmptyState title="No hay temporadas cargadas" />
   }
 
   return (
@@ -179,16 +180,16 @@ export function PhotoManager({ tournaments }: { tournaments: AdminTournamentOpti
             <Input value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Ej: Final de Caballeros A" />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <InlineError>{error}</InlineError>}
         </CardContent>
       </Card>
 
       {photos.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Todavía no hay fotos cargadas para esta selección.</p>
+        <EmptyState title="Todavía no hay fotos cargadas para esta selección" />
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {photos.map((photo, index) => (
-            <div key={photo.id} className="overflow-hidden rounded-xl border border-border bg-white">
+            <div key={photo.id} className="overflow-hidden rounded-xl border border-border bg-card">
               <div className="relative aspect-square w-full">
                 <Image
                   src={photo.url}
@@ -225,7 +226,7 @@ export function PhotoManager({ tournaments }: { tournaments: AdminTournamentOpti
                   type="button"
                   variant="outline"
                   size="icon"
-                  className="size-7 text-red-600 hover:text-red-700"
+                  className="size-7 text-loss hover:text-loss"
                   disabled={isPending}
                   onClick={() => handleDelete(photo.id)}
                 >

@@ -1,24 +1,25 @@
 import { SiteHeader } from "@/components/site-header"
-import { Hero } from "@/components/hero"
-import { Activities } from "@/components/activities"
-import { WinterLeague } from "@/components/winter-league"
-import { InterparquePromo } from "@/components/interparque/InterparquePromo"
-import { CircuitoPromo } from "@/components/circuito/CircuitoPromo"
-import { LocationContact } from "@/components/location-contact"
+import { HomeHero } from "@/components/home/home-hero"
+import { Competitions } from "@/components/home/competitions"
+import { ClubActivities } from "@/components/home/club-activities"
+import { VisitClub } from "@/components/home/visit-club"
 import { SiteFooter } from "@/components/site-footer"
 import { WhatsappFab } from "@/components/whatsapp-fab"
+import { getEnJuego } from "@/lib/data/home"
 
-export default function Home() {
+export const dynamic = "force-dynamic"
+
+export default async function Home() {
+  const enJuego = await getEnJuego()
+
   return (
     <div className="min-h-screen bg-background font-sans">
       <SiteHeader />
-      <main>
-        <Hero />
-        <Activities />
-        <WinterLeague />
-        <InterparquePromo />
-        <CircuitoPromo />
-        <LocationContact />
+      <main id="contenido" className="scroll-mt-20">
+        <HomeHero enJuego={enJuego} />
+        <Competitions />
+        <ClubActivities />
+        <VisitClub />
       </main>
       <SiteFooter />
       <WhatsappFab />

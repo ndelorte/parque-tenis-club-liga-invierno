@@ -30,9 +30,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-function buildCourtDetail(cm: CourtMatch, teamId: string, isHome: boolean): CourtDetail {
-  const currentTeamWon = cm.winner_team_id === teamId
-  const winner = (currentTeamWon === isHome) ? ("home" as const) : ("away" as const)
+function buildCourtDetail(cm: CourtMatch, homeTeamId: string): CourtDetail {
+  const winner = cm.winner_team_id === homeTeamId ? ("home" as const) : ("away" as const)
   return {
     court: cm.court_number,
     homePlayers: [
@@ -80,7 +79,7 @@ export default async function EquipoPage({ params }: Props) {
     if (s.status === "completed" || s.status === "walkover") {
       const courts = (s.court_matches ?? [])
         .sort((a, b) => a.court_number - b.court_number)
-        .map((cm) => buildCourtDetail(cm, team.id, isHome))
+        .map((cm) => buildCourtDetail(cm, s.home_team_id))
 
       const teamCourtsWon = isHome ? (s.home_courts_won ?? 0) : (s.away_courts_won ?? 0)
       const teamCourtsLost = isHome ? (s.away_courts_won ?? 0) : (s.home_courts_won ?? 0)

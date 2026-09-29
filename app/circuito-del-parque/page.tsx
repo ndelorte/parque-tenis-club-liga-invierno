@@ -1,9 +1,9 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowRight, Award, Trophy } from "lucide-react"
 import { getCircuitoEditions } from "@/lib/data/circuito/editions"
 import { getMmActiveEdition } from "@/lib/data/mid-master"
-import { EditionCard } from "@/components/circuito/EditionCard"
+import { buildSeasonCalendar } from "@/lib/circuito/seasonCalendar"
+import { SeasonCalendar } from "@/components/circuito/season-calendar"
 
 export const metadata: Metadata = {
   title: "Circuito del Parque | Parque Tenis Club",
@@ -11,53 +11,65 @@ export const metadata: Metadata = {
 }
 
 export default async function CircuitoDelParquePage() {
-  const editions = await getCircuitoEditions()
-  const midMaster = await getMmActiveEdition()
+  const now = new Date()
+  const year = now.getFullYear()
+
+  const [editions, midMaster] = await Promise.all([getCircuitoEditions(), getMmActiveEdition()])
+  const months = buildSeasonCalendar(editions, year, now.getMonth() + 1)
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <p className="text-xs font-medium uppercase tracking-wider text-brand">Circuito del Parque</p>
-      <h1 className="mt-1 font-heading text-3xl font-bold text-foreground">Torneos mensuales</h1>
-      <p className="mt-2 max-w-xl text-muted-foreground">
-        Cada mes se juega un torneo por categoría. Los puntos que se suman en cada uno acumulan al
-        ranking anual — los 8 mejores de cada categoría clasifican a la Final Master.
-      </p>
-
-      <div className="mt-6 flex flex-wrap gap-3">
-        <Link
-          href="/circuito-del-parque/ranking"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:border-brand/40"
-        >
-          <Award className="size-4" />
-          Ranking anual
-        </Link>
-        <Link
-          href="/circuito-del-parque/final-master"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:border-brand/40"
-        >
-          <Trophy className="size-4" />
-          Final Master
-        </Link>
-        {midMaster && (
-          <Link
-            href={`/circuito-del-parque/especiales/${midMaster.slug}`}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:border-brand/40"
-          >
-            {midMaster.name}
-            <ArrowRight className="size-3.5" />
-          </Link>
-        )}
+    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-6 pb-4 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
+        <h1 className="font-heading text-5xl font-extrabold uppercase leading-[0.9] text-foreground sm:text-6xl lg:text-7xl">
+          Temporada {year}
+        </h1>
+        <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
+          Un torneo por categoría cada mes, con el nombre de un torneo del circuito profesional. Los puntos suman al
+          ranking anual y los 8 mejores de cada categoría juegan el Final Master.
+        </p>
       </div>
 
-      <div className="mt-8 space-y-3">
-        {editions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Todavía no hay torneos mensuales cargados.</p>
-        ) : (
-          editions.map((e) => (
-            <EditionCard key={e.id} slug={e.slug} name={e.name} month={e.month} year={e.year} status={e.status} />
-          ))
+      <div className="mt-8">
+        <SeasonCalendar months={months} />
+      </div>
+
+      <div className="mt-16 border-t-2 border-draw-line">
+        <LandingRow
+          title="Ranking"
+          description="La tabla de cada categoría, torneo por torneo. Los 8 primeros clasifican al Final Master."
+          cta="Ver ranking"
+          href="/circuito-del-parque/ranking"
+        />
+        <LandingRow
+          title="Final Master"
+          description="El cierre de la temporada. Hoy, la clasificación provisoria de cada categoría."
+          cta="Ver clasificados"
+          href="/circuito-del-parque/final-master"
+        />
+        {midMaster && (
+          <LandingRow
+            title="Mid Master"
+            description="El torneo especial de mitad de año, con zonas y cuadro final."
+            cta="Ver torneo"
+            href={`/circuito-del-parque/especiales/${midMaster.slug}`}
+          />
         )}
       </div>
     </main>
+  )
+}
+
+function LandingRow({ title, description, cta, href }: { title: string; description: string; cta: string; href: string }) {
+  return (
+    <Link
+      href={href}
+      className="group grid grid-cols-1 gap-2 border-b border-border py-6 no-underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring sm:grid-cols-[minmax(0,5fr)_minmax(0,6fr)_auto] sm:items-center sm:gap-8 sm:py-7"
+    >
+      <span className="font-heading text-3xl font-extrabold uppercase leading-none text-foreground group-hover:underline group-hover:underline-offset-[6px] sm:text-4xl lg:text-5xl">
+        {title}
+      </span>
+      <span className="text-base leading-relaxed text-muted-foreground">{description}</span>
+      <span className="font-semibold text-accent-dark sm:text-right">{cta}</span>
+    </Link>
   )
 }

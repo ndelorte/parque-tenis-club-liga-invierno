@@ -1,97 +1,80 @@
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowDown } from "lucide-react"
+import { CourtLines } from "./CourtLines"
 
 interface Props {
-  year?: number
+  name: string
+  year: number
+  categoriesCount: number
+  participantsCount: number
 }
 
-export function MidMasterHero({ year = 2026 }: Props) {
+/**
+ * Hero de la edición de Especiales (hoy: Mid Master). Sigue
+ * product/refactor-visual/maquetas/fase-4/Opcion1-EspecialesEdicion.dc.html:
+ * Playfair solo en el nombre propio del evento, resto Barlow/Barlow
+ * Condensed. El trazo dorado de CourtLines es el único movimiento de la
+ * pantalla.
+ */
+export function MidMasterHero({ name, year, categoriesCount, participantsCount }: Props) {
   return (
-    <section
-      className="relative isolate overflow-hidden bg-mm-bg"
-      style={{
-        backgroundImage:
-          "radial-gradient(ellipse 80% 50% at 50% 0%, rgba(201,168,76,0.07) 0%, transparent 70%), radial-gradient(ellipse 60% 60% at 0% 100%, rgba(26,46,31,0.5) 0%, transparent 70%)",
-      }}
-    >
-      {/* Court lines decoration */}
-      <svg
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 h-full w-full"
-        preserveAspectRatio="xMidYMid slice"
-        viewBox="0 0 800 600"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <g stroke="white" strokeWidth="1.2" opacity="0.04">
-          {/* Outer court */}
-          <rect x="80" y="60" width="640" height="480" />
-          {/* Singles sidelines */}
-          <line x1="160" y1="60" x2="160" y2="540" />
-          <line x1="640" y1="60" x2="640" y2="540" />
-          {/* Center net line */}
-          <line x1="80" y1="300" x2="720" y2="300" />
-          {/* Service lines */}
-          <line x1="160" y1="180" x2="640" y2="180" />
-          <line x1="160" y1="420" x2="640" y2="420" />
-          {/* Center service line top half */}
-          <line x1="400" y1="180" x2="400" y2="300" />
-          {/* Center service line bottom half */}
-          <line x1="400" y1="300" x2="400" y2="420" />
-          {/* Center marks on baselines */}
-          <line x1="396" y1="60" x2="404" y2="60" />
-          <line x1="396" y1="540" x2="404" y2="540" />
-        </g>
-      </svg>
+    <section className="relative overflow-hidden border-b border-mm-gold-muted bg-mm-bg">
+      <div className="mx-auto grid max-w-6xl gap-6 px-4 pb-8 pt-6 sm:px-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] md:items-center md:gap-10 md:pb-12 md:pt-8">
+        <div className="grid content-start gap-3.5">
+          <nav aria-label="Estás en" className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold text-mm-text-muted">
+            <Link
+              href="/circuito-del-parque"
+              className="inline-flex min-h-11 items-center hover:text-mm-gold-light"
+            >
+              Circuito del Parque
+            </Link>
+            <span aria-hidden="true">/</span>
+            <span>Especiales</span>
+          </nav>
 
-      <div className="relative mx-auto flex min-h-[88vh] max-w-4xl flex-col items-center justify-center px-6 py-24 text-center sm:py-32">
-        <div className="mm-fade-up mb-4" style={{ animationDelay: "0ms" }}>
-          <Image
-            src="/images/logopngcdp.png"
-            alt="Circuito de Parque"
-            width={400}
-            height={400}
-            className="size-64 object-contain sm:size-80"
-            priority
-          />
+          <p className="flex items-center gap-3 text-[15px] font-semibold text-mm-text-muted">
+            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-mm-plaque">
+              <Image src="/images/logopngcdp.png" alt="" width={40} height={40} className="size-10 object-contain" />
+            </span>
+            Torneo especial del Circuito del Parque
+          </p>
+
+          <h1 className="text-[clamp(2.75rem,10vw,5.5rem)] font-bold leading-[0.95] tracking-[-0.005em] text-mm-text">
+            <span className="font-mm-display">{name}</span>
+            <small className="mt-2.5 block font-heading text-[0.42em] font-bold uppercase tracking-[0.02em] text-mm-gold">
+              Edición {year}
+            </small>
+          </h1>
+
+          <p className="max-w-[52ch] text-[17px] text-mm-text-muted">
+            El torneo de mitad de año. Dos zonas de todos contra todos por categoría, los dos
+            primeros de cada zona a semifinales y la final a tres sets completos.
+          </p>
+
+          <dl className="mt-1.5 grid w-fit grid-cols-2 justify-start gap-x-7 gap-y-0">
+            <div>
+              <dt className="text-[13px] text-mm-text-muted">Categorías</dt>
+              <dd className="font-heading text-[26px] font-bold leading-[1.1] text-mm-gold-light tabular-nums">
+                {categoriesCount}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[13px] text-mm-text-muted">Inscriptos</dt>
+              <dd className="font-heading text-[26px] font-bold leading-[1.1] text-mm-gold-light tabular-nums">
+                {participantsCount}
+              </dd>
+            </div>
+          </dl>
+
+          <Link
+            href="#categorias"
+            className="mt-1.5 inline-flex min-h-12 w-fit items-center gap-2 rounded-sm border border-mm-gold px-5 text-sm font-bold text-mm-gold-light transition-colors hover:bg-mm-gold-wash focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mm-gold-light"
+          >
+            Ver categorías
+          </Link>
         </div>
 
-        <p
-          className="mm-fade-up mb-6 text-[11px] font-medium uppercase tracking-[0.22em] text-mm-text-muted"
-          style={{ animationDelay: "150ms" }}
-        >
-          Parque Tenis Club · {year}
-        </p>
-
-        <h1
-          className="mm-fade-up font-mm-display text-5xl font-bold text-mm-text sm:text-7xl"
-          style={{ animationDelay: "300ms" }}
-        >
-          Mid Master
-        </h1>
-
-        <div
-          className="mm-fade-up my-7 h-px w-24 bg-mm-gold opacity-60"
-          style={{ animationDelay: "420ms" }}
-        />
-
-        <p
-          className="mm-fade-up max-w-lg text-pretty text-base leading-relaxed text-mm-text-muted sm:text-lg"
-          style={{ animationDelay: "520ms" }}
-        >
-          Torneo de mitad de temporada. Los mejores clasificados de cada
-          categoría del circuito compiten por el título.
-        </p>
-
-        <Link
-          href="#categorias"
-          className="mm-fade-up mt-10 inline-flex items-center gap-2 border border-mm-gold/50 px-7 py-3 text-sm font-medium uppercase tracking-[0.12em] text-mm-gold transition-colors hover:border-mm-gold hover:bg-mm-gold/5"
-          style={{ animationDelay: "660ms" }}
-        >
-          Ver categorías
-          <ArrowDown className="size-4" />
-        </Link>
+        <CourtLines />
       </div>
     </section>
   )
