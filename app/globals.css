@@ -29,6 +29,7 @@
   --border: #d3dbd2;
   --border-strong: #7b8a80; /* bordes de controles (AA 3:1); #d3dbd2 solo alcanza 2.89:1 */
   --input: #c7d1c6;
+  --border-strong: #7a8a80; /* bordes de controles (3:1 sobre card) */
 
   --primary: #1c3a2a; /* tablero */
   --primary-foreground: #ffffff;
@@ -100,6 +101,7 @@
   --border: #25392d;
   --border-strong: #5f7a69;
   --input: #2f4638;
+  --border-strong: #5f7868;
 
   --primary: #7fb08a;
   --primary-foreground: #0e1a13;
@@ -180,6 +182,7 @@
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
   --color-input: var(--input);
+  --color-border-strong: var(--border-strong);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-ring: var(--ring);

@@ -51,7 +51,7 @@ export function NewMatchForm({ initialPlayers }: Props) {
   }
 
   return (
-    <div className="rounded-lg border border-border bg-white p-4 space-y-3">
+    <div className="rounded-lg border border-border bg-card p-4 space-y-3">
       <PlayerSelect
         label="Jugador A"
         players={players}
@@ -69,30 +69,30 @@ export function NewMatchForm({ initialPlayers }: Props) {
         excludeId={playerAId}
       />
       <div>
-        <label className="mb-1 block text-xs font-medium text-gray-500">Fecha (opcional)</label>
+        <label className="mb-1 block text-xs font-medium text-muted-foreground">Fecha (opcional)</label>
         <input
           type="date"
           value={matchDate}
           onChange={(e) => setMatchDate(e.target.value)}
-          className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand/30"
+          className="w-full rounded border border-border-strong bg-card px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/30"
         />
       </div>
 
       {error && (
-        <p className="rounded bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>
+        <p className="rounded bg-loss-soft px-3 py-2 text-xs text-loss">{error}</p>
       )}
 
       <div className="flex gap-2">
         <button
           onClick={handleCreate}
           disabled={loading || !playerAId || !playerBId || playerAId === playerBId}
-          className="flex-1 rounded bg-brand py-2 text-xs font-semibold text-white hover:bg-brand/90 disabled:opacity-50"
+          className="flex-1 rounded bg-brand py-2 text-xs font-semibold text-brand-foreground hover:bg-brand/90 disabled:opacity-50"
         >
           {loading ? "Guardando..." : "Crear partido"}
         </button>
         <button
           onClick={() => { setOpen(false); setError("") }}
-          className="rounded border border-gray-300 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100"
+          className="rounded border border-border-strong px-3 py-2 text-xs text-muted-foreground hover:bg-muted"
         >
           Cancelar
         </button>

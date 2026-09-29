@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react"
 import Image from "next/image"
 import { ArrowDown, ArrowUp, Loader2, Trash2, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/admin/states"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -96,7 +97,7 @@ export function SponsorManager({ tournaments }: { tournaments: AdminTournamentOp
   }
 
   if (tournaments.length === 0) {
-    return <p className="text-sm text-muted-foreground">No hay ediciones cargadas.</p>
+    return <EmptyState title="No hay ediciones cargadas" />
   }
 
   return (
@@ -139,7 +140,7 @@ export function SponsorManager({ tournaments }: { tournaments: AdminTournamentOp
       </Card>
 
       {sponsors.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Esta edición todavía no tiene sponsors cargados.</p>
+        <EmptyState title="Esta edición todavía no tiene sponsors cargados" />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {sponsors.map((sponsor, index) => (

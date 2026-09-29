@@ -40,7 +40,7 @@ export function AddParticipantButton({ categoryId, groupId, groupName }: Props) 
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-mm-gold"
+        className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-accent"
       >
         <Plus className="size-3.5" />
         Agregar jugadora
@@ -57,13 +57,13 @@ export function AddParticipantButton({ categoryId, groupId, groupName }: Props) 
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") handleCancel() }}
-          className="flex-1 rounded border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-mm-gold/40"
+          className="flex-1 rounded border border-border-strong bg-card px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/40"
           placeholder="Nombre de la jugadora"
         />
         <button
           onClick={handleSave}
           disabled={loading}
-          className="flex size-7 items-center justify-center rounded bg-mm-gold text-mm-bg hover:bg-mm-gold-light disabled:opacity-50"
+          className="flex size-7 items-center justify-center rounded bg-accent text-accent-foreground hover:bg-accent-dark disabled:opacity-50"
         >
           <Check className="size-3.5" />
         </button>
@@ -74,7 +74,7 @@ export function AddParticipantButton({ categoryId, groupId, groupName }: Props) 
           <X className="size-3.5" />
         </button>
       </div>
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-loss">{error}</p>}
     </div>
   )
 }

@@ -52,7 +52,7 @@ export function MatchForm({ match, players }: Props) {
     <div className="border-b border-border last:border-0">
       <div className="flex items-center gap-2 px-4 py-3">
         <span
-          className={`size-2 shrink-0 rounded-full ${isCompleted ? "bg-green-500" : "bg-muted-foreground/30"}`}
+          className={`size-2 shrink-0 rounded-full ${isCompleted ? "bg-win-soft0" : "bg-muted-foreground/30"}`}
         />
 
         <div className="min-w-0 flex-1">
@@ -90,7 +90,7 @@ export function MatchForm({ match, players }: Props) {
           <button
             onClick={handleDelete}
             disabled={loading}
-            className="rounded p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-500"
+            className="rounded p-1.5 text-muted-foreground hover:bg-loss-soft hover:text-loss"
             title="Eliminar partido"
           >
             <Trash2 className="size-3.5" />
@@ -105,10 +105,10 @@ export function MatchForm({ match, players }: Props) {
       </div>
 
       {open && (
-        <div className="border-t border-border bg-white px-4 py-4">
+        <div className="border-t border-border bg-card px-4 py-4">
           <div className="space-y-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">
                 Score — ej: 6-4 6-2 (o 6-4 6-7 10-8 con super tie-break)
               </label>
               <input
@@ -116,9 +116,9 @@ export function MatchForm({ match, players }: Props) {
                 value={score}
                 onChange={(e) => setScore(e.target.value)}
                 placeholder="6-4 6-2"
-                className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 font-mono text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand/30"
+                className="w-full rounded border border-border-strong bg-card px-2 py-1.5 font-mono text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/30"
               />
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Super tie-break: gana quien llega a 10+ puntos con 2 de diferencia (ej. 10-8, 11-9).
               </p>
               {/* WO (reglas-interparque.md): el ausente pierde 6-0 6-0 */}
@@ -126,14 +126,14 @@ export function MatchForm({ match, players }: Props) {
                 <button
                   type="button"
                   onClick={() => setScore("6-0 6-0")}
-                  className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                  className="rounded border border-border-strong px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
                 >
                   WO a favor de {nameA}
                 </button>
                 <button
                   type="button"
                   onClick={() => setScore("0-6 0-6")}
-                  className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                  className="rounded border border-border-strong px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
                 >
                   WO a favor de {nameB}
                 </button>
@@ -142,14 +142,14 @@ export function MatchForm({ match, players }: Props) {
             <button
               onClick={handleResult}
               disabled={loading}
-              className="w-full rounded bg-brand py-2 text-xs font-semibold text-white hover:bg-brand/90 disabled:opacity-50"
+              className="w-full rounded bg-brand py-2 text-xs font-semibold text-brand-foreground hover:bg-brand/90 disabled:opacity-50"
             >
               {loading ? "Guardando..." : isCompleted ? "Corregir resultado" : "Cargar resultado"}
             </button>
           </div>
 
           {(error || success) && (
-            <p className={`mt-3 rounded px-3 py-2 text-xs ${error ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700"}`}>
+            <p className={`mt-3 rounded px-3 py-2 text-xs ${error ? "bg-loss-soft text-loss" : "bg-win-soft text-win"}`}>
               {error || success}
             </p>
           )}

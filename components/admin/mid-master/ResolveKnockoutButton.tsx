@@ -25,12 +25,12 @@ export function ResolveKnockoutButton({ categoryId }: Props) {
       <button
         onClick={handleResolve}
         disabled={loading}
-        className="flex items-center gap-1.5 rounded border border-mm-gold/50 px-3 py-1.5 text-xs font-medium text-mm-gold hover:border-mm-gold hover:bg-mm-gold/5 disabled:opacity-50"
+        className="flex items-center gap-1.5 rounded border border-accent/60 px-3 py-1.5 text-xs font-medium text-accent hover:border-accent hover:bg-accent-light disabled:opacity-50"
       >
         <Swords className="size-3.5" />
         {loading ? "Asignando..." : "Asignar semifinalistas"}
       </button>
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-loss">{error}</p>}
     </div>
   )
 }
