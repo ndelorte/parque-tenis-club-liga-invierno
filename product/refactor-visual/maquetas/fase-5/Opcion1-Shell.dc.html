@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paneles: pestañas en el tablero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
+<meta name="theme-color" content="#1c3a2a">
+<style>
+/* ── Tokens: mismos valores que app/globals.css (.theme-light). Paneles: siempre en claro. ── */
+:root{
+  color-scheme:light;
+  --bg:#f4f6f2;--surface:#eef2ec;--card:#ffffff;--fg:#13241a;--muted:#4f5f55;--border:#d3dbd2;--border-strong:#7a8a80;
+  --board:#1c3a2a;--board-2:#234a35;--board-line:#7a9784;--board-fg:#f4f6f2;--board-muted:#c5d2c9;
+  --brand:#2c5a41;--brand-light:#e3eee4;
+  --accent:#af5122;--accent-dark:#8a3f1a;--accent-light:#fdf1ea;--clay:#d4622a;--clay-light:#e8844f;
+  --win:#1f6b37;--win-soft:#e2f0e5;--loss:#a3231b;--loss-soft:#f8e0dd;--pending:#7d5700;--pending-soft:#faefcc;
+  --destructive:#b42318;--destructive-fg:#ffffff;--primary-fg:#ffffff;
+  --backdrop:rgb(19 36 26 / .45);
+  --ease-out:cubic-bezier(0.23,1,0.32,1);--ease-in-out:cubic-bezier(0.77,0,0.175,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-tap-highlight-color:transparent;scroll-padding-top:120px}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 Barlow,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;touch-action:manipulation}
+h1,h2,h3,h4{text-wrap:balance;margin:0}
+p{margin:0}
+ul,ol{margin:0;padding:0;list-style:none}
+a{color:var(--accent)}
+button{font:inherit;color:inherit;cursor:pointer}
+code{font-size:.9em;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0 4px;overflow-wrap:anywhere}
+:where(a,button,summary,input,select,textarea,[tabindex]):focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
+.cond{font-family:"Barlow Condensed","Arial Narrow",Barlow,sans-serif;text-transform:uppercase;letter-spacing:.01em}
+.min0{min-width:0}
+.trunc{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mut{color:var(--muted)}
+.sm{font-size:14px}
+.strong{font-weight:700}
+.press{transition:transform 160ms var(--ease-out)}
+.press:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.press,.press:active{transition:none;transform:none}}
+img{max-width:100%}
+
+/* ── Chrome de la maqueta (no es parte del diseño) ── */
+.tool{position:sticky;top:0;z-index:40;background:var(--bg);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
+.tool .t{font-family:"Barlow Condensed",sans-serif;font-size:22px;font-weight:800;text-transform:uppercase;margin-right:auto}
+.toc{display:flex;flex-wrap:wrap;gap:4px 14px;font-weight:600;font-size:15px}
+.toc a{min-height:40px;display:inline-flex;align-items:center}
+.intro{max-width:1280px;margin:0 auto;padding:24px 16px 8px;display:grid;gap:10px}
+.intro h2{font-family:"Barlow Condensed",sans-serif;font-size:34px;font-weight:800;text-transform:uppercase;line-height:1}
+.intro p,.intro li{max-width:80ch;color:var(--muted)}
+.intro ul{list-style:disc;padding-left:20px;display:grid;gap:4px}
+.shot{max-width:1280px;margin:0 auto;padding:32px 16px 0}
+.shot>h3,.blockt{font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:800;text-transform:uppercase;margin-bottom:4px;scroll-margin-top:72px}
+.shot>p{color:var(--muted);font-size:14px;max-width:80ch;margin-bottom:12px}
+.cap{font-size:13px;font-weight:700;color:var(--muted);margin:14px 0 6px}
+.phones{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.phones>div{width:375px;max-width:100%}
+.frame{container:frame/inline-size;position:relative;background:var(--bg);border:1.5px solid var(--border-strong);border-radius:8px;overflow:clip;min-height:420px}
+.frame.phone{width:375px;max-width:100%}
+.page-end{height:80px}
+.skip{position:absolute;left:12px;top:-60px;z-index:30;background:var(--card);color:var(--fg);padding:10px 14px;border-radius:6px;font-weight:700;transition:transform 160ms var(--ease-out)}
+.skip:focus-visible{transform:translateY(72px)}
+
+/* ── Contenido de página (común) ── */
+.pc{padding:24px 16px 40px;max-width:1040px;margin:0 auto;width:100%;min-width:0}
+.pc:focus{outline:none}
+.pc:focus-visible{outline:3px solid var(--accent);outline-offset:-3px}
+.pagehead{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+.pagehead h1{font-size:clamp(28px,5cqi,40px);font-weight:800;line-height:1}
+.lede{color:var(--muted);margin-top:6px;max-width:65ch}
+.h2s{font-family:"Barlow Condensed",sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;margin:22px 0 8px}
+.slot{border:1.5px dashed var(--border-strong);border-radius:8px;background:var(--card);padding:18px 16px;display:grid;gap:4px;color:var(--muted);font-size:14px}
+.slot b{color:var(--fg);font-size:15px}
+.closebox{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:16px}
+.cats{display:grid;gap:8px}
+@container frame (min-width:720px){.cats{grid-template-columns:1fr 1fr}}
+.catrow{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding:10px 16px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--fg);text-decoration:none;transition:border-color 150ms var(--ease-out),background-color 150ms var(--ease-out)}
+.catrow>span{display:grid}
+.catrow svg{color:var(--muted);flex:none}
+@media (hover:hover) and (pointer:fine){.catrow:hover{border-color:var(--border-strong);background:var(--surface)}}
+.crumbs{margin-bottom:10px;font-size:14px}
+.crumbs ol{display:flex;flex-wrap:wrap;gap:2px 0}
+.crumbs li{display:inline-flex;align-items:center;min-width:0}
+.crumbs li+li::before{content:"/";color:var(--muted);padding:0 8px}
+.crumbs a{min-height:32px;display:inline-flex;align-items:center;font-weight:600}
+.crumbs [aria-current]{color:var(--muted)}
+.daygroup{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.daygroup .slot{border:0;border-radius:0}
+.dayhead{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;font-weight:700;font-size:15px}
+.anchor{scroll-margin-top:140px}
+
+/* ── Botones (comunes) ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:6px;border:1.5px solid transparent;font-weight:700;font-size:15px;text-decoration:none;white-space:nowrap;transition:background-color 150ms var(--ease-out),border-color 150ms var(--ease-out),color 150ms var(--ease-out),transform 160ms var(--ease-out)}
+.btn svg{flex:none}
+.btn.full{width:100%}
+.btn-primary{background:var(--accent);color:var(--primary-fg)}
+.btn-outline{background:var(--card);border-color:var(--border-strong);color:var(--fg)}
+.btn-ghost{background:transparent;color:var(--fg)}
+.btn-danger{background:var(--destructive);color:var(--destructive-fg)}
+.btn:disabled,.btn[aria-disabled="true"]{background:var(--surface);color:var(--muted);border-color:var(--border);cursor:not-allowed}
+.btn:disabled:active{transform:none}
+@media (hover:hover) and (pointer:fine){
+  .btn-primary:not([aria-disabled="true"]):hover{background:var(--accent-dark)}
+  .btn-outline:not(:disabled):hover{background:var(--surface);border-color:var(--fg)}
+  .btn-ghost:hover{background:var(--surface)}
+  .btn-danger:hover{background:var(--loss)}
+}
+.sm-btn{min-height:40px;margin-top:10px}
+
+/* ── Logos (sobre disco claro para que CDP se lea sobre el tablero) ── */
+.logo{flex:none;display:inline-grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--border)}
+.logo img{width:30px;height:30px;object-fit:contain}
+.logo.sm{width:30px;height:30px}.logo.sm img{width:22px;height:22px}
+.logo.lg{width:64px;height:64px}.logo.lg img{width:52px;height:52px}
+
+/* ── Login común ── */
+.login{min-height:0}
+.lwrap{min-height:560px;display:grid;place-content:center;gap:14px;padding:32px 16px;background:var(--bg);background-image:linear-gradient(var(--board),var(--board));background-size:100% 132px;background-repeat:no-repeat}
+.lcard{width:min(400px,100%);background:var(--card);border:1px solid var(--border);border-top:4px solid var(--clay);border-radius:8px;padding:24px 20px;box-shadow:0 1px 2px var(--backdrop)}
+.lhead{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.lname{font-size:30px;font-weight:800;line-height:1}
+.lform{display:grid;gap:14px}
+.lfoot{text-align:center;max-width:40ch;margin:0 auto}
+
+/* ── Campos ── */
+.field{display:grid;gap:6px}
+.field label{font-weight:600;font-size:15px}
+.field input{min-height:44px;width:100%;border:1.5px solid var(--border-strong);border-radius:6px;background:var(--card);color:var(--fg);padding:0 12px;font:inherit;transition:border-color 150ms var(--ease-out)}
+.field input:focus-visible{outline:3px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+.field input[aria-invalid="true"]{border-color:var(--loss)}
+.ferr{display:flex;gap:6px;align-items:flex-start;color:var(--loss);font-size:14px;font-weight:600}
+.ferr svg{flex:none;margin-top:2px}
+
+/* ── Estados comunes ── */
+.states{display:grid;gap:28px;background:var(--bg);border:1.5px solid var(--border-strong);border-radius:8px;padding:20px 16px}
+@container st (min-width:760px){.states{grid-template-columns:1fr 1fr}}
+.stwrap{container:st/inline-size}
+.stcol{display:grid;gap:10px;align-content:start;min-width:0}
+.sthead{font-size:13px;font-weight:700;color:var(--muted);margin-top:10px}
+.stcol>.sthead:first-child{margin-top:0}
+.empty{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1.5px dashed var(--border-strong);border-radius:8px;padding:20px 16px}
+.empty h3{font-size:22px;font-weight:800;line-height:1.05}
+.empty p{color:var(--muted);margin:6px 0 12px;max-width:52ch}
+.eico{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--brand-light);color:var(--brand)}
+.note{display:flex;gap:12px;align-items:flex-start;border-radius:8px;padding:14px 16px;border-left:4px solid}
+.note svg{flex:none;margin-top:2px}
+.note p+p{margin-top:2px}
+.note-error{background:var(--loss-soft);border-color:var(--loss);color:var(--fg)}
+.note-error>svg{color:var(--loss)}
+.note-ok{background:var(--win-soft);border-color:var(--win);color:var(--fg)}
+.note-ok>svg{color:var(--win)}
+.loading{display:grid;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px}
+.sk{display:block;height:14px;border-radius:4px;background:var(--surface);width:100%}
+.sk.s2{width:78%}.sk.s3{width:56%}
+.dlg-preview{background:var(--backdrop);border-radius:8px;padding:28px 16px;display:grid;place-items:center;margin-bottom:10px}
+.dlgcard{background:var(--card);border-radius:8px;border-top:4px solid var(--destructive);padding:20px;max-width:420px;width:100%;display:grid;gap:8px}
+.dlgcard h3{font-size:24px;font-weight:800;line-height:1.05}
+.dlgcard p{color:var(--muted)}
+.dlgact{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:10px}
+dialog{border:0;padding:0;background:transparent;max-width:min(420px,calc(100vw - 32px));overscroll-behavior:contain}
+dialog::backdrop{background:var(--backdrop)}
+
+/* ── Opción 1: header tablero + pestañas ── */
+.o1h{position:sticky;top:0;z-index:10;background:var(--board);color:var(--board-fg)}
+.o1h :focus-visible{outline-color:var(--board-fg)}
+.o1top{display:flex;align-items:center;gap:12px;padding:10px 16px;max-width:1240px;margin:0 auto}
+.o1id{display:flex;align-items:center;gap:12px;min-width:0;flex:1;color:inherit;text-decoration:none;min-height:44px}
+.o1name{font-size:22px;font-weight:800;line-height:1.05}
+.o1ctx{font-size:14px;color:var(--board-muted)}
+.o1btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border-radius:6px;border:1.5px solid var(--board-line);background:transparent;color:var(--board-fg);font-weight:600;font-size:15px;white-space:nowrap;transition:background-color 150ms var(--ease-out),border-color 150ms var(--ease-out),transform 160ms var(--ease-out)}
+@media (hover:hover) and (pointer:fine){.o1btn:hover{background:var(--board-2);border-color:var(--board-muted)}}
+.o1btn .wide{display:none}
+@container frame (min-width:720px){.o1btn .wide{display:inline}.o1btn .narrow{display:none}}
+.o1nav{display:flex;gap:2px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;border-top:1px solid var(--board-2);padding:0 8px;max-width:1240px;margin:0 auto}
+.o1nav::-webkit-scrollbar{display:none}
+.o1nav a{position:relative;flex:none;display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 12px;color:var(--board-muted);font-weight:600;font-size:15px;text-decoration:none;white-space:nowrap;transition:color 150ms var(--ease-out)}
+.o1nav a svg{opacity:.85}
+.o1nav a::after{content:"";position:absolute;left:10px;right:10px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:var(--clay-light);opacity:0;transition:opacity 150ms var(--ease-out)}
+.o1nav a[aria-current]{color:var(--board-fg)}
+.o1nav a[aria-current]::after{opacity:1}
+.o1nav a:focus-visible{outline-offset:-3px}
+.o1h~.pc{max-width:1240px}
+@media (hover:hover) and (pointer:fine){.o1nav a:hover{color:var(--board-fg)}}
+@media (prefers-reduced-motion:reduce){.o1nav a,.o1nav a::after{transition:none}}
+</style>
+</head>
+<body>
+<div class="tool"><p class="t">Fase 5 · Shell de paneles · Opción 1</p>
+<nav class="toc" aria-label="En esta maqueta"><a href="#liga">Liga</a><a href="#circuito">Circuito</a><a href="#interparque">Interparque</a><a href="#login">Login</a><a href="#estados">Estados</a><a href="Opcion2-Shell.dc.html">Ver opción 2</a></nav></div>
+<div class="intro"><h2>Opción 1 · Tablero con pestañas</h2>
+<p>El header es la franja verde tablero del sitio público, así el panel se reconoce como del club. Debajo del nombre van las secciones del panel como pestañas (links reales, con la URL de cada sección). En el celular las pestañas deslizan de costado: todas las secciones quedan a un toque, sin abrir menús.</p>
+<ul><li>Un solo patrón para los tres paneles; lo único que cambia es la lista de secciones.</li>
+<li>Liga: las 6 pestañas de hoy (<code translate="no">Tabs</code> en <code translate="no">/panel-liga</code>) pasan al header como links con <code translate="no">?seccion=</code>; la URL recuerda dónde estabas.</li>
+<li>Sin link “Ver público”: las páginas públicas llevan el botón de WhatsApp con el teléfono del club.</li></ul></div>
+<section class="shot" id="liga"><h3>Panel de Liga</h3>
+<p>Sección Resultados. El contenido de la página no cambia de diseño: el recuadro punteado marca dónde queda el formulario actual.</p>
+<p class="cap">Escritorio · 1280</p><div class="frame"><a class="skip" href="#o1ld-main">Saltar al contenido</a>
+<header class="o1h">
+<div class="o1top">
+<a class="o1id" href="#"><span class="logo"><img src="../../../../public/images/logoligadeinvierno.png" alt="" width="30" height="30"></span>
+<span class="min0"><span class="cond o1name trunc">Panel de Liga</span><span class="o1ctx trunc">Liga de Invierno 2026</span></span></a>
+<form class="o1out" action="#" onsubmit="return false"><button type="submit" class="o1btn press"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span class="wide">Cerrar sesión</span><span class="narrow">Salir</span></button></form>
+</div>
+<nav class="o1nav" aria-label="Secciones del panel"><a href="/panel-liga?seccion=resultados" aria-current="page"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.7V17c0 .6-.5 1-1 1.2C7.9 18.8 7 20.2 7 22M14 14.7V17c0 .6.5 1 1 1.2 1.1.6 2 2 2 3.8M18 2H6v7a6 6 0 0 0 12 0Z"/></svg><span>Resultados</span></a><a href="/panel-liga?seccion=jugadores"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg><span>Jugadores</span></a><a href="/panel-liga?seccion=fixture"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/></svg><span>Fixture</span></a><a href="/panel-liga?seccion=playoffs"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h6v6h6M3 19h6v-8M15 12h6"/></svg><span>Playoffs</span></a><a href="/panel-liga?seccion=fotos"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2ZM8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M21 15l-5-5L5 21"/></svg><span>Fotos</span></a><a href="/panel-liga?seccion=sponsors"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1ZM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><span>Sponsors</span></a></nav>
+</header>
+<main id="o1ld-main" tabindex="-1" class="pc"><div class="pagehead"><div class="min0"><h1 class="cond">Resultados</h1>
+<p class="lede">Elegí la categoría y la fecha para cargar el resultado de cada serie.</p></div></div>
+<div class="closebox"><div class="min0"><p class="strong">Cerrar temporada</p><p class="mut">Faltan finales por cargar en: Damas B, Doble Mixto 5.</p></div>
+<button type="button" class="btn btn-outline press" disabled><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11h14v10H5ZM8 11V7a4 4 0 0 1 8 0v4"/></svg>Cerrar temporada</button></div>
+<div class="slot"><p><b translate="no">ResultLoader</b></p><p>Formulario actual, sin rediseño: solo pasa a tokens semánticos (sin gray-*, bg-white) y usa los estados comunes de abajo.</p></div></main></div>
+<p class="cap">Celular · 375</p><div class="phones"><div><div class="frame phone"><a class="skip" href="#o1lm-main">Saltar al contenido</a>
+<header class="o1h">
+<div class="o1top">
+<a class="o1id" href="#"><span class="logo"><img src="../../../../public/images/logoligadeinvierno.png" alt="" width="30" height="30"></span>
+<span class="min0"><span class="cond o1name trunc">Panel de Liga</span><span class="o1ctx trunc">Liga de Invierno 2026</span></span></a>
+<form class="o1out" action="#" onsubmit="return false"><button type="submit" class="o1btn press"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span class="wide">Cerrar sesión</span><span class="narrow">Salir</span></button></form>
+</div>
+<nav class="o1nav" aria-label="Secciones del panel"><a href="/panel-liga?seccion=resultados" aria-current="page"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.7V17c0 .6-.5 1-1 1.2C7.9 18.8 7 20.2 7 22M14 14.7V17c0 .6.5 1 1 1.2 1.1.6 2 2 2 3.8M18 2H6v7a6 6 0 0 0 12 0Z"/></svg><span>Resultados</span></a><a href="/panel-liga?seccion=jugadores"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg><span>Jugadores</span></a><a href="/panel-liga?seccion=fixture"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/></svg><span>Fixture</span></a><a href="/panel-liga?seccion=playoffs"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h6v6h6M3 19h6v-8M15 12h6"/></svg><span>Playoffs</span></a><a href="/panel-liga?seccion=fotos"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2ZM8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M21 15l-5-5L5 21"/></svg><span>Fotos</span></a><a href="/panel-liga?seccion=sponsors"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1ZM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><span>Sponsors</span></a></nav>
+</header>
+<main id="o1lm-main" tabindex="-1" class="pc"><div class="pagehead"><div class="min0"><h1 class="cond">Resultados</h1>
+<p class="lede">Elegí la categoría y la fecha para cargar el resultado de cada serie.</p></div></div>
+<div class="closebox"><div class="min0"><p class="strong">Cerrar temporada</p><p class="mut">Faltan finales por cargar en: Damas B, Doble Mixto 5.</p></div>
+<button type="button" class="btn btn-outline press" disabled><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11h14v10H5ZM8 11V7a4 4 0 0 1 8 0v4"/></svg>Cerrar temporada</button></div>
+<div class="slot"><p><b translate="no">ResultLoader</b></p><p>Formulario actual, sin rediseño: solo pasa a tokens semánticos (sin gray-*, bg-white) y usa los estados comunes de abajo.</p></div></main></div></div><div><div class="frame phone"><a class="skip" href="#o1lm2-main">Saltar al contenido</a>
+<header class="o1h">
+<div class="o1top">
+<a class="o1id" href="#"><span class="logo"><img src="../../../../public/images/logoligadeinvierno.png" alt="" width="30" height="30"></span>
+<span class="min0"><span class="cond o1name trunc">Panel de Liga</span><span class="o1ctx trunc">Liga de Invierno 2026</span></span></a>
+<form class="o1out" action="#" onsubmit="return false"><button type="submit" class="o1btn press"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span class="wide">Cerrar sesión</span><span class="narrow">Salir</span></button></form>
+</div>
+<nav class="o1nav" aria-label="Secciones del panel"><a href="/panel-liga?seccion=resultados"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.7V17c0 .6-.5 1-1 1.2C7.9 18.8 7 20.2 7 22M14 14.7V17c0 .6.5 1 1 1.2 1.1.6 2 2 2 3.8M18 2H6v7a6 6 0 0 0 12 0Z"/></svg><span>Resultados</span></a><a href="/panel-liga?seccion=jugadores"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg><span>Jugadores</span></a><a href="/panel-liga?seccion=fixture"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/></svg><span>Fixture</span></a><a href="/panel-liga?seccion=playoffs" aria-current="page"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h6v6h6M3 19h6v-8M15 12h6"/></svg><span>Playoffs</span></a><a href="/panel-liga?seccion=fotos"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2ZM8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M21 15l-5-5L5 21"/></svg><span>Fotos</span></a><a href="/panel-liga?seccion=sponsors"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1ZM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><span>Sponsors</span></a></nav>
+</header>
+<main id="o1lm2-main" tabindex="-1" class="pc"><div class="pagehead"><div class="min0"><h1 class="cond">Playoffs</h1>
+<p class="lede">Cuadro de playoffs por categoría: cargá los cruces y sus resultados.</p></div></div>
+<div class="slot"><p><b translate="no">PlayoffManager</b></p><p>Formulario actual, sin rediseño: solo pasa a tokens semánticos.</p></div></main></div></div></div></section><section class="shot" id="circuito"><h3>Panel del Circuito</h3>
+<p>Mid Master y Circuito mensual comparten panel. Hoy el de Mid Master es negro y dorado y el mensual es claro: con el shell quedan los dos en claro, como el resto de los paneles. En las páginas profundas, una miga reemplaza los “← volver” armados a mano.</p>
+<p class="cap">Escritorio · 1280 · Mid Master</p><div class="frame"><a class="skip" href="#o1cd-main">Saltar al contenido</a>
+<header class="o1h">
+<div class="o1top">
+<a class="o1id" href="#"><span class="logo"><img src="../../../../public/images/logopngcdp.png" alt="" width="30" height="30"></span>
+<span class="min0"><span class="cond o1name trunc">Panel del Circuito</span><span class="o1ctx trunc">Mid Master 2026 · torneos mensuales</span></span></a>
+<form class="o1out" action="#" onsubmit="return false"><button type="submit" class="o1btn press"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span class="wide">Cerrar sesión</span><span class="narrow">Salir</span></button></form>
+</div>
+<nav class="o1nav" aria-label="Secciones del panel"><a href="/panel-circuito" aria-current="page"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l2.9 5.9 6.6 1-4.8 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5L2.5 9.4l6.6-1Z"/></svg><span>Mid Master</span></a><a href="/panel-circuito/mensual"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg><span>Circuito mensual</span></a></nav>
+</header>
+<main id="o1cd-main" tabindex="-1" class="pc"><div class="pagehead"><div class="min0"><h1 class="cond">Gestión del Mid Master</h1>
+<p class="lede">Elegí una categoría para cargar resultados, editar participantes y programar partidos.</p></div></div>
+<h2 class="h2s">Singles</h2><ul class="cats" role="list"><li><a class="catrow press" href="#"><span class="min0"><span class="mut sm">2 zonas de 4</span><span class="strong trunc">Caballeros Primera</span></span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a></li><li><a class="catrow press" href="#"><span class="min0"><span class="mut sm">2 zonas de 4</span><span class="strong trunc">Caballeros Segunda</span></span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a></li><li><a class="catrow press" href="#"><span class="min0"><span class="mut sm">2 zonas de 4</span><span class="strong trunc">Damas Primera</span></span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a></li></ul>
+<h2 class="h2s">Dobles</h2><ul class="cats" role="list"><li><a class="catrow press" href="#"><span class="min0"><span class="mut sm">2 zonas de 4</span><span class="strong trunc">Mixto Intermedia</span></span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a></li><li><a class="catrow press" href="#"><span class="min0"><span class="mut sm">2 zonas de 4</span><span class="strong trunc">Mixto Segunda</span></span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a></li></ul></main></div>
+<p class="cap">Celular · 375 · Circuito mensual, categoría</p><div class="phones"><div><div class="frame phone"><a class="skip" href="#o1cm-main">Saltar al contenido</a>
+<header class="o1h">
+<div class="o1top">
+<a class="o1id" href="#"><span class="logo"><img src="../../../../public/images/logopngcdp.png" alt="" width="30" height="30"></span>
+<span class="min0"><span class="cond o1name trunc">Panel del Circuito</span><span class="o1ctx trunc">Mid Master 2026 · torneos mensuales</span></span></a>
+<form class="o1out" action="#" onsubmit="return false"><button type="submit" class="o1btn press"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span class="wide">Cerrar sesión</span><span class="narrow">Salir</span></button></form>
+</div>
+<nav class="o1nav" aria-label="Secciones del panel"><a href="/panel-circuito"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l2.9 5.9 6.6 1-4.8 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5L2.5 9.4l6.6-1Z"/></svg><span>Mid Master</span></a><a href="/panel-circuito/mensual" aria-current="page"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg><span>Circuito mensual</span></a></nav>
+</header>
+<main id="o1cm-main" tabindex="-1" class="pc"><nav class="crumbs" aria-label="Ubicación"><ol role="list"><li><a href="#">Circuito mensual</a></li><li><a href="#">Septiembre 2026</a></li><li><span aria-current="page">Caballeros Segunda</span></li></ol></nav>
+<div class="pagehead"><div class="min0"><h1 class="cond">Caballeros Segunda</h1>
+<p class="lede">Inscribí participantes, generá el cuadro y cargá resultados.</p></div></div>
+<div class="slot"><p><b translate="no">ParticipantsPanel · MatchesList</b></p><p>Sin cambios de flujo. La miga reemplaza al link “← Panel Circuito del Parque” armado a mano en cada página.</p></div></main></div></div><div><div class="frame phone"><a class="skip" href="#o1cm2-main">Saltar al contenido</a>
+<header class="o1h">
+<div class="o1top">
+<a class="o1id" href="#"><span class="logo"><img src="../../../../public/images/logopngcdp.png" alt="" width="30" height="30"></span>
+<span class="min0"><span class="cond o1name trunc">Panel del Circuito</span><span class="o1ctx trunc">Mid Master 2026 · torneos mensuales</span></span></a>
+<form class="o1out" action="#" onsubmit="return false"><button type="submit" class="o1btn press"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span class="wide">Cerrar sesión</span><span class="narrow">Salir</span></button></form>
+</div>
+<nav class="o1nav" aria-label="Secciones del panel"><a href="/panel-circuito" aria-current="page"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l2.9 5.9 6.6 1-4.8 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5L2.5 9.4l6.6-1Z"/></svg><span>Mid Master</span></a><a href="/panel-circuito/mensual"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg><span>Circuito mensual</span></a></nav>
+</header>
+<main id="o1cm2-main" tabindex="-1" class="pc"><div class="pagehead"><div class="min0"><h1 class="cond">Gestión del Mid Master</h1>
+<p class="lede">Elegí una categoría para cargar resultados, editar participantes y programar partidos.</p></div></div>
+<h2 class="h2s">Singles</h2><ul class="cats" role="list"><li><a class="catrow press" href="#"><span class="min0"><span class="mut sm">2 zonas de 4</span><span class="strong trunc">Caballeros Primera</span></span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a></li><li><a class="catrow press" href="#"><span class="min0"><span class="mut sm">2 zonas de 4</span><span class="strong trunc">Caballeros Segunda</span></span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a></li><li><a class="catrow press" href="#"><span class="min0"><span class="mut sm">2 zonas de 4</span><span class="strong trunc">Damas Primera</span></span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a></li></ul>
+<h2 class="h2s">Dobles</h2><ul class="cats" role="list"><li><a class="catrow press" href="#"><span class="min0"><span class="mut sm">2 zonas de 4</span><span class="strong trunc">Mixto Intermedia</span></span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a></li><li><a class="catrow press" href="#"><span class="min0"><span class="mut sm">2 zonas de 4</span><span class="strong trunc">Mixto Segunda</span></span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a></li></ul></main></div></div></div></section><section class="shot" id="interparque"><h3>Panel de Interparque</h3>
+<p>Es una sola página: las secciones son anclas a “Nuevo partido” y “Partidos cargados”.</p>
+<p class="cap">Escritorio · 1280</p><div class="frame"><a class="skip" href="#o1id-main">Saltar al contenido</a>
+<header class="o1h">
+<div class="o1top">
+<a class="o1id" href="#"><span class="logo"><img src="../../../../public/images/LOGO.png" alt="" width="30" height="30"></span>
+<span class="min0"><span class="cond o1name trunc">Panel de Interparque</span><span class="o1ctx trunc">Partidos entre alumnos</span></span></a>
+<form class="o1out" action="#" onsubmit="return false"><button type="submit" class="o1btn press"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span class="wide">Cerrar sesión</span><span class="narrow">Salir</span></button></form>
+</div>
+<nav class="o1nav" aria-label="Secciones del panel"><a href="#o1id-nuevo" aria-current="true"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span>Nuevo partido</span></a><a href="#o1id-partidos"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg><span>Partidos cargados</span></a></nav>
+</header>
+<main id="o1id-main" tabindex="-1" class="pc"><div class="pagehead"><div class="min0"><h1 class="cond">Partidos de Interparque</h1>
+<p class="lede">Cargá jugadores nuevos, partidos y resultados. La tabla de posiciones se calcula sola a partir de los resultados.</p></div></div>
+<section id="o1id-nuevo" class="anchor" aria-labelledby="o1id-nuevo-t"><h2 id="o1id-nuevo-t" class="h2s">Nuevo partido</h2>
+<div class="slot"><p><b translate="no">NewMatchForm</b></p><p>Alta de jugador y de partido, igual que hoy.</p></div></section>
+<section id="o1id-partidos" class="anchor" aria-labelledby="o1id-partidos-t"><h2 id="o1id-partidos-t" class="h2s">Partidos cargados</h2>
+<div class="daygroup"><p class="dayhead">Domingo 27 de septiembre</p><div class="slot"><p><b translate="no">MatchForm × n</b></p><p>Filas actuales agrupadas por fecha; el contenedor pasa de bg-white a card.</p></div></div></section></main></div>
+<p class="cap">Celular · 375</p><div class="phones"><div><div class="frame phone"><a class="skip" href="#o1im-main">Saltar al contenido</a>
+<header class="o1h">
+<div class="o1top">
+<a class="o1id" href="#"><span class="logo"><img src="../../../../public/images/LOGO.png" alt="" width="30" height="30"></span>
+<span class="min0"><span class="cond o1name trunc">Panel de Interparque</span><span class="o1ctx trunc">Partidos entre alumnos</span></span></a>
+<form class="o1out" action="#" onsubmit="return false"><button type="submit" class="o1btn press"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span class="wide">Cerrar sesión</span><span class="narrow">Salir</span></button></form>
+</div>
+<nav class="o1nav" aria-label="Secciones del panel"><a href="#o1im-nuevo"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span>Nuevo partido</span></a><a href="#o1im-partidos" aria-current="true"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg><span>Partidos cargados</span></a></nav>
+</header>
+<main id="o1im-main" tabindex="-1" class="pc"><div class="pagehead"><div class="min0"><h1 class="cond">Partidos de Interparque</h1>
+<p class="lede">Cargá jugadores nuevos, partidos y resultados. La tabla de posiciones se calcula sola a partir de los resultados.</p></div></div>
+<section id="o1im-nuevo" class="anchor" aria-labelledby="o1im-nuevo-t"><h2 id="o1im-nuevo-t" class="h2s">Nuevo partido</h2>
+<div class="slot"><p><b translate="no">NewMatchForm</b></p><p>Alta de jugador y de partido, igual que hoy.</p></div></section>
+<section id="o1im-partidos" class="anchor" aria-labelledby="o1im-partidos-t"><h2 id="o1im-partidos-t" class="h2s">Partidos cargados</h2>
+<div class="daygroup"><p class="dayhead">Domingo 27 de septiembre</p><div class="slot"><p><b translate="no">MatchForm × n</b></p><p>Filas actuales agrupadas por fecha; el contenedor pasa de bg-white a card.</p></div></div></section></main></div></div></div></section><section class="shot" id="login"><h3>Login común</h3>
+<p>La misma tarjeta para los tres paneles (<code translate="no">components/admin/login-card.tsx</code>): cambia solo el logo y el nombre. Reemplaza los tres logins de hoy, incluido el negro y dorado de Mid Master.</p>
+<p class="cap">Escritorio · 1280 · Liga</p><div class="frame login"><main class="lwrap">
+<div class="lcard">
+<div class="lhead"><span class="logo lg"><img src="../../../../public/images/logoligadeinvierno.png" alt="" width="52" height="52"></span>
+<div class="min0"><p class="mut sm">Parque Tenis Club · acceso privado</p><h1 class="cond lname">Panel de Liga</h1></div></div>
+<form class="lform" action="#" onsubmit="return false" novalidate>
+<div aria-live="polite"></div>
+<div class="field"><label for="o1lgd-email">Email</label><input id="o1lgd-email" name="email" type="email" autocomplete="username" spellcheck="false" inputmode="email" required value=""></div>
+<div class="field"><label for="o1lgd-pass">Contraseña</label><input id="o1lgd-pass" name="password" type="password" autocomplete="current-password" required></div>
+<button type="submit" class="btn btn-primary press full">Ingresar al panel</button>
+</form>
+</div>
+<p class="lfoot mut sm">Solo para organizadores. Si llegaste acá por error, cerrá esta pestaña.</p>
+</main></div>
+<p class="cap">Celular · 375 · Circuito con error, Interparque ingresando</p><div class="phones"><div><div class="frame login phone"><main class="lwrap">
+<div class="lcard">
+<div class="lhead"><span class="logo lg"><img src="../../../../public/images/logopngcdp.png" alt="" width="52" height="52"></span>
+<div class="min0"><p class="mut sm">Parque Tenis Club · acceso privado</p><h1 class="cond lname">Panel del Circuito</h1></div></div>
+<form class="lform" action="#" onsubmit="return false" novalidate>
+<div aria-live="polite"><div class="note note-error" role="alert" id="o1lgc-err"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4M12 16h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg><div><p class="strong">Email o contraseña incorrectos.</p><p>Revisá los datos. Si no tenés acceso, pedíselo al organizador del club.</p></div></div></div>
+<div class="field"><label for="o1lgc-email">Email</label><input id="o1lgc-email" name="email" type="email" autocomplete="username" spellcheck="false" inputmode="email" required value="organizacion@parquetenis.com" aria-invalid="true" aria-describedby="o1lgc-err"></div>
+<div class="field"><label for="o1lgc-pass">Contraseña</label><input id="o1lgc-pass" name="password" type="password" autocomplete="current-password" required></div>
+<button type="submit" class="btn btn-primary press full">Ingresar al panel</button>
+</form>
+</div>
+<p class="lfoot mut sm">Solo para organizadores. Si llegaste acá por error, cerrá esta pestaña.</p>
+</main></div></div><div><div class="frame login phone"><main class="lwrap">
+<div class="lcard">
+<div class="lhead"><span class="logo lg"><img src="../../../../public/images/LOGO.png" alt="" width="52" height="52"></span>
+<div class="min0"><p class="mut sm">Parque Tenis Club · acceso privado</p><h1 class="cond lname">Panel de Interparque</h1></div></div>
+<form class="lform" action="#" onsubmit="return false" novalidate>
+<div aria-live="polite"></div>
+<div class="field"><label for="o1lgi-email">Email</label><input id="o1lgi-email" name="email" type="email" autocomplete="username" spellcheck="false" inputmode="email" required value=""></div>
+<div class="field"><label for="o1lgi-pass">Contraseña</label><input id="o1lgi-pass" name="password" type="password" autocomplete="current-password" required></div>
+<button type="submit" class="btn btn-primary press full" aria-disabled="true">Ingresando…</button>
+</form>
+</div>
+<p class="lfoot mut sm">Solo para organizadores. Si llegaste acá por error, cerrá esta pestaña.</p>
+</main></div></div></div></section><section class="shot" id="estados"><h3>Estados comunes</h3>
+<p>Iguales en las dos opciones: <code translate="no">EmptyState</code>, cargando, error y confirmaciones. Reemplazan los textos sueltos, los <code translate="no">text-red-600</code>/<code translate="no">bg-green-50</code> y el <code translate="no">window.confirm</code>.</p>
+<div class="stwrap"><div class="states">
+<div class="stcol">
+<h4 class="sthead">EmptyState · con acción</h4>
+<div class="empty"><span class="eico"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1Z"/></svg></span><div class="min0"><h3 class="cond">Todavía no hay partidos cargados</h3>
+<p>Cuando cargues el primero aparece acá, agrupado por fecha. La tabla de posiciones se calcula sola.</p>
+<a class="btn btn-primary press" href="#"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Cargar partido</a></div></div>
+
+<h4 class="sthead">EmptyState · sin acción (falta un dato de base)</h4>
+<div class="empty"><span class="eico"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l2.9 5.9 6.6 1-4.8 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5L2.5 9.4l6.6-1Z"/></svg></span><div class="min0"><h3 class="cond">No hay ninguna edición activa</h3>
+<p>Para cargar resultados, la edición tiene que figurar como activa en <code translate="no">mid_master_editions</code> (status <code translate="no">active</code>).</p></div></div>
+
+<h4 class="sthead">Cargando</h4>
+<div class="loading" aria-busy="true" role="status"><p class="mut">Cargando categorías…</p><span class="sk"></span><span class="sk s2"></span><span class="sk s3"></span></div>
+</div>
+
+<div class="stcol">
+<h4 class="sthead">Error al guardar</h4>
+<div class="note note-error" role="alert"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4M12 16h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg><div class="min0"><p class="strong">No se pudo guardar el resultado.</p>
+<p>Se cortó la conexión con el servidor. Lo que cargaste sigue en el formulario: probá guardar de nuevo.</p>
+<button type="button" class="btn btn-outline press sm-btn">Reintentar</button></div></div>
+
+<h4 class="sthead">Error en un campo</h4>
+<div class="field"><label for="o1st-score">Score · cancha 1</label>
+<input id="o1st-score" name="score-1" type="text" autocomplete="off" spellcheck="false" value="6-4 63" aria-invalid="true" aria-describedby="o1st-score-e">
+<p class="ferr" id="o1st-score-e"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4M12 16h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>Revisá el formato: sets separados por espacio, por ejemplo 6-4 6-3.</p></div>
+
+<h4 class="sthead">Confirmación de guardado</h4>
+<div class="note note-ok" role="status" aria-live="polite"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><div class="min0"><p class="strong">Resultado guardado.</p>
+<p>La tabla de Caballeros A ya se recalculó con este resultado.</p></div></div>
+
+<h4 class="sthead">Confirmación antes de una acción que no se deshace</h4>
+<p class="mut sm" style="margin-bottom:10px">Reemplaza al <code translate="no">window.confirm</code> de <code translate="no">CloseTournamentButton</code>. Así se ve abierto:</p>
+<div class="dlg-preview" aria-hidden="true" inert><div class="dlgcard">
+<h3 class="cond">¿Cerrar Liga de Invierno 2026?</h3>
+<p>Se va a marcar como finalizada y se deshabilita la carga de resultados.</p>
+<div class="dlgact"><button type="button" class="btn btn-ghost press" tabindex="-1">Cancelar</button><button type="button" class="btn btn-danger press" tabindex="-1"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11h14v10H5ZM8 11V7a4 4 0 0 1 8 0v4"/></svg>Cerrar temporada</button></div>
+</div></div>
+<button type="button" class="btn btn-outline press" data-open="o1st-dlg">Abrir el diálogo real</button>
+<dialog id="o1st-dlg" aria-labelledby="o1st-dlg-t"><div class="dlgcard">
+<h3 class="cond" id="o1st-dlg-t">¿Cerrar Liga de Invierno 2026?</h3>
+<p>Se va a marcar como finalizada y se deshabilita la carga de resultados.</p>
+<form method="dialog" class="dlgact"><button value="cancel" class="btn btn-ghost press" autofocus>Cancelar</button><button value="ok" class="btn btn-danger press"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11h14v10H5ZM8 11V7a4 4 0 0 1 8 0v4"/></svg>Cerrar temporada</button></form>
+</div></dialog>
+</div>
+</div></div></section>
+<div class="page-end"></div>
+<script>
+(function(){
+  document.addEventListener('click',function(e){
+    var o=e.target.closest('[data-open]');if(o){var d=document.getElementById(o.dataset.open);if(d&&d.showModal)d.showModal();return;}
+    if(e.target.tagName==='DIALOG'){var r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}
+    var a=e.target.closest('a[href^="/"],a[href="#"]');if(a)e.preventDefault();
+    document.querySelectorAll('details.dd[open]').forEach(function(d){if(!d.contains(e.target))d.open=false;});
+  });
+  document.querySelectorAll('.o1nav [aria-current]').forEach(function(a){var n=a.parentElement;n.scrollLeft=a.offsetLeft-(n.clientWidth-a.offsetWidth)/2;});
+  document.addEventListener('keydown',function(e){if(e.key!=='Escape')return;document.querySelectorAll('details[open]').forEach(function(d){if(d.contains(document.activeElement)){d.open=false;d.querySelector('summary').focus();}});});
+})();
+</script>
+</body>
+</html>

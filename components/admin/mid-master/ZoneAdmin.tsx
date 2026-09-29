@@ -74,11 +74,11 @@ export function ZoneAdmin({ data }: Props) {
                 return (
                   <tr key={row.participantId} className="border-t border-border/50">
                     <td className="py-1.5">
-                      <span className={`font-bold ${row.position <= 2 ? "text-mm-gold" : "text-muted-foreground"}`}>
+                      <span className={`font-bold ${row.position <= 2 ? "text-accent" : "text-muted-foreground"}`}>
                         {row.position}
                       </span>
                       {row.advances && (
-                        <span className="ml-1 inline-block size-1.5 rounded-full bg-mm-gold align-middle" />
+                        <span className="ml-1 inline-block size-1.5 rounded-full bg-accent align-middle" />
                       )}
                     </td>
                     <td className="py-1.5 text-sm text-foreground">{name}</td>

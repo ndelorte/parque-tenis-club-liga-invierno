@@ -83,7 +83,7 @@ export function CreateEditionForm() {
       <Button onClick={handleSubmit} disabled={loading || !name.trim() || !slug.trim()}>
         {loading ? "Creando..." : "Crear edición"}
       </Button>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-loss">{error}</p>}
     </div>
   )
 }

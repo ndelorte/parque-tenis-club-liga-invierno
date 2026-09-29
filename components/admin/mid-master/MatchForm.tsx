@@ -88,8 +88,8 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
       <div className="flex items-center gap-2 px-4 py-3">
         {/* Status indicator */}
         <span className={`size-2 shrink-0 rounded-full ${
-          isCompleted ? "bg-green-500" :
-          match.status === "scheduled" ? "bg-mm-gold" :
+          isCompleted ? "bg-win-soft0" :
+          match.status === "scheduled" ? "bg-accent" :
           "bg-muted-foreground/30"
         }`} />
 
@@ -124,7 +124,7 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
             <button
               onClick={handleClear}
               disabled={loading}
-              className="rounded p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-500"
+              className="rounded p-1.5 text-muted-foreground hover:bg-loss-soft hover:text-loss"
               title="Borrar resultado"
             >
               <Trash2 className="size-3.5" />
@@ -141,14 +141,14 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
 
       {/* Expandable form */}
       {open && (
-        <div className="border-t border-mm-border bg-white px-4 py-4">
+        <div className="border-t border-border bg-card px-4 py-4">
           {/* Tabs */}
-          <div className="mb-4 flex gap-1 rounded-lg bg-gray-100 p-1">
+          <div className="mb-4 flex gap-1 rounded-lg bg-muted p-1">
             {isKnockout && (
               <button
                 onClick={() => setActiveTab("players")}
                 className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors ${
-                  activeTab === "players" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-800"
+                  activeTab === "players" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Users className="size-3.5" />
@@ -158,7 +158,7 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
             <button
               onClick={() => setActiveTab("schedule")}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors ${
-                activeTab === "schedule" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-800"
+                activeTab === "schedule" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Calendar className="size-3.5" />
@@ -167,7 +167,7 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
             <button
               onClick={() => setActiveTab("result")}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors ${
-                activeTab === "result" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-800"
+                activeTab === "result" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Trophy className="size-3.5" />
@@ -178,11 +178,11 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
           {activeTab === "players" && isKnockout && (
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">Jugador / Pareja 1</label>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Jugador / Pareja 1</label>
                 <select
                   value={p1Id}
                   onChange={(e) => setP1Id(e.target.value)}
-                  className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-mm-gold/40"
+                  className="w-full rounded border border-border-strong bg-card px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/40"
                 >
                   <option value="">— Sin asignar —</option>
                   {participants.map((p) => (
@@ -193,11 +193,11 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">Jugador / Pareja 2</label>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Jugador / Pareja 2</label>
                 <select
                   value={p2Id}
                   onChange={(e) => setP2Id(e.target.value)}
-                  className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-mm-gold/40"
+                  className="w-full rounded border border-border-strong bg-card px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/40"
                 >
                   <option value="">— Sin asignar —</option>
                   {participants.map((p) => (
@@ -210,7 +210,7 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
               <button
                 onClick={handleAssignPlayers}
                 disabled={loading || !p1Id || !p2Id || p1Id === p2Id}
-                className="w-full rounded bg-mm-gold py-2 text-xs font-semibold text-mm-bg hover:bg-mm-gold-light disabled:opacity-50"
+                className="w-full rounded bg-accent py-2 text-xs font-semibold text-accent-foreground hover:bg-accent-dark disabled:opacity-50"
               >
                 {loading ? "Guardando..." : "Asignar participantes"}
               </button>
@@ -221,28 +221,28 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-500">Fecha</label>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Fecha</label>
                   <input
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-mm-gold/40"
+                    className="w-full rounded border border-border-strong bg-card px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/40"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-500">Hora</label>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Hora</label>
                   <input
                     type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-mm-gold/40"
+                    className="w-full rounded border border-border-strong bg-card px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/40"
                   />
                 </div>
               </div>
               <button
                 onClick={handleSchedule}
                 disabled={loading}
-                className="w-full rounded bg-gray-900 py-2 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+                className="w-full rounded bg-primary py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 {loading ? "Guardando..." : "Guardar fecha"}
               </button>
@@ -252,7 +252,7 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
           {activeTab === "result" && (
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">
                   Score — ej: 6-4 6-2 · 6-4 3-6 {isFinal ? "6-4" : "7-6"}
                 </label>
                 <input
@@ -260,10 +260,10 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
                   value={score}
                   onChange={(e) => setScore(e.target.value)}
                   placeholder={isFinal ? "6-4 6-2 (o 6-4 3-6 6-4)" : "6-4 6-2 (o 6-4 3-6 7-6)"}
-                  className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 font-mono text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-mm-gold/40"
+                  className="w-full rounded border border-border-strong bg-card px-2 py-1.5 font-mono text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/40"
                 />
                 {!isFinal && (
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Tercer set: siempre 7-6 (supertiebreak). Final: set completo.
                   </p>
                 )}
@@ -271,7 +271,7 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
               <button
                 onClick={handleResult}
                 disabled={loading || !match.participant_1_id || !match.participant_2_id}
-                className="w-full rounded bg-mm-gold py-2 text-xs font-semibold text-mm-bg hover:bg-mm-gold-light disabled:opacity-50"
+                className="w-full rounded bg-accent py-2 text-xs font-semibold text-accent-foreground hover:bg-accent-dark disabled:opacity-50"
                 title={!match.participant_1_id ? "Asigná los participantes primero" : ""}
               >
                 {loading ? "Guardando..." : "Cargar resultado"}
@@ -285,7 +285,7 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
           )}
 
           {(error || success) && (
-            <p className={`mt-3 rounded px-3 py-2 text-xs ${error ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700"}`}>
+            <p className={`mt-3 rounded px-3 py-2 text-xs ${error ? "bg-loss-soft text-loss" : "bg-win-soft text-win"}`}>
               {error || success}
             </p>
           )}

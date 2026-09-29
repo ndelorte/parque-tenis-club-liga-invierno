@@ -461,7 +461,7 @@ function QFCard({
             <Badge className="bg-primary text-primary-foreground text-xs">Jugado</Badge>
           )}
           {qf.status === "scheduled" && (
-            <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">Programado</Badge>
+            <Badge variant="outline" className="text-xs text-pending border-pending">Programado</Badge>
           )}
         </div>
         <CardTitle className="font-heading text-base">
