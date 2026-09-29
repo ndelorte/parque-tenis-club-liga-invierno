@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
 import { ZoneSection } from "@/components/mid-master/ZoneSection"
 import { KnockoutBracket } from "@/components/mid-master/KnockoutBracket"
-import { MmReveal } from "@/components/mid-master/MmReveal"
+import { MmSponsorsBanner } from "@/components/mid-master/MmSponsorsBanner"
 import { getMmEditionBySlug, getMmCategoryForPublic, getMmCategories } from "@/lib/data/mid-master"
+import type { MmCategory } from "@/lib/mid-master/types"
 
 export const dynamic = "force-dynamic"
 
@@ -38,6 +38,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+function getChampionLabel(category: MmCategory): string {
+  if (category.type === "doubles") return "Campeones"
+  return /damas/i.test(category.name) ? "Campeona" : "Campeón"
+}
+
+function getCrossDescription(category: MmCategory): string {
+  const unit = category.type === "doubles" ? "parejas" : "jugadores"
+  return `2 zonas de ${category.zoneSize} ${unit}. Pasan los dos primeros de cada zona; las semifinales se cruzan (1° A con 2° B, 1° B con 2° A).`
+}
+
 export default async function CategoryPage({ params }: Props) {
   const { edition, slug } = await params
   const ed = await getMmEditionBySlug(edition)
@@ -46,50 +56,96 @@ export default async function CategoryPage({ params }: Props) {
   const cat = await getMmCategoryForPublic(ed.id, slug)
   if (!cat) notFound()
 
-  const typeLabel = cat.type === "singles" ? "Singles" : "Dobles"
-  const zoneLabel =
-    cat.zoneSize === 3
-      ? "2 zonas de 3 · Semifinal · Final"
-      : "2 zonas de 4 · Semifinal · Final"
+  const { final } = cat.knockout
+  const isFinalPlayed = final.status === "played" || final.status === "walkover"
+  const championName =
+    isFinalPlayed && final.winnerId === final.participantAId
+      ? final.participantALabel
+      : final.participantBLabel
+  const runnerUpName =
+    isFinalPlayed && final.winnerId === final.participantAId
+      ? final.participantBLabel
+      : final.participantALabel
+
+  const noParticipants = cat.zones[0].participants.length === 0 && cat.zones[1].participants.length === 0
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-      <Link
-        href={`/circuito-del-parque/especiales/${ed.slug}`}
-        className="mb-8 inline-flex items-center gap-1.5 text-xs text-mm-text-faint transition-colors hover:text-mm-gold"
-      >
-        <ArrowLeft className="size-3.5" />
-        {ed.name}
-      </Link>
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <nav aria-label="Estás en" className="flex flex-wrap gap-x-2 gap-y-1 text-sm font-semibold text-mm-text-muted">
+        <Link href="/circuito-del-parque" className="hover:text-mm-gold-light">
+          Circuito del Parque
+        </Link>
+        <span aria-hidden="true">/</span>
+        <Link href={`/circuito-del-parque/especiales/${ed.slug}`} className="hover:text-mm-gold-light">
+          {ed.name} {ed.year}
+        </Link>
+      </nav>
 
-      <div className="mb-10 border-b border-mm-border pb-8">
-        <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.2em] text-mm-gold">
-          {typeLabel} · {zoneLabel}
-        </p>
-        <h1 className="font-mm-display text-3xl font-bold text-mm-text sm:text-4xl">
-          {cat.name}
-        </h1>
-      </div>
+      <header className="mt-3 grid gap-2.5 border-b border-mm-gold-muted pb-6">
+        <h1 className="font-mm-display text-[clamp(2.125rem,7vw,3.75rem)] leading-none text-mm-text">{cat.name}</h1>
+        <p className="text-mm-text-muted">{getCrossDescription(cat)}</p>
+      </header>
 
-      {cat.zones[0].participants.length === 0 && cat.zones[1].participants.length === 0 ? (
-        <p className="text-sm text-mm-text-muted">
-          Los participantes aún no fueron cargados.
-        </p>
+      {noParticipants ? (
+        <p className="mt-8 text-sm text-mm-text-muted">Los participantes aún no fueron cargados.</p>
       ) : (
         <>
-          <div className="grid gap-6 md:grid-cols-2">
-            <MmReveal delay={0}>
-              <ZoneSection zone={cat.zones[0]} />
-            </MmReveal>
-            <MmReveal delay={100}>
-              <ZoneSection zone={cat.zones[1]} />
-            </MmReveal>
-          </div>
-          <MmReveal delay={0} className="mt-8">
+          {isFinalPlayed && (
+            <section
+              aria-labelledby="mm-champ-h"
+              className="relative mt-7 grid gap-1.5 justify-items-start border border-mm-gold bg-mm-gold-wash px-5 py-5 outline outline-1 outline-offset-4 outline-mm-gold-muted sm:px-7 sm:py-6"
+            >
+              <p id="mm-champ-h" className="font-heading text-lg font-bold text-mm-gold">
+                {getChampionLabel(cat)}
+              </p>
+              <p className="font-mm-display text-[clamp(1.875rem,6vw,2.75rem)] leading-[1.05] text-mm-text">
+                {championName}
+              </p>
+              <p className="text-[15px] text-mm-text-muted">
+                Final ante {runnerUpName}
+                <br />
+                <b className="font-heading text-2xl font-bold tracking-[0.02em] text-mm-text tabular-nums">
+                  {final.score}
+                </b>
+              </p>
+            </section>
+          )}
+
+          <section className="mt-10" aria-labelledby="mm-cuadro-h">
+            <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1.5">
+              <h2 id="mm-cuadro-h" className="font-mm-display text-[clamp(1.75rem,5vw,2.5rem)] leading-[1.05] text-mm-text">
+                Cuadro final
+              </h2>
+              <p className="text-sm text-mm-text-muted">
+                Semis al mejor de 3 con super tie-break; final a 3 sets completos.
+              </p>
+            </div>
             <KnockoutBracket knockout={cat.knockout} />
-          </MmReveal>
+          </section>
+
+          <section className="mt-10" aria-labelledby="mm-zonas-h">
+            <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1.5">
+              <h2 id="mm-zonas-h" className="font-mm-display text-[clamp(1.75rem,5vw,2.5rem)] leading-[1.05] text-mm-text">
+                Zonas
+              </h2>
+              <p className="text-sm text-mm-text-muted">
+                Orden: partidos ganados, diferencia de sets, diferencia de games, enfrentamiento directo.
+              </p>
+            </div>
+            <div className="grid gap-9 md:grid-cols-2">
+              <ZoneSection zone={cat.zones[0]} />
+              <ZoneSection zone={cat.zones[1]} />
+            </div>
+            <p className="mt-2.5 text-[13px] text-mm-text-muted">
+              El tercer set de zonas y semifinales es super tie-break y se registra como 7-6.
+            </p>
+          </section>
         </>
       )}
+
+      <div className="mt-12">
+        <MmSponsorsBanner />
+      </div>
     </div>
   )
 }
