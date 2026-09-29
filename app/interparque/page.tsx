@@ -4,7 +4,9 @@ import { RulesSection } from "@/components/interparque/RulesSection"
 import { StandingsTable } from "@/components/interparque/StandingsTable"
 import { MatchesList } from "@/components/interparque/MatchesList"
 import { getInterparqueMatches, getInterparquePlayers, getInterparqueStandings } from "@/lib/data/interparque"
-import { buildPlayerParticipation, buildSeasonCalendar, groupCompletedMatchesByDate } from "@/components/interparque/seasonCalendar"
+import { buildPlayerParticipation, buildSeasonCalendar } from "@/components/interparque/seasonCalendar"
+
+const MATCHES_PAGE_SIZE = 8
 
 export const metadata: Metadata = {
   title: "Interparque | Parque Tenis Club",
@@ -15,9 +17,9 @@ export const metadata: Metadata = {
 export default async function InterparquePage({
   searchParams,
 }: {
-  searchParams: Promise<{ fecha?: string }>
+  searchParams: Promise<{ pagina?: string }>
 }) {
-  const { fecha } = await searchParams
+  const { pagina } = await searchParams
   const [standings, matches, players] = await Promise.all([
     getInterparqueStandings(),
     getInterparqueMatches(),
@@ -26,8 +28,21 @@ export default async function InterparquePage({
 
   const seasonDates = buildSeasonCalendar(matches)
   const participation = buildPlayerParticipation(matches)
-  const matchGroups = groupCompletedMatchesByDate(matches, seasonDates)
-  const selectedKey = matchGroups.some((g) => g.key === fecha) ? fecha! : (matchGroups.at(-1)?.key ?? null)
+
+  // Partidos jugados: lista plana del más nuevo al más viejo, paginada de a
+  // 8 (sin dividir por fecha 1/2/3 — eso lo pidió el usuario para esta
+  // sección; el calendario de fechas sigue en el hero y en la tabla).
+  const completedMatches = matches
+    .filter((m) => m.status === "completed")
+    .sort((a, b) => {
+      const dateA = a.match_date ?? ""
+      const dateB = b.match_date ?? ""
+      if (dateA !== dateB) return dateB.localeCompare(dateA)
+      return b.created_at.localeCompare(a.created_at)
+    })
+  const totalPages = Math.max(1, Math.ceil(completedMatches.length / MATCHES_PAGE_SIZE))
+  const page = Math.min(Math.max(Number.parseInt(pagina ?? "1", 10) || 1, 1), totalPages)
+  const pageMatches = completedMatches.slice((page - 1) * MATCHES_PAGE_SIZE, page * MATCHES_PAGE_SIZE)
 
   return (
     <div className="bg-background">
@@ -62,7 +77,7 @@ export default async function InterparquePage({
             </h2>
             <p className="text-sm text-muted-foreground">Debajo de cada nombre, los puntos que sumó.</p>
           </div>
-          <MatchesList groups={matchGroups} players={players} selectedKey={selectedKey} />
+          <MatchesList matches={pageMatches} players={players} page={page} totalPages={totalPages} />
         </section>
       </main>
     </div>

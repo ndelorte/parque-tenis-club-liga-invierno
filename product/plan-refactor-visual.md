@@ -433,6 +433,10 @@ Es la pieza técnica más compleja; se construye en la Fase 2 y se reutiliza en 
 - **Gaps para `open-questions.md`**: fecha de la Final Master sin definir (fixture real); fechas de Mid Master 2026 sin definir (la maqueta usó julio como ejemplo); no hay flyers reales de Interparque en el repo para validar la sub-identidad contra ellos; niveles de Interparque por categoría (ya es OQ-IP-03 abierta).
 - No existe `components/shared/`: como en F2 y F3, los componentes de Especiales e Interparque quedan en sus propios módulos (`components/mid-master/*`, `components/interparque/*`).
 
+**Ajustes post-revisión del PR #14 (2026-09-28)**:
+- El calendario de fechas del hero (`SeasonHero`) marca "Jugada" cuando la fecha **ya pasó por calendario**, no cuando hay un partido `completed` cargado ese día — así una fecha lluviosa sin partido registrado no queda mostrando "Próxima" para siempre. Cambio acotado a `buildSeasonCalendar` en `components/interparque/seasonCalendar.ts`; no afecta la tabla de posiciones ni el hero, que solo consumen el campo `status` resultante.
+- "Partidos jugados" ya NO se agrupa por "Fecha 1/2/3" con botones (esa división se mantiene solo en el hero-calendario y en la tabla de posiciones): pasa a ser una lista plana del más nuevo al más viejo, paginada de a 8 con "Anterior"/"Siguiente" (`?pagina=` en la URL, sin JS de cliente). Se borró `groupCompletedMatchesByDate`/`DateGroup` de `seasonCalendar.ts` por quedar sin uso.
+
 ### 4.7 Fase 5 — Paneles admin (`feat/visual-f5-paneles`)
 
 Sin rediseño: orden y usabilidad. Maqueta solo del shell.

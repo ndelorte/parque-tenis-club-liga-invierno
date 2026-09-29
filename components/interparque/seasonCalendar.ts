@@ -77,12 +77,12 @@ export interface SeasonMatchLike {
 }
 
 /**
- * Arma las fechas (domingos) de la temporada activa a partir de los partidos
- * reales cargados: el año de la temporada es el más frecuente entre los
- * `match_date` cargados (si no hay ninguno, se usa el año actual). Una fecha
- * queda "done" si tiene al menos un partido `completed` ese día; "next" es la
- * primera fecha sin partidos completados (la próxima a jugarse en orden); el
- * resto queda "later".
+ * Arma las fechas (domingos) de la temporada activa: el año de la temporada
+ * es el más frecuente entre los `match_date` de los partidos reales cargados
+ * (si no hay ninguno, se usa el año actual). Una fecha queda "done" cuando ya
+ * pasó (por calendario, no por si se cargó un partido ese día: si llovió y no
+ * hay partido registrado, la fecha igual pasa a "jugada" al otro día); "next"
+ * es la primera fecha que no pasó todavía; el resto queda "later".
  */
 export function buildSeasonCalendar(matches: SeasonMatchLike[], now: Date = new Date()): SeasonDate[] {
   const years = matches
@@ -92,12 +92,10 @@ export function buildSeasonCalendar(matches: SeasonMatchLike[], now: Date = new 
     .filter((y) => !Number.isNaN(y))
 
   const year = modeYear(years) ?? now.getFullYear()
-  const completedKeys = new Set(
-    matches.filter((m) => m.status === "completed" && m.match_date).map((m) => m.match_date as string),
-  )
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
   const sundays = seasonSundays(year)
-  const doneFlags = sundays.map((date) => completedKeys.has(toISODateKey(date)))
+  const doneFlags = sundays.map((date) => date < todayStart)
   const nextIndex = doneFlags.findIndex((done) => !done)
 
   return sundays.map((date, i) => ({
@@ -143,42 +141,4 @@ export function describePlayedDates(dots: PlayerDateDot[]): string {
   const last = played[played.length - 1]
   const rest = played.slice(0, -1).join(", ")
   return `Jugó las fechas ${rest} y ${last}`
-}
-
-export interface DateGroup<T> {
-  /** Clave "YYYY-MM-DD", o "sin-fecha" para partidos completados sin fecha cargada. */
-  key: string
-  /** La fecha de temporada correspondiente, si `key` cae dentro del calendario calculado. */
-  seasonDate: SeasonDate | null
-  matches: T[]
-}
-
-/**
- * Agrupa partidos `completed` por fecha, en orden cronológico (los partidos
- * sin fecha cargada quedan al final). Genérico sobre el tipo de partido para
- * no acoplar este módulo presentacional al tipo `InterparqueMatch` de `lib/`.
- */
-export function groupCompletedMatchesByDate<
-  T extends { match_date: string | null; status: "scheduled" | "completed" },
->(matches: T[], seasonDates: SeasonDate[]): DateGroup<T>[] {
-  const seasonByKey = new Map(seasonDates.map((s) => [s.key, s]))
-  const byKey = new Map<string, T[]>()
-  for (const match of matches) {
-    if (match.status !== "completed") continue
-    const key = match.match_date ?? "sin-fecha"
-    if (!byKey.has(key)) byKey.set(key, [])
-    byKey.get(key)!.push(match)
-  }
-
-  return Array.from(byKey.entries())
-    .sort(([a], [b]) => {
-      if (a === "sin-fecha") return 1
-      if (b === "sin-fecha") return -1
-      return a.localeCompare(b)
-    })
-    .map(([key, ms]) => ({
-      key,
-      seasonDate: key !== "sin-fecha" ? (seasonByKey.get(key) ?? null) : null,
-      matches: ms,
-    }))
 }
