@@ -15,6 +15,7 @@
     "import:circuito-sheet": "tsx scripts/import-circuito-ranking-sheet.ts",
     "validate:data": "tsx scripts/validate-data.ts",
     "dedupe:players": "tsx scripts/dedupe-players.ts",
+    "recalc:ranking-faltante": "tsx scripts/recalc-ranking-faltante.ts",
     "fix:repechaje-importados": "tsx scripts/fix-repechaje-importados.ts",
     "diagnose:brackets": "tsx scripts/diagnose-circuito-brackets.ts"
   },
