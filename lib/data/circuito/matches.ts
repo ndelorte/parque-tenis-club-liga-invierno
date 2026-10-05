@@ -195,6 +195,23 @@ export async function refreshRepechajeStructure(categoryId: string): Promise<voi
   }
 }
 
+// Vuelve a armar el repechaje desde cero (borra sus partidos y resultados: no
+// da puntos) con los que perdieron su primer partido. Para repechajes que
+// quedaron con el armado viejo y ya tienen resultados, que la apertura de la
+// página no rehace sola. Solo cuadros de eliminación armados por el panel.
+export async function rebuildCircuitoRepechaje(categoryId: string): Promise<void> {
+  const supabase = createAdminClient()
+  const { data: category } = await supabase.from("circuito_categories").select("draw_size").eq("id", categoryId).maybeSingle()
+  const rule = category?.draw_size ? selectDrawRule(category.draw_size, CIRCUITO_FORMAT_SPEC) : null
+  if (rule?.format !== "single_elimination") throw new Error("Esta categoría no tiene repechaje.")
+  await assertPanelGeneratedBracket(supabase, categoryId)
+
+  const { error } = await supabase.from("circuito_matches").delete().eq("category_id", categoryId).eq("bracket", "repechaje")
+  if (error) throw new Error(`Error al borrar el repechaje: ${error.message}`)
+  await ensureRepechajeStructure(supabase, categoryId)
+  await syncCircuitoBracketSlots(supabase, categoryId, rule.format)
+}
+
 // Los cuadros importados de Challonge no se editan desde el panel: su
 // estructura no es la del motor y sus puntos vienen de la planilla del club
 // (scripts/import-circuito-ranking-sheet.ts). Se chequea ANTES de escribir.

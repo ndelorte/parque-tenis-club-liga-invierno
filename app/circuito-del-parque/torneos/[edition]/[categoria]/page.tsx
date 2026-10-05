@@ -234,7 +234,7 @@ function EliminationSections({
   championPoints: number
 }) {
   const mainTree = buildBracketTree(mainMatches, names)
-  const repechajeTree = repechajeMatches.length > 0 ? buildBracketTree(repechajeMatches, names, { strictByes: true }) : null
+  const repechajeTree = repechajeMatches.length > 0 ? buildBracketTree(repechajeMatches, names, { fromPanel: true }) : null
 
   return (
     <div>
