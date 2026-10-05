@@ -6,6 +6,8 @@ import { getCircuitoParticipants, getPlayersForSelect } from "@/lib/data/circuit
 import { getCircuitoMatches, refreshRepechajeStructure } from "@/lib/data/circuito/matches"
 import { getCircuitRanking } from "@/lib/data/circuito/ranking"
 import { selectDrawRule } from "@/lib/circuito/generateBracket"
+import { desiredRepechajeLineCount, repechajeShape } from "@/lib/circuito/repechajePlan"
+import { toBracketSlotMatch } from "@/lib/data/circuito/bracket"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
 import { ParticipantsPanel } from "@/components/admin/circuito/ParticipantsPanel"
 import { MatchesList } from "@/components/admin/circuito/MatchesList"
@@ -39,6 +41,14 @@ export default async function CircuitoCategoryPage({
   const participantSeeds = Object.fromEntries(participants.map((p) => [p.id, p.seed]))
   const mainMatches = matches.filter((m) => m.bracket === "main")
   const repechajeMatches = matches.filter((m) => m.bracket === "repechaje")
+  // ¿El repechaje guardado tiene otra forma que la que corresponde hoy? (armado
+  // viejo con resultados cargados: la página no lo rehace sola)
+  const repechajeShapeNow = [...new Set(repechajeMatches.map((m) => m.round_number))]
+    .sort((a, b) => a - b)
+    .map((r) => repechajeMatches.filter((m) => m.round_number === r).length)
+  const repechajeNeedsRebuild =
+    repechajeMatches.length > 0 &&
+    JSON.stringify(repechajeShape(desiredRepechajeLineCount(matches.map(toBracketSlotMatch)))) !== JSON.stringify(repechajeShapeNow)
   const format = category.draw_size ? (selectDrawRule(category.draw_size, CIRCUITO_FORMAT_SPEC)?.format ?? null) : null
 
   return (
@@ -103,6 +113,7 @@ export default async function CircuitoCategoryPage({
             <MatchesList
               categoryId={category.id}
               part="repechaje"
+              needsRebuild={repechajeNeedsRebuild}
               matches={repechajeMatches}
               participantNames={participantNames}
               participantSeeds={participantSeeds}

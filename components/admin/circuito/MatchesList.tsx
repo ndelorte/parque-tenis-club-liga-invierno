@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { ChevronDown, ChevronUp, MoveHorizontal, Trophy, X } from "lucide-react"
-import { submitCircuitoMatchResultAction, swapCircuitoParticipantsAction } from "@/app/actions/circuito"
+import { rebuildCircuitoRepechajeAction, submitCircuitoMatchResultAction, swapCircuitoParticipantsAction } from "@/app/actions/circuito"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { buildBracketTree } from "@/lib/circuito/bracketTree"
@@ -28,6 +28,8 @@ interface Props {
   // "main" o "repechaje": la página los muestra por separado (el repechaje
   // abajo de los puntos de ranking).
   part: "main" | "repechaje"
+  // Repechaje con otra forma que la que corresponde (armado viejo con resultados).
+  needsRebuild?: boolean
   matches: CircuitoMatchView[]
   participantNames: Record<string, string>
   participantSeeds: Record<string, number | null>
@@ -267,6 +269,7 @@ function ResultDialog({
 export function MatchesList({
   categoryId,
   part,
+  needsRebuild,
   matches,
   participantNames,
   participantSeeds,
@@ -314,7 +317,7 @@ export function MatchesList({
   const treeNames = Object.fromEntries(
     Object.entries(participantNames).map(([id, n]) => [id, { name: n, seed: participantSeeds[id] ?? null }]),
   )
-  const strictByes = part === "repechaje"
+  const fromPanel = part === "repechaje"
   // Eliminación simple (y repechaje): cuadro horizontal. En grupos + llave,
   // el tramo de semis y final (el de zonas va en listas).
   const treeMatches =
@@ -323,7 +326,7 @@ export function MatchesList({
       : format === "groups_then_knockout"
         ? matches.filter((m) => m.round_number >= 2).map((m) => ({ ...m, round_number: m.round_number - 1 }))
         : []
-  const tree = treeMatches.length > 0 ? buildBracketTree(treeMatches, treeNames, { strictByes }) : null
+  const tree = treeMatches.length > 0 ? buildBracketTree(treeMatches, treeNames, { fromPanel }) : null
 
   const listMatches =
     part === "main" && format === "groups_then_knockout"
@@ -386,6 +389,32 @@ export function MatchesList({
             medida que cargás resultados. No suma puntos.
           </p>
         </>
+      )}
+
+      {part === "repechaje" && needsRebuild && (
+        <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+          <p className="mb-2">
+            Este repechaje se armó con el criterio anterior (solo perdedores de 1ª ronda) y ya tiene resultados, por eso
+            no se actualiza solo. Podés rehacerlo: queda como un cuadro entre todos los que perdieron su primer partido.
+            Se borran los resultados cargados en el repechaje (no suma puntos).
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={async () => {
+              if (!confirm("¿Rehacer el repechaje? Se borran los resultados que ya cargaste en él.")) return
+              setBusy(true)
+              setReorderError("")
+              const result = await rebuildCircuitoRepechajeAction(categoryId, editionSlug, categorySlug)
+              setBusy(false)
+              if (!result.ok) setReorderError(result.error)
+            }}
+          >
+            Rehacer repechaje
+          </Button>
+          {reorderError && <p className="mt-2 text-red-700">{reorderError}</p>}
+        </div>
       )}
 
       {canReorder && (

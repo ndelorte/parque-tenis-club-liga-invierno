@@ -7,7 +7,7 @@ import { addCategoryToEdition } from "@/lib/data/circuito/categories"
 import { createCircuitoEdition } from "@/lib/data/circuito/editions"
 import { addCircuitoParticipant, createPlayerByName, removeCircuitoParticipant, renameCircuitoParticipant } from "@/lib/data/circuito/participants"
 import { generateAndPersistCircuitoBracket } from "@/lib/data/circuito/bracket"
-import { submitCircuitoMatchResult, swapCircuitoParticipants } from "@/lib/data/circuito/matches"
+import { rebuildCircuitoRepechaje, submitCircuitoMatchResult, swapCircuitoParticipants } from "@/lib/data/circuito/matches"
 
 type ActionResult = { ok: true } | { ok: false; error: string }
 
@@ -185,5 +185,22 @@ export async function renameCircuitoParticipantAction(
   revalidatePath(`/panel-circuito/mensual/${editionSlug}/${categorySlug}`)
   revalidatePath(`/circuito-del-parque/torneos/${editionSlug}/${categorySlug}`)
   revalidatePath("/circuito-del-parque/ranking")
+  return { ok: true }
+}
+
+export async function rebuildCircuitoRepechajeAction(
+  categoryId: string,
+  editionSlug: string,
+  categorySlug: string,
+): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
+  try {
+    await rebuildCircuitoRepechaje(categoryId)
+  } catch (e) {
+    return { ok: false, error: errorMessage(e, "Error al rehacer el repechaje.") }
+  }
+
+  revalidatePath(`/panel-circuito/mensual/${editionSlug}/${categorySlug}`)
+  revalidatePath(`/circuito-del-parque/torneos/${editionSlug}/${categorySlug}`)
   return { ok: true }
 }

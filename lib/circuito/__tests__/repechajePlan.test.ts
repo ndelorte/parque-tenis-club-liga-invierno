@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest"
 import { generateBracket } from "../generateBracket"
+import { buildBracketTree } from "../bracketTree"
 import { CIRCUITO_FORMAT_SPEC } from "../formatSpec"
-import { repechajeLineCount, repechajeShape, repechajeSources } from "../repechajePlan"
+import { desiredRepechajeLineCount, repechajeLineCount, repechajeShape, repechajeSources } from "../repechajePlan"
 import { emptyRepechaje, get, participants, play, slots, sync, toRows } from "./bracketTestUtils"
 
 const mainFor = (n: number) => toRows(generateBracket(participants(n), CIRCUITO_FORMAT_SPEC), "main")
@@ -175,5 +176,39 @@ describe("repechaje por primer partido perdido", () => {
     expect(withBye).toHaveLength(2)
     // los byes son para los 2 de mejor seed entre los 6 (p3 y p4)
     expect(withBye.flatMap((r) => slots(r)).filter(Boolean).sort()).toEqual(["p3", "p4"])
+  })
+})
+
+describe("el repechaje siempre se puede dibujar como cuadro horizontal", () => {
+  it("en cualquier momento del torneo (8 a 24 inscriptos, resultados al azar) buildBracketTree arma el árbol", () => {
+    const withoutTree: string[] = []
+    for (let n = 8; n <= 24; n++) {
+      for (let trial = 0; trial < 4; trial++) {
+        const ps = participants(n)
+        let rows = sync("single_elimination", ps, mainFor(n))
+        rows = sync("single_elimination", ps, [...rows, ...emptyRepechaje(rows)])
+        for (let round = 1; round <= 6; round++) {
+          for (const m of rows.filter((x) => x.bracket === "main" && x.round === round)) {
+            const cur = get(rows, m.id)
+            if (!cur.participantAId || !cur.participantBId || cur.winnerId) continue
+            rows = sync("single_elimination", ps, play(rows, cur.id, Math.random() < 0.5 ? cur.participantAId : cur.participantBId))
+            // la capa de datos rehace la forma cuando corresponde
+            const rep0 = rows.filter((x) => x.bracket === "repechaje")
+            const current = [...new Set(rep0.map((x) => x.round))].sort().map((r) => rep0.filter((x) => x.round === r).length)
+            if (JSON.stringify(repechajeShape(desiredRepechajeLineCount(rows))) !== JSON.stringify(current)) {
+              rows = sync("single_elimination", ps, [...rows.filter((x) => x.bracket === "main"), ...emptyRepechaje(rows)])
+            }
+            const input = rows
+              .filter((x) => x.bracket === "repechaje")
+              .map((r) => ({
+                id: r.id, round_number: r.round, position: r.position, participant_a_id: r.participantAId,
+                participant_b_id: r.participantBId, score: r.score, winner_id: r.winnerId, status: "pending", is_walkover: false,
+              }))
+            if (input.length > 0 && !buildBracketTree(input, {}, { fromPanel: true })) withoutTree.push(`N=${n}`)
+          }
+        }
+      }
+    }
+    expect(withoutTree).toEqual([])
   })
 })

@@ -109,11 +109,11 @@ function finalizeTree(
   roundNumbers: number[],
   totalRounds: number,
   participants: Record<string, BracketTreeParticipant>,
-  strictByes = false,
+  fromPanel = false,
 ): BracketTree {
-  // Con strictByes (repechaje), un lugar con un solo participante es "pase
-  // libre" recién cuando ese participante ya avanzó a la ronda siguiente;
-  // antes está esperando rival.
+  // Con fromPanel (repechaje armado por el panel), un lugar con un solo
+  // participante es "pase libre" recién cuando ese participante ya avanzó a la
+  // ronda siguiente; antes está esperando rival.
   const advanced = new Set(
     (matchesByRound.get(2) ?? []).flatMap((m) => [m.participant_a_id, m.participant_b_id]).filter((id): id is string => !!id),
   )
@@ -129,7 +129,7 @@ function finalizeTree(
         b: toSide(m.participant_b_id, participants),
         score: m.score,
         winnerId: m.winner_id,
-        isBye: r === 1 && !!m.participant_a_id && !m.participant_b_id && (!strictByes || advanced.has(m.participant_a_id)),
+        isBye: r === 1 && !!m.participant_a_id && !m.participant_b_id && (!fromPanel || advanced.has(m.participant_a_id)),
         isWalkover: m.is_walkover,
         status: m.status,
       })),
@@ -178,7 +178,7 @@ function isLinkedByPosition(byRound: Map<number, BracketTreeMatchInput[]>, round
 function buildBracketTreeByPosition(
   matches: BracketTreeMatchInput[],
   participants: Record<string, BracketTreeParticipant>,
-  strictByes: boolean,
+  fromPanel: boolean,
 ): BracketTree | null {
   if (matches.length === 0) return null
 
@@ -210,9 +210,12 @@ function buildBracketTreeByPosition(
   const lastRoundExpectedSize = firstRoundSize / 2 ** (totalRounds - 1)
   if (lastRoundExpectedSize !== 1) return null // la última ronda tiene que ser la final (1 partido)
 
-  if (!isLinkedByPosition(byRound, roundNumbers)) return null
+  // Los cuadros que arma el panel tienen `position` confiable: la verificación
+  // de enlaces es para detectar imports de Challonge y no aplica (además, los
+  // byes del repechaje que avanzan varias rondas no cumplen su regla).
+  if (!fromPanel && !isLinkedByPosition(byRound, roundNumbers)) return null
 
-  return finalizeTree(byRound, roundNumbers, totalRounds, participants, strictByes)
+  return finalizeTree(byRound, roundNumbers, totalRounds, participants, fromPanel)
 }
 
 // Reconstruye el árbol de atrás para adelante desde la final, siguiendo
@@ -306,10 +309,11 @@ export function reconstructBracketFromResults(
 export function buildBracketTree(
   matches: BracketTreeMatchInput[],
   participants: Record<string, BracketTreeParticipant>,
-  options: { strictByes?: boolean } = {},
+  // fromPanel: cuadro armado por el panel (repechaje): se confía en round/position.
+  options: { fromPanel?: boolean } = {},
 ): BracketTree | null {
   return (
-    buildBracketTreeByPosition(matches, participants, options.strictByes ?? false) ??
+    buildBracketTreeByPosition(matches, participants, options.fromPanel ?? false) ??
     reconstructBracketFromResults(matches, participants)
   )
 }
