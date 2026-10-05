@@ -72,12 +72,14 @@ async function main() {
     const [keep, ...drops] = withUsage
 
     // Nombre con el que queda la ficha unificada. La convención del sitio es
-    // "Apellido Nombre" (es como están cargados los equipos de la Liga y como se
+    // "Apellido Nombre" (como están cargados los equipos de la Liga y como se
     // ven los cuadros); las fichas de la planilla/Challonge suelen venir como
-    // "Nombre Apellido". Se queda el nombre de la ficha con más equipos de Liga;
-    // si ninguna tiene equipos, el de la ficha que se conserva.
+    // "Nombre Apellido". Se usa el nombre de la ficha con más equipos de Liga;
+    // si ninguna tiene equipos, el de la ficha creada más recientemente (es la
+    // que se cargó a mano desde el panel, con la convención actual).
     const byTeams = [...withUsage].sort((a, b) => b.teams - a.teams)
-    const finalName = byTeams[0].teams > 0 ? byTeams[0].displayName : keep.displayName
+    const newest = [...withUsage].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
+    const finalName = byTeams[0].teams > 0 ? byTeams[0].displayName : newest.displayName
 
     log(cluster.kind === "same" ? `• MISMO NOMBRE  → quedará como "${finalName}"` : "• PARECIDOS (revisar a mano)")
     for (const p of withUsage) {
