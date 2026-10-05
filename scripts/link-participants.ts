@@ -11,6 +11,12 @@
  *   2) Abrir ese archivo y, en cada "elegido", poner el jugador correcto: su
  *      nombre exacto (ej. "Ciarlantini Ignacio") o su id; null = no vincular.
  *      En dobles: uno por cada jugador ("partes").
+ *      Opcionales por jugador: "renombrar": "Apellido Nombre" (cambia el nombre
+ *      del jugador elegido) y "crear": "Apellido Nombre" (si el jugador todavía
+ *      no existe, se crea).
+ *   2b) npm run link:participantes -- --check
+ *        Comprueba el archivo y muestra qué haría (jugadores a crear, a renombrar
+ *        y a vincular) SIN escribir nada.
  *   3) npm run link:participantes -- --apply
  *        Vincula lo elegido: pone el jugador en todos los participantes con ese
  *        nombre y actualiza el nombre mostrado al del jugador.
@@ -24,7 +30,7 @@ dotenv.config({ path: ".env.local" })
 import { readFileSync, writeFileSync, existsSync } from "fs"
 import { createAdminClient } from "./lib/db"
 import { parseArgs, log, ok, warn } from "./lib/utils"
-import { compareNames, nameTokens, editDistance } from "../lib/players/similarNames"
+import { compareNames, nameKey, nameTokens, editDistance } from "../lib/players/similarNames"
 
 const FILE = "scripts/vinculos-participantes.json"
 
@@ -74,10 +80,10 @@ function candidatesFor(text: string, players: Player[]): Array<{ player: Player;
 }
 
 async function main() {
-  const apply = parseArgs(process.argv.slice(2))["apply"] === true
+  const args = parseArgs(process.argv.slice(2))
   const db = createAdminClient()
 
-  if (apply) return applyLinks(db)
+  if (args["apply"] === true || args["check"] === true) return applyLinks(db, args["apply"] === true)
 
   const { data: playerRows } = await db.from("players").select("id, display_name").eq("active", true)
   const players: Player[] = (playerRows ?? []).map((p) => ({ id: p.id as string, displayName: p.display_name as string }))
@@ -147,46 +153,106 @@ async function main() {
   warn("   Abrí el archivo, revisá/completá los \"elegido\" (id del jugador o null) y corré: npm run link:participantes -- --apply")
 }
 
-async function applyLinks(db: ReturnType<typeof createAdminClient>) {
+interface PartSpec { elegido?: string | null; renombrar?: string | null; crear?: string | null }
+interface LinkEntry extends PartSpec {
+  tipo: "single" | "dobles"
+  nombre: string
+  partes?: Array<PartSpec & { texto: string }>
+}
+
+async function applyLinks(db: ReturnType<typeof createAdminClient>, write: boolean) {
   if (!existsSync(FILE)) throw new Error(`No existe ${FILE}. Primero corré: npm run link:participantes`)
-  const entries = JSON.parse(readFileSync(FILE, "utf8")) as Array<{
-    tipo: "single" | "dobles"
-    nombre: string
-    elegido?: string | null
-    partes?: Array<{ texto: string; elegido: string | null }>
-  }>
+  const entries = JSON.parse(readFileSync(FILE, "utf8")) as LinkEntry[]
 
-  const nameOf = async (id: string) => {
-    const { data } = await db.from("players").select("display_name").eq("id", id).maybeSingle()
-    if (!data) throw new Error(`No existe el jugador ${id}`)
-    return data.display_name as string
-  }
-
-  // "elegido" puede ser el id o el nombre exacto del jugador.
   const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   const { data: activeRows } = await db.from("players").select("id, display_name").eq("active", true)
-  const resolve = (value: string | null | undefined, context: string): string | null => {
-    if (!value) return null
-    if (UUID.test(value)) return value
-    const wanted = value.trim().toLowerCase()
-    const found = (activeRows ?? []).filter((p) => String(p.display_name).trim().toLowerCase() === wanted)
-    if (found.length === 1) return found[0].id as string
-    throw new Error(`${context}: "${value}" ${found.length === 0 ? "no coincide con ningún jugador activo" : "coincide con más de un jugador; usá el id"}`)
+  const players = (activeRows ?? []).map((p) => ({ id: p.id as string, name: String(p.display_name) }))
+  const norm = (t: string) => t.trim().replace(/\s+/g, " ").toLowerCase()
+  const byName = (name: string) => players.filter((p) => norm(p.name) === norm(name))
+  const split = (full: string) => {
+    const display = full.trim().replace(/\s+/g, " ")
+    const [first, ...rest] = display.split(" ")
+    return { display, first, last: rest.join(" ") }
   }
 
+  const problems: string[] = []
+  const created = new Set<string>()
+  const renamed = new Map<string, string>() // id -> nuevo nombre
+
+  // Resuelve un jugador (id, nombre exacto o "crear"), creándolo/renombrándolo si corresponde.
+  async function resolvePlayer(spec: PartSpec, context: string): Promise<string | null> {
+    let id: string | null = null
+    let autoRename: string | null = null
+    if (spec.crear) {
+      const existing = byName(spec.crear)
+      if (existing.length === 1) id = existing[0].id
+      else if (existing.length > 1) problems.push(`${context}: hay más de un jugador "${spec.crear}"`)
+      else {
+        if (!created.has(norm(spec.crear))) created.add(norm(spec.crear))
+        if (write) {
+          const n = split(spec.crear)
+          const { data, error } = await db
+            .from("players")
+            .insert({ display_name: n.display, first_name: n.first, last_name: n.last, active: true })
+            .select("id")
+            .single()
+          if (error || !data) throw new Error(`No se pudo crear "${spec.crear}": ${error?.message}`)
+          players.push({ id: data.id as string, name: n.display })
+          id = data.id as string
+        } else id = `(nuevo) ${spec.crear}`
+      }
+    } else if (spec.elegido) {
+      if (UUID.test(spec.elegido)) id = spec.elegido
+      else {
+        let found = byName(spec.elegido)
+        // Mismo nombre en otro orden (ej. "Bautista Berutti" para "Berutti Bautista"):
+        // se usa ese jugador y se lo deja con el nombre tal como se escribió acá.
+        if (found.length === 0) {
+          found = players.filter((p) => nameKey(p.name) === nameKey(spec.elegido!))
+          if (found.length === 1) autoRename = spec.elegido.trim().replace(/\s+/g, " ")
+        }
+        if (found.length === 1) id = found[0].id
+        else problems.push(`${context}: "${spec.elegido}" ${found.length === 0 ? "no coincide con ningún jugador activo" : "coincide con más de un jugador; usá el id"}`)
+      }
+    }
+    const newName = spec.renombrar ?? autoRename
+    if (id && newName && !id.startsWith("(nuevo)")) {
+      const current = players.find((p) => p.id === id)
+      if (current && current.name !== newName.trim().replace(/\s+/g, " ")) {
+        if (!renamed.has(id)) renamed.set(id, newName.trim().replace(/\s+/g, " "))
+        if (write) {
+          const n = split(newName)
+          const { error } = await db.from("players").update({ display_name: n.display, first_name: n.first, last_name: n.last }).eq("id", id)
+          if (error) throw new Error(`No se pudo renombrar a "${spec.renombrar}": ${error.message}`)
+          current.name = n.display
+        }
+      }
+    }
+    return id
+  }
+  const nameOf = (id: string | null) => (id ? (id.startsWith("(nuevo)") ? id.slice(8) : renamed.get(id) ?? players.find((p) => p.id === id)?.name ?? "?") : "—")
+
   let linked = 0
+  const plan: string[] = []
   for (const e of entries) {
     let p1: string | null = null
     let p2: string | null = null
-    if (e.tipo === "single") p1 = resolve(e.elegido, e.nombre)
+    if (e.tipo === "single") p1 = await resolvePlayer(e, e.nombre)
     else {
-      p1 = resolve(e.partes?.[0]?.elegido, e.nombre)
-      p2 = resolve(e.partes?.[1]?.elegido, e.nombre)
-      if (!p1 || !p2) { if (p1 || p2) warn(`Dobles incompleto, se omite: ${e.nombre}`); continue }
+      p1 = await resolvePlayer(e.partes?.[0] ?? {}, `${e.nombre} (1º)`)
+      p2 = await resolvePlayer(e.partes?.[1] ?? {}, `${e.nombre} (2º)`)
+      if (!p1 || !p2) {
+        if (p1 || p2) problems.push(`Dobles incompleto: ${e.nombre}`)
+        continue
+      }
     }
     if (!p1) continue
+    const displayName = p2 ? `${nameOf(p1)} / ${nameOf(p2)}` : nameOf(p1)
 
-    const displayName = p2 ? `${await nameOf(p1)} / ${await nameOf(p2)}` : await nameOf(p1)
+    if (!write) {
+      plan.push(`${e.nombre}  →  ${displayName}`)
+      continue
+    }
     const { data: updated, error } = await db
       .from("circuito_participants")
       .update({ player_id: p1, player_2_id: p2, display_name: displayName })
@@ -196,6 +262,21 @@ async function applyLinks(db: ReturnType<typeof createAdminClient>) {
     if (error) throw new Error(`Error vinculando "${e.nombre}": ${error.message}`)
     linked += updated?.length ?? 0
     ok(`${e.nombre} → ${displayName}  (${updated?.length ?? 0} participante/s)`)
+  }
+
+  if (problems.length > 0) {
+    warn("\nProblemas (corregí el archivo):")
+    problems.forEach((p) => warn(`  - ${p}`))
+    if (write) log("(Lo que se pudo resolver ya se aplicó; volvé a correr cuando lo corrijas.)")
+  }
+  if (!write) {
+    log(`\nVa a CREAR ${created.size} jugador(es): ${[...created].map((n) => `"${n}"`).join(", ") || "ninguno"}`)
+    log(`Va a RENOMBRAR ${renamed.size} jugador(es):`)
+    for (const [id, to] of renamed) log(`  ${players.find((p) => p.id === id)?.name}  →  ${to}`)
+    log(`\nVa a VINCULAR ${plan.length} nombre(s):`)
+    plan.forEach((l) => log(`  ${l}`))
+    log(problems.length ? "\nHay problemas arriba: corregilos antes de --apply." : "\nTodo resuelve. Para aplicar: npm run link:participantes -- --apply")
+    return
   }
   log(`\n${linked} participante(s) vinculados. Siguiente: npm run recalc:ranking-faltante`)
 }
