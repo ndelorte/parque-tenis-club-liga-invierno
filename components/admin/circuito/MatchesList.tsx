@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp, Trophy } from "lucide-react"
 import { submitCircuitoMatchResultAction } from "@/app/actions/circuito"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import type { DrawFormatKind } from "@/lib/circuito/types"
 
 export interface CircuitoMatchView {
   id: string
@@ -23,9 +24,24 @@ interface Props {
   participantNames: Record<string, string>
   editionSlug: string
   categorySlug: string
+  format: DrawFormatKind | null // null = cuadro importado: se asume eliminación directa
 }
 
-function roundLabel(bracket: "main" | "repechaje", roundNumber: number, totalRounds: number) {
+function roundLabel(
+  bracket: "main" | "repechaje",
+  roundNumber: number,
+  totalRounds: number,
+  format: DrawFormatKind | null,
+  zone: "A" | "B" | null,
+) {
+  if (bracket === "main") {
+    if (format === "round_robin_pure") return "Todos contra todos"
+    if (format === "round_robin_with_final") return roundNumber === 1 ? "Todos contra todos" : "Final"
+    if (format === "groups_then_knockout") {
+      if (roundNumber === 1) return zone ? `Zona ${zone}` : "Fase de zonas"
+      return roundNumber === totalRounds ? "Final" : "Semifinal"
+    }
+  }
   const prefix = bracket === "repechaje" ? "Repechaje — " : ""
   if (roundNumber === totalRounds) return `${prefix}Final`
   if (roundNumber === totalRounds - 1) return `${prefix}Semifinal`
@@ -134,7 +150,7 @@ function MatchRow({
   )
 }
 
-export function MatchesList({ matches, participantNames, editionSlug, categorySlug }: Props) {
+export function MatchesList({ matches, participantNames, editionSlug, categorySlug, format }: Props) {
   const name = (id: string | null) => (id ? participantNames[id] ?? "?" : "Por definir")
 
   const mainMatches = matches.filter((m) => m.bracket === "main")
@@ -143,16 +159,21 @@ export function MatchesList({ matches, participantNames, editionSlug, categorySl
   const totalRepechajeRounds = repechajeMatches.reduce((max, m) => Math.max(max, m.round_number), 0)
 
   const grouped = (list: CircuitoMatchView[], totalRounds: number, bracket: "main" | "repechaje") => {
-    const byRound = new Map<number, CircuitoMatchView[]>()
+    // Una sección por ronda; en la fase de zonas, una por zona.
+    const sections = new Map<string, { round: number; zone: "A" | "B" | null; matches: CircuitoMatchView[] }>()
     for (const m of list) {
-      if (!byRound.has(m.round_number)) byRound.set(m.round_number, [])
-      byRound.get(m.round_number)!.push(m)
+      const zone = bracket === "main" && m.round_number === 1 ? m.zone : null
+      const key = `${m.round_number}-${zone ?? ""}`
+      if (!sections.has(key)) sections.set(key, { round: m.round_number, zone, matches: [] })
+      sections.get(key)!.matches.push(m)
     }
-    return [...byRound.entries()].sort(([a], [b]) => a - b).map(([round, roundMatches]) => (
-      <div key={`${bracket}-${round}`} className="mb-4">
+    return [...sections.values()]
+      .sort((a, b) => a.round - b.round || (a.zone ?? "").localeCompare(b.zone ?? ""))
+      .map(({ round, zone, matches: roundMatches }) => (
+      <div key={`${bracket}-${round}-${zone ?? ""}`} className="mb-4">
         <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           <Trophy className="size-3" />
-          {roundLabel(bracket, round, totalRounds)}
+          {roundLabel(bracket, round, totalRounds, format, zone)}
         </p>
         <div className="overflow-hidden rounded-lg border border-border bg-card">
           {roundMatches.map((m) => (

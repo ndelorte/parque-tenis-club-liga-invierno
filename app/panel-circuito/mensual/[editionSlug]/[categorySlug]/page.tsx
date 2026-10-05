@@ -5,6 +5,8 @@ import { getCircuitoCategoryBySlug } from "@/lib/data/circuito/categories"
 import { getCircuitoParticipants, getPlayersForSelect } from "@/lib/data/circuito/participants"
 import { getCircuitoMatches } from "@/lib/data/circuito/matches"
 import { getCircuitRanking } from "@/lib/data/circuito/ranking"
+import { selectDrawRule } from "@/lib/circuito/generateBracket"
+import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
 import { ParticipantsPanel } from "@/components/admin/circuito/ParticipantsPanel"
 import { MatchesList } from "@/components/admin/circuito/MatchesList"
 import { AdminShell, AdminPageHeader } from "@/components/admin/admin-shell"
@@ -68,6 +70,7 @@ export default async function CircuitoCategoryPage({
             participantNames={participantNames}
             editionSlug={editionSlug}
             categorySlug={categorySlug}
+            format={category.draw_size ? (selectDrawRule(category.draw_size, CIRCUITO_FORMAT_SPEC)?.format ?? null) : null}
           />
 
           {ranking.length > 0 && (
