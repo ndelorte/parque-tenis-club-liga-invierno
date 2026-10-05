@@ -1,11 +1,12 @@
 import type { Metadata } from "next"
-import { getAnnualCircuitRanking, getCircuitoCategorySlugsWithRanking } from "@/lib/data/circuito/ranking"
-import { CIRCUITO_FIXED_CATEGORIES } from "@/lib/data/circuito/categories"
+import { getAnnualCircuitRanking, getCircuitoCategoriesWithRanking } from "@/lib/data/circuito/ranking"
 import { RankingTable } from "@/components/circuito/RankingTable"
 import { CategoryFilterPills } from "@/components/circuito/CategoryFilterPills"
 import { CourtLines } from "@/components/mid-master/CourtLines"
 
 export const metadata: Metadata = { title: "Final Master | Circuito del Parque" }
+// La clasificación sale del ranking, que se recalcula al cargar cada resultado: sin cache.
+export const dynamic = "force-dynamic"
 
 // Clasifican los 8 mejores del ranking anual por categoría — reglas-circuito-del-parque.md.
 const QUALIFIERS = 8
@@ -17,10 +18,10 @@ export default async function CircuitoFinalMasterPage({
 }) {
   const { categoria } = await searchParams
   const year = new Date().getFullYear()
-  // Solo las categorías con jugadores en el ranking del año; si la pedida
-  // no tiene, se muestra la primera que sí.
-  const rankedSlugs = await getCircuitoCategorySlugsWithRanking(year)
-  const categories = CIRCUITO_FIXED_CATEGORIES.filter((c) => rankedSlugs.has(c.slug))
+  // Todas las categorías que se jugaron en el año (las 14 fijas y las que se
+  // agregaron a mano a algún torneo): las que tienen jugadores con puntos. Si
+  // la pedida no tiene, se muestra la primera que sí.
+  const categories = await getCircuitoCategoriesWithRanking(year)
   const selected = categories.some((c) => c.slug === categoria) ? categoria! : categories[0]?.slug
   const entries = selected ? (await getAnnualCircuitRanking(year, selected)).entries.slice(0, QUALIFIERS) : []
 
@@ -58,7 +59,7 @@ export default async function CircuitoFinalMasterPage({
             <div>
               <dt className="text-[13px] text-mm-text-muted">Categorías</dt>
               <dd className="font-heading text-xl font-bold leading-tight tabular-nums text-mm-gold-light sm:text-2xl">
-                {CIRCUITO_FIXED_CATEGORIES.length}
+                {categories.length}
               </dd>
             </div>
           </dl>
