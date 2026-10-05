@@ -99,12 +99,21 @@ function resolveRoundRobinWithFinal(
   const zoneMatches = mainMatches.filter((m) => m.round === 1)
   const totalPossible = (participants.length * (participants.length - 1)) / 2
   const completed = toZoneMatches(zoneMatches)
+  const final = mainMatches.find((m) => m.round === 2)
   if (completed.length === totalPossible) {
-    const standings = calculateZoneStandings(participants, completed)
-    for (const p of standings.slice(2)) instances.set(p.id, "round_of_32_plus")
+    // Los que no juegan la final suman "16vos o más". Se toma a quienes
+    // efectivamente la juegan (en datos importados pueden no ser los 2
+    // primeros de la tabla por el desempate); sin final definida, los 3° y 4°.
+    if (final?.participantAId && final.participantBId) {
+      for (const p of participants) {
+        if (p.id !== final.participantAId && p.id !== final.participantBId) instances.set(p.id, "round_of_32_plus")
+      }
+    } else {
+      const standings = calculateZoneStandings(participants, completed)
+      for (const p of standings.slice(2)) instances.set(p.id, "round_of_32_plus")
+    }
   }
 
-  const final = mainMatches.find((m) => m.round === 2)
   if (!final) return
   const loserId = loserOf(final)
   if (final.winnerId && loserId) {
@@ -129,8 +138,18 @@ function resolveGroupsThenKnockout(
     const completed = toZoneMatches(zoneMatchesRaw)
     if (completed.length < totalPossible) continue
 
-    const standings = calculateZoneStandings(zoneParticipants, completed)
-    for (const p of standings.slice(2)) instances.set(p.id, "round_of_32_plus")
+    // Con las semis ya definidas, no suman "16vos o más" los que no las juegan
+    // (en datos importados pueden no ser los 2 primeros de la tabla por el
+    // desempate); si todavía no se definieron, los 3° en adelante de la zona.
+    const semiIds = new Set(
+      mainMatches.filter((m) => m.round === 2).flatMap((m) => [m.participantAId, m.participantBId]).filter(Boolean),
+    )
+    if (semiIds.size > 0) {
+      for (const p of zoneParticipants) if (!semiIds.has(p.id)) instances.set(p.id, "round_of_32_plus")
+    } else {
+      const standings = calculateZoneStandings(zoneParticipants, completed)
+      for (const p of standings.slice(2)) instances.set(p.id, "round_of_32_plus")
+    }
   }
 
   for (const semi of mainMatches.filter((m) => m.round === 2)) {
