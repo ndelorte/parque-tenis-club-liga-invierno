@@ -24,27 +24,30 @@ export function nameKey(name: string): string {
   return nameTokens(name).sort().join(" ")
 }
 
+// Distancia de edición con intercambio de letras contiguas ("Kilmunda" vs
+// "Klimunda" cuesta 1, no 2).
 export function editDistance(a: string, b: string): number {
   if (a === b) return 0
-  const prev = Array.from({ length: b.length + 1 }, (_, j) => j)
+  const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array<number>(b.length).fill(0)])
+  for (let j = 0; j <= b.length; j++) d[0][j] = j
   for (let i = 1; i <= a.length; i++) {
-    let diagonal = prev[0]
-    prev[0] = i
     for (let j = 1; j <= b.length; j++) {
-      const above = prev[j]
-      prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, diagonal + (a[i - 1] === b[j - 1] ? 0 : 1))
-      diagonal = above
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1))
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1)
     }
   }
-  return prev[b.length]
+  return d[a.length][b.length]
 }
 
-// Dos palabras "casi iguales": un solo error de tipeo en palabras de 5+
-// letras, o una inicial ("n" por "nicolas").
+// Dos palabras "casi iguales": un error de tipeo (o dos letras cambiadas de
+// lugar) en palabras de 5+ letras, hasta dos errores en palabras de 7+, o una
+// inicial ("n" por "nicolas").
 function tokensClose(a: string, b: string): boolean {
   if (a === b) return true
   if (a.length === 1 || b.length === 1) return a[0] === b[0]
-  return Math.min(a.length, b.length) >= 5 && editDistance(a, b) <= 1
+  const shortest = Math.min(a.length, b.length)
+  const distance = editDistance(a, b)
+  return (shortest >= 5 && distance <= 1) || (shortest >= 7 && distance <= 2)
 }
 
 // Cada palabra de `small` encuentra una palabra distinta de `big`.
