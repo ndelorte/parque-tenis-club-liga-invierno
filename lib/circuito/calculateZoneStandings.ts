@@ -55,7 +55,7 @@ export function calculateZoneStandings(
     // loguea y ese partido puntual no suma sets/games, pero el resto de la
     // tabla se sigue calculando igual.
     try {
-      const parsed = parseCircuitoScore(match.score, { isFinal: false })
+      const parsed = parseCircuitoScore(match.score, { isFinal: false, superTiebreakAsSet: true })
       recordA.setsWon += parsed.setsWonA
       recordA.setsLost += parsed.setsWonB
       recordB.setsWon += parsed.setsWonB

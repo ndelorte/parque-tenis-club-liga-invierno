@@ -92,7 +92,7 @@ function buildZoneDisplay(
     // puntual queda sin sumar a sets/games — el resto de la zona se sigue
     // mostrando normalmente.
     try {
-      const parsed = parseCircuitoScore(m.score!, { isFinal: false })
+      const parsed = parseCircuitoScore(m.score!, { isFinal: false, superTiebreakAsSet: true })
       a.setsWon += parsed.setsWonA
       a.setsLost += parsed.setsWonB
       b.setsWon += parsed.setsWonB

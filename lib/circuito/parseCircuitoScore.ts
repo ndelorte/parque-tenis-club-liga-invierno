@@ -14,7 +14,16 @@ export interface ParsedCircuitoScore {
   gamesWonB: number
 }
 
-export function parseCircuitoScore(score: string, options: { isFinal: boolean }): ParsedCircuitoScore {
+// `superTiebreakAsSet`: solo para el DESEMPATE y las tablas de zona. Los
+// partidos importados de Challonge traen el 3er set como supertiebreak real
+// ("10-3", "5-10", "13-15"); para contar sets y games se lo toma como el
+// 7-6 o 6-7 fijo que prevé el reglamento (gana el set quien ganó el
+// supertiebreak). No cambia el score guardado ni lo que se acepta al cargar
+// un resultado.
+export function parseCircuitoScore(
+  score: string,
+  options: { isFinal: boolean; superTiebreakAsSet?: boolean },
+): ParsedCircuitoScore {
   if (!score || !score.trim()) throw new Error("Score vacío")
 
   const parts = score.trim().split(/\s+/)
@@ -34,7 +43,15 @@ export function parseCircuitoScore(score: string, options: { isFinal: boolean })
   if (sets.length === 3 && !options.isFinal) {
     const third = sets[2]
     const valid = (third.a === 7 && third.b === 6) || (third.a === 6 && third.b === 7)
-    if (!valid) {
+    if (!valid && options.superTiebreakAsSet) {
+      const hi = Math.max(third.a, third.b)
+      const lo = Math.min(third.a, third.b)
+      const isRealSet = (hi === 6 && lo <= 4) || (hi === 7 && lo >= 5)
+      // Un set completo (6-4, 7-5) se cuenta tal cual; lo que no es un set
+      // real (10-3, 5-10, 3-7, 13-15) es el supertiebreak: vale 7-6 o 6-7.
+      if (!isRealSet && hi >= 7 && hi - lo >= 2) sets[2] = third.a > third.b ? { a: 7, b: 6 } : { a: 6, b: 7 }
+      else if (!isRealSet) throw new Error(`Tercer set no interpretable: "${parts[2]}"`)
+    } else if (!valid) {
       throw new Error(
         `Tercer set inválido: debe ser 7-6 o 6-7 (fijo, salvo en la final), recibido "${parts[2]}"`,
       )

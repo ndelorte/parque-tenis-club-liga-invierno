@@ -42,3 +42,33 @@ describe("parseCircuitoScore", () => {
     expect(() => parseCircuitoScore("6-4 6-3 6-3 6-3", { isFinal: false })).toThrow()
   })
 })
+
+describe("parseCircuitoScore — supertiebreak como set (desempate)", () => {
+  const lenient = { isFinal: false, superTiebreakAsSet: true }
+
+  it("5-10 cuenta como 6-7 (lo ganó B) y 10-3 como 7-6 (lo ganó A)", () => {
+    const b = parseCircuitoScore("6-1 4-6 5-10", lenient)
+    expect(b.sets[2]).toEqual({ a: 6, b: 7 })
+    expect(b.setsWonA).toBe(1)
+    expect(b.setsWonB).toBe(2)
+    expect(b.gamesWonA).toBe(16)
+    expect(b.gamesWonB).toBe(14)
+
+    const a = parseCircuitoScore("7-6 3-6 10-3", lenient)
+    expect(a.sets[2]).toEqual({ a: 7, b: 6 })
+    expect(a.setsWonA).toBe(2)
+  })
+
+  it("también supertiebreaks cortos (3-7) o largos (13-15)", () => {
+    expect(parseCircuitoScore("2-6 6-3 3-7", lenient).sets[2]).toEqual({ a: 6, b: 7 })
+    expect(parseCircuitoScore("4-6 7-6 13-15", lenient).sets[2]).toEqual({ a: 6, b: 7 })
+  })
+
+  it("un tercer set completo (6-4) se cuenta tal cual", () => {
+    expect(parseCircuitoScore("6-4 3-6 6-4", lenient).sets[2]).toEqual({ a: 6, b: 4 })
+  })
+
+  it("al cargar un resultado nuevo la regla estricta sigue igual (solo 7-6 o 6-7)", () => {
+    expect(() => parseCircuitoScore("6-1 4-6 5-10", { isFinal: false })).toThrow()
+  })
+})
