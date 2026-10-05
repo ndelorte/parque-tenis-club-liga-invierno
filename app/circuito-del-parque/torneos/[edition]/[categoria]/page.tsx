@@ -21,6 +21,9 @@ import { ChampionCard } from "@/components/circuito/champion-card"
 import { BracketMatchCard } from "@/components/circuito/bracket-match-card"
 import { ZoneStandingsTable, type ZoneMatchRow, type ZoneStandingsRow } from "@/components/circuito/zone-standings-table"
 
+// Los resultados y el repechaje se actualizan al cargar cada partido: sin cache.
+export const dynamic = "force-dynamic"
+
 export async function generateMetadata({
   params,
 }: {

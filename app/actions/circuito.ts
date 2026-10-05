@@ -106,6 +106,11 @@ export async function submitCircuitoMatchResultAction(
   }
 
   revalidatePath(`/panel-circuito/mensual/${editionSlug}/${categorySlug}`)
+  // Páginas públicas: cuadro de la categoría, torneo y ranking (los puntos se
+  // recalculan al guardar el resultado).
+  revalidatePath(`/circuito-del-parque/torneos/${editionSlug}/${categorySlug}`)
+  revalidatePath(`/circuito-del-parque/torneos/${editionSlug}`)
+  revalidatePath("/circuito-del-parque/ranking")
   return { ok: true }
 }
 
