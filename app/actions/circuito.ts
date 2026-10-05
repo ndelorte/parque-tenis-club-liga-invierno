@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { isRequestFromAdmin } from "@/lib/auth/requireAdmin"
 import { createCircuitoEdition } from "@/lib/data/circuito/editions"
-import { addCircuitoParticipant, removeCircuitoParticipant } from "@/lib/data/circuito/participants"
+import { addCircuitoParticipant, createPlayerByName, removeCircuitoParticipant } from "@/lib/data/circuito/participants"
 import { generateAndPersistCircuitoBracket } from "@/lib/data/circuito/bracket"
 import { submitCircuitoMatchResult } from "@/lib/data/circuito/matches"
 
@@ -105,4 +105,16 @@ export async function submitCircuitoMatchResultAction(
 
   revalidatePath(`/panel-circuito/mensual/${editionSlug}/${categorySlug}`)
   return { ok: true }
+}
+
+export async function createCircuitoPlayerAction(
+  fullName: string,
+): Promise<{ ok: true; player: { id: string; displayName: string } } | { ok: false; error: string }> {
+  if (!(await isRequestFromAdmin())) return { ok: false, error: "No autorizado." }
+  try {
+    const player = await createPlayerByName(fullName)
+    return { ok: true, player }
+  } catch (e) {
+    return { ok: false, error: errorMessage(e, "Error al crear el jugador.") }
+  }
 }
