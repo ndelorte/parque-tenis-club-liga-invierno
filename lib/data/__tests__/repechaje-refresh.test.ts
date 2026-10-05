@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- base de datos simulada mínima, solo para este test */
 import { describe, it, expect, vi } from "vitest"
 
 type Row = Record<string, any>
