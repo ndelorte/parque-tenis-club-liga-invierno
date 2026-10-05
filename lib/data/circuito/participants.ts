@@ -129,3 +129,78 @@ export async function removeCircuitoParticipant(participantId: string): Promise<
   const { error } = await supabase.from("circuito_participants").delete().eq("id", participantId)
   if (error) throw new Error(`Error al borrar participante: ${error.message}`)
 }
+
+function splitName(fullName: string): { displayName: string; firstName: string; lastName: string } {
+  const displayName = fullName.trim().replace(/\s+/g, " ")
+  const [firstName, ...rest] = displayName.split(" ")
+  return { displayName, firstName, lastName: rest.join(" ") }
+}
+
+// Corrige un error de tipeo en el nombre de una inscripción ya hecha (con el
+// cuadro armado o no). `names` va en el orden del participante: jugador 1 y,
+// en dobles, jugador 2. Se corrige el JUGADOR (tabla compartida con Liga, así
+// queda bien en todos lados) y se recalcula el nombre de cada inscripción
+// donde aparece. Los participantes importados sin jugador vinculado
+// (Challonge) solo tienen el texto: se edita ese.
+export async function renameCircuitoParticipant(participantId: string, names: string[]): Promise<void> {
+  const supabase = createAdminClient()
+  const { data: participant, error } = await supabase
+    .from("circuito_participants")
+    .select("*")
+    .eq("id", participantId)
+    .maybeSingle()
+  if (error || !participant) throw new Error("No se encontró el participante.")
+
+  const playerIds = [participant.player_id, participant.player_2_id].filter((id): id is string => !!id)
+
+  if (playerIds.length === 0) {
+    const { displayName } = splitName(names[0] ?? "")
+    if (!displayName) throw new Error("Escribí el nombre.")
+    const { error: updateError } = await supabase
+      .from("circuito_participants")
+      .update({ display_name: displayName })
+      .eq("id", participantId)
+    if (updateError) throw new Error(`Error al guardar el nombre: ${updateError.message}`)
+    return
+  }
+
+  if (names.length < playerIds.length || names.slice(0, playerIds.length).some((n) => !n.trim())) {
+    throw new Error("Completá el nombre de todos los jugadores.")
+  }
+
+  for (const [i, playerId] of playerIds.entries()) {
+    const { displayName, firstName, lastName } = splitName(names[i])
+    const { data: clash } = await supabase
+      .from("players")
+      .select("id")
+      .ilike("display_name", displayName)
+      .neq("id", playerId)
+      .limit(1)
+    if (clash && clash.length > 0) throw new Error(`Ya existe otro jugador llamado "${displayName}".`)
+
+    const { error: playerError } = await supabase
+      .from("players")
+      .update({ display_name: displayName, first_name: firstName, last_name: lastName })
+      .eq("id", playerId)
+    if (playerError) throw new Error(`Error al guardar el nombre: ${playerError.message}`)
+  }
+
+  // Recalcula el nombre de toda inscripción (de cualquier torneo) que incluya
+  // a estos jugadores.
+  const idList = playerIds.join(",")
+  const { data: affected, error: affectedError } = await supabase
+    .from("circuito_participants")
+    .select("id, player_id, player_2_id")
+    .or(`player_id.in.(${idList}),player_2_id.in.(${idList})`)
+  if (affectedError) throw new Error(`Error al actualizar las inscripciones: ${affectedError.message}`)
+
+  const allIds = [...new Set((affected ?? []).flatMap((p) => [p.player_id, p.player_2_id]).filter((id): id is string => !!id))]
+  const { data: players } = await supabase.from("players").select("id, display_name").in("id", allIds)
+  const nameOf = (id: string) => players?.find((p) => p.id === id)?.display_name ?? "?"
+
+  for (const p of affected ?? []) {
+    const displayName = p.player_id ? (p.player_2_id ? `${nameOf(p.player_id)} / ${nameOf(p.player_2_id)}` : nameOf(p.player_id)) : null
+    if (!displayName) continue
+    await supabase.from("circuito_participants").update({ display_name: displayName }).eq("id", p.id)
+  }
+}

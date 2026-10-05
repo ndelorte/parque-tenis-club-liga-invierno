@@ -1,6 +1,7 @@
 // Helpers compartidos por los tests del motor de cuadros: simulan contra
 // memoria lo que hace lib/data/circuito (insertar el cuadro, cargar un
 // resultado, sincronizar lugares) sin Supabase.
+import { repechajeLineCount, repechajeShape, repechajeSources } from "../repechajePlan"
 import { computeSlotUpdates, type BracketSlotMatch, type SlotUpdate } from "../syncBracketSlots"
 import type { CircuitoBracket, CircuitoParticipant, DrawFormatKind } from "../types"
 
@@ -55,3 +56,20 @@ export function play(matches: BracketSlotMatch[], id: string, winnerId: string):
 
 export const get = (matches: BracketSlotMatch[], id: string) => matches.find((m) => m.id === id)!
 export const slots = (m: BracketSlotMatch) => [m.participantAId, m.participantBId]
+
+// Filas vacías del repechaje, como las deja lib/data/circuito/bracket.ts:ensureRepechajeStructure.
+export function emptyRepechaje(main: BracketSlotMatch[]): BracketSlotMatch[] {
+  return repechajeShape(repechajeLineCount(repechajeSources(main).length)).flatMap((count, roundIdx) =>
+    Array.from({ length: count }, (_, position) => ({
+      id: `repechaje-${roundIdx + 1}-${position}`,
+      bracket: "repechaje" as const,
+      round: roundIdx + 1,
+      position,
+      zone: null,
+      participantAId: null,
+      participantBId: null,
+      winnerId: null,
+      score: null,
+    })),
+  )
+}

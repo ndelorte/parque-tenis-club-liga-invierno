@@ -1,14 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { Trash2 } from "lucide-react"
+import { Pencil, Trash2 } from "lucide-react"
 import {
   addCircuitoParticipantAction,
   removeCircuitoParticipantAction,
   generateCircuitoBracketAction,
   createCircuitoPlayerAction,
+  renameCircuitoParticipantAction,
 } from "@/app/actions/circuito"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { PlayerCombobox } from "@/components/admin/PlayerCombobox"
 
 interface Participant {
@@ -85,6 +87,28 @@ export function ParticipantsPanel({
     return result
   }
 
+  // Edición de nombres (error de tipeo), también con el cuadro ya armado.
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editNames, setEditNames] = useState<string[]>([])
+
+  function startEdit(p: Participant) {
+    const nameOf = (id: string | null) => players.find((pl) => pl.id === id)?.displayName ?? ""
+    const names = p.player_id ? [nameOf(p.player_id), ...(p.player_2_id ? [nameOf(p.player_2_id)] : [])] : [p.display_name]
+    setEditNames(names.map((n, i) => n || (i === 0 && !p.player_id ? p.display_name : "")))
+    setEditingId(p.id)
+    setError("")
+  }
+
+  async function handleSaveEdit() {
+    if (!editingId) return
+    setLoading(true)
+    setError("")
+    const result = await renameCircuitoParticipantAction(editingId, editNames, editionSlug, categorySlug)
+    setLoading(false)
+    if (result.ok) setEditingId(null)
+    else setError(result.error)
+  }
+
   async function handleRemove(participantId: string) {
     setLoading(true)
     setError("")
@@ -111,24 +135,59 @@ export function ParticipantsPanel({
       {participants.length > 0 && (
         <ul className="mb-3 divide-y divide-border">
           {participants.map((p) => (
-            <li key={p.id} className="flex items-center justify-between py-2">
-              <span className="text-sm text-foreground">
-                {p.seed !== null && (
-                  <span className="mr-2 font-mono text-xs text-muted-foreground" title="Cabeza de serie">
-                    [{p.seed}]
+            <li key={p.id} className="py-2">
+              {editingId === p.id ? (
+                <div className="space-y-2">
+                  {editNames.map((n, i) => (
+                    <Input
+                      key={i}
+                      value={n}
+                      onChange={(e) => setEditNames((prev) => prev.map((x, j) => (j === i ? e.target.value : x)))}
+                      placeholder={editNames.length > 1 ? `Jugador/a ${i + 1}` : "Nombre"}
+                      aria-label={editNames.length > 1 ? `Nombre del jugador/a ${i + 1}` : "Nombre"}
+                    />
+                  ))}
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleSaveEdit} disabled={loading || editNames.some((n) => !n.trim())}>
+                      Guardar
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditingId(null)} disabled={loading}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-foreground">
+                    {p.seed !== null && (
+                      <span className="mr-2 font-mono text-xs text-muted-foreground" title="Cabeza de serie">
+                        [{p.seed}]
+                      </span>
+                    )}
+                    {p.display_name}
                   </span>
-                )}
-                {p.display_name}
-              </span>
-              {!hasBracket && (
-                <button
-                  onClick={() => handleRemove(p.id)}
-                  disabled={loading}
-                  className="rounded p-1 text-muted-foreground hover:bg-loss-soft hover:text-loss"
-                  title="Quitar"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
+                  <span className="flex items-center gap-1">
+                    <button
+                      onClick={() => startEdit(p)}
+                      disabled={loading}
+                      className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      title="Corregir nombre"
+                      aria-label="Corregir nombre"
+                    >
+                      <Pencil className="size-3.5" />
+                    </button>
+                    {!hasBracket && (
+                      <button
+                        onClick={() => handleRemove(p.id)}
+                        disabled={loading}
+                        className="rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500"
+                        title="Quitar"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    )}
+                  </span>
+                </div>
               )}
             </li>
           ))}

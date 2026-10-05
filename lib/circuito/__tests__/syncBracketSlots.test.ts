@@ -1,9 +1,8 @@
 import { describe, it, expect } from "vitest"
 import { generateBracket } from "../generateBracket"
-import { generateRepechaje } from "../generateRepechaje"
 import { CIRCUITO_FORMAT_SPEC } from "../formatSpec"
-import { computeSlotUpdates, isPanelGeneratedBracket, round1LosersIfComplete, type BracketSlotMatch } from "../syncBracketSlots"
-import { get, participants, play, slots, sync, toRows } from "./bracketTestUtils"
+import { computeSlotUpdates, isPanelGeneratedBracket, type BracketSlotMatch } from "../syncBracketSlots"
+import { emptyRepechaje, get, participants, play, slots, sync, toRows } from "./bracketTestUtils"
 
 describe("computeSlotUpdates — eliminación simple", () => {
   // 10 inscriptos → cuadro de 16: 6 byes (seeds 1-6) + 2 partidos reales.
@@ -47,24 +46,6 @@ describe("computeSlotUpdates — eliminación simple", () => {
     let m = sync("single_elimination", ps, initial)
     m = sync("single_elimination", ps, play(m, "main-1-6", "p7"))
     expect(computeSlotUpdates("single_elimination", ps, m)).toEqual([])
-  })
-})
-
-describe("computeSlotUpdates — repechaje", () => {
-  // 4 perdedores de 1ª ronda → repechaje de 2 rondas (semis + final).
-  const losers = participants(4)
-  const repechaje = generateRepechaje("single_elimination", losers, CIRCUITO_FORMAT_SPEC)!
-  const initial = toRows(repechaje, "repechaje")
-
-  it("el ganador de una ronda del repechaje avanza a la siguiente", () => {
-    let m = play(initial, "repechaje-1-0", "p1")
-    m = sync("single_elimination", losers, play(m, "repechaje-1-1", "p3"))
-    expect(slots(get(m, "repechaje-2-0"))).toEqual(["p1", "p3"])
-  })
-
-  it("también avanza cuando el cuadro principal es de zonas (el repechaje siempre es eliminación)", () => {
-    const m = sync("groups_then_knockout", losers, play(initial, "repechaje-1-0", "p4"))
-    expect(slots(get(m, "repechaje-2-0"))).toEqual(["p4", null])
   })
 })
 
@@ -149,20 +130,6 @@ describe("computeSlotUpdates — zonas + llave (N=6-7)", () => {
   })
 })
 
-describe("round1LosersIfComplete", () => {
-  const ps = participants(10)
-  const initial = toRows(generateBracket(ps, CIRCUITO_FORMAT_SPEC), "main")
-
-  it("null mientras falte algún partido real de 1ª ronda", () => {
-    expect(round1LosersIfComplete(play(initial, "main-1-6", "p7"))).toBeNull()
-  })
-
-  it("devuelve los perdedores (los byes no cuentan)", () => {
-    const m = play(play(initial, "main-1-6", "p7"), "main-1-1", "p9")
-    expect(round1LosersIfComplete(m)?.sort()).toEqual(["p10", "p8"])
-  })
-})
-
 describe("isPanelGeneratedBracket", () => {
   it.each([4, 5, 6, 7, 10])("reconoce el cuadro que arma el motor para %i inscriptos", (n) => {
     const ps = participants(n)
@@ -174,8 +141,7 @@ describe("isPanelGeneratedBracket", () => {
     const ps = participants(10)
     let m = sync("single_elimination", ps, toRows(generateBracket(ps, CIRCUITO_FORMAT_SPEC), "main"))
     m = sync("single_elimination", ps, play(play(m, "main-1-6", "p7"), "main-1-1", "p9"))
-    const repechaje = toRows(generateRepechaje("single_elimination", participants(2), CIRCUITO_FORMAT_SPEC)!, "repechaje")
-    expect(isPanelGeneratedBracket(ps, [...m, ...repechaje], CIRCUITO_FORMAT_SPEC)).toBe(true)
+    expect(isPanelGeneratedBracket(ps, [...m, ...emptyRepechaje(m)], CIRCUITO_FORMAT_SPEC)).toBe(true)
   })
 
   it("rechaza un cuadro con otra 1ª ronda (ej. import de Challonge)", () => {

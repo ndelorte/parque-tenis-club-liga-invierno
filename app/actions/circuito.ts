@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { isRequestFromAdmin } from "@/lib/auth/requireAdmin"
 import { addCategoryToEdition } from "@/lib/data/circuito/categories"
 import { createCircuitoEdition } from "@/lib/data/circuito/editions"
-import { addCircuitoParticipant, createPlayerByName, removeCircuitoParticipant } from "@/lib/data/circuito/participants"
+import { addCircuitoParticipant, createPlayerByName, removeCircuitoParticipant, renameCircuitoParticipant } from "@/lib/data/circuito/participants"
 import { generateAndPersistCircuitoBracket } from "@/lib/data/circuito/bracket"
 import { submitCircuitoMatchResult, swapCircuitoParticipants } from "@/lib/data/circuito/matches"
 
@@ -154,5 +154,24 @@ export async function addCircuitoCategoryAction(
 
   revalidatePath(`/panel-circuito/mensual/${editionSlug}`)
   revalidatePath(`/circuito-del-parque/torneos/${editionSlug}`)
+  return { ok: true }
+}
+
+export async function renameCircuitoParticipantAction(
+  participantId: string,
+  names: string[],
+  editionSlug: string,
+  categorySlug: string,
+): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
+  try {
+    await renameCircuitoParticipant(participantId, names)
+  } catch (e) {
+    return { ok: false, error: errorMessage(e, "Error al guardar el nombre.") }
+  }
+
+  revalidatePath(`/panel-circuito/mensual/${editionSlug}/${categorySlug}`)
+  revalidatePath(`/circuito-del-parque/torneos/${editionSlug}/${categorySlug}`)
+  revalidatePath("/circuito-del-parque/ranking")
   return { ok: true }
 }
