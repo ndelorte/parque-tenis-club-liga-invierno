@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { SimilarPlayersError } from "@/lib/players/similarNames"
 import { isRequestFromAdmin } from "@/lib/auth/requireAdmin"
 import { addCategoryToEdition } from "@/lib/data/circuito/categories"
 import { createCircuitoEdition } from "@/lib/data/circuito/editions"
@@ -108,14 +109,22 @@ export async function submitCircuitoMatchResultAction(
   return { ok: true }
 }
 
+// Jugadores parecidos al nombre que se quiso cargar: la UI pregunta si es el mismo.
+export type SimilarPlayer = { id: string; displayName: string; match: "same" | "similar" }
+type ActionResultWithSimilar = ActionResult | { ok: false; error: string; similar: SimilarPlayer[] }
+
 export async function createCircuitoPlayerAction(
   fullName: string,
-): Promise<{ ok: true; player: { id: string; displayName: string } } | { ok: false; error: string }> {
+  force = false,
+): Promise<
+  { ok: true; player: { id: string; displayName: string } } | { ok: false; error: string; similar?: SimilarPlayer[] }
+> {
   if (!(await isRequestFromAdmin())) return { ok: false, error: "No autorizado." }
   try {
-    const player = await createPlayerByName(fullName)
+    const player = await createPlayerByName(fullName, force)
     return { ok: true, player }
   } catch (e) {
+    if (e instanceof SimilarPlayersError) return { ok: false, error: e.message, similar: e.similar }
     return { ok: false, error: errorMessage(e, "Error al crear el jugador.") }
   }
 }
@@ -162,11 +171,13 @@ export async function renameCircuitoParticipantAction(
   names: string[],
   editionSlug: string,
   categorySlug: string,
-): Promise<ActionResult> {
+  force = false,
+): Promise<ActionResultWithSimilar> {
   if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   try {
-    await renameCircuitoParticipant(participantId, names)
+    await renameCircuitoParticipant(participantId, names, force)
   } catch (e) {
+    if (e instanceof SimilarPlayersError) return { ok: false, error: e.message, similar: e.similar }
     return { ok: false, error: errorMessage(e, "Error al guardar el nombre.") }
   }
 

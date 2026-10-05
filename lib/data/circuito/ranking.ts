@@ -7,6 +7,7 @@ import { isGrandSlamMonth } from "@/lib/circuito/pointsTable"
 import { CIRCUITO_FIXED_CATEGORIES } from "@/lib/circuito/fixedCategories"
 import { buildAnnualRanking, type AnnualRanking } from "@/lib/circuito/buildAnnualRanking"
 import type { CircuitoParticipant } from "@/lib/circuito/types"
+import type { SupabaseClient } from "@supabase/supabase-js"
 import type { CircuitoParticipantRow } from "./types"
 
 // Único escritor de circuito_ranking_points (patrón calcado de
@@ -86,6 +87,41 @@ export async function recalculateAndPersistCircuitRanking(categoryId: string): P
   }
   const { error: staleError } = await staleQuery
   if (staleError) throw new Error(`Error al limpiar el ranking del circuito: ${staleError.message}`)
+}
+
+// Al unificar dos fichas de la misma persona (lib/players/mergePlayers.ts),
+// pasa los puntos de `dropId` a `keepId`. La clave es (jugador, categoría,
+// edición): si ambas fichas tienen puntos en el mismo torneo es la misma
+// persona anotada dos veces, así que queda el mayor (no se suman: se contaría
+// doble). Devuelve cuántas filas movió o descartó.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function mergeRankingPoints(db: SupabaseClient<any, any, any>, keepId: string, dropId: string): Promise<number> {
+  type Row = { id: string; category_id: string; edition_id: string; points: number }
+  const read = async (playerId: string): Promise<Row[]> => {
+    const { data, error } = await db
+      .from("circuito_ranking_points")
+      .select("id, category_id, edition_id, points")
+      .eq("player_id", playerId)
+    if (error) throw new Error(`Leyendo puntos: ${error.message}`)
+    return (data ?? []) as Row[]
+  }
+  const [dropRows, keepRows] = [await read(dropId), await read(keepId)]
+
+  for (const row of dropRows) {
+    const existing = keepRows.find((k) => k.category_id === row.category_id && k.edition_id === row.edition_id)
+    if (existing) {
+      if (row.points > existing.points) {
+        const { error } = await db.from("circuito_ranking_points").update({ points: row.points }).eq("id", existing.id)
+        if (error) throw new Error(`Actualizando puntos: ${error.message}`)
+      }
+      const { error } = await db.from("circuito_ranking_points").delete().eq("id", row.id)
+      if (error) throw new Error(`Quitando puntos duplicados: ${error.message}`)
+    } else {
+      const { error } = await db.from("circuito_ranking_points").update({ player_id: keepId }).eq("id", row.id)
+      if (error) throw new Error(`Moviendo puntos: ${error.message}`)
+    }
+  }
+  return dropRows.length
 }
 
 export interface CircuitoRankingPointsInput {

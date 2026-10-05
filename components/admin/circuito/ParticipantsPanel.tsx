@@ -81,8 +81,8 @@ export function ParticipantsPanel({
     }
   }
 
-  async function handleCreatePlayer(name: string) {
-    const result = await createCircuitoPlayerAction(name)
+  async function handleCreatePlayer(name: string, force = false) {
+    const result = await createCircuitoPlayerAction(name, force)
     if (result.ok) setCreatedPlayers((prev) => [...prev, result.player])
     return result
   }
@@ -96,16 +96,22 @@ export function ParticipantsPanel({
     const names = p.player_id ? [nameOf(p.player_id), ...(p.player_2_id ? [nameOf(p.player_2_id)] : [])] : [p.display_name]
     setEditNames(names.map((n, i) => n || (i === 0 && !p.player_id ? p.display_name : "")))
     setEditingId(p.id)
+    setEditSimilar([])
     setError("")
   }
 
-  async function handleSaveEdit() {
+  // Nombres parecidos a los de otro jugador: se pregunta antes de guardar.
+  const [editSimilar, setEditSimilar] = useState<Array<{ id: string; displayName: string; match: "same" | "similar" }>>([])
+
+  async function handleSaveEdit(force = false) {
     if (!editingId) return
     setLoading(true)
     setError("")
-    const result = await renameCircuitoParticipantAction(editingId, editNames, editionSlug, categorySlug)
+    setEditSimilar([])
+    const result = await renameCircuitoParticipantAction(editingId, editNames, editionSlug, categorySlug, force)
     setLoading(false)
     if (result.ok) setEditingId(null)
+    else if ("similar" in result && result.similar.length > 0) setEditSimilar(result.similar)
     else setError(result.error)
   }
 
@@ -147,8 +153,28 @@ export function ParticipantsPanel({
                       aria-label={editNames.length > 1 ? `Nombre del jugador/a ${i + 1}` : "Nombre"}
                     />
                   ))}
+                  {editSimilar.length > 0 && (
+                    <div role="alert" className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
+                      <p className="mb-1 font-medium">
+                        Ya hay un jugador con un nombre {editSimilar.some((s) => s.match === "same") ? "igual (o al revés)" : "parecido"}:{" "}
+                        {editSimilar.map((s) => `«${s.displayName}»`).join(", ")}.
+                      </p>
+                      <p className="mb-1.5">
+                        Si es la misma persona, no la guardes con otro nombre: pedí unificarlas (así se suman sus puntos
+                        del ranking). Si es otra persona, guardala igual.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => void handleSaveEdit(true)}
+                        disabled={loading}
+                        className="underline hover:no-underline"
+                      >
+                        Es otra persona: guardar igual
+                      </button>
+                    </div>
+                  )}
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={handleSaveEdit} disabled={loading || editNames.some((n) => !n.trim())}>
+                    <Button size="sm" onClick={() => void handleSaveEdit()} disabled={loading || editNames.some((n) => !n.trim())}>
                       Guardar
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => setEditingId(null)} disabled={loading}>
