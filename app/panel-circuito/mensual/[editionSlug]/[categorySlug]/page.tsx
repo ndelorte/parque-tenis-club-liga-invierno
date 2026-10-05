@@ -3,9 +3,7 @@ import { notFound } from "next/navigation"
 import { getCircuitoEditionBySlug } from "@/lib/data/circuito/editions"
 import { getCircuitoCategoryBySlug } from "@/lib/data/circuito/categories"
 import { getCircuitoParticipants, getPlayersForSelect } from "@/lib/data/circuito/participants"
-import { getCircuitoMatches } from "@/lib/data/circuito/matches"
-import { ensureRepechajeStructure, syncCircuitoBracketSlots } from "@/lib/data/circuito/bracket"
-import { createAdminClient } from "@/lib/supabase/admin"
+import { getCircuitoMatches, refreshRepechajeStructure } from "@/lib/data/circuito/matches"
 import { getCircuitRanking } from "@/lib/data/circuito/ranking"
 import { selectDrawRule } from "@/lib/circuito/generateBracket"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
@@ -31,19 +29,8 @@ export default async function CircuitoCategoryPage({
   const participants = await getCircuitoParticipants(category.id)
   const hasBracket = category.draw_size !== null
   // Cuadros armados antes de que el repechaje tuviera su forma fija: se
-  // actualizan la primera vez que se abre la categoría (solo si el repechaje
-  // todavía no tiene resultados).
-  const drawFormat = category.draw_size ? selectDrawRule(category.draw_size, CIRCUITO_FORMAT_SPEC)?.format : undefined
-  if (drawFormat === "single_elimination") {
-    try {
-      const supabase = createAdminClient()
-      if (await ensureRepechajeStructure(supabase, category.id)) {
-        await syncCircuitoBracketSlots(supabase, category.id, drawFormat)
-      }
-    } catch (e) {
-      console.error("[panel-circuito] no se pudo actualizar el repechaje", e)
-    }
-  }
+  // actualizan la primera vez que se abre la categoría.
+  if (hasBracket) await refreshRepechajeStructure(category.id)
   const matches = hasBracket ? await getCircuitoMatches(category.id) : []
   const ranking = hasBracket ? await getCircuitRanking(edition.id, category.id) : []
   const players = await getPlayersForSelect()
