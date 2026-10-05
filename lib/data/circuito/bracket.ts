@@ -112,6 +112,7 @@ async function assignSeedsForCategory(supabase: AdminClient, categoryId: string)
   const seeds = assignSeedsFromRanking(
     (participantRows ?? []).map((p) => ({ id: p.id, playerId: p.player_id, player2Id: p.player_2_id })),
     ranking.entries.map((e) => e.playerId),
+    CIRCUITO_FORMAT_SPEC.seededCount,
   )
   for (const [participantId, seed] of seeds) {
     const { error: seedError } = await supabase.from("circuito_participants").update({ seed }).eq("id", participantId)
@@ -145,7 +146,7 @@ export async function generateAndPersistCircuitoBracket(categoryId: string): Pro
     seed: p.seed,
   }))
 
-  const bracket = generateBracket(participants, CIRCUITO_FORMAT_SPEC)
+  const bracket = generateBracket(participants, CIRCUITO_FORMAT_SPEC, Math.random)
 
   // Si esto falla (ej. otro admin generó el mismo cuadro en paralelo y chocó
   // con el índice único de position) no hay nada propio que deshacer.

@@ -1,3 +1,4 @@
+import { sortBySeed } from "../generateBracket"
 import { describe, it, expect } from "vitest"
 import { generateBracket, nextPowerOfTwo, selectDrawRule } from "../generateBracket"
 import { CIRCUITO_FORMAT_SPEC } from "../formatSpec"
@@ -231,5 +232,31 @@ describe("generateBracket — ubicación de los seeds (eliminación simple)", ()
     const realByes = byes.filter((b) => b !== null)
     expect(realByes.map((b) => b.seed).sort()).toEqual([1, 2, 3, 4])
     expect(new Set(realByes.map((b) => b.quarter)).size).toBe(4)
+  })
+})
+
+describe("sorteo de los participantes sin seed", () => {
+  const withSeeds = (n: number, seeded: number) =>
+    Array.from({ length: n }, (_, i) => ({ id: `p${String(i + 1).padStart(2, "0")}`, seed: i < seeded ? i + 1 : null }))
+
+  it("los sembrados quedan primero y en orden; el resto se mezcla pero no se pierde nadie", () => {
+    const ps = withSeeds(12, 8)
+    // random determinista que invierte el orden
+    const sorted = sortBySeed(ps, () => 0)
+    expect(sorted.slice(0, 8).map((p) => p.seed)).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
+    expect(sorted.map((p) => p.id).sort()).toEqual(ps.map((p) => p.id).sort())
+  })
+
+  it("sin random el orden de los no sembrados es estable (por id)", () => {
+    const sorted = sortBySeed(withSeeds(12, 8))
+    expect(sorted.slice(8).map((p) => p.id)).toEqual(["p09", "p10", "p11", "p12"])
+  })
+
+  it("con random distinto de un orden estable puede cambiar el de los no sembrados", () => {
+    const orders = new Set<string>()
+    for (let k = 0; k < 20; k++) {
+      orders.add(sortBySeed(withSeeds(12, 8), Math.random).slice(8).map((p) => p.id).join())
+    }
+    expect(orders.size).toBeGreaterThan(1)
   })
 })

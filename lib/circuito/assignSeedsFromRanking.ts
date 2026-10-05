@@ -11,10 +11,13 @@ export interface SeedableParticipant {
 
 // `rankingOrder`: ids de jugadores en el orden del ranking (1° primero), ya
 // con el desempate aplicado (lib/circuito/buildAnnualRanking.ts).
+// `seededCount`: solo los primeros N del ranking reciben seed; el resto queda
+// en null y se ubica por sorteo al armar el cuadro.
 // Devuelve participantId → seed (1 = mejor), o null si no tiene ranking.
 export function assignSeedsFromRanking(
   participants: SeedableParticipant[],
   rankingOrder: string[],
+  seededCount = Number.POSITIVE_INFINITY,
 ): Map<string, number | null> {
   const positionOf = new Map(rankingOrder.map((playerId, i) => [playerId, i]))
 
@@ -32,6 +35,6 @@ export function assignSeedsFromRanking(
     .sort((a, b) => a.position - b.position)
 
   const seeds = new Map<string, number | null>(participants.map((p) => [p.id, null]))
-  ranked.forEach((p, i) => seeds.set(p.id, i + 1))
+  ranked.slice(0, seededCount).forEach((p, i) => seeds.set(p.id, i + 1))
   return seeds
 }
