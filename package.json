@@ -16,6 +16,7 @@
     "validate:data": "tsx scripts/validate-data.ts",
     "dedupe:players": "tsx scripts/dedupe-players.ts",
     "recalc:ranking-faltante": "tsx scripts/recalc-ranking-faltante.ts",
+    "ajustar:ranking": "tsx scripts/ajustar-ranking-2026.ts",
     "link:participantes": "tsx scripts/link-participants.ts",
     "fix:repechaje-importados": "tsx scripts/fix-repechaje-importados.ts",
     "diagnose:brackets": "tsx scripts/diagnose-circuito-brackets.ts"

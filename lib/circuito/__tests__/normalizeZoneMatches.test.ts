@@ -72,4 +72,22 @@ describe("puntos de formatos de zona importados de Challonge", () => {
     expect(points.get("b")).toBe(650)
     expect(points.get("c")).toBe(50)
   })
+
+  it("N=4: si los finalistas no son los 2 primeros de la tabla, los otros dos igual suman 16vos (Roland Garros +50)", () => {
+    // Zona de 6 partidos (M-R aparece 2 veces: la 2ª es la final, ganó Rende).
+    const rg = [
+      m(1, 0, "M", "R", "R"),
+      m(1, 1, "T", "C", "T"),
+      m(1, 2, "M", "R", "R"), // revancha = final
+      m(2, 0, "C", "M", "M"),
+      m(2, 1, "R", "T", "T"),
+      m(3, 0, "T", "M", "M"),
+      m(3, 1, "R", "C", "R"),
+    ]
+    const points = calculateRankingPoints({ format: "round_robin_with_final", participants: ps(["M", "R", "T", "C"]), matches: rg, isGrandSlam: true })
+    expect(points.get("R")).toBe(2000)
+    expect(points.get("M")).toBe(1300)
+    expect(points.get("T")).toBe(100) // antes quedaba en 0
+    expect(points.get("C")).toBe(100)
+  })
 })
