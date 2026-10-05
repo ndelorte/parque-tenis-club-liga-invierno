@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { Database } from "@/lib/supabase/types"
+import { findSimilarPlayers, SimilarPlayersError } from "@/lib/players/similarNames"
 import type { CircuitoParticipantRow } from "./types"
 
 type PlayerRow = Database["public"]["Tables"]["players"]["Row"]
@@ -28,17 +29,25 @@ export async function getPlayersForSelect(): Promise<SelectablePlayer[]> {
 // Alta rápida de un jugador que todavía no existe en `players` desde el panel
 // de inscripción. Con un solo texto: la primera palabra es el nombre y el resto
 // el apellido; display_name queda tal cual se escribió.
-export async function createPlayerByName(fullName: string): Promise<SelectablePlayer> {
+export async function createPlayerByName(fullName: string, force = false): Promise<SelectablePlayer> {
   const displayName = fullName.trim().replace(/\s+/g, " ")
   if (!displayName) throw new Error("Escribí el nombre del jugador.")
 
   const supabase = createAdminClient()
-  const { data: existing } = await supabase
-    .from("players")
-    .select("id")
-    .ilike("display_name", displayName)
-    .limit(1)
-  if (existing && existing.length > 0) throw new Error("Ya existe un jugador con ese nombre.")
+
+  // Mismo nombre en otro orden, con otros acentos o con un error de tipeo:
+  // se pregunta antes de crear una ficha repetida (partiría los puntos del
+  // ranking de la misma persona en dos).
+  if (!force) {
+    const { data: all } = await supabase.from("players").select("id, display_name").eq("active", true)
+    const similar = findSimilarPlayers(
+      (all ?? []).map((p) => ({ id: p.id, displayName: p.display_name })),
+      displayName,
+    )
+    if (similar.length > 0) {
+      throw new SimilarPlayersError(similar.slice(0, 5).map((s) => ({ ...s.player, match: s.match })))
+    }
+  }
 
   const [firstName, ...rest] = displayName.split(" ")
   const { data, error } = await supabase
@@ -142,7 +151,7 @@ function splitName(fullName: string): { displayName: string; firstName: string; 
 // queda bien en todos lados) y se recalcula el nombre de cada inscripción
 // donde aparece. Los participantes importados sin jugador vinculado
 // (Challonge) solo tienen el texto: se edita ese.
-export async function renameCircuitoParticipant(participantId: string, names: string[]): Promise<void> {
+export async function renameCircuitoParticipant(participantId: string, names: string[], force = false): Promise<void> {
   const supabase = createAdminClient()
   const { data: participant, error } = await supabase
     .from("circuito_participants")
@@ -168,16 +177,22 @@ export async function renameCircuitoParticipant(participantId: string, names: st
     throw new Error("Completá el nombre de todos los jugadores.")
   }
 
+  const { data: allPlayers } = await supabase.from("players").select("id, display_name").eq("active", true)
+  const everyone = (allPlayers ?? []).map((p) => ({ id: p.id, displayName: p.display_name }))
+
+  if (!force) {
+    // Un nombre igual o parecido al de OTRO jugador: se pregunta antes de guardar.
+    for (const [i, playerId] of playerIds.entries()) {
+      const { displayName } = splitName(names[i])
+      const similar = findSimilarPlayers(everyone, displayName, playerId).filter((s) => !playerIds.includes(s.player.id))
+      if (similar.length > 0) {
+        throw new SimilarPlayersError(similar.slice(0, 5).map((s) => ({ ...s.player, match: s.match })))
+      }
+    }
+  }
+
   for (const [i, playerId] of playerIds.entries()) {
     const { displayName, firstName, lastName } = splitName(names[i])
-    const { data: clash } = await supabase
-      .from("players")
-      .select("id")
-      .ilike("display_name", displayName)
-      .neq("id", playerId)
-      .limit(1)
-    if (clash && clash.length > 0) throw new Error(`Ya existe otro jugador llamado "${displayName}".`)
-
     const { error: playerError } = await supabase
       .from("players")
       .update({ display_name: displayName, first_name: firstName, last_name: lastName })

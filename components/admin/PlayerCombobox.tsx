@@ -16,7 +16,16 @@ interface Props {
   excludeIds?: string[] // ya inscriptos o elegidos en el otro campo
   // Si se pasa, ofrece "Crear «texto»" cuando el jugador no existe. Debe
   // devolver el jugador creado (o un error); el combobox lo deja elegido.
-  onCreate?: (name: string) => Promise<{ ok: true; player: ComboboxPlayer } | { ok: false; error: string }>
+  // Si ya hay jugadores con un nombre igual o parecido (otro orden, un error
+  // de tipeo), devuelve `similar` y el combobox pregunta si es el mismo;
+  // con `force` se crea igual.
+  onCreate?: (
+    name: string,
+    force?: boolean,
+  ) => Promise<
+    | { ok: true; player: ComboboxPlayer }
+    | { ok: false; error: string; similar?: Array<ComboboxPlayer & { match: "same" | "similar" }> }
+  >
 }
 
 // Autocompletar de jugadores: se escribe parte del nombre o apellido y
@@ -30,6 +39,7 @@ export function PlayerCombobox({ players, onChange, placeholder, excludeIds = []
   const [highlighted, setHighlighted] = useState(0)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState("")
+  const [similar, setSimilar] = useState<Array<ComboboxPlayer & { match: "same" | "similar" }>>([])
 
   const suggestions = useMemo(() => {
     const excluded = new Set(excludeIds)
@@ -46,18 +56,23 @@ export function PlayerCombobox({ players, onChange, placeholder, excludeIds = []
     onChange(player.id)
   }
 
-  async function create() {
+  async function create(force = false) {
     if (!onCreate || creating) return
     setCreating(true)
     setCreateError("")
-    const result = await onCreate(query)
+    setSimilar([])
+    const result = await onCreate(query, force)
     setCreating(false)
     if (result.ok) choose(result.player)
-    else setCreateError(result.error)
+    else if (result.similar && result.similar.length > 0) {
+      setSimilar(result.similar)
+      setOpen(false)
+    } else setCreateError(result.error)
   }
 
   function clear() {
     setCreateError("")
+    setSimilar([])
     setSelected(null)
     setQuery("")
     onChange("")
@@ -94,6 +109,7 @@ export function PlayerCombobox({ players, onChange, placeholder, excludeIds = []
         onChange={(e) => {
           setQuery(e.target.value)
           setCreateError("")
+          setSimilar([])
           setHighlighted(0)
           setOpen(true)
           // Editar el texto después de elegir descarta la selección.
@@ -160,6 +176,39 @@ export function PlayerCombobox({ players, onChange, placeholder, excludeIds = []
         </ul>
       )}
       {createError && <p className="mt-1 text-xs text-red-600">{createError}</p>}
+      {similar.length > 0 && (
+        <div role="alert" className="mt-1 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
+          <p className="mb-1.5 font-medium">
+            {similar.some((s) => s.match === "same")
+              ? "Ya está cargado con este nombre (o con nombre y apellido al revés):"
+              : "Ya hay jugadores con un nombre parecido:"}
+          </p>
+          <ul className="mb-2 space-y-1">
+            {similar.map((s) => (
+              <li key={s.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSimilar([])
+                    choose(s)
+                  }}
+                  className="rounded border border-amber-400 bg-white px-2 py-0.5 font-medium hover:bg-amber-100"
+                >
+                  Usar «{s.displayName}»
+                </button>
+              </li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            onClick={() => void create(true)}
+            disabled={creating}
+            className="text-amber-900 underline hover:no-underline"
+          >
+            Es otra persona: crear «{query.trim()}» igual
+          </button>
+        </div>
+      )}
     </div>
   )
 }
