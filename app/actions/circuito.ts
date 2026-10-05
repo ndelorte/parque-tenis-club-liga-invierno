@@ -135,10 +135,11 @@ export async function swapCircuitoParticipantsAction(
   participantBId: string,
   editionSlug: string,
   categorySlug: string,
+  bracket: "main" | "repechaje" = "main",
 ): Promise<ActionResult> {
   if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   try {
-    await swapCircuitoParticipants(categoryId, participantAId, participantBId)
+    await swapCircuitoParticipants(categoryId, participantAId, participantBId, bracket)
   } catch (e) {
     return { ok: false, error: errorMessage(e, "Error al mover los participantes.") }
   }

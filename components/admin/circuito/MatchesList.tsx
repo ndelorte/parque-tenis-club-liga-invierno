@@ -284,12 +284,17 @@ export function MatchesList({
 
   // Solo se reordena un cuadro armado por el panel y sin resultados cargados.
   // (`matches` son los de esta parte; el reordenamiento mira el principal.)
-  const canReorder = part === "main" && format !== null && matches.every((m) => m.winner_id === null && m.score === null)
+  const unplayed = matches.every((m) => m.winner_id === null && m.score === null)
+  const placedInRepechaje = matches.filter((m) => m.round_number === 1).flatMap((m) => [m.participant_a_id, m.participant_b_id]).filter(Boolean).length
+  const canReorder =
+    part === "main"
+      ? format !== null && unplayed
+      : format === "single_elimination" && unplayed && placedInRepechaje >= 2
 
   async function swap(fromId: string, toId: string) {
     setBusy(true)
     setReorderError("")
-    const result = await swapCircuitoParticipantsAction(categoryId, fromId, toId, editionSlug, categorySlug)
+    const result = await swapCircuitoParticipantsAction(categoryId, fromId, toId, editionSlug, categorySlug, part)
     setBusy(false)
     setSelectedId(null)
     if (!result.ok) setReorderError(result.error)
@@ -389,7 +394,9 @@ export function MatchesList({
             <p className="text-xs text-muted-foreground">
               {reordering
                 ? "Arrastrá un participante sobre otro para intercambiarlos (o tocá uno y después el otro)."
-                : "¿Querés cambiar a alguien de lugar? Podés hacerlo hasta que se cargue el primer resultado."}
+                : part === "main"
+                  ? "¿Querés cambiar a alguien de lugar? Podés hacerlo hasta que se cargue el primer resultado."
+                  : "¿Querés cambiar a alguien de lugar en el repechaje? Podés hacerlo hasta que se juegue el primer partido del repechaje."}
             </p>
             <Button
               size="sm"
@@ -416,7 +423,7 @@ export function MatchesList({
           championLabel={part === "repechaje" ? "Ganó el repechaje" : "Campeón"}
           idPrefix={part}
           onOpenMatch={setDialogMatchId}
-          reorder={reordering && part === "main" && format !== "groups_then_knockout" ? reorder : undefined}
+          reorder={reordering && format !== "groups_then_knockout" ? reorder : undefined}
         />
       )}
 

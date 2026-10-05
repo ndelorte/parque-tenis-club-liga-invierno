@@ -13,14 +13,20 @@ export function canReorderBracket(matches: BracketSlotMatch[]): boolean {
 }
 
 // Intercambia dos participantes de lugar en la 1ª ronda del cuadro principal
+// (o del repechaje, con bracket = "repechaje")
 // (eliminación: partidos de la 1ª ronda; zonas / todos contra todos: todos
 // los partidos de la 1ª ronda donde aparecen). Devuelve solo los partidos
 // que cambian. Los lugares derivados (byes, semis) los recalcula después
 // syncCircuitoBracketSlots.
-export function computeSwapUpdates(matches: BracketSlotMatch[], idA: string, idB: string): SwapUpdate[] {
+export function computeSwapUpdates(
+  matches: BracketSlotMatch[],
+  idA: string,
+  idB: string,
+  bracket: "main" | "repechaje" = "main",
+): SwapUpdate[] {
   if (idA === idB) throw new Error("Elegí dos participantes distintos.")
 
-  const round1 = matches.filter((m) => m.bracket === "main" && m.round === 1)
+  const round1 = matches.filter((m) => m.bracket === bracket && m.round === 1)
   const inRound1 = (id: string) => round1.some((m) => m.participantAId === id || m.participantBId === id)
   if (!inRound1(idA) || !inRound1(idB)) throw new Error("Esos participantes no están en el cuadro.")
 

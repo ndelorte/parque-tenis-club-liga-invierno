@@ -53,9 +53,9 @@ export async function insertCircuitoBracket(
 // Deja armado el cuadro de repechaje (eliminación simple, 8+): forma fija,
 // con todos los lugares vacíos — los va llenando syncCircuitoBracketSlots a
 // medida que alguien pierde su primer partido (lib/circuito/repechajePlan.ts).
-// Idempotente. Un repechaje ya en juego con otra forma (armado con el
+// Idempotente; devuelve true si armó/rehízo filas. Un repechaje ya en juego con otra forma (armado con el
 // criterio anterior: solo perdedores de 1ª ronda) se deja como está.
-export async function ensureRepechajeStructure(supabase: AdminClient, categoryId: string): Promise<void> {
+export async function ensureRepechajeStructure(supabase: AdminClient, categoryId: string): Promise<boolean> {
   const { data, error } = await supabase.from("circuito_matches").select("*").eq("category_id", categoryId)
   if (error) throw new Error(`Error al leer el cuadro: ${error.message}`)
   const rows = (data ?? []) as CircuitoMatchRow[]
@@ -65,8 +65,8 @@ export async function ensureRepechajeStructure(supabase: AdminClient, categoryId
   const sameShape =
     existing.length === shape.reduce((a, b) => a + b, 0) &&
     shape.every((count, i) => existing.filter((r) => r.round_number === i + 1).length === count)
-  if (sameShape) return
-  if (existing.some((r) => r.winner_id || r.score)) return
+  if (sameShape) return false
+  if (existing.some((r) => r.winner_id || r.score)) return false
 
   if (existing.length > 0) {
     const { error: deleteError } = await supabase
@@ -89,9 +89,10 @@ export async function ensureRepechajeStructure(supabase: AdminClient, categoryId
       status: "pending" as const,
     })),
   )
-  if (empty.length === 0) return
+  if (empty.length === 0) return false
   const { error: insertError } = await supabase.from("circuito_matches").insert(empty)
   if (insertError) throw new Error(`Error al armar el repechaje: ${insertError.message}`)
+  return true
 }
 
 // Aplica contra la DB lo que calcula lib/circuito/syncBracketSlots.ts:

@@ -114,6 +114,7 @@ export async function swapCircuitoParticipants(
   categoryId: string,
   participantAId: string,
   participantBId: string,
+  bracket: "main" | "repechaje" = "main",
 ): Promise<void> {
   const supabase = createAdminClient()
 
@@ -133,11 +134,15 @@ export async function swapCircuitoParticipants(
   const rows = (matchRows ?? []) as CircuitoMatchRow[]
   const slotMatches = rows.map(toBracketSlotMatch)
 
-  if (!canReorderBracket(slotMatches)) {
-    throw new Error("Ya hay resultados cargados: el orden del cuadro no se puede cambiar.")
+  if (!canReorderBracket(slotMatches.filter((m) => m.bracket === bracket))) {
+    throw new Error(
+      bracket === "main"
+        ? "Ya hay resultados cargados: el orden del cuadro no se puede cambiar."
+        : "Ya hay resultados cargados en el repechaje: su orden no se puede cambiar.",
+    )
   }
 
-  const updates = computeSwapUpdates(slotMatches, participantAId, participantBId)
+  const updates = computeSwapUpdates(slotMatches, participantAId, participantBId, bracket)
   const applied: typeof updates = []
   try {
     for (const u of updates) {
