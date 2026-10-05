@@ -91,10 +91,17 @@ El armado del cuadro **cambia según N** (cantidad de inscriptos ese mes). Esto 
 
 Solo existe cuando el formato es **eliminación simple** (8+ inscriptos).
 
-- **Elegibles**: únicamente los perdedores de la **1ª ronda** del cuadro principal.
-- **Estructura**: eliminación directa (cuadro propio, separado del principal). Si el número de
-  elegibles no es potencia de 2, se completan byes con el **mismo criterio de seeding** que el
-  cuadro principal (ranking vigente).
+- **Elegibles**: quien pierde **su primer partido**, sea en la 1ª ronda o, si arrancó con bye,
+  en la 2ª. Quien ya ganó su primer partido y después pierde no entra.
+- **Estructura**: eliminación directa (cuadro propio, separado del principal), entre todos los
+  elegibles. Si no son potencia de 2 (ej. 6), se completan byes con el **mismo criterio de
+  seeding** que el cuadro principal (los mejores sembrados pasan sin jugar).
+- **Cuándo se arma**: se va llenando a medida que se cargan resultados del principal (cada
+  perdedor ocupa el lugar del partido donde perdió); cuando ya se jugaron todos los primeros
+  partidos, queda como un cuadro del tamaño justo. Si ya se jugó un partido del repechaje, su
+  forma no cambia.
+- **Mover participantes**: el organizador puede intercambiar de lugar a dos participantes (del
+  principal o del repechaje) hasta que se juegue el primer partido de ese cuadro.
 - **Campeón de repechaje**: es un resultado aparte. **No reingresa** al cuadro principal.
 - **Puntos**: ganar el repechaje **no otorga puntos de ranking**. Su función es exclusivamente
   garantizar que todo participante juegue como mínimo 2 partidos (los formatos de zona ya lo

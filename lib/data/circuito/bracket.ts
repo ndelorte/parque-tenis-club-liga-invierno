@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { generateBracket, selectDrawRule } from "@/lib/circuito/generateBracket"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
-import { repechajeLineCount, repechajeShape, repechajeSources } from "@/lib/circuito/repechajePlan"
+import { desiredRepechajeLineCount, repechajeShape } from "@/lib/circuito/repechajePlan"
 import { computeSlotUpdates, type BracketSlotMatch } from "@/lib/circuito/syncBracketSlots"
 import type { CircuitoBracket, CircuitoParticipant, DrawFormatKind } from "@/lib/circuito/types"
 import { assignSeedsFromRanking } from "@/lib/circuito/assignSeedsFromRanking"
@@ -53,14 +53,15 @@ export async function insertCircuitoBracket(
 // Deja armado el cuadro de repechaje (eliminación simple, 8+): forma fija,
 // con todos los lugares vacíos — los va llenando syncCircuitoBracketSlots a
 // medida que alguien pierde su primer partido (lib/circuito/repechajePlan.ts).
-// Idempotente; devuelve true si armó/rehízo filas. Un repechaje ya en juego con otra forma (armado con el
+// Cuando ya se jugaron todos los primeros partidos, se achica al tamaño justo
+// (cuadro entre los perdedores). Idempotente; devuelve true si armó/rehízo filas. Un repechaje ya en juego con otra forma (armado con el
 // criterio anterior: solo perdedores de 1ª ronda) se deja como está.
 export async function ensureRepechajeStructure(supabase: AdminClient, categoryId: string): Promise<boolean> {
   const { data, error } = await supabase.from("circuito_matches").select("*").eq("category_id", categoryId)
   if (error) throw new Error(`Error al leer el cuadro: ${error.message}`)
   const rows = (data ?? []) as CircuitoMatchRow[]
 
-  const shape = repechajeShape(repechajeLineCount(repechajeSources(rows.map(toBracketSlotMatch)).length))
+  const shape = repechajeShape(desiredRepechajeLineCount(rows.map(toBracketSlotMatch)))
   const existing = rows.filter((r) => r.bracket === "repechaje")
   const sameShape =
     existing.length === shape.reduce((a, b) => a + b, 0) &&
