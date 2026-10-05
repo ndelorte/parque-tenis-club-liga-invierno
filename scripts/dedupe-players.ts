@@ -71,7 +71,15 @@ async function main() {
     )
     const [keep, ...drops] = withUsage
 
-    log(cluster.kind === "same" ? "• MISMO NOMBRE" : "• PARECIDOS (revisar a mano)")
+    // Nombre con el que queda la ficha unificada. La convención del sitio es
+    // "Apellido Nombre" (es como están cargados los equipos de la Liga y como se
+    // ven los cuadros); las fichas de la planilla/Challonge suelen venir como
+    // "Nombre Apellido". Se queda el nombre de la ficha con más equipos de Liga;
+    // si ninguna tiene equipos, el de la ficha que se conserva.
+    const byTeams = [...withUsage].sort((a, b) => b.teams - a.teams)
+    const finalName = byTeams[0].teams > 0 ? byTeams[0].displayName : keep.displayName
+
+    log(cluster.kind === "same" ? `• MISMO NOMBRE  → quedará como "${finalName}"` : "• PARECIDOS (revisar a mano)")
     for (const p of withUsage) {
       const mark = p === keep ? "conservar" : "sobra    "
       log(`    ${mark}  ${p.displayName.padEnd(32)} ${p.id}  inscripciones: ${p.participants}  puntos: ${p.points}  equipos: ${p.teams}`)
@@ -80,7 +88,7 @@ async function main() {
     if (cluster.kind === "same") {
       if (apply) {
         for (const drop of drops) {
-          await mergePlayers(db, keep.id, drop.id)
+          await mergePlayers(db, keep.id, drop.id, finalName)
           merged++
         }
         ok("    unificado")
