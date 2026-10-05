@@ -87,6 +87,44 @@ function outcomeOf(winnerId: string | null, inputs: [Outcome, Outcome]): Outcome
   return winners.length === 2 ? { kind: "pending" } : { kind: "empty" }
 }
 
+// Dónde queda cada participante en la 1ª ronda del repechaje (lugar 2p = A del
+// partido p, 2p+1 = B). Los movimientos manuales del organizador (intercambios,
+// ver swapParticipants.ts) se respetan: quien ya está en un lugar y sigue
+// siendo elegible se queda; a los que llegan se los pone en el lugar de su
+// partido de origen, o en uno libre si ese lo ocupa otro.
+function placeLines(lines: RepechajeLine[], currentSlots: Array<string | null>): RepechajeLine[] {
+  const eligible = new Map<string, number>()
+  lines.forEach((line, k) => {
+    if (line.kind === "filled") eligible.set(line.id, k)
+  })
+
+  const placed = new Map<number, string>()
+  const placedIds = new Set<string>()
+  currentSlots.forEach((id, k) => {
+    if (id && eligible.has(id) && !placedIds.has(id)) {
+      placed.set(k, id)
+      placedIds.add(id)
+    }
+  })
+
+  const rank = (k: number) => (lines[k].kind === "filled" ? 0 : lines[k].kind === "pending" ? 1 : 2)
+  for (const [id, naturalK] of eligible) {
+    if (placedIds.has(id)) continue
+    const free = lines.map((_, k) => k).filter((k) => !placed.has(k))
+    const k = free.includes(naturalK) ? naturalK : free.sort((a, b) => rank(a) - rank(b) || a - b)[0]
+    if (k === undefined) continue
+    placed.set(k, id)
+    placedIds.add(id)
+  }
+
+  return lines.map((line, k): RepechajeLine => {
+    const id = placed.get(k)
+    if (id) return { kind: "filled", id }
+    // Libre: su partido de origen sigue pendiente, o ya no va a llegar nadie.
+    return line.kind === "pending" ? line : { kind: "empty" }
+  })
+}
+
 export interface RepechajeSlots {
   matchId: string
   participantAId: string | null
@@ -97,13 +135,18 @@ export interface RepechajeSlots {
 // las filas existentes no tienen la forma esperada (repechaje armado con el
 // criterio anterior, ya en juego): ese se deja como está.
 export function computeRepechajeSlots(matches: BracketSlotMatch[]): RepechajeSlots[] | null {
-  const lines = repechajeLines(matches)
-  const shape = repechajeShape(lines.length)
+  const naturalLines = repechajeLines(matches)
+  const shape = repechajeShape(naturalLines.length)
   const rep = matches.filter((m) => m.bracket === "repechaje")
   const round = (r: number) => rep.filter((m) => m.round === r).sort((a, b) => a.position - b.position)
 
   if (shape.length === 0 || rep.length !== shape.reduce((a, b) => a + b, 0)) return null
   if (!shape.every((count, i) => round(i + 1).length === count)) return null
+
+  const lines = placeLines(
+    naturalLines,
+    round(1).flatMap((m) => [m.participantAId, m.participantBId]),
+  )
 
   const result: RepechajeSlots[] = []
   let previous: Outcome[] = []

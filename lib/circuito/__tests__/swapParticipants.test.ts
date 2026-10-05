@@ -3,7 +3,7 @@ import { generateBracket } from "../generateBracket"
 import { CIRCUITO_FORMAT_SPEC } from "../formatSpec"
 import { isPanelGeneratedBracket, type BracketSlotMatch } from "../syncBracketSlots"
 import { canReorderBracket, computeSwapUpdates } from "../swapParticipants"
-import { get, participants, slots, toRows } from "./bracketTestUtils"
+import { emptyRepechaje, get, participants, slots, toRows } from "./bracketTestUtils"
 
 function applySwap(rows: BracketSlotMatch[], a: string, b: string): BracketSlotMatch[] {
   const updates = computeSwapUpdates(rows, a, b)
@@ -59,5 +59,19 @@ describe("canReorderBracket", () => {
     const rows = toRows(generateBracket(participants(8), CIRCUITO_FORMAT_SPEC), "main")
     expect(canReorderBracket(rows)).toBe(true)
     expect(canReorderBracket([{ ...rows[0], winnerId: "p1", score: "6-0 6-0" }, ...rows.slice(1)])).toBe(false)
+  })
+})
+
+describe("computeSwapUpdates — repechaje", () => {
+  it("intercambia lugares de la 1ª ronda del repechaje y no toca el principal", () => {
+    const main = toRows(generateBracket(participants(8), CIRCUITO_FORMAT_SPEC), "main")
+    const rep = emptyRepechaje(main).map((m) =>
+      m.id === "repechaje-1-0" ? { ...m, participantAId: "p8", participantBId: "p5" } : m.id === "repechaje-1-1" ? { ...m, participantAId: "p6" } : m,
+    )
+    const updates = computeSwapUpdates([...main, ...rep], "p8", "p6", "repechaje")
+    expect(updates.every((u) => u.matchId.startsWith("repechaje"))).toBe(true)
+    expect(updates.find((u) => u.matchId === "repechaje-1-0")).toMatchObject({ participantAId: "p6", participantBId: "p5" })
+    expect(updates.find((u) => u.matchId === "repechaje-1-1")).toMatchObject({ participantAId: "p8" })
+    expect(() => computeSwapUpdates([...main, ...rep], "p8", "p1", "repechaje")).toThrow()
   })
 })

@@ -89,4 +89,29 @@ describe("repechaje por primer partido perdido", () => {
     // Las líneas 5-7 son vacías: ese partido no se juega, pasa directo a la 2ª ronda.
     expect(stateOf("repechaje-2-1")[0]).toBe(loser)
   })
+
+  it("un intercambio manual en el repechaje se respeta cuando llegan más perdedores", () => {
+    const { ps, rows: r0 } = start(8)
+    let rows = step(ps, r0, "main-1-0", "p1") // p8 → línea 0
+    rows = step(ps, rows, "main-1-1", "p4") // p5 → línea 1
+    rows = step(ps, rows, "main-1-2", "p3") // p6 → línea 2
+    // el organizador intercambia p8 (línea 0) con p6 (línea 2)
+    rows = rows.map((m) => {
+      if (m.id === "repechaje-1-0") return { ...m, participantAId: "p6" }
+      if (m.id === "repechaje-1-1") return { ...m, participantAId: "p8" }
+      return m
+    })
+    rows = step(ps, rows, "main-1-3", "p2") // llega p7 → línea 3
+    expect(slots(get(rows, "repechaje-1-0"))).toEqual(["p6", "p5"])
+    expect(slots(get(rows, "repechaje-1-1"))).toEqual(["p8", "p7"])
+  })
+
+  it("si el que se movió deja de ser elegible (se corrige el resultado), vuelve a su lugar natural", () => {
+    const { ps, rows: r0 } = start(8)
+    let rows = step(ps, r0, "main-1-0", "p1") // p8
+    rows = step(ps, rows, "main-1-1", "p4") // p5
+    rows = rows.map((m) => (m.id === "repechaje-1-0" ? { ...m, participantAId: "p5", participantBId: "p8" } : m))
+    rows = step(ps, rows, "main-1-0", "p8") // ahora pierde p1
+    expect(slots(get(rows, "repechaje-1-0")).sort()).toEqual(["p1", "p5"])
+  })
 })
