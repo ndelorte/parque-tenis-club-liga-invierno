@@ -173,7 +173,7 @@ export async function swapCircuitoParticipants(
 // Pone al día el repechaje de un cuadro de eliminación armado por el panel
 // (forma fija + lugares según los resultados ya cargados). Nunca toca los
 // cuadros importados de Challonge ni los de otro formato. Es seguro llamarlo
-// en cada apertura de la página: no escribe si no hay nada que cambiar.
+// en cada apertura de la página: solo escribe si algo cambia.
 export async function refreshRepechajeStructure(categoryId: string): Promise<void> {
   try {
     const supabase = createAdminClient()
@@ -187,9 +187,11 @@ export async function refreshRepechajeStructure(categoryId: string): Promise<voi
     } catch {
       return // import histórico: no se recalcula nada
     }
-    if (await ensureRepechajeStructure(supabase, categoryId)) {
-      await syncCircuitoBracketSlots(supabase, categoryId, rule.format)
-    }
+    await ensureRepechajeStructure(supabase, categoryId)
+    // Siempre se recalculan los lugares: aunque la forma sea la misma, el
+    // acomodo puede haber quedado de una versión anterior (idempotente: solo
+    // escribe si algo cambia).
+    await syncCircuitoBracketSlots(supabase, categoryId, rule.format)
   } catch (e) {
     console.error("[circuito] no se pudo actualizar el repechaje", e)
   }
