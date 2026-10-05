@@ -4,7 +4,7 @@ import { calculateRankingPoints, type CircuitoBracketMatchResult } from "@/lib/c
 import { selectDrawRule } from "@/lib/circuito/generateBracket"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
 import { isGrandSlamMonth } from "@/lib/circuito/pointsTable"
-import { CIRCUITO_FIXED_CATEGORIES } from "@/lib/circuito/fixedCategories"
+import { CIRCUITO_FIXED_CATEGORIES, orderRankedCategories, type RankedCategory } from "@/lib/circuito/fixedCategories"
 import { buildAnnualRanking, type AnnualRanking } from "@/lib/circuito/buildAnnualRanking"
 import type { CircuitoParticipant } from "@/lib/circuito/types"
 import type { SupabaseClient } from "@supabase/supabase-js"
@@ -234,6 +234,24 @@ export async function getAnnualCircuitRanking(
 // /final-master. Un count por categoría (14 consultas livianas en paralelo)
 // en vez de traer todas las filas del año: esas superan el límite de 1000
 // filas por respuesta de PostgREST a medida que avanza el año.
+// Categorías (fijas o agregadas a mano) con algún jugador con puntos en el año.
+export async function getCircuitoCategoriesWithRanking(year: number): Promise<RankedCategory[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("circuito_ranking_points")
+    .select("circuito_categories!inner(name, slug, type), circuito_editions!inner(year)")
+    .eq("circuito_editions.year", year)
+    .gt("points", 0)
+  if (error || !data) return []
+
+  const found = new Map<string, RankedCategory>()
+  for (const row of data as unknown as Array<{ circuito_categories: RankedCategory }>) {
+    const c = row.circuito_categories
+    found.set(c.slug, { name: c.name, slug: c.slug, type: c.type })
+  }
+  return orderRankedCategories([...found.values()])
+}
+
 export async function getCircuitoCategorySlugsWithRanking(year: number): Promise<Set<string>> {
   const supabase = await createClient()
   const slugs = await Promise.all(

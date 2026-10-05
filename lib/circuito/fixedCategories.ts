@@ -32,3 +32,23 @@ export function categorySlug(name: string, type: "single" | "dobles"): string {
     .replace(/^-+|-+$/g, "")
   return base ? `${base}-${type}` : ""
 }
+
+export interface RankedCategory {
+  name: string
+  slug: string
+  type: "single" | "dobles"
+}
+
+// Categorías que tienen jugadores con puntos, en el orden de siempre (primero
+// las 14 fijas) y, a continuación, las que se agregaron a mano a algún torneo
+// (por tipo y nombre) — así una categoría nueva aparece en el ranking apenas
+// suma puntos.
+export function orderRankedCategories(found: RankedCategory[]): RankedCategory[] {
+  const bySlug = new Map(found.map((c) => [c.slug, c]))
+  const fixed = CIRCUITO_FIXED_CATEGORIES.filter((c) => bySlug.has(c.slug)).map((c) => bySlug.get(c.slug)!)
+  const fixedSlugs = new Set(CIRCUITO_FIXED_CATEGORIES.map((c) => c.slug))
+  const extra = found
+    .filter((c) => !fixedSlugs.has(c.slug))
+    .sort((a, b) => (a.type === b.type ? 0 : a.type === "single" ? -1 : 1) || a.name.localeCompare(b.name, "es"))
+  return [...fixed, ...extra]
+}

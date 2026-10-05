@@ -1,10 +1,11 @@
 import type { Metadata } from "next"
-import { getAnnualCircuitRanking, getCircuitoCategorySlugsWithRanking } from "@/lib/data/circuito/ranking"
-import { CIRCUITO_FIXED_CATEGORIES } from "@/lib/data/circuito/categories"
+import { getAnnualCircuitRanking, getCircuitoCategoriesWithRanking } from "@/lib/data/circuito/ranking"
 import { RankingByTournamentTable } from "@/components/circuito/RankingByTournamentTable"
 import { CategoryFilterPills } from "@/components/circuito/CategoryFilterPills"
 
 export const metadata: Metadata = { title: "Ranking | Circuito del Parque" }
+// El ranking se recalcula al cargar cada resultado: la página nunca se cachea.
+export const dynamic = "force-dynamic"
 
 const QUALIFIERS = 8
 
@@ -17,8 +18,7 @@ export default async function CircuitoRankingPage({
   const year = new Date().getFullYear()
   // Solo las categorías con jugadores en el ranking del año; si la pedida
   // no tiene, se muestra la primera que sí.
-  const rankedSlugs = await getCircuitoCategorySlugsWithRanking(year)
-  const categories = CIRCUITO_FIXED_CATEGORIES.filter((c) => rankedSlugs.has(c.slug))
+  const categories = await getCircuitoCategoriesWithRanking(year)
   const selected = categories.some((c) => c.slug === categoria) ? categoria! : categories[0]?.slug
   const selectedCategory = categories.find((c) => c.slug === selected)
   const ranking = selected ? await getAnnualCircuitRanking(year, selected) : null
