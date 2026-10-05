@@ -66,6 +66,7 @@ export default async function CircuitoCategoryPage({
       {hasBracket && (
         <>
           <MatchesList
+            categoryId={category.id}
             matches={matches}
             participantNames={participantNames}
             editionSlug={editionSlug}

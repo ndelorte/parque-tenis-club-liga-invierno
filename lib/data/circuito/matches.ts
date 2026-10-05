@@ -5,6 +5,7 @@ import { generateRepechaje } from "@/lib/circuito/generateRepechaje"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
 import { selectDrawRule } from "@/lib/circuito/generateBracket"
 import type { CircuitoParticipant, DrawFormatKind } from "@/lib/circuito/types"
+import { canReorderBracket, computeSwapUpdates } from "@/lib/circuito/swapParticipants"
 import { isPanelGeneratedBracket, round1LosersIfComplete } from "@/lib/circuito/syncBracketSlots"
 import { insertCircuitoBracket, syncCircuitoBracketSlots, toBracketSlotMatch } from "./bracket"
 import { recalculateAndPersistCircuitRanking } from "./ranking"
@@ -105,6 +106,64 @@ export async function submitCircuitoMatchResult(
   await syncCircuitoBracketSlots(supabase, match.category_id, rule.format)
 
   await recalculateAndPersistCircuitRanking(match.category_id)
+}
+
+// Intercambia de lugar a dos participantes del cuadro recién generado (el
+// organizador corrige a mano lo que armó el sorteo). Solo antes de que se
+// cargue cualquier resultado.
+export async function swapCircuitoParticipants(
+  categoryId: string,
+  participantAId: string,
+  participantBId: string,
+): Promise<void> {
+  const supabase = createAdminClient()
+
+  const { data: category, error: categoryError } = await supabase
+    .from("circuito_categories")
+    .select("draw_size")
+    .eq("id", categoryId)
+    .maybeSingle()
+  if (categoryError || !category?.draw_size) throw new Error("La categoría no tiene un cuadro generado.")
+  const rule = selectDrawRule(category.draw_size, CIRCUITO_FORMAT_SPEC)
+  if (!rule) throw new Error("No hay un formato válido para esta categoría.")
+
+  await assertPanelGeneratedBracket(supabase, categoryId)
+
+  const { data: matchRows, error } = await supabase.from("circuito_matches").select("*").eq("category_id", categoryId)
+  if (error) throw new Error(`Error al leer el cuadro: ${error.message}`)
+  const rows = (matchRows ?? []) as CircuitoMatchRow[]
+  const slotMatches = rows.map(toBracketSlotMatch)
+
+  if (!canReorderBracket(slotMatches)) {
+    throw new Error("Ya hay resultados cargados: el orden del cuadro no se puede cambiar.")
+  }
+
+  const updates = computeSwapUpdates(slotMatches, participantAId, participantBId)
+  const applied: typeof updates = []
+  try {
+    for (const u of updates) {
+      const { error: updateError } = await supabase
+        .from("circuito_matches")
+        .update({ participant_a_id: u.participantAId, participant_b_id: u.participantBId })
+        .eq("id", u.matchId)
+      if (updateError) throw new Error(`Error al mover participantes: ${updateError.message}`)
+      applied.push(u)
+    }
+    await syncCircuitoBracketSlots(supabase, categoryId, rule.format)
+  } catch (e) {
+    // Sin transacciones: se vuelve atrás lo ya escrito para no dejar un
+    // participante repetido en el cuadro.
+    for (const u of applied) {
+      const original = rows.find((r) => r.id === u.matchId)
+      if (original) {
+        await supabase
+          .from("circuito_matches")
+          .update({ participant_a_id: original.participant_a_id, participant_b_id: original.participant_b_id })
+          .eq("id", u.matchId)
+      }
+    }
+    throw e
+  }
 }
 
 // Los cuadros importados de Challonge no se editan desde el panel: su

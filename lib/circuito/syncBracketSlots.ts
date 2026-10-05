@@ -190,6 +190,23 @@ export function isPanelGeneratedBracket(
 ): boolean {
   if (!selectDrawRule(participants.length, spec)) return false
   const expected = generateBracket(participants, spec)
+  // El organizador puede intercambiar participantes de lugar (swapParticipants.ts):
+  // el cuadro sigue siendo del panel si es el mismo armado salvo por quién
+  // ocupa cada lugar, o sea si hay una correspondencia 1 a 1 entre los
+  // participantes esperados y los reales.
+  const expectedToActual = new Map<string, string>()
+  const actualToExpected = new Map<string, string>()
+  const sameParticipant = (expectedId: string | null, actualId: string | null) => {
+    if (expectedId === null || actualId === null) return expectedId === actualId
+    const mapped = expectedToActual.get(expectedId)
+    const back = actualToExpected.get(actualId)
+    if (mapped === undefined && back === undefined) {
+      expectedToActual.set(expectedId, actualId)
+      actualToExpected.set(actualId, expectedId)
+      return true
+    }
+    return mapped === actualId && back === expectedId
+  }
   const main = matches.filter((m) => m.bracket === "main")
 
   const maxRound = Math.max(0, ...main.map((m) => m.round))
@@ -204,8 +221,8 @@ export function isPanelGeneratedBracket(
       return (
         a.position === position &&
         a.zone === e.group &&
-        a.participantAId === (e.participantA?.id ?? null) &&
-        a.participantBId === (e.participantB?.id ?? null)
+        sameParticipant(e.participantA?.id ?? null, a.participantAId) &&
+        sameParticipant(e.participantB?.id ?? null, a.participantBId)
       )
     })
   })

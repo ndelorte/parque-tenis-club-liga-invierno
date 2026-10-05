@@ -5,7 +5,7 @@ import { isRequestFromAdmin } from "@/lib/auth/requireAdmin"
 import { createCircuitoEdition } from "@/lib/data/circuito/editions"
 import { addCircuitoParticipant, createPlayerByName, removeCircuitoParticipant } from "@/lib/data/circuito/participants"
 import { generateAndPersistCircuitoBracket } from "@/lib/data/circuito/bracket"
-import { submitCircuitoMatchResult } from "@/lib/data/circuito/matches"
+import { submitCircuitoMatchResult, swapCircuitoParticipants } from "@/lib/data/circuito/matches"
 
 type ActionResult = { ok: true } | { ok: false; error: string }
 
@@ -117,4 +117,22 @@ export async function createCircuitoPlayerAction(
   } catch (e) {
     return { ok: false, error: errorMessage(e, "Error al crear el jugador.") }
   }
+}
+
+export async function swapCircuitoParticipantsAction(
+  categoryId: string,
+  participantAId: string,
+  participantBId: string,
+  editionSlug: string,
+  categorySlug: string,
+): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
+  try {
+    await swapCircuitoParticipants(categoryId, participantAId, participantBId)
+  } catch (e) {
+    return { ok: false, error: errorMessage(e, "Error al mover los participantes.") }
+  }
+
+  revalidatePath(`/panel-circuito/mensual/${editionSlug}/${categorySlug}`)
+  return { ok: true }
 }
