@@ -37,4 +37,12 @@ describe("assignSeedsFromRanking", () => {
     const seeds = assignSeedsFromRanking([single("a", "j1"), single("b", "j2")], [])
     expect([...seeds.values()]).toEqual([null, null])
   })
+
+  it("solo los primeros N del ranking reciben seed; el resto queda sin seed", () => {
+    const ps = Array.from({ length: 10 }, (_, i) => single(`p${i + 1}`, `j${i + 1}`))
+    const seeds = assignSeedsFromRanking(ps, ps.map((_, i) => `j${i + 1}`), 8)
+    expect(seeds.get("p8")).toBe(8)
+    expect(seeds.get("p9")).toBeNull()
+    expect(seeds.get("p10")).toBeNull()
+  })
 })

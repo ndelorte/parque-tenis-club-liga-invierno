@@ -19,3 +19,16 @@ export const CIRCUITO_FIXED_CATEGORIES: Array<{ name: string; slug: string; type
   { name: "Mixto Intermedia", slug: "mixto-intermedia-dobles", type: "dobles" },
   { name: "Mixto Segunda", slug: "mixto-segunda-dobles", type: "dobles" },
 ]
+
+// Slug de una categoría agregada a mano: "Caballeros +50" + dobles →
+// "caballeros-mas50-dobles" (mismo criterio que las 14 fijas).
+export function categorySlug(name: string, type: "single" | "dobles"): string {
+  const base = name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\+/g, "mas")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+  return base ? `${base}-${type}` : ""
+}

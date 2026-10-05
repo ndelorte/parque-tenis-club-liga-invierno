@@ -1,28 +1,36 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, ChevronUp, MoveHorizontal, Trophy } from "lucide-react"
+import { ChevronDown, ChevronUp, MoveHorizontal, Trophy, X } from "lucide-react"
 import { submitCircuitoMatchResultAction, swapCircuitoParticipantsAction } from "@/app/actions/circuito"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { buildBracketTree } from "@/lib/circuito/bracketTree"
 import type { DrawFormatKind } from "@/lib/circuito/types"
+import { AdminBracketTree, type Reorder } from "./AdminBracketTree"
 
 export interface CircuitoMatchView {
   id: string
   bracket: "main" | "repechaje"
   round_number: number
+  position: number
   zone: "A" | "B" | null
   participant_a_id: string | null
   participant_b_id: string | null
   score: string | null
   status: string
   winner_id: string | null
+  is_walkover: boolean
 }
 
 interface Props {
   categoryId: string
+  // "main" o "repechaje": la página los muestra por separado (el repechaje
+  // abajo de los puntos de ranking).
+  part: "main" | "repechaje"
   matches: CircuitoMatchView[]
   participantNames: Record<string, string>
+  participantSeeds: Record<string, number | null>
   editionSlug: string
   categorySlug: string
   format: DrawFormatKind | null // null = cuadro importado: se asume eliminación directa
@@ -51,13 +59,62 @@ function roundLabel(
   return `${prefix}Ronda ${roundNumber}`
 }
 
-// Modo "reordenar": cada participante de la 1ª ronda se arrastra (o se toca y
-// después se toca otro) para intercambiarlo de lugar con otro.
-interface Reorder {
-  selectedId: string | null
-  busy: boolean
-  onPick: (participantId: string) => void
-  onSwap: (fromId: string, toId: string) => void
+// Formulario de resultado, compartido por la fila de la lista y el diálogo
+// que se abre desde el cuadro horizontal.
+function ResultForm({
+  match,
+  isFinal,
+  editionSlug,
+  categorySlug,
+  onDone,
+}: {
+  match: Pick<CircuitoMatchView, "id" | "score">
+  isFinal: boolean
+  editionSlug: string
+  categorySlug: string
+  onDone: () => void
+}) {
+  const [score, setScore] = useState(match.score ?? "")
+  const [isWalkover, setIsWalkover] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  async function handleSubmit() {
+    if (!score.trim()) {
+      setError("Ingresá el score.")
+      return
+    }
+    setLoading(true)
+    setError("")
+    const result = await submitCircuitoMatchResultAction(match.id, score, isWalkover, editionSlug, categorySlug)
+    setLoading(false)
+    if (result.ok) onDone()
+    else setError(result.error)
+  }
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-medium text-muted-foreground">
+        Score — ej: 6-4 6-2 {isFinal ? "(o 6-4 3-6 6-4, la final se juega completa)" : "(o 6-4 3-6 7-6)"}
+      </label>
+      <Input value={score} onChange={(e) => setScore(e.target.value)} placeholder="6-4 6-2" className="font-mono" />
+      <label className="flex items-center gap-2 text-xs text-muted-foreground">
+        <input
+          type="checkbox"
+          checked={isWalkover}
+          onChange={(e) => {
+            setIsWalkover(e.target.checked)
+            if (e.target.checked && !score.trim()) setScore("6-0 6-0")
+          }}
+        />
+        Walkover (6-0 6-0 si gana el de arriba, 0-6 0-6 si gana el de abajo)
+      </label>
+      <Button onClick={handleSubmit} disabled={loading} size="sm" className="w-full">
+        {loading ? "Guardando..." : "Cargar resultado"}
+      </Button>
+      {error && <p className="text-xs text-loss">{error}</p>}
+    </div>
+  )
 }
 
 function MatchRow({
@@ -76,27 +133,10 @@ function MatchRow({
   reorder?: Reorder
 }) {
   const [open, setOpen] = useState(false)
-  const [score, setScore] = useState(match.score ?? "")
-  const [isWalkover, setIsWalkover] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
 
   const isBye = !!match.participant_a_id && !match.participant_b_id
   const isReady = !!match.participant_a_id && !!match.participant_b_id
   const isPlayed = match.status === "played" || match.status === "walkover"
-
-  async function handleSubmit() {
-    if (!score.trim()) {
-      setError("Ingresá el score.")
-      return
-    }
-    setLoading(true)
-    setError("")
-    const result = await submitCircuitoMatchResultAction(match.id, score, isWalkover, editionSlug, categorySlug)
-    setLoading(false)
-    if (result.ok) setOpen(false)
-    else setError(result.error)
-  }
 
   function nameCell(participantId: string | null, className: string) {
     const label = name(participantId)
@@ -169,42 +209,82 @@ function MatchRow({
       </div>
 
       {open && (
-        <div className="space-y-2 border-t border-border bg-muted/30 px-3 py-3">
-          <label className="block text-xs font-medium text-muted-foreground">
-            Score — ej: 6-4 6-2 {isFinal ? "(o 6-4 3-6 6-4, la final se juega completa)" : "(o 6-4 3-6 7-6)"}
-          </label>
-          <Input value={score} onChange={(e) => setScore(e.target.value)} placeholder="6-4 6-2" className="font-mono" />
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            <input
-              type="checkbox"
-              checked={isWalkover}
-              onChange={(e) => {
-                setIsWalkover(e.target.checked)
-                if (e.target.checked && !score.trim()) setScore("6-0 6-0")
-              }}
-            />
-            Walkover (6-0 6-0 si gana el de arriba, 0-6 0-6 si gana el de abajo)
-          </label>
-          <Button onClick={handleSubmit} disabled={loading} size="sm" className="w-full">
-            {loading ? "Guardando..." : "Cargar resultado"}
-          </Button>
-          {error && <p className="text-xs text-loss">{error}</p>}
+        <div className="border-t border-border bg-muted/30 px-3 py-3">
+          <ResultForm
+            match={match}
+            isFinal={isFinal}
+            editionSlug={editionSlug}
+            categorySlug={categorySlug}
+            onDone={() => setOpen(false)}
+          />
         </div>
       )}
     </div>
   )
 }
 
-export function MatchesList({ categoryId, matches, participantNames, editionSlug, categorySlug, format }: Props) {
+// Diálogo para cargar/corregir el resultado de un partido del cuadro horizontal.
+function ResultDialog({
+  match,
+  title,
+  isFinal,
+  editionSlug,
+  categorySlug,
+  onClose,
+}: {
+  match: CircuitoMatchView
+  title: string
+  isFinal: boolean
+  editionSlug: string
+  categorySlug: string
+  onClose: () => void
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Cargar resultado"
+        className="w-full max-w-sm rounded-lg border border-border bg-card p-4 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-3 flex items-start justify-between gap-2">
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          <button type="button" onClick={onClose} aria-label="Cerrar" className="rounded p-1 text-muted-foreground hover:bg-muted">
+            <X className="size-4" />
+          </button>
+        </div>
+        <ResultForm match={match} isFinal={isFinal} editionSlug={editionSlug} categorySlug={categorySlug} onDone={onClose} />
+      </div>
+    </div>
+  )
+}
+
+export function MatchesList({
+  categoryId,
+  part,
+  matches,
+  participantNames,
+  participantSeeds,
+  editionSlug,
+  categorySlug,
+  format,
+}: Props) {
   const [reordering, setReordering] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [reorderError, setReorderError] = useState("")
+  const [dialogMatchId, setDialogMatchId] = useState<string | null>(null)
 
   const name = (id: string | null) => (id ? participantNames[id] ?? "?" : "Por definir")
 
   // Solo se reordena un cuadro armado por el panel y sin resultados cargados.
-  const canReorder = format !== null && matches.every((m) => m.winner_id === null && m.score === null)
+  // (`matches` son los de esta parte; el reordenamiento mira el principal.)
+  const canReorder = part === "main" && format !== null && matches.every((m) => m.winner_id === null && m.score === null)
 
   async function swap(fromId: string, toId: string) {
     setBusy(true)
@@ -223,16 +303,35 @@ export function MatchesList({ categoryId, matches, participantNames, editionSlug
 
   const reorder: Reorder = { selectedId, busy, onPick: pick, onSwap: (a, b) => void swap(a, b) }
 
-  const mainMatches = matches.filter((m) => m.bracket === "main")
-  const repechajeMatches = matches.filter((m) => m.bracket === "repechaje")
-  const totalMainRounds = mainMatches.reduce((max, m) => Math.max(max, m.round_number), 0)
-  const totalRepechajeRounds = repechajeMatches.reduce((max, m) => Math.max(max, m.round_number), 0)
+  const totalRounds = matches.reduce((max, m) => Math.max(max, m.round_number), 0)
+  const dialogMatch = matches.find((m) => m.id === dialogMatchId) ?? null
 
-  const grouped = (list: CircuitoMatchView[], totalRounds: number, bracket: "main" | "repechaje") => {
+  const treeNames = Object.fromEntries(
+    Object.entries(participantNames).map(([id, n]) => [id, { name: n, seed: participantSeeds[id] ?? null }]),
+  )
+  const strictByes = part === "repechaje"
+  // Eliminación simple (y repechaje): cuadro horizontal. En grupos + llave,
+  // el tramo de semis y final (el de zonas va en listas).
+  const treeMatches =
+    part === "repechaje" || format === "single_elimination" || format === null
+      ? matches
+      : format === "groups_then_knockout"
+        ? matches.filter((m) => m.round_number >= 2).map((m) => ({ ...m, round_number: m.round_number - 1 }))
+        : []
+  const tree = treeMatches.length > 0 ? buildBracketTree(treeMatches, treeNames, { strictByes }) : null
+
+  const listMatches =
+    part === "main" && format === "groups_then_knockout"
+      ? matches.filter((m) => m.round_number === 1)
+      : tree
+        ? []
+        : matches
+
+  const grouped = (list: CircuitoMatchView[], withReorder: boolean) => {
     // Una sección por ronda; en la fase de zonas, una por zona.
     const sections = new Map<string, { round: number; zone: "A" | "B" | null; matches: CircuitoMatchView[] }>()
     for (const m of list) {
-      const zone = bracket === "main" && m.round_number === 1 ? m.zone : null
+      const zone = part === "main" && m.round_number === 1 ? m.zone : null
       const key = `${m.round_number}-${zone ?? ""}`
       if (!sections.has(key)) sections.set(key, { round: m.round_number, zone, matches: [] })
       sections.get(key)!.matches.push(m)
@@ -240,30 +339,50 @@ export function MatchesList({ categoryId, matches, participantNames, editionSlug
     return [...sections.values()]
       .sort((a, b) => a.round - b.round || (a.zone ?? "").localeCompare(b.zone ?? ""))
       .map(({ round, zone, matches: roundMatches }) => (
-      <div key={`${bracket}-${round}-${zone ?? ""}`} className="mb-4">
-        <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          <Trophy className="size-3" />
-          {roundLabel(bracket, round, totalRounds, format, zone)}
-        </p>
-        <div className="overflow-hidden rounded-lg border border-border bg-card">
-          {roundMatches.map((m) => (
-            <MatchRow
-              key={m.id}
-              match={m}
-              name={name}
-              isFinal={bracket === "main" && round === totalRounds}
-              editionSlug={editionSlug}
-              categorySlug={categorySlug}
-              reorder={reordering && bracket === "main" && round === 1 ? reorder : undefined}
-            />
-          ))}
+        <div key={`${part}-${round}-${zone ?? ""}`} className="mb-4">
+          <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <Trophy className="size-3" />
+            {roundLabel(part, round, totalRounds, format, zone)}
+          </p>
+          <div className="overflow-hidden rounded-lg border border-border bg-card">
+            {roundMatches.map((m) => (
+              <MatchRow
+                key={m.id}
+                match={m}
+                name={name}
+                isFinal={part === "main" && round === totalRounds}
+                editionSlug={editionSlug}
+                categorySlug={categorySlug}
+                reorder={withReorder && reordering && round === 1 ? reorder : undefined}
+              />
+            ))}
+          </div>
         </div>
-      </div>
-    ))
+      ))
   }
+
+  const dialogTitle = dialogMatch ? `${name(dialogMatch.participant_a_id)} vs ${name(dialogMatch.participant_b_id)}` : ""
+  const dialogIsFinal =
+    !!dialogMatch &&
+    part === "main" &&
+    (format === "groups_then_knockout"
+      ? dialogMatch.round_number === totalRounds
+      : dialogMatch.round_number === totalRounds)
+
+  if (matches.length === 0) return null
 
   return (
     <div>
+      {part === "repechaje" && (
+        <>
+          <h2 className="mb-1 font-heading text-xl font-bold uppercase">Repechaje</h2>
+          <p className="mb-4 max-w-2xl text-xs text-muted-foreground">
+            Entra quien pierde su primer partido (en 1ª ronda, o en 2ª si arrancó con bye). Se va completando solo a
+            medida que cargás resultados. No suma puntos.
+          </p>
+        </>
+      )}
+
       {canReorder && (
         <div className="mb-4 rounded-lg border border-border bg-card p-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -288,8 +407,29 @@ export function MatchesList({ categoryId, matches, participantNames, editionSlug
           {reorderError && <p className="mt-2 text-xs text-loss">{reorderError}</p>}
         </div>
       )}
-      {grouped(mainMatches, totalMainRounds, "main")}
-      {repechajeMatches.length > 0 && grouped(repechajeMatches, totalRepechajeRounds, "repechaje")}
+
+      {listMatches.length > 0 && grouped(listMatches, true)}
+
+      {tree && (
+        <AdminBracketTree
+          tree={tree}
+          championLabel={part === "repechaje" ? "Ganó el repechaje" : "Campeón"}
+          idPrefix={part}
+          onOpenMatch={setDialogMatchId}
+          reorder={reordering && part === "main" && format !== "groups_then_knockout" ? reorder : undefined}
+        />
+      )}
+
+      {dialogMatch && (
+        <ResultDialog
+          match={dialogMatch}
+          title={dialogTitle}
+          isFinal={dialogIsFinal}
+          editionSlug={editionSlug}
+          categorySlug={categorySlug}
+          onClose={() => setDialogMatchId(null)}
+        />
+      )}
     </div>
   )
 }

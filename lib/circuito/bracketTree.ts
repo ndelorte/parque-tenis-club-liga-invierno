@@ -109,7 +109,14 @@ function finalizeTree(
   roundNumbers: number[],
   totalRounds: number,
   participants: Record<string, BracketTreeParticipant>,
+  strictByes = false,
 ): BracketTree {
+  // Con strictByes (repechaje), un lugar con un solo participante es "pase
+  // libre" recién cuando ese participante ya avanzó a la ronda siguiente;
+  // antes está esperando rival.
+  const advanced = new Set(
+    (matchesByRound.get(2) ?? []).flatMap((m) => [m.participant_a_id, m.participant_b_id]).filter((id): id is string => !!id),
+  )
   const rounds: BracketTreeRound[] = roundNumbers.map((r) => {
     const roundMatches = [...matchesByRound.get(r)!].sort((a, b) => a.position - b.position)
     return {
@@ -122,7 +129,7 @@ function finalizeTree(
         b: toSide(m.participant_b_id, participants),
         score: m.score,
         winnerId: m.winner_id,
-        isBye: r === 1 && !!m.participant_a_id && !m.participant_b_id,
+        isBye: r === 1 && !!m.participant_a_id && !m.participant_b_id && (!strictByes || advanced.has(m.participant_a_id)),
         isWalkover: m.is_walkover,
         status: m.status,
       })),
@@ -171,6 +178,7 @@ function isLinkedByPosition(byRound: Map<number, BracketTreeMatchInput[]>, round
 function buildBracketTreeByPosition(
   matches: BracketTreeMatchInput[],
   participants: Record<string, BracketTreeParticipant>,
+  strictByes: boolean,
 ): BracketTree | null {
   if (matches.length === 0) return null
 
@@ -204,7 +212,7 @@ function buildBracketTreeByPosition(
 
   if (!isLinkedByPosition(byRound, roundNumbers)) return null
 
-  return finalizeTree(byRound, roundNumbers, totalRounds, participants)
+  return finalizeTree(byRound, roundNumbers, totalRounds, participants, strictByes)
 }
 
 // Reconstruye el árbol de atrás para adelante desde la final, siguiendo
@@ -298,6 +306,10 @@ export function reconstructBracketFromResults(
 export function buildBracketTree(
   matches: BracketTreeMatchInput[],
   participants: Record<string, BracketTreeParticipant>,
+  options: { strictByes?: boolean } = {},
 ): BracketTree | null {
-  return buildBracketTreeByPosition(matches, participants) ?? reconstructBracketFromResults(matches, participants)
+  return (
+    buildBracketTreeByPosition(matches, participants, options.strictByes ?? false) ??
+    reconstructBracketFromResults(matches, participants)
+  )
 }

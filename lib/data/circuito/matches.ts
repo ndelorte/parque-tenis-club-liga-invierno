@@ -1,13 +1,12 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { calculateCircuitoMatchResult } from "@/lib/circuito/calculateCircuitoMatchResult"
-import { generateRepechaje } from "@/lib/circuito/generateRepechaje"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
 import { selectDrawRule } from "@/lib/circuito/generateBracket"
 import type { CircuitoParticipant, DrawFormatKind } from "@/lib/circuito/types"
 import { canReorderBracket, computeSwapUpdates } from "@/lib/circuito/swapParticipants"
-import { isPanelGeneratedBracket, round1LosersIfComplete } from "@/lib/circuito/syncBracketSlots"
-import { insertCircuitoBracket, syncCircuitoBracketSlots, toBracketSlotMatch } from "./bracket"
+import { isPanelGeneratedBracket } from "@/lib/circuito/syncBracketSlots"
+import { ensureRepechajeStructure, syncCircuitoBracketSlots, toBracketSlotMatch } from "./bracket"
 import { recalculateAndPersistCircuitRanking } from "./ranking"
 import type { CircuitoMatchRow } from "./types"
 
@@ -102,7 +101,7 @@ export async function submitCircuitoMatchResult(
   // Todo lo que depende de este resultado se recalcula desde cero (no se
   // "avanza" solo este ganador): si se corrigió un resultado ya cargado, el
   // cambio se propaga en cascada — ver lib/circuito/syncBracketSlots.ts.
-  if (rule.format === "single_elimination") await syncRepechaje(supabase, match.category_id)
+  if (rule.format === "single_elimination") await ensureRepechajeStructure(supabase, match.category_id)
   await syncCircuitoBracketSlots(supabase, match.category_id, rule.format)
 
   await recalculateAndPersistCircuitRanking(match.category_id)
@@ -185,49 +184,4 @@ async function assertPanelGeneratedBracket(supabase: AdminClient, categoryId: st
         "vienen de Challonge y de la planilla del club, no se editan desde acá.",
     )
   }
-}
-
-// N=8+: cuando terminan de jugarse todos los partidos reales de la 1ª ronda
-// (sin contar byes), se arma el repechaje con sus perdedores. Si después se
-// corrige un resultado de 1ª ronda y cambia quién perdió, el repechaje ya
-// no corresponde y se vuelve a armar (el repechaje no da puntos, así que
-// rehacerlo no toca el ranking).
-async function syncRepechaje(supabase: AdminClient, categoryId: string) {
-  const { data, error } = await supabase.from("circuito_matches").select("*").eq("category_id", categoryId)
-  if (error) throw new Error(`Error al leer el cuadro: ${error.message}`)
-  const rows = (data ?? []) as CircuitoMatchRow[]
-
-  const loserIds = round1LosersIfComplete(rows.map(toBracketSlotMatch))
-  if (!loserIds) return // la 1ª ronda todavía no terminó
-
-  const repechajeRows = rows.filter((r) => r.bracket === "repechaje")
-  if (repechajeRows.length > 0) {
-    const currentIds = repechajeRows
-      .filter((r) => r.round_number === 1)
-      .flatMap((r) => [r.participant_a_id, r.participant_b_id])
-      .filter((id): id is string => !!id)
-    if (sameIdSet(currentIds, loserIds)) return
-
-    const { error: deleteError } = await supabase
-      .from("circuito_matches")
-      .delete()
-      .eq("category_id", categoryId)
-      .eq("bracket", "repechaje")
-    if (deleteError) throw new Error(`Error al rehacer el repechaje: ${deleteError.message}`)
-  }
-
-  const { data: loserRows, error: losersError } = await supabase
-    .from("circuito_participants")
-    .select("id, seed")
-    .in("id", loserIds)
-  if (losersError) throw new Error(`Error al leer participantes: ${losersError.message}`)
-  const losers: CircuitoParticipant[] = (loserRows ?? []).map((p) => ({ id: p.id, seed: p.seed }))
-
-  const repechaje = generateRepechaje("single_elimination", losers, CIRCUITO_FORMAT_SPEC)
-  if (repechaje) await insertCircuitoBracket(supabase, categoryId, "repechaje", repechaje)
-}
-
-function sameIdSet(a: string[], b: string[]): boolean {
-  const setA = new Set(a)
-  return setA.size === new Set(b).size && b.every((id) => setA.has(id))
 }

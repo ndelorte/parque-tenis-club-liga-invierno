@@ -43,6 +43,8 @@ export interface MatchFormatSpec {
 export interface CircuitoFormatSpec {
   drawRules: DrawRule[]
   seedingSource: SeedingSource
+  // Cuántos reciben cabeza de serie por ranking; el resto se sortea al armar el cuadro.
+  seededCount: number
   byePolicy: ByePolicy
   repechaje: RepechajeSpec
   match: MatchFormatSpec

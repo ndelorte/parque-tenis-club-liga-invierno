@@ -234,7 +234,7 @@ function EliminationSections({
   championPoints: number
 }) {
   const mainTree = buildBracketTree(mainMatches, names)
-  const repechajeTree = repechajeMatches.length > 0 ? buildBracketTree(repechajeMatches, names) : null
+  const repechajeTree = repechajeMatches.length > 0 ? buildBracketTree(repechajeMatches, names, { strictByes: true }) : null
 
   return (
     <div>
@@ -261,7 +261,7 @@ function EliminationSections({
         <section className="mt-14 border-t border-border pt-8">
           <h2 className="mb-2 font-heading text-3xl font-extrabold uppercase text-foreground">Repechaje</h2>
           <p className="mb-6 max-w-2xl text-sm text-muted-foreground">
-            Para quienes perdieron en la primera ronda: asegura un segundo partido. No suma puntos al ranking.
+            Para quienes pierden su primer partido: asegura un segundo partido. Se va completando a medida que se juegan los partidos. No suma puntos al ranking.
           </p>
           {repechajeTree ? (
             <>

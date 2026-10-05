@@ -4,6 +4,7 @@ import { notFound } from "next/navigation"
 import { ArrowRight } from "lucide-react"
 import { getCircuitoEditionBySlug } from "@/lib/data/circuito/editions"
 import { getCircuitoCategoriesForEdition } from "@/lib/data/circuito/categories"
+import { AddCategoryForm } from "@/components/admin/circuito/AddCategoryForm"
 import { AdminShell, AdminPageHeader } from "@/components/admin/admin-shell"
 
 export const metadata: Metadata = { title: "Edición | Panel Circuito del Parque" }
@@ -37,6 +38,8 @@ export default async function CircuitoEditionPage({
 
       <CategoryGroup title="Single" categories={singles} editionSlug={editionSlug} />
       <CategoryGroup title="Dobles" categories={dobles} editionSlug={editionSlug} />
+
+      <AddCategoryForm editionId={edition.id} editionSlug={editionSlug} />
     </AdminShell>
   )
 }

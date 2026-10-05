@@ -30,9 +30,13 @@ export default async function CircuitoCategoryPage({
   const hasBracket = category.draw_size !== null
   const matches = hasBracket ? await getCircuitoMatches(category.id) : []
   const ranking = hasBracket ? await getCircuitRanking(edition.id, category.id) : []
-  const players = hasBracket ? [] : await getPlayersForSelect()
+  const players = await getPlayersForSelect()
 
   const participantNames = Object.fromEntries(participants.map((p) => [p.id, p.display_name]))
+  const participantSeeds = Object.fromEntries(participants.map((p) => [p.id, p.seed]))
+  const mainMatches = matches.filter((m) => m.bracket === "main")
+  const repechajeMatches = matches.filter((m) => m.bracket === "repechaje")
+  const format = category.draw_size ? (selectDrawRule(category.draw_size, CIRCUITO_FORMAT_SPEC)?.format ?? null) : null
 
   return (
     <AdminShell
@@ -67,11 +71,13 @@ export default async function CircuitoCategoryPage({
         <>
           <MatchesList
             categoryId={category.id}
-            matches={matches}
+            part="main"
+            matches={mainMatches}
             participantNames={participantNames}
+            participantSeeds={participantSeeds}
             editionSlug={editionSlug}
             categorySlug={categorySlug}
-            format={category.draw_size ? (selectDrawRule(category.draw_size, CIRCUITO_FORMAT_SPEC)?.format ?? null) : null}
+            format={format}
           />
 
           {ranking.length > 0 && (
@@ -89,6 +95,19 @@ export default async function CircuitoCategoryPage({
               </div>
             </section>
           )}
+
+          <section className="mt-10">
+            <MatchesList
+              categoryId={category.id}
+              part="repechaje"
+              matches={repechajeMatches}
+              participantNames={participantNames}
+              participantSeeds={participantSeeds}
+              editionSlug={editionSlug}
+              categorySlug={categorySlug}
+              format={format}
+            />
+          </section>
         </>
       )}
     </AdminShell>

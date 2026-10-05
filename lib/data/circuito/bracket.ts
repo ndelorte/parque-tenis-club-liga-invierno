@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { generateBracket, selectDrawRule } from "@/lib/circuito/generateBracket"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
+import { repechajeLineCount, repechajeShape, repechajeSources } from "@/lib/circuito/repechajePlan"
 import { computeSlotUpdates, type BracketSlotMatch } from "@/lib/circuito/syncBracketSlots"
 import type { CircuitoBracket, CircuitoParticipant, DrawFormatKind } from "@/lib/circuito/types"
 import { assignSeedsFromRanking } from "@/lib/circuito/assignSeedsFromRanking"
@@ -47,6 +48,50 @@ export async function insertCircuitoBracket(
 
   const { error } = await supabase.from("circuito_matches").insert(rows)
   if (error) throw new Error(`Error al generar el cuadro: ${error.message}`)
+}
+
+// Deja armado el cuadro de repechaje (eliminación simple, 8+): forma fija,
+// con todos los lugares vacíos — los va llenando syncCircuitoBracketSlots a
+// medida que alguien pierde su primer partido (lib/circuito/repechajePlan.ts).
+// Idempotente. Un repechaje ya en juego con otra forma (armado con el
+// criterio anterior: solo perdedores de 1ª ronda) se deja como está.
+export async function ensureRepechajeStructure(supabase: AdminClient, categoryId: string): Promise<void> {
+  const { data, error } = await supabase.from("circuito_matches").select("*").eq("category_id", categoryId)
+  if (error) throw new Error(`Error al leer el cuadro: ${error.message}`)
+  const rows = (data ?? []) as CircuitoMatchRow[]
+
+  const shape = repechajeShape(repechajeLineCount(repechajeSources(rows.map(toBracketSlotMatch)).length))
+  const existing = rows.filter((r) => r.bracket === "repechaje")
+  const sameShape =
+    existing.length === shape.reduce((a, b) => a + b, 0) &&
+    shape.every((count, i) => existing.filter((r) => r.round_number === i + 1).length === count)
+  if (sameShape) return
+  if (existing.some((r) => r.winner_id || r.score)) return
+
+  if (existing.length > 0) {
+    const { error: deleteError } = await supabase
+      .from("circuito_matches")
+      .delete()
+      .eq("category_id", categoryId)
+      .eq("bracket", "repechaje")
+    if (deleteError) throw new Error(`Error al rehacer el repechaje: ${deleteError.message}`)
+  }
+
+  const empty = shape.flatMap((count, roundIdx) =>
+    Array.from({ length: count }, (_, position) => ({
+      category_id: categoryId,
+      bracket: "repechaje" as const,
+      round_number: roundIdx + 1,
+      position,
+      zone: null,
+      participant_a_id: null,
+      participant_b_id: null,
+      status: "pending" as const,
+    })),
+  )
+  if (empty.length === 0) return
+  const { error: insertError } = await supabase.from("circuito_matches").insert(empty)
+  if (insertError) throw new Error(`Error al armar el repechaje: ${insertError.message}`)
 }
 
 // Aplica contra la DB lo que calcula lib/circuito/syncBracketSlots.ts:
@@ -112,6 +157,7 @@ async function assignSeedsForCategory(supabase: AdminClient, categoryId: string)
   const seeds = assignSeedsFromRanking(
     (participantRows ?? []).map((p) => ({ id: p.id, playerId: p.player_id, player2Id: p.player_2_id })),
     ranking.entries.map((e) => e.playerId),
+    CIRCUITO_FORMAT_SPEC.seededCount,
   )
   for (const [participantId, seed] of seeds) {
     const { error: seedError } = await supabase.from("circuito_participants").update({ seed }).eq("id", participantId)
@@ -145,7 +191,7 @@ export async function generateAndPersistCircuitoBracket(categoryId: string): Pro
     seed: p.seed,
   }))
 
-  const bracket = generateBracket(participants, CIRCUITO_FORMAT_SPEC)
+  const bracket = generateBracket(participants, CIRCUITO_FORMAT_SPEC, Math.random)
 
   // Si esto falla (ej. otro admin generó el mismo cuadro en paralelo y chocó
   // con el índice único de position) no hay nada propio que deshacer.
@@ -161,6 +207,7 @@ export async function generateAndPersistCircuitoBracket(categoryId: string): Pro
       .eq("id", categoryId)
     if (updateError) throw new Error(`Error al fijar draw_size: ${updateError.message}`)
 
+    if (bracket.format === "single_elimination") await ensureRepechajeStructure(supabase, categoryId)
     await syncCircuitoBracketSlots(supabase, categoryId, bracket.format)
   } catch (e) {
     await supabase.from("circuito_matches").delete().eq("category_id", categoryId)

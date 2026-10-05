@@ -15,13 +15,22 @@ export function selectDrawRule(n: number, spec: CircuitoFormatSpec): DrawRule | 
 // en orden estable por id. No decide DE DÓNDE sale el seed (ranking vs
 // manual) — eso lo asigna quien arma la lista de participantes; el motor
 // solo consume el valor ya asignado, de forma determinista.
-export function sortBySeed(participants: CircuitoParticipant[]): CircuitoParticipant[] {
-  return [...participants].sort((a, b) => {
+export function sortBySeed(participants: CircuitoParticipant[], random?: () => number): CircuitoParticipant[] {
+  const sorted = [...participants].sort((a, b) => {
     if (a.seed !== null && b.seed !== null) return a.seed - b.seed
     if (a.seed !== null) return -1
     if (b.seed !== null) return 1
     return a.id.localeCompare(b.id)
   })
+  if (!random) return sorted
+
+  // Sorteo de los no sembrados (Fisher-Yates); los sembrados quedan primero.
+  const seededCount = sorted.filter((p) => p.seed !== null).length
+  for (let i = sorted.length - 1; i > seededCount; i--) {
+    const j = seededCount + Math.floor(random() * (i - seededCount + 1))
+    ;[sorted[i], sorted[j]] = [sorted[j], sorted[i]]
+  }
+  return sorted
 }
 
 export function nextPowerOfTwo(n: number): number {
@@ -33,6 +42,8 @@ export function nextPowerOfTwo(n: number): number {
 export function generateBracket(
   participants: CircuitoParticipant[],
   spec: CircuitoFormatSpec,
+  // Si se pasa, los participantes sin seed se ubican al azar (en vez de por id).
+  random?: () => number,
 ): CircuitoBracket {
   const ids = new Set(participants.map((p) => p.id))
   if (ids.size !== participants.length) {
@@ -48,7 +59,7 @@ export function generateBracket(
     )
   }
 
-  const seeded = sortBySeed(participants)
+  const seeded = sortBySeed(participants, random)
 
   switch (rule.format) {
     case "round_robin_with_final":

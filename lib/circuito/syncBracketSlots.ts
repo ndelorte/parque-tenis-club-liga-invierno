@@ -1,5 +1,6 @@
 import { calculateZoneStandings, type ZoneMatchResult } from "./calculateZoneStandings"
 import { generateBracket, selectDrawRule } from "./generateBracket"
+import { computeRepechajeSlots } from "./repechajePlan"
 import type { CircuitoFormatSpec, CircuitoParticipant, DrawFormatKind } from "./types"
 
 // Un partido del cuadro tal como está persistido (circuito_matches), con
@@ -73,8 +74,17 @@ export function computeSlotUpdates(
       break
   }
 
-  // El repechaje es siempre eliminación directa (generateRepechaje.ts).
-  syncSingleElimination(working, "repechaje", round, setSlots)
+  // El repechaje es siempre eliminación directa. Con eliminación simple en
+  // el principal se llena con quienes pierden su primer partido
+  // (repechajePlan.ts); si el repechaje existente tiene otra forma (armado
+  // con el criterio anterior) se sigue como cuadro común.
+  const repechajeSlots = format === "single_elimination" ? computeRepechajeSlots(working) : null
+  if (repechajeSlots) {
+    const byId = new Map(working.map((m) => [m.id, m]))
+    for (const slots of repechajeSlots) setSlots(byId.get(slots.matchId), slots.participantAId, slots.participantBId)
+  } else {
+    syncSingleElimination(working, "repechaje", round, setSlots)
+  }
 
   return updates
 }
@@ -163,17 +173,6 @@ function syncGroupsThenKnockout(participants: CircuitoParticipant[], round: Roun
   const bothSemisDone = semis.length === 2 && semiWinners.every(Boolean)
   const [finalMatch] = round("main", 3)
   setSlots(finalMatch, bothSemisDone ? semiWinners[0] : null, bothSemisDone ? semiWinners[1] : null)
-}
-
-// Perdedores de la 1ª ronda del cuadro principal (quienes entran al
-// repechaje), o null si todavía falta cargar algún partido real de esa
-// ronda. Un bye no genera perdedor.
-export function round1LosersIfComplete(matches: BracketSlotMatch[]): string[] | null {
-  const realMatches = matches.filter(
-    (m) => m.bracket === "main" && m.round === 1 && m.participantAId && m.participantBId,
-  )
-  if (realMatches.length === 0 || realMatches.some((m) => !m.winnerId)) return null
-  return realMatches.map((m) => (m.winnerId === m.participantAId ? m.participantBId! : m.participantAId!))
 }
 
 // ¿Este cuadro lo armó el motor del panel (generateBracket) para estos

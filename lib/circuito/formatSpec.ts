@@ -17,6 +17,7 @@ export const CIRCUITO_FORMAT_SPEC: CircuitoFormatSpec = {
   // resultados del año en curso); el primer torneo de 2026 es la única
   // excepción manual — eso lo resuelve quien arma el seed, no el motor.
   seedingSource: "ranking",
+  seededCount: 8,
   byePolicy: "top_seeds",
   repechaje: {
     eligibility: "all_r1_losers",
