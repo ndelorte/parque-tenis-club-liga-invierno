@@ -14,6 +14,13 @@ describe("compareNames", () => {
     expect(compareNames("Juan Perez", "Juan Perez Gomez")).toBe("similar")
   })
 
+  it("letras cambiadas de lugar o dos errores en una palabra larga → parecido", () => {
+    expect(compareNames("Marcos Kilmunda", "Klimunda Marcos")).toBe("similar")
+    expect(compareNames("Juan Loaiza", "Laoiza Juan")).toBe("similar")
+    expect(compareNames("Alejandra Bottari", "Alejandra Botarri")).toBe("similar")
+    expect(compareNames("Christian Fernandez", "Fernandez Cristhian")).toBe("similar")
+  })
+
   it("personas distintas no coinciden", () => {
     expect(compareNames("Juan Perez", "Juan Gomez")).toBeNull()
     expect(compareNames("Ana Diaz", "Ana Diez")).toBeNull() // palabras cortas: sin tolerancia

@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { revalidatePath } from "next/cache"
+import { findLigaNameConflicts, type LigaNameConflict } from "@/lib/players/ligaNameConflicts"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { isAdminUser } from "@/lib/auth/admin"
@@ -234,6 +235,8 @@ export type PlayerInput = {
   playerId: string | null
   displayName: string
   isCaptain: boolean
+  // El organizador ya confirmó que este nombre es otra persona (no preguntar de nuevo).
+  confirmedDistinct?: boolean
 }
 
 export type TeamInput = {
@@ -245,7 +248,7 @@ export type TeamInput = {
 export async function saveTeamPlayers(
   categoryId: string,
   teams: TeamInput[],
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; conflicts?: LigaNameConflict[] }> {
   const authClient = await createClient()
   const {
     data: { user },
@@ -257,6 +260,17 @@ export async function saveTeamPlayers(
   const supabase = createAdminClient()
 
   try {
+    // Antes de escribir nada: ¿algún nombre nuevo (o renombrado) se parece a un
+    // jugador ya cargado? Una ficha repetida parte los puntos del ranking.
+    const { data: activePlayers } = await supabase.from("players").select("id, display_name").eq("active", true)
+    const conflicts = findLigaNameConflicts(
+      teams,
+      ((activePlayers ?? []) as Array<{ id: string; display_name: string }>).map((p) => ({ id: p.id, displayName: p.display_name })),
+    )
+    if (conflicts.length > 0) {
+      return { success: false, error: "Hay nombres que se parecen a jugadores ya cargados.", conflicts }
+    }
+
     const { data: currentTeams } = await supabase
       .from("teams")
       .select("id")
@@ -335,6 +349,28 @@ export async function saveTeamPlayers(
               .from("team_players")
               .update({ is_captain: player.isCaptain ?? false })
               .eq("id", player.teamPlayerId)
+          } else {
+            // Jugador que ya existía y se eligió para este equipo (no estaba
+            // vinculado): se vincula, o se reactiva si ya había estado.
+            const { data: link } = await supabase
+              .from("team_players")
+              .select("id")
+              .eq("team_id", teamId)
+              .eq("player_id", player.playerId)
+              .maybeSingle()
+            if (link) {
+              await supabase
+                .from("team_players")
+                .update({ active: true, is_captain: player.isCaptain ?? false })
+                .eq("id", (link as any).id)
+            } else {
+              await supabase.from("team_players").insert({
+                team_id: teamId,
+                player_id: player.playerId,
+                active: true,
+                is_captain: player.isCaptain ?? false,
+              })
+            }
           }
         }
       }

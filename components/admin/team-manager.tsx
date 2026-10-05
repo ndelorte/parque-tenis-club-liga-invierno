@@ -38,6 +38,19 @@ type PlayerDraft = {
   playerId: string | null
   displayName: string
   isCaptain: boolean
+  // Nombre guardado, para poder volver atrás si el cambio resultó ser un error.
+  originalName?: string
+  // Confirmado por el organizador: es otra persona, aunque el nombre se parezca.
+  confirmedDistinct?: boolean
+}
+
+// Aviso "este nombre se parece a uno ya cargado" (ver lib/players/ligaNameConflicts.ts).
+type NameConflict = {
+  teamLocalId: string
+  playerIndex: number
+  typedName: string
+  isNew: boolean
+  candidates: Array<{ id: string; displayName: string; match: "same" | "similar" }>
 }
 
 type TeamDraft = {
@@ -58,10 +71,12 @@ export function TeamManager({ categories }: { categories: CategoryForAdmin[] }) 
   const [isPending, startTransition] = useTransition()
   const [savedAt, setSavedAt] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [conflicts, setConflicts] = useState<NameConflict[]>([])
 
   function loadCategory(catId: string) {
     setSavedAt(null)
     setError(null)
+    setConflicts([])
     startTransition(async () => {
       const teams = await getTeamsForAdmin(catId)
       setDrafts(
@@ -74,6 +89,7 @@ export function TeamManager({ categories }: { categories: CategoryForAdmin[] }) 
             playerId: p.playerId,
             displayName: p.displayName,
             isCaptain: p.isCaptain,
+            originalName: p.displayName,
           })),
         })),
       )
@@ -101,7 +117,7 @@ export function TeamManager({ categories }: { categories: CategoryForAdmin[] }) 
           ? {
               ...t,
               players: t.players.map((p, i) =>
-                i === idx ? { ...p, displayName: val } : p,
+                i === idx ? { ...p, displayName: val, confirmedDistinct: false } : p,
               ),
             }
           : t,
@@ -175,6 +191,7 @@ export function TeamManager({ categories }: { categories: CategoryForAdmin[] }) 
           playerId: p.playerId,
           displayName: p.displayName,
           isCaptain: p.isCaptain,
+          confirmedDistinct: p.confirmedDistinct,
         })),
       }))
       const result = await saveTeamPlayers(categoryId, input)
@@ -186,10 +203,53 @@ export function TeamManager({ categories }: { categories: CategoryForAdmin[] }) 
           }),
         )
         loadCategory(categoryId)
+      } else if (result.conflicts && result.conflicts.length > 0) {
+        setConflicts(
+          result.conflicts.map((c) => ({
+            teamLocalId: drafts[c.teamIndex].localId,
+            playerIndex: c.playerIndex,
+            typedName: c.typedName,
+            isNew: c.isNew,
+            candidates: c.candidates,
+          })),
+        )
+        setError("Revisá los nombres marcados abajo antes de guardar.")
       } else {
         setError(result.error ?? "Error al guardar")
       }
     })
+  }
+
+  function dropConflict(c: NameConflict) {
+    setConflicts((all) => all.filter((x) => !(x.teamLocalId === c.teamLocalId && x.playerIndex === c.playerIndex)))
+  }
+
+  function patchPlayer(c: NameConflict, patch: Partial<PlayerDraft>) {
+    update((ts) =>
+      ts.map((t) =>
+        t.localId === c.teamLocalId
+          ? { ...t, players: t.players.map((p, i) => (i === c.playerIndex ? { ...p, ...patch } : p)) }
+          : t,
+      ),
+    )
+    dropConflict(c)
+  }
+
+  // Es el mismo jugador que ya estaba cargado: se usa esa ficha en vez de crear otra.
+  function linkToExisting(c: NameConflict, candidate: { id: string; displayName: string }) {
+    patchPlayer(c, { playerId: candidate.id, displayName: candidate.displayName, confirmedDistinct: false })
+  }
+
+  // Es otra persona: se guarda con ese nombre igual.
+  function keepAsDistinct(c: NameConflict) {
+    patchPlayer(c, { confirmedDistinct: true })
+  }
+
+  // Era un cambio por error: vuelve al nombre guardado.
+  function revertName(c: NameConflict) {
+    const team = drafts.find((t) => t.localId === c.teamLocalId)
+    const original = team?.players[c.playerIndex]?.originalName ?? ""
+    patchPlayer(c, { displayName: original })
   }
 
   return (
@@ -319,6 +379,47 @@ export function TeamManager({ categories }: { categories: CategoryForAdmin[] }) 
               No hay equipos en esta categoría.
             </p>
           )}
+        </div>
+      )}
+
+      {conflicts.length > 0 && (
+        <div role="alert" className="space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          <p className="font-medium">
+            Estos nombres se parecen a jugadores que ya están cargados. Si es la misma persona, usá la ficha
+            existente: así se suman sus puntos del ranking y no queda repetida.
+          </p>
+          {conflicts.map((c) => {
+            const team = drafts.find((t) => t.localId === c.teamLocalId)
+            return (
+              <div key={`${c.teamLocalId}-${c.playerIndex}`} className="rounded-md border border-amber-300 bg-white p-2.5">
+                <p className="mb-2">
+                  <strong>«{c.typedName}»</strong>
+                  {team ? ` (${team.name})` : ""} se parece a:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {c.isNew &&
+                    c.candidates.map((cand) => (
+                      <Button key={cand.id} size="sm" variant="outline" onClick={() => linkToExisting(c, cand)}>
+                        Es el mismo: usar «{cand.displayName}»
+                      </Button>
+                    ))}
+                  {!c.isNew && (
+                    <>
+                      <span className="w-full text-xs">
+                        {c.candidates.map((cand) => `«${cand.displayName}»`).join(", ")}
+                      </span>
+                      <Button size="sm" variant="outline" onClick={() => revertName(c)}>
+                        Cancelar el cambio de nombre
+                      </Button>
+                    </>
+                  )}
+                  <Button size="sm" variant="ghost" onClick={() => keepAsDistinct(c)}>
+                    Es otra persona: guardar igual
+                  </Button>
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
 
