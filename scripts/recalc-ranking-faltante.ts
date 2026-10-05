@@ -54,6 +54,7 @@ async function main() {
         matches: matches.map((m) => ({
           bracket: m.bracket,
           round: m.round_number,
+          position: m.position,
           zone: m.zone,
           participantAId: m.participant_a_id,
           participantBId: m.participant_b_id,

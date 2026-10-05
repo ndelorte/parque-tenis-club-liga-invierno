@@ -1,10 +1,12 @@
 import type { CircuitoParticipant, DrawFormatKind } from "./types"
 import { calculateZoneStandings, type ZoneMatchResult } from "./calculateZoneStandings"
 import { pointsForInstance, type CircuitoInstance } from "./pointsTable"
+import { normalizeZoneMatches } from "./normalizeZoneMatches"
 
 export interface CircuitoBracketMatchResult {
   bracket: "main" | "repechaje"
   round: number
+  position?: number // orden dentro de la ronda (para reconstruir imports de Challonge)
   zone: "A" | "B" | null
   participantAId: string | null
   participantBId: string | null
@@ -26,7 +28,9 @@ export interface CalculateRankingPointsInput {
 // las posiciones de instancia son por definición finales, no se puede
 // derivar "3° de la zona" sin que la zona haya terminado.
 export function calculateRankingPoints(input: CalculateRankingPointsInput): Map<string, number> {
-  const { format, participants, matches, isGrandSlam } = input
+  const { format, participants, isGrandSlam } = input
+  // Imports de Challonge en formatos de zona: se reconstruye zona / semis / final.
+  const matches = normalizeZoneMatches(format, input.matches)
   const mainMatches = matches.filter((m) => m.bracket === "main")
   const instances = new Map<string, CircuitoInstance>()
 
