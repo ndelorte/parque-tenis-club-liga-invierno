@@ -141,13 +141,16 @@ export async function syncCircuitoBracketSlots(
 async function assignSeedsForCategory(supabase: AdminClient, categoryId: string): Promise<void> {
   const { data: category, error: categoryError } = await supabase
     .from("circuito_categories")
-    .select("slug, circuito_editions!inner(year)")
+    .select("slug, circuito_editions!inner(year, month)")
     .eq("id", categoryId)
     .maybeSingle()
   if (categoryError || !category) throw new Error("No se encontró la categoría.")
-  const year = (category as unknown as { circuito_editions: { year: number } }).circuito_editions.year
+  const { year, month } = (category as unknown as { circuito_editions: { year: number; month: number } }).circuito_editions
 
-  let ranking = await getAnnualCircuitRanking(year, category.slug)
+  // Ranking "hasta ese momento": solo los torneos de meses anteriores de este
+  // año (ni este torneo ni los siguientes). Si todavía no hay ninguno, el
+  // ranking final del año anterior (reglas-circuito-del-parque.md, "Seeding").
+  let ranking = await getAnnualCircuitRanking(year, category.slug, month)
   if (ranking.entries.length === 0) ranking = await getAnnualCircuitRanking(year - 1, category.slug)
 
   const { data: participantRows, error } = await supabase

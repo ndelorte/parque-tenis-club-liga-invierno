@@ -194,12 +194,16 @@ export async function getCircuitRanking(editionId: string, categoryId?: string):
 // circuito_categories (incluso con el mismo slug) — no hay una categoría
 // "canónica" única. El orden y el desempate (OQ-38) los resuelve
 // lib/circuito/buildAnnualRanking.ts.
+// `beforeMonth`: solo cuenta los torneos de meses anteriores (el ranking
+// "hasta ese momento", para sortear el cuadro de un torneo sin que cuenten ni
+// ese torneo ni los que vienen después).
 export async function getAnnualCircuitRanking(
   year: number,
   categorySlug: string,
+  beforeMonth?: number,
 ): Promise<AnnualRanking> {
   const supabase = await createClient()
-  const { data, error } = await supabase
+  const query = supabase
     .from("circuito_ranking_points")
     .select(
       "player_id, edition_id, points, players(display_name), circuito_categories!inner(slug), circuito_editions!inner(year, month, name)",
@@ -207,6 +211,7 @@ export async function getAnnualCircuitRanking(
     .eq("circuito_editions.year", year)
     .eq("circuito_categories.slug", categorySlug)
     .gt("points", 0)
+  const { data, error } = await (beforeMonth === undefined ? query : query.lt("circuito_editions.month", beforeMonth))
 
   if (error || !data) return { entries: [], tournaments: [] }
 
