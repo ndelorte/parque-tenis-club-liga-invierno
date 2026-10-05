@@ -174,26 +174,29 @@ export async function swapCircuitoParticipants(
 // (forma fija + lugares según los resultados ya cargados). Nunca toca los
 // cuadros importados de Challonge ni los de otro formato. Es seguro llamarlo
 // en cada apertura de la página: solo escribe si algo cambia.
-export async function refreshRepechajeStructure(categoryId: string): Promise<void> {
+export async function refreshRepechajeStructure(categoryId: string): Promise<{ ok: boolean; message: string | null }> {
   try {
     const supabase = createAdminClient()
     const { data: category } = await supabase.from("circuito_categories").select("draw_size").eq("id", categoryId).maybeSingle()
-    if (!category?.draw_size) return
+    if (!category?.draw_size) return { ok: true, message: null }
     const rule = selectDrawRule(category.draw_size, CIRCUITO_FORMAT_SPEC)
-    if (rule?.format !== "single_elimination") return
+    if (rule?.format !== "single_elimination") return { ok: true, message: null }
 
     try {
       await assertPanelGeneratedBracket(supabase, categoryId)
     } catch {
-      return // import histórico: no se recalcula nada
+      // import histórico: no se recalcula nada
+      return { ok: false, message: "Este cuadro no se armó desde el panel (es un import histórico): su repechaje no se recalcula." }
     }
     await ensureRepechajeStructure(supabase, categoryId)
     // Siempre se recalculan los lugares: aunque la forma sea la misma, el
     // acomodo puede haber quedado de una versión anterior (idempotente: solo
     // escribe si algo cambia).
     await syncCircuitoBracketSlots(supabase, categoryId, rule.format)
+    return { ok: true, message: null }
   } catch (e) {
     console.error("[circuito] no se pudo actualizar el repechaje", e)
+    return { ok: false, message: `No se pudo actualizar el repechaje: ${e instanceof Error ? e.message : String(e)}` }
   }
 }
 

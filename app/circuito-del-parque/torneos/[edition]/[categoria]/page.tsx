@@ -4,7 +4,7 @@ import { notFound } from "next/navigation"
 import { getCircuitoEditionBySlug } from "@/lib/data/circuito/editions"
 import { getCircuitoCategoryBySlug } from "@/lib/data/circuito/categories"
 import { getCircuitoParticipants } from "@/lib/data/circuito/participants"
-import { getCircuitoMatches } from "@/lib/data/circuito/matches"
+import { getCircuitoMatches, refreshRepechajeStructure } from "@/lib/data/circuito/matches"
 import type { CircuitoMatchRow, CircuitoParticipantRow } from "@/lib/data/circuito/types"
 import type { CircuitoCategoryRow } from "@/lib/data/circuito/types"
 import { selectDrawRule } from "@/lib/circuito/generateBracket"
@@ -142,6 +142,12 @@ export default async function CircuitoTorneoCategoriaPage({
 
   const category = await getCircuitoCategoryBySlug(edition.id, categorySlug)
   if (!category || category.draw_size === null) notFound()
+
+  // El repechaje se deriva de los resultados del principal: se pone al día
+  // también acá (idempotente) por si quedó con un acomodo de una versión anterior.
+  if (selectDrawRule(category.draw_size, CIRCUITO_FORMAT_SPEC)?.format === "single_elimination") {
+    await refreshRepechajeStructure(category.id)
+  }
 
   const [participants, matches] = await Promise.all([
     getCircuitoParticipants(category.id),

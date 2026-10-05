@@ -32,7 +32,7 @@ export default async function CircuitoCategoryPage({
   const hasBracket = category.draw_size !== null
   // Cuadros armados antes de que el repechaje tuviera su forma fija: se
   // actualizan la primera vez que se abre la categoría.
-  if (hasBracket) await refreshRepechajeStructure(category.id)
+  const repechajeRefresh = hasBracket ? await refreshRepechajeStructure(category.id) : { ok: true, message: null }
   const matches = hasBracket ? await getCircuitoMatches(category.id) : []
   const ranking = hasBracket ? await getCircuitRanking(edition.id, category.id) : []
   const players = await getPlayersForSelect()
@@ -114,6 +114,7 @@ export default async function CircuitoCategoryPage({
               categoryId={category.id}
               part="repechaje"
               needsRebuild={repechajeNeedsRebuild}
+              refreshNote={repechajeRefresh.message}
               matches={repechajeMatches}
               participantNames={participantNames}
               participantSeeds={participantSeeds}
