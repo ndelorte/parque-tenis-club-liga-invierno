@@ -170,6 +170,31 @@ export async function swapCircuitoParticipants(
   }
 }
 
+// Pone al día el repechaje de un cuadro de eliminación armado por el panel
+// (forma fija + lugares según los resultados ya cargados). Nunca toca los
+// cuadros importados de Challonge ni los de otro formato. Es seguro llamarlo
+// en cada apertura de la página: no escribe si no hay nada que cambiar.
+export async function refreshRepechajeStructure(categoryId: string): Promise<void> {
+  try {
+    const supabase = createAdminClient()
+    const { data: category } = await supabase.from("circuito_categories").select("draw_size").eq("id", categoryId).maybeSingle()
+    if (!category?.draw_size) return
+    const rule = selectDrawRule(category.draw_size, CIRCUITO_FORMAT_SPEC)
+    if (rule?.format !== "single_elimination") return
+
+    try {
+      await assertPanelGeneratedBracket(supabase, categoryId)
+    } catch {
+      return // import histórico: no se recalcula nada
+    }
+    if (await ensureRepechajeStructure(supabase, categoryId)) {
+      await syncCircuitoBracketSlots(supabase, categoryId, rule.format)
+    }
+  } catch (e) {
+    console.error("[circuito] no se pudo actualizar el repechaje", e)
+  }
+}
+
 // Los cuadros importados de Challonge no se editan desde el panel: su
 // estructura no es la del motor y sus puntos vienen de la planilla del club
 // (scripts/import-circuito-ranking-sheet.ts). Se chequea ANTES de escribir.
