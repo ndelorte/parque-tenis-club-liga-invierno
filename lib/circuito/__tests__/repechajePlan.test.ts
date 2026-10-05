@@ -114,4 +114,66 @@ describe("repechaje por primer partido perdido", () => {
     rows = step(ps, rows, "main-1-0", "p8") // ahora pierde p1
     expect(slots(get(rows, "repechaje-1-0")).sort()).toEqual(["p1", "p5"])
   })
+
+  it("principal completo: el repechaje es un cuadro de tamaño justo entre los que perdieron su primer partido", () => {
+    for (let n = 8; n <= 24; n++) {
+      for (let trial = 0; trial < 4; trial++) {
+        const ps = participants(n)
+        let rows = sync("single_elimination", ps, mainFor(n))
+        const played = new Set<string>()
+        const expected = new Set<string>()
+        for (let round = 1; round <= 6; round++) {
+          for (const m of rows.filter((x) => x.bracket === "main" && x.round === round)) {
+            const cur = get(rows, m.id)
+            if (!cur.participantAId || !cur.participantBId || cur.winnerId) continue
+            const aWins = Math.random() < 0.5
+            const winner = aWins ? cur.participantAId : cur.participantBId
+            const loser = aWins ? cur.participantBId : cur.participantAId
+            if (!played.has(loser)) expected.add(loser)
+            played.add(cur.participantAId)
+            played.add(cur.participantBId)
+            rows = sync("single_elimination", ps, play(rows, cur.id, winner))
+          }
+        }
+        // como lo deja la capa de datos: forma según lo que corresponde ahora
+        rows = sync("single_elimination", ps, [...rows.filter((r) => r.bracket === "main"), ...emptyRepechaje(rows)])
+
+        const r1 = rows.filter((r) => r.bracket === "repechaje" && r.round === 1)
+        const inR1 = r1.flatMap((r) => slots(r)).filter(Boolean) as string[]
+        expect([...inR1].sort()).toEqual([...expected].sort())
+        expect(r1.length * 2).toBe(expected.size < 2 ? 0 : 2 ** Math.ceil(Math.log2(expected.size)))
+
+        // cada match de la 1ª ronda con un solo jugador es un bye ya resuelto: ese jugador está en la 2ª ronda
+        const r2ids = rows.filter((r) => r.bracket === "repechaje" && r.round === 2).flatMap((r) => slots(r))
+        for (const m of r1) {
+          const [a, b] = slots(m)
+          if (a && !b) expect(r2ids).toContain(a)
+        }
+      }
+    }
+  })
+
+  it("12 inscriptos con 6 perdedores de primer partido → cuadro de 8 con 2 byes para los mejores sembrados", () => {
+    const ps = participants(12)
+    let rows = sync("single_elimination", ps, mainFor(12))
+    // R1 real: 4 partidos; ganan los de mejor seed → pierden p9..p12.
+    for (const m of rows.filter((x) => x.bracket === "main" && x.round === 1 && x.participantAId && x.participantBId)) {
+      rows = sync("single_elimination", ps, play(rows, m.id, m.participantAId!))
+    }
+    // R2: pierden dos de los que venían de bye (p3 y p4); el resto gana.
+    for (const m of rows.filter((x) => x.bracket === "main" && x.round === 2)) {
+      const cur = get(rows, m.id)
+      const pair = [cur.participantAId!, cur.participantBId!]
+      const loser = pair.find((id) => id === "p3" || id === "p4")
+      const byeSeedWins = [...pair].sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))[0]
+      rows = sync("single_elimination", ps, play(rows, cur.id, loser ? pair.find((id) => id !== loser)! : byeSeedWins))
+    }
+    rows = sync("single_elimination", ps, [...rows.filter((r) => r.bracket === "main"), ...emptyRepechaje(rows)])
+    const r1 = rows.filter((r) => r.bracket === "repechaje" && r.round === 1)
+    expect(r1).toHaveLength(4)
+    const withBye = r1.filter((r) => slots(r).filter(Boolean).length === 1)
+    expect(withBye).toHaveLength(2)
+    // los byes son para los 2 de mejor seed entre los 6 (p3 y p4)
+    expect(withBye.flatMap((r) => slots(r)).filter(Boolean).sort()).toEqual(["p3", "p4"])
+  })
 })

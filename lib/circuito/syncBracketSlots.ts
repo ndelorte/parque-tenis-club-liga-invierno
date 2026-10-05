@@ -78,7 +78,7 @@ export function computeSlotUpdates(
   // el principal se llena con quienes pierden su primer partido
   // (repechajePlan.ts); si el repechaje existente tiene otra forma (armado
   // con el criterio anterior) se sigue como cuadro común.
-  const repechajeSlots = format === "single_elimination" ? computeRepechajeSlots(working) : null
+  const repechajeSlots = format === "single_elimination" ? computeRepechajeSlots(working, new Map(participants.map((p) => [p.id, p.seed]))) : null
   if (repechajeSlots) {
     const byId = new Map(working.map((m) => [m.id, m]))
     for (const slots of repechajeSlots) setSlots(byId.get(slots.matchId), slots.participantAId, slots.participantBId)

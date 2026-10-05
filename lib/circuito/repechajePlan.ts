@@ -1,4 +1,4 @@
-import { nextPowerOfTwo } from "./generateBracket"
+import { drawLineOrder, nextPowerOfTwo } from "./generateBracket"
 import type { BracketSlotMatch } from "./syncBracketSlots"
 
 // Repechaje de la eliminación simple (8+): entra quien pierde SU PRIMER
@@ -10,8 +10,11 @@ import type { BracketSlotMatch } from "./syncBracketSlots"
 //   primer partido: los partidos reales de la 1ª ronda y los de la 2ª con un
 //   bye en alguno de sus dos lugares. Cada origen tiene un lugar fijo
 //   ("línea") en el repechaje, en ese orden.
-// - Las líneas se agrupan de a 2 en la 1ª ronda del repechaje. Hay
-//   nextPowerOfTwo(orígenes) líneas.
+// - Las líneas se agrupan de a 2 en la 1ª ronda del repechaje. Mientras falte
+//   jugar algún primer partido hay nextPowerOfTwo(orígenes) líneas (se va
+//   llenando); cuando ya se jugaron todos, el repechaje pasa a ser un cuadro
+//   de eliminación del tamaño justo entre los perdedores (6 → cuadro de 8
+//   con 2 byes para los mejores sembrados), ver desiredRepechajeLineCount.
 // - Una línea está pendiente hasta que se juega su origen. Si el perdedor no
 //   estaba en su primer partido (ya había jugado) o no hay origen, la línea
 //   queda vacía para siempre y su rival pasa solo (como un bye).
@@ -92,15 +95,16 @@ function outcomeOf(winnerId: string | null, inputs: [Outcome, Outcome]): Outcome
 // ver swapParticipants.ts) se respetan: quien ya está en un lugar y sigue
 // siendo elegible se queda; a los que llegan se los pone en el lugar de su
 // partido de origen, o en uno libre si ese lo ocupa otro.
-function placeLines(lines: RepechajeLine[], currentSlots: Array<string | null>): RepechajeLine[] {
+function placeLines(natural: RepechajeLine[], currentSlots: Array<string | null>, slotCount: number): RepechajeLine[] {
+  const lines = Array.from({ length: slotCount }, (_, k): RepechajeLine => natural[k] ?? { kind: "empty" })
   const eligible = new Map<string, number>()
-  lines.forEach((line, k) => {
+  natural.forEach((line, k) => {
     if (line.kind === "filled") eligible.set(line.id, k)
   })
 
   const placed = new Map<number, string>()
   const placedIds = new Set<string>()
-  currentSlots.forEach((id, k) => {
+  currentSlots.slice(0, slotCount).forEach((id, k) => {
     if (id && eligible.has(id) && !placedIds.has(id)) {
       placed.set(k, id)
       placedIds.add(id)
@@ -125,6 +129,76 @@ function placeLines(lines: RepechajeLine[], currentSlots: Array<string | null>):
   })
 }
 
+const hasResult = (m: BracketSlotMatch) => !!m.winnerId || !!m.score
+
+// Cantidad de lugares del repechaje que corresponde AHORA:
+// - mientras falte jugar algún primer partido del principal, el máximo
+//   posible (se va llenando);
+// - cuando ya se jugaron todos, el repechaje es un cuadro de eliminación
+//   entre los que perdieron su primer partido (6 jugadores → cuadro de 8
+//   con 2 byes), así que se achica al tamaño justo;
+// - si el repechaje ya tiene resultados, no se toca su forma.
+export function desiredRepechajeLineCount(matches: BracketSlotMatch[]): number {
+  const rep = matches.filter((m) => m.bracket === "repechaje")
+  if (rep.some(hasResult)) return rep.filter((m) => m.round === 1).length * 2
+
+  const natural = repechajeLines(matches)
+  if (natural.length === 0 || natural.some((l) => l.kind === "pending")) return natural.length
+  const eligible = natural.filter((l) => l.kind === "filled").length
+  return eligible < 2 ? 0 : nextPowerOfTwo(eligible)
+}
+
+// Con todos los primeros partidos jugados: los elegibles se ubican como en un
+// cuadro de eliminación común (mejores sembrados con bye, ver drawLineOrder).
+// Si los lugares ocupados ya son los que corresponden, se respeta el orden
+// actual (así se conservan los intercambios manuales).
+function layoutClosed(
+  natural: RepechajeLine[],
+  currentSlots: Array<string | null>,
+  slotCount: number,
+  seedOf: Map<string, number | null>,
+): RepechajeLine[] {
+  const eligible = natural
+    .map((line, k) => ({ line, k }))
+    .filter((e): e is { line: { kind: "filled"; id: string }; k: number } => e.line.kind === "filled")
+    .map((e) => ({ id: e.line.id, k: e.k, seed: seedOf.get(e.line.id) ?? Number.POSITIVE_INFINITY }))
+    .sort((a, b) => a.seed - b.seed || a.k - b.k)
+
+  const order = drawLineOrder(slotCount) // posición en el ranking de cada lugar, de arriba abajo
+  const canonical = Array.from({ length: slotCount }, (_, slot): RepechajeLine => {
+    const entry = eligible[order[slot] - 1]
+    return entry ? { kind: "filled", id: entry.id } : { kind: "empty" }
+  })
+
+  // Lugares que deben quedar ocupados. Quien ya está en uno de ellos se queda
+  // (conserva los intercambios manuales); el resto va a su lugar del cuadro
+  // o, si lo ocupa otro, a cualquiera libre.
+  const occupied = new Set(canonical.flatMap((c, slot) => (c.kind === "filled" ? [slot] : [])))
+  const eligibleIds = new Set(eligible.map((e) => e.id))
+  const result: RepechajeLine[] = Array.from({ length: slotCount }, () => ({ kind: "empty" }))
+  const placedIds = new Set<string>()
+  currentSlots.slice(0, slotCount).forEach((id, slot) => {
+    if (id && eligibleIds.has(id) && occupied.has(slot) && !placedIds.has(id)) {
+      result[slot] = { kind: "filled", id }
+      placedIds.add(id)
+    }
+  })
+  for (const slot of [...occupied].sort((a, b) => a - b)) {
+    const wanted = canonical[slot]
+    if (wanted.kind !== "filled" || placedIds.has(wanted.id) || result[slot].kind === "filled") continue
+    result[slot] = wanted
+    placedIds.add(wanted.id)
+  }
+  for (const entry of eligible) {
+    if (placedIds.has(entry.id)) continue
+    const free = [...occupied].sort((a, b) => a - b).find((slot) => result[slot].kind !== "filled")
+    if (free === undefined) break
+    result[free] = { kind: "filled", id: entry.id }
+    placedIds.add(entry.id)
+  }
+  return result
+}
+
 export interface RepechajeSlots {
   matchId: string
   participantAId: string | null
@@ -134,19 +208,26 @@ export interface RepechajeSlots {
 // Lugares que le corresponden a cada partido del repechaje. Devuelve null si
 // las filas existentes no tienen la forma esperada (repechaje armado con el
 // criterio anterior, ya en juego): ese se deja como está.
-export function computeRepechajeSlots(matches: BracketSlotMatch[]): RepechajeSlots[] | null {
+export function computeRepechajeSlots(
+  matches: BracketSlotMatch[],
+  seedOf: Map<string, number | null> = new Map(),
+): RepechajeSlots[] | null {
   const naturalLines = repechajeLines(matches)
-  const shape = repechajeShape(naturalLines.length)
+  const lineCount = desiredRepechajeLineCount(matches)
+  const shape = repechajeShape(lineCount)
   const rep = matches.filter((m) => m.bracket === "repechaje")
   const round = (r: number) => rep.filter((m) => m.round === r).sort((a, b) => a.position - b.position)
 
   if (shape.length === 0 || rep.length !== shape.reduce((a, b) => a + b, 0)) return null
   if (!shape.every((count, i) => round(i + 1).length === count)) return null
 
-  const lines = placeLines(
-    naturalLines,
-    round(1).flatMap((m) => [m.participantAId, m.participantBId]),
-  )
+  const currentSlots = round(1).flatMap((m) => [m.participantAId, m.participantBId])
+  const closed = naturalLines.length > 0 && naturalLines.every((l) => l.kind !== "pending")
+  const frozen = rep.some(hasResult)
+  const lines =
+    closed && !frozen
+      ? layoutClosed(naturalLines, currentSlots, lineCount, seedOf)
+      : placeLines(naturalLines, currentSlots, lineCount)
 
   const result: RepechajeSlots[] = []
   let previous: Outcome[] = []
