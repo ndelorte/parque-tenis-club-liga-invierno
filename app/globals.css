@@ -266,7 +266,6 @@
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 
-  --animate-snow: snow-fall 12s linear infinite;
   --animate-mm-court-draw: mm-court-draw 900ms var(--ease-out) both;
 }
 
@@ -502,13 +501,6 @@ h3 {
   animation-play-state: paused;
 }
 
-@keyframes snow-fall {
-  0% { transform: translateY(-24px) translateX(0); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 0.7; }
-  100% { transform: translateY(110vh) translateX(var(--snow-drift, 0)); opacity: 0; }
-}
-
 /* Reducir movimiento = menos y más suave: sin desplazamientos ni loops. */
 @media (prefers-reduced-motion: reduce) {
   .press,
@@ -516,8 +508,7 @@ h3 {
     transition: none;
     transform: none;
   }
-  .sponsors-marquee-track,
-  .animate-snow {
+  .sponsors-marquee-track {
     animation: none;
   }
   .mm-fade-up {
