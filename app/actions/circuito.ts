@@ -7,7 +7,7 @@ import { addCategoryToEdition } from "@/lib/data/circuito/categories"
 import { createCircuitoEdition } from "@/lib/data/circuito/editions"
 import { addCircuitoParticipant, createPlayerByName, removeCircuitoParticipant, renameCircuitoParticipant } from "@/lib/data/circuito/participants"
 import { generateAndPersistCircuitoBracket } from "@/lib/data/circuito/bracket"
-import { rebuildCircuitoRepechaje, submitCircuitoMatchResult, swapCircuitoParticipants } from "@/lib/data/circuito/matches"
+import { rebuildCircuitoRepechaje, refreshRepechajeStructure, submitCircuitoMatchResult, swapCircuitoParticipants } from "@/lib/data/circuito/matches"
 
 type ActionResult = { ok: true } | { ok: false; error: string }
 
@@ -199,6 +199,22 @@ export async function rebuildCircuitoRepechajeAction(
   } catch (e) {
     return { ok: false, error: errorMessage(e, "Error al rehacer el repechaje.") }
   }
+
+  revalidatePath(`/panel-circuito/mensual/${editionSlug}/${categorySlug}`)
+  revalidatePath(`/circuito-del-parque/torneos/${editionSlug}/${categorySlug}`)
+  return { ok: true }
+}
+
+// Recalcula los lugares del repechaje desde los resultados ya cargados (no
+// borra nada). Devuelve el motivo si no pudo.
+export async function refreshCircuitoRepechajeAction(
+  categoryId: string,
+  editionSlug: string,
+  categorySlug: string,
+): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
+  const result = await refreshRepechajeStructure(categoryId)
+  if (!result.ok) return { ok: false, error: result.message ?? "No se pudo actualizar el repechaje." }
 
   revalidatePath(`/panel-circuito/mensual/${editionSlug}/${categorySlug}`)
   revalidatePath(`/circuito-del-parque/torneos/${editionSlug}/${categorySlug}`)

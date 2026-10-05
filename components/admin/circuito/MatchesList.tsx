@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { ChevronDown, ChevronUp, MoveHorizontal, Trophy, X } from "lucide-react"
-import { rebuildCircuitoRepechajeAction, submitCircuitoMatchResultAction, swapCircuitoParticipantsAction } from "@/app/actions/circuito"
+import { rebuildCircuitoRepechajeAction, refreshCircuitoRepechajeAction, submitCircuitoMatchResultAction, swapCircuitoParticipantsAction } from "@/app/actions/circuito"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { buildBracketTree } from "@/lib/circuito/bracketTree"
@@ -30,6 +30,8 @@ interface Props {
   part: "main" | "repechaje"
   // Repechaje con otra forma que la que corresponde (armado viejo con resultados).
   needsRebuild?: boolean
+  // Motivo por el que el repechaje no se pudo actualizar al abrir la página.
+  refreshNote?: string | null
   matches: CircuitoMatchView[]
   participantNames: Record<string, string>
   participantSeeds: Record<string, number | null>
@@ -270,6 +272,7 @@ export function MatchesList({
   categoryId,
   part,
   needsRebuild,
+  refreshNote,
   matches,
   participantNames,
   participantSeeds,
@@ -377,7 +380,7 @@ export function MatchesList({
       ? dialogMatch.round_number === totalRounds
       : dialogMatch.round_number === totalRounds)
 
-  if (matches.length === 0) return null
+  if (matches.length === 0 && !(part === "repechaje" && format === "single_elimination")) return null
 
   return (
     <div>
@@ -391,28 +394,48 @@ export function MatchesList({
         </>
       )}
 
-      {part === "repechaje" && needsRebuild && (
-        <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
-          <p className="mb-2">
-            Este repechaje se armó con el criterio anterior (solo perdedores de 1ª ronda) y ya tiene resultados, por eso
-            no se actualiza solo. Podés rehacerlo: queda como un cuadro entre todos los que perdieron su primer partido.
-            Se borran los resultados cargados en el repechaje (no suma puntos).
-          </p>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={busy}
-            onClick={async () => {
-              if (!confirm("¿Rehacer el repechaje? Se borran los resultados que ya cargaste en él.")) return
-              setBusy(true)
-              setReorderError("")
-              const result = await rebuildCircuitoRepechajeAction(categoryId, editionSlug, categorySlug)
-              setBusy(false)
-              if (!result.ok) setReorderError(result.error)
-            }}
-          >
-            Rehacer repechaje
-          </Button>
+      {part === "repechaje" && format === "single_elimination" && (
+        <div className="mb-4 rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">
+          {(refreshNote || needsRebuild) && (
+            <p className="mb-2 rounded border border-amber-300 bg-amber-50 p-2 text-amber-900">
+              {refreshNote ??
+                "Este repechaje se armó con el criterio anterior y ya tiene resultados, por eso no se actualiza solo."}
+            </p>
+          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true)
+                setReorderError("")
+                const result = await refreshCircuitoRepechajeAction(categoryId, editionSlug, categorySlug)
+                setBusy(false)
+                if (!result.ok) setReorderError(result.error)
+              }}
+            >
+              Actualizar repechaje
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={busy}
+              onClick={async () => {
+                if (!confirm("¿Rehacer el repechaje desde cero? Se borran los resultados que ya cargaste en él (no suma puntos).")) return
+                setBusy(true)
+                setReorderError("")
+                const result = await rebuildCircuitoRepechajeAction(categoryId, editionSlug, categorySlug)
+                setBusy(false)
+                if (!result.ok) setReorderError(result.error)
+              }}
+            >
+              Rehacer repechaje
+            </Button>
+            <span>
+              «Actualizar» acomoda a los que perdieron su primer partido según los resultados; «Rehacer» lo arma de cero.
+            </span>
+          </div>
           {reorderError && <p className="mt-2 text-red-700">{reorderError}</p>}
         </div>
       )}
