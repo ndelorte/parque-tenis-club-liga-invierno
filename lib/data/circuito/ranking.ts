@@ -4,7 +4,7 @@ import { calculateRankingPoints, type CircuitoBracketMatchResult } from "@/lib/c
 import { selectDrawRule } from "@/lib/circuito/generateBracket"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
 import { isGrandSlamMonth } from "@/lib/circuito/pointsTable"
-import { CIRCUITO_FIXED_CATEGORIES, orderRankedCategories, type RankedCategory } from "@/lib/circuito/fixedCategories"
+import { orderRankedCategories, type RankedCategory } from "@/lib/circuito/fixedCategories"
 import { buildAnnualRanking, type AnnualRanking } from "@/lib/circuito/buildAnnualRanking"
 import type { CircuitoParticipant } from "@/lib/circuito/types"
 import type { SupabaseClient } from "@supabase/supabase-js"
@@ -255,20 +255,4 @@ export async function getCircuitoCategoriesWithRanking(year: number): Promise<Ra
     found.set(c.slug, { name: c.name, slug: c.slug, type: c.type })
   }
   return orderRankedCategories([...found.values()])
-}
-
-export async function getCircuitoCategorySlugsWithRanking(year: number): Promise<Set<string>> {
-  const supabase = await createClient()
-  const slugs = await Promise.all(
-    CIRCUITO_FIXED_CATEGORIES.map(async ({ slug }) => {
-      const { count, error } = await supabase
-        .from("circuito_ranking_points")
-        .select("id, circuito_categories!inner(slug), circuito_editions!inner(year)", { count: "exact", head: true })
-        .eq("circuito_editions.year", year)
-        .eq("circuito_categories.slug", slug)
-        .gt("points", 0)
-      return !error && (count ?? 0) > 0 ? slug : null
-    }),
-  )
-  return new Set(slugs.filter((slug): slug is string => slug !== null))
 }
