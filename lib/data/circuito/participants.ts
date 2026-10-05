@@ -25,6 +25,31 @@ export async function getPlayersForSelect(): Promise<SelectablePlayer[]> {
   return (data as PlayerRow[]).map((p) => ({ id: p.id, displayName: p.display_name }))
 }
 
+// Alta rápida de un jugador que todavía no existe en `players` desde el panel
+// de inscripción. Con un solo texto: la primera palabra es el nombre y el resto
+// el apellido; display_name queda tal cual se escribió.
+export async function createPlayerByName(fullName: string): Promise<SelectablePlayer> {
+  const displayName = fullName.trim().replace(/\s+/g, " ")
+  if (!displayName) throw new Error("Escribí el nombre del jugador.")
+
+  const supabase = createAdminClient()
+  const { data: existing } = await supabase
+    .from("players")
+    .select("id")
+    .ilike("display_name", displayName)
+    .limit(1)
+  if (existing && existing.length > 0) throw new Error("Ya existe un jugador con ese nombre.")
+
+  const [firstName, ...rest] = displayName.split(" ")
+  const { data, error } = await supabase
+    .from("players")
+    .insert({ first_name: firstName, last_name: rest.join(" "), display_name: displayName, active: true })
+    .select("id, display_name")
+    .single()
+  if (error || !data) throw new Error(`Error al crear el jugador: ${error?.message ?? "sin datos"}`)
+  return { id: data.id, displayName: data.display_name }
+}
+
 export async function getCircuitoParticipants(categoryId: string): Promise<CircuitoParticipantRow[]> {
   const supabase = await createClient()
   const { data, error } = await supabase

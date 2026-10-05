@@ -14,17 +14,22 @@ interface Props {
   onChange: (playerId: string) => void // "" = sin selección
   placeholder: string
   excludeIds?: string[] // ya inscriptos o elegidos en el otro campo
+  // Si se pasa, ofrece "Crear «texto»" cuando el jugador no existe. Debe
+  // devolver el jugador creado (o un error); el combobox lo deja elegido.
+  onCreate?: (name: string) => Promise<{ ok: true; player: ComboboxPlayer } | { ok: false; error: string }>
 }
 
 // Autocompletar de jugadores: se escribe parte del nombre o apellido y
 // sugiere los que coinciden (lib/players/searchPlayers.ts). Para vaciarlo
 // desde afuera (ej. después de agregar), el padre le cambia la `key`.
-export function PlayerCombobox({ players, onChange, placeholder, excludeIds = [] }: Props) {
+export function PlayerCombobox({ players, onChange, placeholder, excludeIds = [], onCreate }: Props) {
   const listId = useId()
   const [query, setQuery] = useState("")
   const [selected, setSelected] = useState<ComboboxPlayer | null>(null)
   const [open, setOpen] = useState(false)
   const [highlighted, setHighlighted] = useState(0)
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState("")
 
   const suggestions = useMemo(() => {
     const excluded = new Set(excludeIds)
@@ -41,7 +46,18 @@ export function PlayerCombobox({ players, onChange, placeholder, excludeIds = []
     onChange(player.id)
   }
 
+  async function create() {
+    if (!onCreate || creating) return
+    setCreating(true)
+    setCreateError("")
+    const result = await onCreate(query)
+    setCreating(false)
+    if (result.ok) choose(result.player)
+    else setCreateError(result.error)
+  }
+
   function clear() {
+    setCreateError("")
     setSelected(null)
     setQuery("")
     onChange("")
@@ -77,6 +93,7 @@ export function PlayerCombobox({ players, onChange, placeholder, excludeIds = []
         placeholder={placeholder}
         onChange={(e) => {
           setQuery(e.target.value)
+          setCreateError("")
           setHighlighted(0)
           setOpen(true)
           // Editar el texto después de elegir descarta la selección.
@@ -107,9 +124,10 @@ export function PlayerCombobox({ players, onChange, placeholder, excludeIds = []
           role="listbox"
           className="absolute z-10 mt-1 max-h-64 w-full overflow-auto rounded-md border border-border bg-popover py-1 text-sm shadow-md"
         >
-          {suggestions.length === 0 ? (
+          {suggestions.length === 0 && (
             <li className="px-3 py-1.5 text-muted-foreground">Sin coincidencias</li>
-          ) : (
+          )}
+          {suggestions.length > 0 &&
             suggestions.map((p, i) => (
               <li
                 key={p.id}
@@ -125,10 +143,23 @@ export function PlayerCombobox({ players, onChange, placeholder, excludeIds = []
               >
                 {p.displayName}
               </li>
-            ))
+            ))}
+          {onCreate && (
+            <li
+              role="option"
+              aria-selected={false}
+              onMouseDown={(e) => {
+                e.preventDefault()
+                void create()
+              }}
+              className="cursor-pointer border-t border-border px-3 py-1.5 font-medium text-foreground hover:bg-muted"
+            >
+              {creating ? "Creando..." : `+ Crear jugador nuevo «${query.trim()}»`}
+            </li>
           )}
         </ul>
       )}
+      {createError && <p className="mt-1 text-xs text-red-600">{createError}</p>}
     </div>
   )
 }

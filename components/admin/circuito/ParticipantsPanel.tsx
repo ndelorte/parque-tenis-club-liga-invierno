@@ -6,6 +6,7 @@ import {
   addCircuitoParticipantAction,
   removeCircuitoParticipantAction,
   generateCircuitoBracketAction,
+  createCircuitoPlayerAction,
 } from "@/app/actions/circuito"
 import { Button } from "@/components/ui/button"
 import { PlayerCombobox } from "@/components/admin/PlayerCombobox"
@@ -39,9 +40,12 @@ export function ParticipantsPanel({
   editionSlug,
   categorySlug,
   participants,
-  players,
+  players: initialPlayers,
   hasBracket,
 }: Props) {
+  // Los jugadores creados desde acá se suman a la lista sin recargar.
+  const [createdPlayers, setCreatedPlayers] = useState<Player[]>([])
+  const players = [...initialPlayers, ...createdPlayers]
   const [playerId, setPlayerId] = useState("")
   const [player2Id, setPlayer2Id] = useState("")
   const [loading, setLoading] = useState(false)
@@ -73,6 +77,12 @@ export function ParticipantsPanel({
     } else {
       setError(result.error)
     }
+  }
+
+  async function handleCreatePlayer(name: string) {
+    const result = await createCircuitoPlayerAction(name)
+    if (result.ok) setCreatedPlayers((prev) => [...prev, result.player])
+    return result
   }
 
   async function handleRemove(participantId: string) {
@@ -131,6 +141,7 @@ export function ParticipantsPanel({
             <PlayerCombobox
               key={`p1-${resetKey}`}
               players={players}
+              onCreate={handleCreatePlayer}
               onChange={setPlayerId}
               placeholder={isDobles ? "Jugador/a 1 — escribí nombre o apellido" : "Escribí nombre o apellido"}
               excludeIds={[...inscribedIds, player2Id].filter(Boolean)}
@@ -139,6 +150,7 @@ export function ParticipantsPanel({
               <PlayerCombobox
                 key={`p2-${resetKey}`}
                 players={players}
+                onCreate={handleCreatePlayer}
                 onChange={setPlayer2Id}
                 placeholder="Jugador/a 2 — escribí nombre o apellido"
                 excludeIds={[...inscribedIds, playerId].filter(Boolean)}
