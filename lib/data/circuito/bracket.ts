@@ -5,6 +5,7 @@ import { desiredRepechajeLineCount, repechajeShape } from "@/lib/circuito/repech
 import { computeSlotUpdates, type BracketSlotMatch } from "@/lib/circuito/syncBracketSlots"
 import type { CircuitoBracket, CircuitoParticipant, DrawFormatKind } from "@/lib/circuito/types"
 import { assignSeedsFromRanking } from "@/lib/circuito/assignSeedsFromRanking"
+import { canReorderBracket } from "@/lib/circuito/swapParticipants"
 import type { CircuitoMatchRow } from "./types"
 import { getAnnualCircuitRanking } from "./ranking"
 
@@ -219,6 +220,43 @@ export async function generateAndPersistCircuitoBracket(categoryId: string): Pro
     await supabase.from("circuito_categories").update({ draw_size: null }).eq("id", categoryId)
     throw e
   }
+}
+
+// Cambiar los inscriptos con el cuadro ya armado obliga a rehacer el sorteo
+// (los lugares dependen de la cantidad). Solo se puede mientras no haya
+// resultados cargados: tirar el cuadro borraría partidos jugados.
+export async function assertBracketResettable(supabase: AdminClient, categoryId: string): Promise<boolean> {
+  const { data, error } = await supabase.from("circuito_matches").select("*").eq("category_id", categoryId)
+  if (error) throw new Error(`Error al leer el cuadro: ${error.message}`)
+  const rows = (data ?? []) as CircuitoMatchRow[]
+  if (rows.length === 0) return false
+  if (!canReorderBracket(rows.map(toBracketSlotMatch))) {
+    throw new Error("Ya hay resultados cargados: no se pueden cambiar los participantes de este cuadro.")
+  }
+  return true
+}
+
+// Borra el cuadro (sin resultados) y lo vuelve a sortear con los inscriptos
+// actuales. Con menos de 4 inscriptos queda sin cuadro, listo para generarlo
+// de nuevo desde el panel. Los intercambios manuales previos se pierden.
+export async function regenerateCircuitoBracket(categoryId: string): Promise<void> {
+  const supabase = createAdminClient()
+  await assertBracketResettable(supabase, categoryId)
+
+  const { error: matchesError } = await supabase.from("circuito_matches").delete().eq("category_id", categoryId)
+  if (matchesError) throw new Error(`Error al rehacer el cuadro: ${matchesError.message}`)
+  const { error: categoryError } = await supabase
+    .from("circuito_categories")
+    .update({ draw_size: null })
+    .eq("id", categoryId)
+  if (categoryError) throw new Error(`Error al rehacer el cuadro: ${categoryError.message}`)
+  await supabase.from("circuito_participants").update({ seed: null }).eq("category_id", categoryId)
+
+  const { count } = await supabase
+    .from("circuito_participants")
+    .select("id", { count: "exact", head: true })
+    .eq("category_id", categoryId)
+  if ((count ?? 0) >= 4) await generateAndPersistCircuitoBracket(categoryId)
 }
 
 export async function getCircuitoDrawFormat(categoryId: string) {

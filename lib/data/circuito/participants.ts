@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { Database } from "@/lib/supabase/types"
 import { findSimilarPlayers, SimilarPlayersError } from "@/lib/players/similarNames"
+import { assertBracketResettable, regenerateCircuitoBracket } from "./bracket"
 import type { CircuitoParticipantRow } from "./types"
 
 type PlayerRow = Database["public"]["Tables"]["players"]["Row"]
@@ -85,16 +86,9 @@ export async function addCircuitoParticipant(input: {
 }): Promise<CircuitoParticipantRow> {
   const supabase = createAdminClient()
 
-  // Con el cuadro ya armado, un inscripto nuevo no tiene lugar: habría que
-  // regenerarlo (y el panel dejaría de reconocerlo como propio).
-  const { data: existingMatches } = await supabase
-    .from("circuito_matches")
-    .select("id")
-    .eq("category_id", input.categoryId)
-    .limit(1)
-  if (existingMatches && existingMatches.length > 0) {
-    throw new Error("El cuadro de esta categoría ya fue generado: no se pueden agregar participantes.")
-  }
+  // Con el cuadro ya armado (y sin resultados) se rehace el sorteo después de
+  // inscribir; con resultados cargados no se puede.
+  const hadBracket = await assertBracketResettable(supabase, input.categoryId)
 
   const playerIds = input.player2Id ? [input.playerId, input.player2Id] : [input.playerId]
 
@@ -130,13 +124,28 @@ export async function addCircuitoParticipant(input: {
     .single()
 
   if (error || !data) throw new Error(`Error al agregar participante: ${error?.message ?? "sin datos"}`)
+  if (hadBracket) await regenerateCircuitoBracket(input.categoryId)
   return data
 }
 
 export async function removeCircuitoParticipant(participantId: string): Promise<void> {
   const supabase = createAdminClient()
+  const { data: participant } = await supabase
+    .from("circuito_participants")
+    .select("category_id")
+    .eq("id", participantId)
+    .maybeSingle()
+  if (!participant) throw new Error("No se encontró el participante.")
+
+  const hadBracket = await assertBracketResettable(supabase, participant.category_id)
+  // Hay que soltar el cuadro antes: los partidos referencian al participante.
+  if (hadBracket) {
+    const { error: matchesError } = await supabase.from("circuito_matches").delete().eq("category_id", participant.category_id)
+    if (matchesError) throw new Error(`Error al rehacer el cuadro: ${matchesError.message}`)
+  }
   const { error } = await supabase.from("circuito_participants").delete().eq("id", participantId)
   if (error) throw new Error(`Error al borrar participante: ${error.message}`)
+  if (hadBracket) await regenerateCircuitoBracket(participant.category_id)
 }
 
 function splitName(fullName: string): { displayName: string; firstName: string; lastName: string } {
