@@ -5,7 +5,7 @@ import { SimilarPlayersError } from "@/lib/players/similarNames"
 import { isRequestFromAdmin } from "@/lib/auth/requireAdmin"
 import { addCategoryToEdition } from "@/lib/data/circuito/categories"
 import { createCircuitoEdition } from "@/lib/data/circuito/editions"
-import { addCircuitoParticipant, createPlayerByName, removeCircuitoParticipant, renameCircuitoParticipant } from "@/lib/data/circuito/participants"
+import { addCircuitoParticipant, createPlayerByName, removeCircuitoParticipant, renameCircuitoParticipant, mergeParticipantIntoExistingPlayer } from "@/lib/data/circuito/participants"
 import { generateAndPersistCircuitoBracket } from "@/lib/data/circuito/bracket"
 import { rebuildCircuitoRepechaje, refreshRepechajeStructure, submitCircuitoMatchResult, swapCircuitoParticipants } from "@/lib/data/circuito/matches"
 
@@ -115,7 +115,7 @@ export async function submitCircuitoMatchResultAction(
 }
 
 // Jugadores parecidos al nombre que se quiso cargar: la UI pregunta si es el mismo.
-export type SimilarPlayer = { id: string; displayName: string; match: "same" | "similar" }
+export type SimilarPlayer = { id: string; displayName: string; match: "same" | "similar"; slot?: number }
 type ActionResultWithSimilar = ActionResult | { ok: false; error: string; similar: SimilarPlayer[] }
 
 export async function createCircuitoPlayerAction(
@@ -223,5 +223,27 @@ export async function refreshCircuitoRepechajeAction(
 
   revalidatePath(`/panel-circuito/mensual/${editionSlug}/${categorySlug}`)
   revalidatePath(`/circuito-del-parque/torneos/${editionSlug}/${categorySlug}`)
+  return { ok: true }
+}
+
+// "Es la misma persona" en el cartel de nombre repetido: la inscripción pasa a
+// usar la ficha ya existente (se unifican, se suman sus puntos).
+export async function mergeParticipantPlayerAction(
+  participantId: string,
+  slot: number,
+  keepPlayerId: string,
+  editionSlug: string,
+  categorySlug: string,
+): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
+  try {
+    await mergeParticipantIntoExistingPlayer(participantId, slot, keepPlayerId)
+  } catch (e) {
+    return { ok: false, error: errorMessage(e, "Error al unificar las jugadoras.") }
+  }
+
+  revalidatePath(`/panel-circuito/mensual/${editionSlug}/${categorySlug}`)
+  revalidatePath(`/circuito-del-parque/torneos/${editionSlug}/${categorySlug}`)
+  revalidatePath("/circuito-del-parque/ranking")
   return { ok: true }
 }
