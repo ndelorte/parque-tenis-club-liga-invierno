@@ -61,7 +61,10 @@ export function ParticipantsPanel({
   const isDobles = categoryType === "dobles"
   const canAdd = playerId && (!isDobles || (player2Id && player2Id !== playerId))
 
+  const REDRAW_WARNING = "El cuadro ya está generado: se vuelve a sortear (se pierden los cambios de lugar manuales). Solo es posible si no hay resultados cargados."
+
   async function handleAdd() {
+    if (hasBracket && !confirm(`${REDRAW_WARNING}\n\n¿Agregar y rehacer el cuadro?`)) return
     setLoading(true)
     setError("")
     const result = await addCircuitoParticipantAction(
@@ -116,6 +119,7 @@ export function ParticipantsPanel({
   }
 
   async function handleRemove(participantId: string) {
+    if (hasBracket && !confirm(`${REDRAW_WARNING}\n\n¿Quitar y rehacer el cuadro?`)) return
     setLoading(true)
     setError("")
     const result = await removeCircuitoParticipantAction(participantId, editionSlug, categorySlug)
@@ -202,16 +206,14 @@ export function ParticipantsPanel({
                     >
                       <Pencil className="size-3.5" />
                     </button>
-                    {!hasBracket && (
-                      <button
-                        onClick={() => handleRemove(p.id)}
-                        disabled={loading}
-                        className="rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500"
-                        title="Quitar"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleRemove(p.id)}
+                      disabled={loading}
+                      className="rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500"
+                      title="Quitar"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
                   </span>
                 </div>
               )}
@@ -220,8 +222,7 @@ export function ParticipantsPanel({
         </ul>
       )}
 
-      {!hasBracket && (
-        <>
+      <>
           <div className="flex flex-wrap gap-2">
             <PlayerCombobox
               key={`p1-${resetKey}`}
@@ -246,6 +247,7 @@ export function ParticipantsPanel({
             </Button>
           </div>
 
+          {!hasBracket && (
           <div className="mt-4 border-t border-border pt-4">
             <Button onClick={handleGenerate} disabled={loading || participants.length < 4} className="w-full">
               {loading ? "Generando..." : "Generar cuadro"}
@@ -259,8 +261,8 @@ export function ParticipantsPanel({
               </p>
             )}
           </div>
-        </>
-      )}
+          )}
+      </>
 
       {error && <p className="mt-3 text-sm text-loss">{error}</p>}
     </div>
