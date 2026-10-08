@@ -1,9 +1,9 @@
 // Calendario de la temporada del Circuito para la landing (12 meses, uno por
 // tarjeta) — product/plan-refactor-visual.md §4.3/§8. Excepción aprobada:
 // lógica de PRESENTACIÓN nueva en lib/circuito/, no decide reglas
-// deportivas: el estado mostrado sale tal cual del `status` ya calculado de
-// la edición (statusForMonth, lib/circuito/editionStatus.ts), igual que la
-// landing actual.
+// deportivas: el estado mostrado sale tal cual del `status` de la edición,
+// que getCircuitoEditions deriva de los resultados cargados
+// (deriveEditionStatus, lib/circuito/editionStatus.ts).
 
 import { isGrandSlamMonth } from "./pointsTable"
 

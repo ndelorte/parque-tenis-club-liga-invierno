@@ -1,8 +1,56 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { statusForMonth } from "@/lib/circuito/editionStatus"
+import { deriveEditionStatus, statusForMonth } from "@/lib/circuito/editionStatus"
+import type { CategoryStatusMatch } from "@/lib/circuito/categoryStatus"
 import type { CircuitoEditionRow } from "./types"
 import { createFixedCategoriesForEdition } from "./categories"
+
+const PAGE = 1000
+
+// Pisa el status guardado con el que sale de los resultados cargados (ver
+// deriveEditionStatus). Si una edición no tiene cuadros, queda el guardado.
+async function withDerivedStatus(editions: CircuitoEditionRow[]): Promise<CircuitoEditionRow[]> {
+  if (editions.length === 0) return editions
+  const supabase = await createClient()
+
+  const { data: categoryRows } = await supabase
+    .from("circuito_categories")
+    .select("id, edition_id, draw_size")
+    .in("edition_id", editions.map((e) => e.id))
+  const categories = categoryRows as { id: string; edition_id: string; draw_size: number | null }[] | null
+  if (!categories || categories.length === 0) return editions
+
+  const matchesByCategory = new Map<string, CategoryStatusMatch[]>()
+  const ids = categories.map((c) => c.id)
+  for (let i = 0; i < ids.length; i += 40) {
+    const chunk = ids.slice(i, i + 40)
+    for (let from = 0; ; from += PAGE) {
+      const { data: matchRows } = await supabase
+        .from("circuito_matches")
+        .select("category_id, bracket, round_number, zone, participant_a_id, participant_b_id, winner_id, score")
+        .in("category_id", chunk)
+        .order("id")
+        .range(from, from + PAGE - 1)
+      const data = matchRows as (CategoryStatusMatch & { category_id: string })[] | null
+      if (!data) return editions
+      for (const m of data) {
+        const list = matchesByCategory.get(m.category_id) ?? []
+        list.push(m)
+        matchesByCategory.set(m.category_id, list)
+      }
+      if (data.length < PAGE) break
+    }
+  }
+
+  return editions.map((e) => {
+    const derived = deriveEditionStatus(
+      categories
+        .filter((c) => c.edition_id === e.id)
+        .map((c) => ({ drawSize: c.draw_size, matches: matchesByCategory.get(c.id) ?? [] })),
+    )
+    return derived ? { ...e, status: derived } : e
+  })
+}
 
 export async function getCircuitoEditions(): Promise<CircuitoEditionRow[]> {
   const supabase = await createClient()
@@ -13,7 +61,7 @@ export async function getCircuitoEditions(): Promise<CircuitoEditionRow[]> {
     .order("month", { ascending: false })
 
   if (error || !data) return []
-  return data
+  return withDerivedStatus(data)
 }
 
 export async function getCircuitoEditionBySlug(slug: string): Promise<CircuitoEditionRow | null> {
@@ -25,7 +73,7 @@ export async function getCircuitoEditionBySlug(slug: string): Promise<CircuitoEd
     .maybeSingle()
 
   if (error || !data) return null
-  return data
+  return (await withDerivedStatus([data]))[0]
 }
 
 export async function createCircuitoEdition(input: {
