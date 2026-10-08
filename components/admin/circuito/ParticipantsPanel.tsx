@@ -5,6 +5,7 @@ import { Pencil, Trash2 } from "lucide-react"
 import {
   addCircuitoParticipantAction,
   removeCircuitoParticipantAction,
+  mergeParticipantPlayerAction,
   generateCircuitoBracketAction,
   createCircuitoPlayerAction,
   renameCircuitoParticipantAction,
@@ -104,7 +105,9 @@ export function ParticipantsPanel({
   }
 
   // Nombres parecidos a los de otro jugador: se pregunta antes de guardar.
-  const [editSimilar, setEditSimilar] = useState<Array<{ id: string; displayName: string; match: "same" | "similar" }>>([])
+  const [editSimilar, setEditSimilar] = useState<
+    Array<{ id: string; displayName: string; match: "same" | "similar"; slot?: number }>
+  >([])
 
   async function handleSaveEdit(force = false) {
     if (!editingId) return
@@ -116,6 +119,20 @@ export function ParticipantsPanel({
     if (result.ok) setEditingId(null)
     else if ("similar" in result && result.similar.length > 0) setEditSimilar(result.similar)
     else setError(result.error)
+  }
+
+  async function handleUseExisting(keepPlayerId: string, slot: number) {
+    if (!editingId) return
+    setLoading(true)
+    setError("")
+    const result = await mergeParticipantPlayerAction(editingId, slot, keepPlayerId, editionSlug, categorySlug)
+    setLoading(false)
+    if (result.ok) {
+      setEditingId(null)
+      setEditSimilar([])
+    } else {
+      setError(result.error)
+    }
   }
 
   async function handleRemove(participantId: string) {
@@ -164,9 +181,22 @@ export function ParticipantsPanel({
                         {editSimilar.map((s) => `«${s.displayName}»`).join(", ")}.
                       </p>
                       <p className="mb-1.5">
-                        Si es la misma persona, no la guardes con otro nombre: pedí unificarlas (así se suman sus puntos
-                        del ranking). Si es otra persona, guardala igual.
+                        Si es la misma persona, usá la que ya existe: se unifican las dos fichas y se suman sus puntos del
+                        ranking. Si es otra persona, guardala igual.
                       </p>
+                      <div className="mb-1.5 flex flex-wrap gap-2">
+                        {editSimilar.map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => void handleUseExisting(s.id, s.slot ?? 0)}
+                            disabled={loading}
+                            className="rounded border border-amber-400 bg-white px-2 py-1 font-medium hover:bg-amber-100"
+                          >
+                            Es la misma: usar «{s.displayName}»
+                          </button>
+                        ))}
+                      </div>
                       <button
                         type="button"
                         onClick={() => void handleSaveEdit(true)}

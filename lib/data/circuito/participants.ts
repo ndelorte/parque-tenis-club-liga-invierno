@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { Database } from "@/lib/supabase/types"
 import { findSimilarPlayers, SimilarPlayersError } from "@/lib/players/similarNames"
+import { mergePlayers } from "@/lib/players/mergePlayers"
+import { recalculateAndPersistCircuitRanking } from "./ranking"
 import { assertBracketResettable, regenerateCircuitoBracket } from "./bracket"
 import type { CircuitoParticipantRow } from "./types"
 
@@ -195,7 +197,7 @@ export async function renameCircuitoParticipant(participantId: string, names: st
       const { displayName } = splitName(names[i])
       const similar = findSimilarPlayers(everyone, displayName, playerId).filter((s) => !playerIds.includes(s.player.id))
       if (similar.length > 0) {
-        throw new SimilarPlayersError(similar.slice(0, 5).map((s) => ({ ...s.player, match: s.match })))
+        throw new SimilarPlayersError(similar.slice(0, 5).map((s) => ({ ...s.player, match: s.match, slot: i })))
       }
     }
   }
@@ -227,4 +229,54 @@ export async function renameCircuitoParticipant(participantId: string, names: st
     if (!displayName) continue
     await supabase.from("circuito_participants").update({ display_name: displayName }).eq("id", p.id)
   }
+}
+
+// "Es la misma persona": en vez de renombrar a un jugador que ya existe con
+// ese nombre, la inscripción pasa a usar la ficha existente (`keepPlayerId`).
+// Se unifican las dos fichas (puntos, inscripciones y equipos de todos los
+// torneos pasan a la que queda; la repetida se desactiva) y se recalcula el
+// ranking de las categorías afectadas. `slot` es el jugador de la inscripción
+// que se corrige: 0 = jugador 1, 1 = jugador 2 (dobles).
+export async function mergeParticipantIntoExistingPlayer(
+  participantId: string,
+  slot: number,
+  keepPlayerId: string,
+): Promise<void> {
+  const supabase = createAdminClient()
+  const { data: participant } = await supabase
+    .from("circuito_participants")
+    .select("*")
+    .eq("id", participantId)
+    .maybeSingle()
+  if (!participant) throw new Error("No se encontró el participante.")
+
+  const dropId = slot === 1 ? participant.player_2_id : participant.player_id
+  if (!dropId) throw new Error("Esta inscripción no tiene un jugador vinculado para unificar.")
+  if (dropId === keepPlayerId) throw new Error("Ya es esa jugadora.")
+
+  const { data: keeper } = await supabase.from("players").select("id").eq("id", keepPlayerId).maybeSingle()
+  if (!keeper) throw new Error("No se encontró la jugadora elegida.")
+
+  // Si ya está inscripta en esta categoría, quedaría dos veces: hay que quitar
+  // una de las dos inscripciones a mano.
+  const { data: inCategory } = await supabase
+    .from("circuito_participants")
+    .select("id, player_id, player_2_id")
+    .eq("category_id", participant.category_id)
+  const alreadyIn = (inCategory ?? []).some(
+    (p) => p.id !== participantId && (p.player_id === keepPlayerId || p.player_2_id === keepPlayerId),
+  )
+  if (alreadyIn || participant.player_id === keepPlayerId || participant.player_2_id === keepPlayerId) {
+    throw new Error("Esa jugadora ya está inscripta en esta categoría: quitá una de las dos inscripciones.")
+  }
+
+  // Categorías donde figura la ficha repetida: su ranking cambia de dueña.
+  const { data: affected } = await supabase
+    .from("circuito_participants")
+    .select("category_id")
+    .or(`player_id.eq.${dropId},player_2_id.eq.${dropId}`)
+  const categoryIds = [...new Set((affected ?? []).map((p) => p.category_id))]
+
+  await mergePlayers(supabase, keepPlayerId, dropId)
+  for (const categoryId of categoryIds) await recalculateAndPersistCircuitRanking(categoryId)
 }
