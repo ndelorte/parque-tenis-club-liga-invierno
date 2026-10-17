@@ -14,7 +14,8 @@ interface Props {
 // Calendario de la temporada del Circuito (landing) — product/refactor-visual/maquetas/fase-2/Landing.dc.html.
 // Grand Slam: polvo fuerte con líneas de cancha (misma tarjeta esté jugado, en
 // juego o próximo). Jugado (no GS): polvo suave. Próximo (no GS): borde
-// punteado, transparente. Mes en juego: doble anillo + punto amarillo. Mes
+// punteado, transparente. Mes en juego (ya tiene resultados cargados: usa la
+// tarjeta de jugado, polvo suave, no la punteada de próximo): doble anillo + punto amarillo. Mes
 // sin torneo cargado: tarjeta punteada, "A confirmar" — nunca se inventa un
 // nombre de torneo.
 export function SeasonCalendar({ months }: Props) {
@@ -61,7 +62,7 @@ function MonthCard({ month }: { month: SeasonCalendarMonth }) {
   if (month.isGrandSlam) {
     tone = "court-stripe border-2 border-draw-line"
     textTone = "text-board-foreground"
-  } else if (edition.status === "finished") {
+  } else if (edition.status !== "upcoming") {
     tone = "border-[1.5px] border-clay-soft-border bg-clay-soft"
     textTone = "text-foreground"
   } else {

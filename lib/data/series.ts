@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createPublicClient } from "@/lib/supabase/public"
 import type { Round, Series, CourtMatch, Team, Player } from "@/lib/tournament/types"
 import type { Database } from "@/lib/supabase/types"
 
@@ -101,7 +101,7 @@ function mapSeries(
 }
 
 export async function getRoundsWithSeries(categoryId: string): Promise<RoundWithSeries[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase
     .from("rounds")
@@ -140,7 +140,7 @@ export async function getRoundsWithSeries(categoryId: string): Promise<RoundWith
 export async function getSeriesForTeam(
   teamId: string,
 ): Promise<(Series & { court_matches: CourtMatch[]; home_team?: Team; away_team?: Team; round?: Round })[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase
     .from("series")

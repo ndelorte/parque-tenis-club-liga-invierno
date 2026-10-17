@@ -7,7 +7,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { WhatsappFab } from "@/components/whatsapp-fab"
 import { getEnJuego } from "@/lib/data/home"
 
-export const dynamic = "force-dynamic"
+export const revalidate = 60
 
 export default async function Home() {
   const enJuego = await getEnJuego()

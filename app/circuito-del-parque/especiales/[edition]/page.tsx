@@ -5,7 +5,12 @@ import { CategoryGrid } from "@/components/mid-master/CategoryGrid"
 import { MmSponsorsBanner } from "@/components/mid-master/MmSponsorsBanner"
 import { getMmEditionBySlug, getMmCategoriesForPublic } from "@/lib/data/mid-master"
 
-export const dynamic = "force-dynamic"
+export const revalidate = 60
+
+// Sin rutas en build: cada combinación se renderiza en su primera visita y se cachea (ISR).
+export async function generateStaticParams() {
+  return []
+}
 
 interface Props {
   params: Promise<{ edition: string }>

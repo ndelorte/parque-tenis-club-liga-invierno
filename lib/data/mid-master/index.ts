@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createPublicClient } from "@/lib/supabase/public"
 import { calculateZoneStandings } from "@/lib/mid-master/calculateZoneStandings"
 import type {
   DbMmCategory,
@@ -26,7 +26,7 @@ type AnyRow = Record<string, any>
 // Cast helper: permite queries a tablas mid_master_* fuera del tipo Database
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function supabase(): Promise<any> {
-  return createClient()
+  return createPublicClient()
 }
 
 function logError(fn: string, error: unknown) {

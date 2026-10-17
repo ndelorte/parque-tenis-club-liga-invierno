@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createPublicClient } from "@/lib/supabase/public"
 import { calculateInterparqueStandings } from "@/lib/interparque/calculateInterparqueStandings"
 import type { InterparqueMatchRow, InterparqueStandingRow } from "@/lib/interparque/calculateInterparqueStandings"
 
@@ -33,7 +33,7 @@ function logError(fn: string, error: unknown) {
 }
 
 export async function getInterparquePlayers(): Promise<InterparquePlayerRow[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data, error } = await supabase
     .from("interparque_players")
     .select("*")
@@ -48,7 +48,7 @@ export async function getInterparquePlayers(): Promise<InterparquePlayerRow[]> {
 }
 
 export async function getInterparqueMatches(): Promise<InterparqueMatch[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data, error } = await supabase
     .from("interparque_matches")
     .select("*")

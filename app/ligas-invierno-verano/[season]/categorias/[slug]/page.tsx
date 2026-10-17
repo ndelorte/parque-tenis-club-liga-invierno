@@ -17,7 +17,12 @@ import { buildBracketOrNull } from "@/lib/playoffs/generateProvisionalBracket"
 import { formatTournamentTitle } from "@/lib/tournament/formatTournamentTitle"
 import { getSeasonTheme } from "@/components/liga/season-theme"
 
-export const dynamic = "force-dynamic"
+export const revalidate = 60
+
+// Sin rutas en build: cada combinación se renderiza en su primera visita y se cachea (ISR).
+export async function generateStaticParams() {
+  return []
+}
 
 interface Props {
   params: Promise<{ season: string; slug: string }>

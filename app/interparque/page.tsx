@@ -6,6 +6,8 @@ import { MatchesList } from "@/components/interparque/MatchesList"
 import { getInterparqueMatches, getInterparquePlayers, getInterparqueStandings } from "@/lib/data/interparque"
 import { buildPlayerParticipation, buildSeasonCalendar } from "@/components/interparque/seasonCalendar"
 
+export const revalidate = 60
+
 const MATCHES_PAGE_SIZE = 8
 
 export const metadata: Metadata = {

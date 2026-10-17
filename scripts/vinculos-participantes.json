@@ -1,0 +1,62 @@
+[
+  {
+    "tipo": "single",
+    "nombre": "Cristian Tamburro",
+    "veces": 2,
+    "donde": [
+      "Halle Open — Caballeros Segunda",
+      "Cincinnati Open — Caballeros Tercera"
+    ],
+    "candidatos": [
+      {
+        "id": "9cf08112-b7ad-4761-9f35-eb15d19a7ae7",
+        "nombre": "Tamburro Cristian",
+        "inscripciones": 1,
+        "puntos": 200,
+        "equipos": 0,
+        "coincidencia": "mismo nombre"
+      },
+      {
+        "id": "d7d001a0-ade9-4166-9dcf-28038fbca58c",
+        "nombre": "Arguello Cristian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (cristian), otro nombre"
+      },
+      {
+        "id": "0d234db2-2a7e-4269-9902-3799e1c0d55c",
+        "nombre": "Tapia Christian",
+        "inscripciones": 0,
+        "puntos": 400,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (christian), otro nombre"
+      },
+      {
+        "id": "46270c20-51e6-4e96-9c24-db40d3d7f6a2",
+        "nombre": "Andre Christian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 3,
+        "coincidencia": "mismo apellido (christian), otro nombre"
+      },
+      {
+        "id": "93be13fd-d8bf-4a61-ab90-c18502dc8f98",
+        "nombre": "Leonardi Cristian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (cristian), otro nombre"
+      },
+      {
+        "id": "631e21d2-71d8-48f9-a2dc-2a1263617736",
+        "nombre": "Alberti Cristian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (cristian), otro nombre"
+      }
+    ],
+    "elegido": "Tamburro Cristian Diego"
+  }
+]

@@ -7,7 +7,7 @@ import { MmSponsorsBanner } from "@/components/mid-master/MmSponsorsBanner"
 import { getMmEditionBySlug, getMmCategoryForPublic, getMmCategories } from "@/lib/data/mid-master"
 import type { MmCategory } from "@/lib/mid-master/types"
 
-export const dynamic = "force-dynamic"
+export const revalidate = 60
 
 interface Props {
   params: Promise<{ edition: string; slug: string }>

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createPublicClient } from "@/lib/supabase/public"
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { Database } from "@/lib/supabase/types"
 
@@ -36,7 +36,7 @@ export async function getPhotos(
   tournamentId: string,
   categoryId?: string | null,
 ): Promise<TournamentPhoto[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   let query = supabase
     .from("tournament_photos")

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createPublicClient } from "@/lib/supabase/public"
 import type { Tournament } from "@/lib/tournament/types"
 import { sortTournaments } from "@/lib/tournament/sortTournaments"
 import type { Database } from "@/lib/supabase/types"
@@ -19,7 +19,7 @@ function mapTournamentRow(row: TournamentRow): Tournament {
 }
 
 export async function getAllTournaments(): Promise<Tournament[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase.from("tournaments").select("*")
 
@@ -29,7 +29,7 @@ export async function getAllTournaments(): Promise<Tournament[]> {
 }
 
 export async function getActiveTournament(): Promise<Tournament | null> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase
     .from("tournaments")
@@ -45,7 +45,7 @@ export async function getActiveTournament(): Promise<Tournament | null> {
 }
 
 export async function getTournamentBySlug(slug: string): Promise<Tournament | null> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase
     .from("tournaments")

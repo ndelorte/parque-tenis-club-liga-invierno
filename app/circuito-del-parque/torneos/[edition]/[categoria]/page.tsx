@@ -22,7 +22,12 @@ import { BracketMatchCard } from "@/components/circuito/bracket-match-card"
 import { ZoneStandingsTable, type ZoneMatchRow, type ZoneStandingsRow } from "@/components/circuito/zone-standings-table"
 
 // Los resultados y el repechaje se actualizan al cargar cada partido: sin cache.
-export const dynamic = "force-dynamic"
+export const revalidate = 60
+
+// Sin rutas en build: cada combinación se renderiza en su primera visita y se cachea (ISR).
+export async function generateStaticParams() {
+  return []
+}
 
 export async function generateMetadata({
   params,

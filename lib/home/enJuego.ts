@@ -57,16 +57,14 @@ export function buildLigaEnJuego(
 
 type EditionLike = { slug: string; name: string; status: "upcoming" | "active" | "finished"; year: number; month: number }
 
-// El torneo del mes en curso; si todavía no se cargó, el próximo; si tampoco
-// hay, el último jugado.
-export function pickCircuitoEdition<E extends EditionLike>(editions: E[]): E | null {
+// Los torneos en juego (puede haber más de uno a la vez); si no hay ninguno,
+// el próximo; si tampoco hay, el último jugado.
+export function pickCircuitoEditions<E extends EditionLike>(editions: E[]): E[] {
   const byDate = [...editions].sort((a, b) => a.year - b.year || a.month - b.month)
-  return (
-    byDate.find((e) => e.status === "active") ??
-    byDate.find((e) => e.status === "upcoming") ??
-    byDate.filter((e) => e.status === "finished").at(-1) ??
-    null
-  )
+  const active = byDate.filter((e) => e.status === "active")
+  if (active.length > 0) return active
+  const next = byDate.find((e) => e.status === "upcoming") ?? byDate.filter((e) => e.status === "finished").at(-1)
+  return next ? [next] : []
 }
 
 // Categorías que se juegan en la edición: las que tienen cuadro armado (mismo

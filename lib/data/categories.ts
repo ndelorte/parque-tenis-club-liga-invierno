@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createPublicClient } from "@/lib/supabase/public"
 import type { Category } from "@/lib/tournament/types"
 import type { Database } from "@/lib/supabase/types"
 
@@ -23,7 +23,7 @@ function mapCategoryRow(row: CategoryRow): Category {
 }
 
 export async function getCategoriesForTournament(tournamentId: string): Promise<Category[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase
     .from("categories")
@@ -37,7 +37,7 @@ export async function getCategoriesForTournament(tournamentId: string): Promise<
 }
 
 export async function getCategoryById(id: string): Promise<Category | null> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase
     .from("categories")
@@ -56,7 +56,7 @@ export async function getCategoryById(id: string): Promise<Category | null> {
  * mantiene hasta migrar sus usos en Sprint L2.
  */
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase
     .from("categories")
@@ -73,7 +73,7 @@ export async function getCategoryBySlugForTournament(
   tournamentId: string,
   slug: string
 ): Promise<Category | null> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase
     .from("categories")

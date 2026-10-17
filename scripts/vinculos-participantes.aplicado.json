@@ -1,0 +1,2953 @@
+[
+  {
+    "tipo": "dobles",
+    "nombre": "Achar/Catanni",
+    "veces": 1,
+    "donde": [
+      "Roland Garros — Caballeros Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "Achar",
+        "candidatos": [
+          {
+            "id": "1fb9a5bf-7a73-4266-8dd3-4e4a31c10860",
+            "nombre": "Achar Emanuel",
+            "inscripciones": 0,
+            "puntos": 400,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (achar)"
+          }
+        ],
+        "elegido": "Achar Emanuel"
+      },
+      {
+        "texto": "Catanni",
+        "candidatos": [
+          {
+            "id": "e649049a-c1f9-410e-b4d2-36eb0ef2bd7c",
+            "nombre": "Catanni",
+            "inscripciones": 1,
+            "puntos": 400,
+            "equipos": 0,
+            "coincidencia": "mismo nombre"
+          }
+        ],
+        "elegido": "Catanni"
+      }
+    ]
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Ale Bottari/Roberto",
+    "veces": 1,
+    "donde": [
+      "Monte Carlo — Mixto Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "Ale Bottari",
+        "candidatos": [
+          {
+            "id": "bbbab950-da33-489c-8dd3-9aade6e90268",
+            "nombre": "Bottari Alejandra",
+            "inscripciones": 0,
+            "puntos": 200,
+            "equipos": 1,
+            "coincidencia": "apellido + nombre compatible (apodo/abreviatura)"
+          }
+        ],
+        "elegido": "Bottari Alejandra"
+      },
+      {
+        "texto": "Roberto",
+        "candidatos": [
+          {
+            "id": "30a1036f-a130-4ea5-a6d6-221111039308",
+            "nombre": "Roberto",
+            "inscripciones": 1,
+            "puntos": 200,
+            "equipos": 0,
+            "coincidencia": "mismo nombre"
+          },
+          {
+            "id": "8eeeb002-2d2c-4626-9dbf-3f77643d767a",
+            "nombre": "Roberto Federico",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (roberto)"
+          },
+          {
+            "id": "71e1c222-c063-44a3-bc26-d5254d312207",
+            "nombre": "Bob Roberto",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (roberto)"
+          }
+        ],
+        "crear": "Damario Roberto",
+        "elegido": null
+      }
+    ]
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Avgustin-Bruzera",
+    "veces": 1,
+    "donde": [
+      "Australia Open — Damas Primera"
+    ],
+    "partes": [
+      {
+        "texto": "Avgustin",
+        "candidatos": [
+          {
+            "id": "99018bea-72e1-4c82-aca0-cccc46cc12ed",
+            "nombre": "Ayala Agustin",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (agustin)"
+          },
+          {
+            "id": "d640e89f-7f5a-41e8-899a-27f144a389f9",
+            "nombre": "Avgustin Marcos",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (avgustin)"
+          },
+          {
+            "id": "6c002526-e114-45a9-bfa3-f093474e0773",
+            "nombre": "Penen Agustin",
+            "inscripciones": 0,
+            "puntos": 400,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (agustin)"
+          },
+          {
+            "id": "928cfe71-ed2a-4934-8ea6-d08199f2a134",
+            "nombre": "Candela Avgustin",
+            "inscripciones": 0,
+            "puntos": 2000,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (avgustin)"
+          }
+        ],
+        "elegido": "Avgustin Candela"
+      },
+      {
+        "texto": "Bruzera",
+        "candidatos": [
+          {
+            "id": "e24d2b5e-9dc7-4863-bbd2-281102a09988",
+            "nombre": "Bruzera Victoria",
+            "inscripciones": 0,
+            "puntos": 2000,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (bruzera)"
+          }
+        ],
+        "elegido": "Bruzera Victoria"
+      }
+    ]
+  },
+  {
+    "tipo": "single",
+    "nombre": "Axel Romeo",
+    "veces": 1,
+    "donde": [
+      "Australia Open — Caballeros Primera"
+    ],
+    "candidatos": [
+      {
+        "id": "f7163f6f-4771-4cf1-86f3-b0366d7c5a13",
+        "nombre": "Romeo Axel",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo nombre"
+      },
+      {
+        "id": "d71baa5d-082e-46db-9496-6015687bf8d7",
+        "nombre": "Romero Franco",
+        "inscripciones": 1,
+        "puntos": 0,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (romero), otro nombre"
+      },
+      {
+        "id": "43a643d0-1ba9-49c3-8f45-a479a1c94cdf",
+        "nombre": "Quetglas Axel",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (axel), otro nombre"
+      },
+      {
+        "id": "a3147f02-2b51-4e3b-936e-b71ba1c7340d",
+        "nombre": "Romero Marcela",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (romero), otro nombre"
+      },
+      {
+        "id": "2f5d9395-5404-4169-b619-4f0efb5c41d9",
+        "nombre": "Romero Graciela",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (romero), otro nombre"
+      },
+      {
+        "id": "9876b731-ec2e-4fbe-abfb-8e44d144870a",
+        "nombre": "Romero",
+        "inscripciones": 1,
+        "puntos": 1700,
+        "equipos": 0,
+        "coincidencia": "mismo apellido (romero), otro nombre"
+      }
+    ],
+    "elegido": "Romeo Axel"
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Basualdo/Escobar",
+    "veces": 1,
+    "donde": [
+      "Australia Open — Mixto Intermedia"
+    ],
+    "partes": [
+      {
+        "texto": "Basualdo",
+        "candidatos": [
+          {
+            "id": "03e82391-898e-42df-a249-02fa9524e08b",
+            "nombre": "Basualdo Facundo",
+            "inscripciones": 3,
+            "puntos": 1200,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (basualdo)"
+          }
+        ],
+        "elegido": "Basualdo Facundo"
+      },
+      {
+        "texto": "Escobar",
+        "candidatos": [
+          {
+            "id": "008a270e-2e3c-4926-a5b0-2729d563428a",
+            "nombre": "Escobar Paula",
+            "inscripciones": 0,
+            "puntos": 800,
+            "equipos": 3,
+            "coincidencia": "mismo apellido (escobar)"
+          }
+        ],
+        "elegido": "Escobar Paula"
+      }
+    ]
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Baum/Candio",
+    "veces": 1,
+    "donde": [
+      "Argentina Open — Damas Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "Baum",
+        "candidatos": [
+          {
+            "id": "a7477916-536c-4b48-b62b-7ee295f2b878",
+            "nombre": "Baum Fernanda",
+            "inscripciones": 0,
+            "puntos": 200,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (baum)"
+          }
+        ],
+        "elegido": "Baum Fernanda"
+      },
+      {
+        "texto": "Candio",
+        "candidatos": [
+          {
+            "id": "5b691963-0bf6-4d04-8408-b4f0b4d038e6",
+            "nombre": "Candio Martina",
+            "inscripciones": 0,
+            "puntos": 1500,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (candio)"
+          }
+        ],
+        "elegido": "Candio Martina"
+      }
+    ]
+  },
+  {
+    "tipo": "single",
+    "nombre": "Baustista Berutti",
+    "veces": 3,
+    "donde": [
+      "Roland Garros — Caballeros Tercera",
+      "Cincinnati Open — Caballeros Tercera",
+      "Halle Open — Caballeros Tercera"
+    ],
+    "candidatos": [
+      {
+        "id": "7e71e7e0-a30d-4872-aef8-8b7a8fcdcfab",
+        "nombre": "Bautista Berutti",
+        "inscripciones": 3,
+        "puntos": 500,
+        "equipos": 0,
+        "coincidencia": "nombre parecido"
+      },
+      {
+        "id": "9d161cf9-cc74-4b08-8674-7bf2a255b00a",
+        "nombre": "Sebastian Berutti",
+        "inscripciones": 4,
+        "puntos": 1500,
+        "equipos": 0,
+        "coincidencia": "mismo apellido (berutti), otro nombre"
+      }
+    ],
+    "elegido": "Berutti Bautista"
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Boscato-Candio",
+    "veces": 1,
+    "donde": [
+      "Australia Open — Damas Primera"
+    ],
+    "partes": [
+      {
+        "texto": "Boscato",
+        "candidatos": [
+          {
+            "id": "bcb07c73-ef85-4cc5-9740-39ed5b8cc1e5",
+            "nombre": "Boscato Adriana",
+            "inscripciones": 0,
+            "puntos": 3300,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (boscato)"
+          },
+          {
+            "id": "cbe85a22-836b-4125-8479-c8941f382494",
+            "nombre": "Llanos Boscato Jeronimo",
+            "inscripciones": 0,
+            "puntos": 1700,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (boscato)"
+          }
+        ],
+        "elegido": "Boscato Adriana"
+      },
+      {
+        "texto": "Candio",
+        "candidatos": [
+          {
+            "id": "5b691963-0bf6-4d04-8408-b4f0b4d038e6",
+            "nombre": "Candio Martina",
+            "inscripciones": 0,
+            "puntos": 1500,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (candio)"
+          }
+        ],
+        "elegido": "Candio Martina"
+      }
+    ]
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Boscato/Alonso",
+    "veces": 1,
+    "donde": [
+      "Argentina Open — Damas Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "Boscato",
+        "candidatos": [
+          {
+            "id": "bcb07c73-ef85-4cc5-9740-39ed5b8cc1e5",
+            "nombre": "Boscato Adriana",
+            "inscripciones": 0,
+            "puntos": 3300,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (boscato)"
+          },
+          {
+            "id": "cbe85a22-836b-4125-8479-c8941f382494",
+            "nombre": "Llanos Boscato Jeronimo",
+            "inscripciones": 0,
+            "puntos": 1700,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (boscato)"
+          }
+        ],
+        "elegido": "Boscato Adriana"
+      },
+      {
+        "texto": "Alonso",
+        "candidatos": [
+          {
+            "id": "6fc0d1c8-f020-450e-b918-62bf3c9ad6a4",
+            "nombre": "Alonso Laura",
+            "inscripciones": 1,
+            "puntos": 1000,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (alonso)"
+          },
+          {
+            "id": "1c29c0dd-ed2a-464b-b48d-3c9e38080113",
+            "nombre": "Alonso Martin",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (alonso)"
+          }
+        ],
+        "elegido": "Alonso Laura"
+      }
+    ]
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Brizuela/Hernandez",
+    "veces": 1,
+    "donde": [
+      "Roland Garros — Caballeros Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "Brizuela",
+        "candidatos": [
+          {
+            "id": "d351692c-4911-47b1-b255-185a78bff6bb",
+            "nombre": "Brizuela Lucas",
+            "inscripciones": 4,
+            "puntos": 2700,
+            "equipos": 0,
+            "coincidencia": "mismo apellido (brizuela)"
+          }
+        ],
+        "elegido": "Brizuela Lucas"
+      },
+      {
+        "texto": "Hernandez",
+        "candidatos": [
+          {
+            "id": "a680caa9-c1bf-45b4-9a25-3f06694dfd23",
+            "nombre": "Fernandez Santos Adrian Esteban",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (fernandez)"
+          },
+          {
+            "id": "350ee711-7db7-46b1-82ba-f5b196f1f38a",
+            "nombre": "Hernandez Felicitas",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (hernandez)"
+          },
+          {
+            "id": "a5a9e7ef-00a1-4e02-a174-e6a0aaefad1c",
+            "nombre": "Fernandez Leonardo",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (fernandez)"
+          },
+          {
+            "id": "f4596b90-e9d3-417a-bc2f-d4674b1bc3f6",
+            "nombre": "Diego Fernandez",
+            "inscripciones": 1,
+            "puntos": 400,
+            "equipos": 0,
+            "coincidencia": "mismo apellido (fernandez)"
+          },
+          {
+            "id": "7d353af4-f45b-405c-9dd7-5ab7e0127549",
+            "nombre": "Santiago Fernandez",
+            "inscripciones": 2,
+            "puntos": 400,
+            "equipos": 0,
+            "coincidencia": "mismo apellido (fernandez)"
+          },
+          {
+            "id": "18282d1e-e86d-437b-a01f-daf041afd02e",
+            "nombre": "Fernandez Omar",
+            "inscripciones": 16,
+            "puntos": 3450,
+            "equipos": 0,
+            "coincidencia": "mismo apellido (fernandez)"
+          }
+        ],
+        "elegido": "Hernandez Sebastian"
+      }
+    ]
+  },
+  {
+    "tipo": "single",
+    "nombre": "Bruno Perrillo",
+    "veces": 1,
+    "donde": [
+      "Wimbledon — Caballeros Tercera"
+    ],
+    "candidatos": [
+      {
+        "id": "46fdfb4c-5bc9-4561-9d9c-326969bdb628",
+        "nombre": "Perillo Bruno",
+        "inscripciones": 1,
+        "puntos": 200,
+        "equipos": 0,
+        "coincidencia": "nombre parecido"
+      }
+    ],
+    "elegido": "Perillo Bruno"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Carola Guiliano",
+    "veces": 1,
+    "donde": [
+      "Cincinnati Open — Damas Segunda"
+    ],
+    "candidatos": [
+      {
+        "id": "846da507-36ee-4a61-8552-58770dfcae75",
+        "nombre": "Giuliano Carola",
+        "inscripciones": 1,
+        "puntos": 800,
+        "equipos": 3,
+        "coincidencia": "nombre parecido"
+      },
+      {
+        "id": "c540ca12-e95d-4e18-92e5-ee6977aecbc3",
+        "nombre": "Gerez Carla",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (carla), otro nombre"
+      }
+    ],
+    "elegido": "Giuliano Carola"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Christian Granados",
+    "veces": 1,
+    "donde": [
+      "Roland Garros — Caballeros Segunda"
+    ],
+    "candidatos": [
+      {
+        "id": "705356b0-f6db-4811-9637-28a63febfe5a",
+        "nombre": "Cristian Granados",
+        "inscripciones": 1,
+        "puntos": 50,
+        "equipos": 0,
+        "coincidencia": "nombre parecido"
+      },
+      {
+        "id": "d7d001a0-ade9-4166-9dcf-28038fbca58c",
+        "nombre": "Arguello Cristian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (cristian), otro nombre"
+      },
+      {
+        "id": "0d234db2-2a7e-4269-9902-3799e1c0d55c",
+        "nombre": "Tapia Christian",
+        "inscripciones": 0,
+        "puntos": 400,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (christian), otro nombre"
+      },
+      {
+        "id": "46270c20-51e6-4e96-9c24-db40d3d7f6a2",
+        "nombre": "Andre Christian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 3,
+        "coincidencia": "mismo apellido (christian), otro nombre"
+      },
+      {
+        "id": "93be13fd-d8bf-4a61-ab90-c18502dc8f98",
+        "nombre": "Leonardi Cristian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (cristian), otro nombre"
+      },
+      {
+        "id": "631e21d2-71d8-48f9-a2dc-2a1263617736",
+        "nombre": "Alberti Cristian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (cristian), otro nombre"
+      }
+    ],
+    "elegido": "Cristian Granados",
+    "renombrar": "Granados Christian"
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Cisneros/Iirbas",
+    "veces": 1,
+    "donde": [
+      "Roland Garros — Mixto Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "Cisneros",
+        "candidatos": [
+          {
+            "id": "e6049b2b-b3a1-43ad-89fe-75203b0780ed",
+            "nombre": "Cisneros Roman",
+            "inscripciones": 3,
+            "puntos": 2950,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (cisneros)"
+          }
+        ],
+        "elegido": "Cisneros Roman"
+      },
+      {
+        "texto": "Iirbas",
+        "candidatos": [
+          {
+            "id": "2d22387c-fa0a-442d-97cb-0d358f402848",
+            "nombre": "Iribas Agustina",
+            "inscripciones": 2,
+            "puntos": 4050,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (iribas)"
+          }
+        ],
+        "elegido": "Iribas Agustina"
+      }
+    ]
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Cisneros/Iribas",
+    "veces": 1,
+    "donde": [
+      "Australia Open — Mixto Intermedia"
+    ],
+    "partes": [
+      {
+        "texto": "Cisneros",
+        "candidatos": [
+          {
+            "id": "e6049b2b-b3a1-43ad-89fe-75203b0780ed",
+            "nombre": "Cisneros Roman",
+            "inscripciones": 3,
+            "puntos": 2950,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (cisneros)"
+          }
+        ],
+        "elegido": "Cisneros Roman"
+      },
+      {
+        "texto": "Iribas",
+        "candidatos": [
+          {
+            "id": "2d22387c-fa0a-442d-97cb-0d358f402848",
+            "nombre": "Iribas Agustina",
+            "inscripciones": 2,
+            "puntos": 4050,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (iribas)"
+          }
+        ],
+        "elegido": "Iribas Agustina"
+      }
+    ]
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Coraglio/Bejarano",
+    "veces": 1,
+    "donde": [
+      "Australia Open — Damas Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "Coraglio",
+        "candidatos": [
+          {
+            "id": "9fa5f8c9-c331-4889-8d9d-7ae05a77aa71",
+            "nombre": "Coraglio Mariana",
+            "inscripciones": 0,
+            "puntos": 1200,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (coraglio)"
+          }
+        ],
+        "elegido": "Coraglio Mariana"
+      },
+      {
+        "texto": "Bejarano",
+        "candidatos": [
+          {
+            "id": "2f7f88cb-6748-4830-b28f-b314a088632c",
+            "nombre": "Bejarano Iris",
+            "inscripciones": 0,
+            "puntos": 800,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (bejarano)"
+          }
+        ],
+        "elegido": "Bejarano Iris"
+      }
+    ]
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Coraglio/Kosoarek",
+    "veces": 1,
+    "donde": [
+      "Argentina Open — Damas Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "Coraglio",
+        "candidatos": [
+          {
+            "id": "9fa5f8c9-c331-4889-8d9d-7ae05a77aa71",
+            "nombre": "Coraglio Mariana",
+            "inscripciones": 0,
+            "puntos": 1200,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (coraglio)"
+          }
+        ],
+        "elegido": "Coraglio Mariana"
+      },
+      {
+        "texto": "Kosoarek",
+        "candidatos": [],
+        "elegido": "Kosiorek Eliana"
+      }
+    ]
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Cordero/Diez",
+    "veces": 1,
+    "donde": [
+      "Australia Open — Mixto Intermedia"
+    ],
+    "partes": [
+      {
+        "texto": "Cordero",
+        "candidatos": [
+          {
+            "id": "eeb77333-41b4-4223-99b9-6087c3f53044",
+            "nombre": "Cordero Leandro",
+            "inscripciones": 0,
+            "puntos": 400,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (cordero)"
+          }
+        ],
+        "elegido": "Cordero Leandro"
+      },
+      {
+        "texto": "Diez",
+        "candidatos": [
+          {
+            "id": "a54f54bc-9fb3-44ba-b378-9e2d5a15a176",
+            "nombre": "Diez Melina",
+            "inscripciones": 0,
+            "puntos": 400,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (diez)"
+          }
+        ],
+        "elegido": "Diez Melina"
+      }
+    ]
+  },
+  {
+    "tipo": "single",
+    "nombre": "Cristian Brboza",
+    "veces": 1,
+    "donde": [
+      "Australia Open — Caballeros Tercera"
+    ],
+    "candidatos": [
+      {
+        "id": "9bd28c17-5fce-4401-aff3-8c3638242f21",
+        "nombre": "Barboza Cristian",
+        "inscripciones": 1,
+        "puntos": 200,
+        "equipos": 2,
+        "coincidencia": "nombre parecido"
+      },
+      {
+        "id": "d7d001a0-ade9-4166-9dcf-28038fbca58c",
+        "nombre": "Arguello Cristian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (cristian), otro nombre"
+      },
+      {
+        "id": "0d234db2-2a7e-4269-9902-3799e1c0d55c",
+        "nombre": "Tapia Christian",
+        "inscripciones": 0,
+        "puntos": 400,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (christian), otro nombre"
+      },
+      {
+        "id": "46270c20-51e6-4e96-9c24-db40d3d7f6a2",
+        "nombre": "Andre Christian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 3,
+        "coincidencia": "mismo apellido (christian), otro nombre"
+      },
+      {
+        "id": "93be13fd-d8bf-4a61-ab90-c18502dc8f98",
+        "nombre": "Leonardi Cristian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (cristian), otro nombre"
+      },
+      {
+        "id": "631e21d2-71d8-48f9-a2dc-2a1263617736",
+        "nombre": "Alberti Cristian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (cristian), otro nombre"
+      }
+    ],
+    "elegido": "Barboza Cristian"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Cristian Diego Tamburro",
+    "veces": 1,
+    "donde": [
+      "Halle Open — Caballeros Segunda"
+    ],
+    "candidatos": [
+      {
+        "id": "9cf08112-b7ad-4761-9f35-eb15d19a7ae7",
+        "nombre": "Tamburro Cristian",
+        "inscripciones": 1,
+        "puntos": 200,
+        "equipos": 0,
+        "coincidencia": "nombre parecido"
+      },
+      {
+        "id": "29ca89c6-f9b2-406f-a736-b0ce45acab26",
+        "nombre": "Peralta Diego",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (diego), otro nombre"
+      },
+      {
+        "id": "22c99748-2895-448f-8f57-4e91a89b56d1",
+        "nombre": "Inglese Diego",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (diego), otro nombre"
+      },
+      {
+        "id": "f96ff4f5-cc5d-465b-8d09-b7946ff43caf",
+        "nombre": "Pascual Diego Manuel",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (diego), otro nombre"
+      },
+      {
+        "id": "d7d001a0-ade9-4166-9dcf-28038fbca58c",
+        "nombre": "Arguello Cristian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (cristian), otro nombre"
+      },
+      {
+        "id": "dfa0d4ba-7109-4b24-963a-dce0ac786644",
+        "nombre": "Guerreiro Diego",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (diego), otro nombre"
+      }
+    ],
+    "elegido": "Tamburro Cristian",
+    "renombrar": "Tamburro Cristian Diego"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Cristian Tamburro",
+    "veces": 2,
+    "donde": [
+      "Halle Open — Caballeros Segunda",
+      "Cincinnati Open — Caballeros Tercera"
+    ],
+    "candidatos": [
+      {
+        "id": "9cf08112-b7ad-4761-9f35-eb15d19a7ae7",
+        "nombre": "Tamburro Cristian",
+        "inscripciones": 1,
+        "puntos": 200,
+        "equipos": 0,
+        "coincidencia": "mismo nombre"
+      },
+      {
+        "id": "d7d001a0-ade9-4166-9dcf-28038fbca58c",
+        "nombre": "Arguello Cristian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (cristian), otro nombre"
+      },
+      {
+        "id": "0d234db2-2a7e-4269-9902-3799e1c0d55c",
+        "nombre": "Tapia Christian",
+        "inscripciones": 0,
+        "puntos": 400,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (christian), otro nombre"
+      },
+      {
+        "id": "46270c20-51e6-4e96-9c24-db40d3d7f6a2",
+        "nombre": "Andre Christian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 3,
+        "coincidencia": "mismo apellido (christian), otro nombre"
+      },
+      {
+        "id": "93be13fd-d8bf-4a61-ab90-c18502dc8f98",
+        "nombre": "Leonardi Cristian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (cristian), otro nombre"
+      },
+      {
+        "id": "631e21d2-71d8-48f9-a2dc-2a1263617736",
+        "nombre": "Alberti Cristian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (cristian), otro nombre"
+      }
+    ],
+    "elegido": "Tamburro Cristian Diego"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Cristian Tapia",
+    "veces": 1,
+    "donde": [
+      "Roland Garros — Caballeros +50"
+    ],
+    "candidatos": [
+      {
+        "id": "0d234db2-2a7e-4269-9902-3799e1c0d55c",
+        "nombre": "Tapia Christian",
+        "inscripciones": 0,
+        "puntos": 400,
+        "equipos": 2,
+        "coincidencia": "nombre parecido"
+      },
+      {
+        "id": "f461c07f-1e63-4195-87a3-e172eaafbc21",
+        "nombre": "Tapia Gonzalo",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (tapia), otro nombre"
+      },
+      {
+        "id": "d7d001a0-ade9-4166-9dcf-28038fbca58c",
+        "nombre": "Arguello Cristian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (cristian), otro nombre"
+      },
+      {
+        "id": "46270c20-51e6-4e96-9c24-db40d3d7f6a2",
+        "nombre": "Andre Christian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 3,
+        "coincidencia": "mismo apellido (christian), otro nombre"
+      },
+      {
+        "id": "93be13fd-d8bf-4a61-ab90-c18502dc8f98",
+        "nombre": "Leonardi Cristian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (cristian), otro nombre"
+      },
+      {
+        "id": "631e21d2-71d8-48f9-a2dc-2a1263617736",
+        "nombre": "Alberti Cristian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (cristian), otro nombre"
+      }
+    ],
+    "elegido": "Tapia Christian"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Dante Landolfo",
+    "veces": 1,
+    "donde": [
+      "Halle Open — Caballeros Tercera"
+    ],
+    "candidatos": [],
+    "crear": "Landolfo Dante",
+    "elegido": null
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Diez/Cordero",
+    "veces": 1,
+    "donde": [
+      "Roland Garros — Mixto Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "Diez",
+        "candidatos": [
+          {
+            "id": "a54f54bc-9fb3-44ba-b378-9e2d5a15a176",
+            "nombre": "Diez Melina",
+            "inscripciones": 0,
+            "puntos": 400,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (diez)"
+          }
+        ],
+        "elegido": "Diez Melina"
+      },
+      {
+        "texto": "Cordero",
+        "candidatos": [
+          {
+            "id": "eeb77333-41b4-4223-99b9-6087c3f53044",
+            "nombre": "Cordero Leandro",
+            "inscripciones": 0,
+            "puntos": 400,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (cordero)"
+          }
+        ],
+        "elegido": "Cordero Leandro"
+      }
+    ]
+  },
+  {
+    "tipo": "single",
+    "nombre": "Ezequiel Arce",
+    "veces": 1,
+    "donde": [
+      "Wimbledon — Caballeros Segunda"
+    ],
+    "candidatos": [
+      {
+        "id": "6941ae9d-beab-45b3-80d1-1024cd8759ff",
+        "nombre": "Arce Exequiel",
+        "inscripciones": 3,
+        "puntos": 250,
+        "equipos": 1,
+        "coincidencia": "nombre parecido"
+      },
+      {
+        "id": "5693c20b-8223-4db4-b4e7-044326eaf051",
+        "nombre": "Arce Nicolas",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (arce), otro nombre"
+      }
+    ],
+    "elegido": "Arce Exequiel"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Facu Centurion",
+    "veces": 1,
+    "donde": [
+      "Monte Carlo — Caballeros Primera"
+    ],
+    "candidatos": [
+      {
+        "id": "2f3f44a6-f3ad-4006-9828-cc8f5b8e9331",
+        "nombre": "Centurion Facundo",
+        "inscripciones": 2,
+        "puntos": 2200,
+        "equipos": 2,
+        "coincidencia": "apellido + nombre compatible (apodo/abreviatura)"
+      },
+      {
+        "id": "61157497-5ab8-4dd2-a6a4-e4958677f44f",
+        "nombre": "Marcelo Centurion",
+        "inscripciones": 1,
+        "puntos": 200,
+        "equipos": 0,
+        "coincidencia": "mismo apellido (centurion), otro nombre"
+      }
+    ],
+    "elegido": "Centurion Facundo"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Felipe Rivero",
+    "veces": 1,
+    "donde": [
+      "Halle Open — Caballeros Segunda"
+    ],
+    "candidatos": [
+      {
+        "id": "5ad7a0bb-3e0a-47c4-861f-56ab8ea971d3",
+        "nombre": "Riveiro Gisella Glenda",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (riveiro), otro nombre"
+      }
+    ],
+    "crear": "Rivero Felipe",
+    "elegido": null
+  },
+  {
+    "tipo": "single",
+    "nombre": "Florencio Bovone",
+    "veces": 1,
+    "donde": [
+      "Australia Open — Damas Segunda"
+    ],
+    "candidatos": [
+      {
+        "id": "81b48021-cd97-42ec-9a37-cc8cc0d7db89",
+        "nombre": "Florencia Bovone",
+        "inscripciones": 0,
+        "puntos": 800,
+        "equipos": 0,
+        "coincidencia": "nombre parecido"
+      },
+      {
+        "id": "77069159-2e06-4f82-827d-31cbcdcfeb26",
+        "nombre": "Meizner Florencia",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (florencia), otro nombre"
+      },
+      {
+        "id": "eb22f970-5a4a-4a59-9965-ec563125e5ed",
+        "nombre": "Barreiro Florencia",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 4,
+        "coincidencia": "mismo apellido (florencia), otro nombre"
+      }
+    ],
+    "elegido": "Florencia Bovone",
+    "renombrar": "Bovone Florencia"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Gabriela Di Santo",
+    "veces": 1,
+    "donde": [
+      "Cincinnati Open — Damas Segunda"
+    ],
+    "candidatos": [
+      {
+        "id": "a559b4bc-c447-4bcf-badb-56137f28283c",
+        "nombre": "Tardivo Gabriela",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (gabriela), otro nombre"
+      },
+      {
+        "id": "6f2bb1b0-f18f-46f5-806e-ac3ac9dd01df",
+        "nombre": "Mesaglio Gabriela",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (gabriela), otro nombre"
+      },
+      {
+        "id": "504f6289-5454-4cdc-ba07-d19c26664793",
+        "nombre": "Zapacosta Gabriela",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (gabriela), otro nombre"
+      },
+      {
+        "id": "a680caa9-c1bf-45b4-9a25-3f06694dfd23",
+        "nombre": "Fernandez Santos Adrian Esteban",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (santos), otro nombre"
+      },
+      {
+        "id": "d53090da-26ba-4529-acec-7c09d5cf2b99",
+        "nombre": "Gianoli Pablo Gabriel",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (gabriel), otro nombre"
+      },
+      {
+        "id": "5f6172c0-e22c-4b7e-9db3-13e57ed34713",
+        "nombre": "Di Santo Juliana",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (santo), otro nombre"
+      }
+    ],
+    "crear": "Di Santo Gabriela",
+    "elegido": null
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Garcia/Fernandez",
+    "veces": 1,
+    "donde": [
+      "Roland Garros — Caballeros Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "Garcia",
+        "candidatos": [
+          {
+            "id": "aecc361b-7b3c-4456-82d9-5c83358cf4a8",
+            "nombre": "Garcia Norma",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (garcia)"
+          },
+          {
+            "id": "22d9a382-3f0e-4578-99e9-4b3d54874535",
+            "nombre": "Garcia Hector",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (garcia)"
+          },
+          {
+            "id": "b6092f09-4cd0-49b3-9496-57a95fc37d39",
+            "nombre": "Castro Garcia Alberto Fernando",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (garcia)"
+          },
+          {
+            "id": "232b00ba-b015-4e55-bf8e-4631563357b3",
+            "nombre": "Garcia Gabriel",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (garcia)"
+          },
+          {
+            "id": "fe98bb26-0333-49ff-af58-ad3531cd5571",
+            "nombre": "Charly Garcia",
+            "inscripciones": 0,
+            "puntos": 400,
+            "equipos": 0,
+            "coincidencia": "mismo apellido (garcia)"
+          }
+        ],
+        "elegido": "Charly Garcia",
+        "renombrar": "Garcia Carlos"
+      },
+      {
+        "texto": "Fernandez",
+        "candidatos": [
+          {
+            "id": "a680caa9-c1bf-45b4-9a25-3f06694dfd23",
+            "nombre": "Fernandez Santos Adrian Esteban",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (fernandez)"
+          },
+          {
+            "id": "350ee711-7db7-46b1-82ba-f5b196f1f38a",
+            "nombre": "Hernandez Felicitas",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (hernandez)"
+          },
+          {
+            "id": "a5a9e7ef-00a1-4e02-a174-e6a0aaefad1c",
+            "nombre": "Fernandez Leonardo",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (fernandez)"
+          },
+          {
+            "id": "f4596b90-e9d3-417a-bc2f-d4674b1bc3f6",
+            "nombre": "Diego Fernandez",
+            "inscripciones": 1,
+            "puntos": 400,
+            "equipos": 0,
+            "coincidencia": "mismo apellido (fernandez)"
+          },
+          {
+            "id": "7d353af4-f45b-405c-9dd7-5ab7e0127549",
+            "nombre": "Santiago Fernandez",
+            "inscripciones": 2,
+            "puntos": 400,
+            "equipos": 0,
+            "coincidencia": "mismo apellido (fernandez)"
+          },
+          {
+            "id": "18282d1e-e86d-437b-a01f-daf041afd02e",
+            "nombre": "Fernandez Omar",
+            "inscripciones": 16,
+            "puntos": 3450,
+            "equipos": 0,
+            "coincidencia": "mismo apellido (fernandez)"
+          }
+        ],
+        "elegido": "Fernandez Christian Javier"
+      }
+    ]
+  },
+  {
+    "tipo": "single",
+    "nombre": "German Driemel",
+    "veces": 1,
+    "donde": [
+      "Cincinnati Open — Caballeros Tercera"
+    ],
+    "candidatos": [
+      {
+        "id": "ad6c3a69-27e7-4180-967e-60adc14f35e9",
+        "nombre": "Driemel Germán",
+        "inscripciones": 1,
+        "puntos": 400,
+        "equipos": 1,
+        "coincidencia": "mismo nombre"
+      }
+    ],
+    "elegido": "Driemel Germán"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Germán Driemel",
+    "veces": 1,
+    "donde": [
+      "Wimbledon — Caballeros Tercera"
+    ],
+    "candidatos": [
+      {
+        "id": "ad6c3a69-27e7-4180-967e-60adc14f35e9",
+        "nombre": "Driemel Germán",
+        "inscripciones": 1,
+        "puntos": 400,
+        "equipos": 1,
+        "coincidencia": "mismo nombre"
+      }
+    ],
+    "elegido": "Driemel Germán"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Gian Piovesana",
+    "veces": 1,
+    "donde": [
+      "Miami Open — Caballeros Segunda"
+    ],
+    "candidatos": [
+      {
+        "id": "3662f832-73db-43b8-ab0b-bf5069777c45",
+        "nombre": "Giancarlo Piovesana",
+        "inscripciones": 0,
+        "puntos": 100,
+        "equipos": 0,
+        "coincidencia": "apellido + nombre compatible (apodo/abreviatura)"
+      }
+    ],
+    "elegido": "Giancarlo Piovesana",
+    "renombrar": "Piovesana Giancarlo"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Guido Picco",
+    "veces": 1,
+    "donde": [
+      "Australia Open — Caballeros Tercera"
+    ],
+    "candidatos": [
+      {
+        "id": "25e12ff6-7ace-4f52-a4c7-fe8bf32b2f6d",
+        "nombre": "Picco Guido",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo nombre"
+      },
+      {
+        "id": "3b2ee54b-9df4-4105-b969-9a31696b383b",
+        "nombre": "Tiriduzzi Guido",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (guido), otro nombre"
+      },
+      {
+        "id": "766597cd-8c6d-4a72-8863-0f68585b7ea1",
+        "nombre": "Nerguizian Guido",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (guido), otro nombre"
+      },
+      {
+        "id": "82273e1d-7ea1-439d-aed3-105c2863dd27",
+        "nombre": "Ongarelli Guido",
+        "inscripciones": 6,
+        "puntos": 1850,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (guido), otro nombre"
+      }
+    ],
+    "elegido": "Picco Guido"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Ivan Sebille",
+    "veces": 1,
+    "donde": [
+      "Halle Open — Caballeros Tercera"
+    ],
+    "candidatos": [
+      {
+        "id": "b2e761cf-2ea3-45fe-8505-61e47555d881",
+        "nombre": "ivan Sebile",
+        "inscripciones": 0,
+        "puntos": 100,
+        "equipos": 0,
+        "coincidencia": "nombre parecido"
+      },
+      {
+        "id": "7661d353-b0e0-43e3-b981-62e003f52658",
+        "nombre": "Brodaric Ivan",
+        "inscripciones": 4,
+        "puntos": 500,
+        "equipos": 0,
+        "coincidencia": "mismo apellido (ivan), otro nombre"
+      }
+    ],
+    "elegido": "ivan Sebile",
+    "renombrar": "Sebille Ivan"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Jero Llanos Boscato",
+    "veces": 1,
+    "donde": [
+      "Roland Garros — Caballeros Primera"
+    ],
+    "candidatos": [
+      {
+        "id": "cbe85a22-836b-4125-8479-c8941f382494",
+        "nombre": "Llanos Boscato Jeronimo",
+        "inscripciones": 0,
+        "puntos": 1700,
+        "equipos": 1,
+        "coincidencia": "apellido + nombre compatible (apodo/abreviatura)"
+      },
+      {
+        "id": "02fd6313-5662-4265-bed0-8515837fa0ea",
+        "nombre": "Llanos Sebastian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (llanos), otro nombre"
+      },
+      {
+        "id": "bcb07c73-ef85-4cc5-9740-39ed5b8cc1e5",
+        "nombre": "Boscato Adriana",
+        "inscripciones": 0,
+        "puntos": 3300,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (boscato), otro nombre"
+      }
+    ],
+    "elegido": "Llanos Boscato Jeronimo"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Jeronima Llanos Boscato",
+    "veces": 1,
+    "donde": [
+      "Argentina Open — Caballeros Primera"
+    ],
+    "candidatos": [
+      {
+        "id": "cbe85a22-836b-4125-8479-c8941f382494",
+        "nombre": "Llanos Boscato Jeronimo",
+        "inscripciones": 0,
+        "puntos": 1700,
+        "equipos": 1,
+        "coincidencia": "nombre parecido"
+      },
+      {
+        "id": "02fd6313-5662-4265-bed0-8515837fa0ea",
+        "nombre": "Llanos Sebastian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (llanos), otro nombre"
+      },
+      {
+        "id": "bcb07c73-ef85-4cc5-9740-39ed5b8cc1e5",
+        "nombre": "Boscato Adriana",
+        "inscripciones": 0,
+        "puntos": 3300,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (boscato), otro nombre"
+      }
+    ],
+    "elegido": "Llanos Boscato Jeronimo"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Juan Cruz Lara",
+    "veces": 1,
+    "donde": [
+      "Wimbledon — Caballeros Segunda"
+    ],
+    "candidatos": [
+      {
+        "id": "a387c5a5-fc22-45ef-8f66-969c5b9bee48",
+        "nombre": "Lara Juan Cruz",
+        "inscripciones": 1,
+        "puntos": 100,
+        "equipos": 0,
+        "coincidencia": "mismo nombre"
+      },
+      {
+        "id": "c735e60b-4cbe-4017-b86d-707c031b27b5",
+        "nombre": "Staffolani Laura",
+        "inscripciones": 0,
+        "puntos": 400,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (laura), otro nombre"
+      },
+      {
+        "id": "b6c78c34-3a67-434d-a4b0-daebfc3a78fe",
+        "nombre": "Feininger Laura",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (laura), otro nombre"
+      },
+      {
+        "id": "7279cca5-5ae7-40d6-bbd0-28df77d9799e",
+        "nombre": "Palla Laura Griselda",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (laura), otro nombre"
+      },
+      {
+        "id": "f9ce561c-a6a5-40d1-8d79-4373b43ed0f6",
+        "nombre": "Morales Laura",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (laura), otro nombre"
+      },
+      {
+        "id": "6fc0d1c8-f020-450e-b918-62bf3c9ad6a4",
+        "nombre": "Alonso Laura",
+        "inscripciones": 1,
+        "puntos": 1000,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (laura), otro nombre"
+      }
+    ],
+    "elegido": "Lara Juan Cruz"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Karina Parada",
+    "veces": 1,
+    "donde": [
+      "Cincinnati Open — Damas Segunda"
+    ],
+    "candidatos": [
+      {
+        "id": "6b1c5fe5-7f93-4a4d-86ac-cd86316fe772",
+        "nombre": "Parada Karina",
+        "inscripciones": 1,
+        "puntos": 400,
+        "equipos": 1,
+        "coincidencia": "mismo nombre"
+      },
+      {
+        "id": "373f435a-7055-47da-834e-d1c549414629",
+        "nombre": "Moreno Karina",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (karina), otro nombre"
+      },
+      {
+        "id": "9e4073e6-748f-4112-80a0-bb410a111da2",
+        "nombre": "Fuentes Carina",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (carina), otro nombre"
+      },
+      {
+        "id": "81c1b562-db8a-4d52-8156-c53a10752029",
+        "nombre": "Saavedra Andrea Karina",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (karina), otro nombre"
+      },
+      {
+        "id": "19cc03e8-cc3e-4ff1-bf0d-5085e4a6a7f5",
+        "nombre": "Ameal Marina",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (marina), otro nombre"
+      },
+      {
+        "id": "19ce80c7-91ba-42d7-a48c-782b4a9ba0a3",
+        "nombre": "Larriba Karina",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (karina), otro nombre"
+      }
+    ],
+    "elegido": "Parada Karina"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Leo Attis",
+    "veces": 1,
+    "donde": [
+      "Halle Open — Caballeros Segunda"
+    ],
+    "candidatos": [
+      {
+        "id": "370a8866-5532-4c66-be83-083b8950acb9",
+        "nombre": "Leonidas Attis",
+        "inscripciones": 1,
+        "puntos": 200,
+        "equipos": 0,
+        "coincidencia": "apellido + nombre compatible (apodo/abreviatura)"
+      }
+    ],
+    "elegido": "Leonidas Attis",
+    "renombrar": "Attis Leonidas"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Lionel Jerez",
+    "veces": 1,
+    "donde": [
+      "Australia Open — Caballeros Intermedia"
+    ],
+    "candidatos": [
+      {
+        "id": "c540ca12-e95d-4e18-92e5-ee6977aecbc3",
+        "nombre": "Gerez Carla",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (gerez), otro nombre"
+      },
+      {
+        "id": "86d038c5-170f-411d-9d7e-b94861cd0af2",
+        "nombre": "Martinez Leonel",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (leonel), otro nombre"
+      },
+      {
+        "id": "b416e677-8175-46e3-ae42-9a27bdbea088",
+        "nombre": "Perez Claudio",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (perez), otro nombre"
+      },
+      {
+        "id": "58a7bb11-b368-4b3a-b1f8-1ef5501dab73",
+        "nombre": "Perez Fernando Daniel",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (perez), otro nombre"
+      },
+      {
+        "id": "e50c5627-49dd-4729-9f7e-793eef3517b4",
+        "nombre": "Leonel Monje",
+        "inscripciones": 4,
+        "puntos": 2300,
+        "equipos": 0,
+        "coincidencia": "mismo apellido (leonel), otro nombre"
+      }
+    ],
+    "crear": "Jerez Lionel",
+    "elegido": null
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Loaiza/Fuentes",
+    "veces": 1,
+    "donde": [
+      "Australia Open — Mixto Intermedia"
+    ],
+    "partes": [
+      {
+        "texto": "Loaiza",
+        "candidatos": [
+          {
+            "id": "9e508bf5-9b7b-401c-8301-a7d4194e9215",
+            "nombre": "Loaiza Juan",
+            "inscripciones": 4,
+            "puntos": 1100,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (loaiza)"
+          }
+        ],
+        "elegido": "Loaiza Juan"
+      },
+      {
+        "texto": "Fuentes",
+        "candidatos": [
+          {
+            "id": "9e4073e6-748f-4112-80a0-bb410a111da2",
+            "nombre": "Fuentes Carina",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (fuentes)"
+          },
+          {
+            "id": "c609fbbe-1468-4824-81cb-56a7ab184044",
+            "nombre": "Fuentes Claudia",
+            "inscripciones": 0,
+            "puntos": 800,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (fuentes)"
+          }
+        ],
+        "elegido": "Fuentes Claudia"
+      }
+    ]
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Machelett/Marta",
+    "veces": 1,
+    "donde": [
+      "Argentina Open — Damas Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "Machelett",
+        "candidatos": [
+          {
+            "id": "7d30bb1c-250e-49a6-9a1f-dc19c93f50ea",
+            "nombre": "Machelett Ana",
+            "inscripciones": 0,
+            "puntos": 400,
+            "equipos": 3,
+            "coincidencia": "mismo apellido (machelett)"
+          },
+          {
+            "id": "af72a581-96ad-423f-a96e-a1566af435c1",
+            "nombre": "Machelett Lucia",
+            "inscripciones": 1,
+            "puntos": 2800,
+            "equipos": 3,
+            "coincidencia": "mismo apellido (machelett)"
+          }
+        ],
+        "elegido": "Machelett Lucia"
+      },
+      {
+        "texto": "Marta",
+        "candidatos": [
+          {
+            "id": "08a32dc7-0440-46cd-856c-b17442ec5652",
+            "nombre": "Gimenez Maria Martha",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (maria)"
+          },
+          {
+            "id": "554269a3-fe02-44a0-a885-a750d3720c9f",
+            "nombre": "Cordoba Maria Mercedes",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 3,
+            "coincidencia": "mismo apellido (maria)"
+          },
+          {
+            "id": "8d356c7d-5be0-49e1-bffd-738611366782",
+            "nombre": "Calvi Maria Belen",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (maria)"
+          },
+          {
+            "id": "7366ba64-b7ce-47af-86c9-c4c06a8233d3",
+            "nombre": "Cianciullo Maria Valeria",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (maria)"
+          },
+          {
+            "id": "f31b14ce-c3d5-4c3f-a40e-917b82443bc9",
+            "nombre": "Cesar Maria Paula",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (maria)"
+          },
+          {
+            "id": "115fead8-a9f8-4973-97ed-d1a5c311f1f2",
+            "nombre": "Castro Marta",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (marta)"
+          }
+        ],
+        "elegido": "Gimenez Maria Martha"
+      }
+    ]
+  },
+  {
+    "tipo": "single",
+    "nombre": "Manuel Abdusteir",
+    "veces": 1,
+    "donde": [
+      "Roland Garros — Caballeros Intermedia"
+    ],
+    "candidatos": [
+      {
+        "id": "6ebeeb32-265b-4118-a4c0-b3c7f6ad0493",
+        "nombre": "Abdusetir Juan Manuel",
+        "inscripciones": 0,
+        "puntos": 1300,
+        "equipos": 3,
+        "coincidencia": "nombre parecido"
+      },
+      {
+        "id": "1fb9a5bf-7a73-4266-8dd3-4e4a31c10860",
+        "nombre": "Achar Emanuel",
+        "inscripciones": 0,
+        "puntos": 400,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (emanuel), otro nombre"
+      },
+      {
+        "id": "f96ff4f5-cc5d-465b-8d09-b7946ff43caf",
+        "nombre": "Pascual Diego Manuel",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (manuel), otro nombre"
+      },
+      {
+        "id": "eab934e2-64c7-41f6-a2af-7ccae821bdcb",
+        "nombre": "Otero Francisco Manuel",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (manuel), otro nombre"
+      },
+      {
+        "id": "5e816db1-bf6a-41fa-8f11-24d3c50bea38",
+        "nombre": "Gonzalez Manuela",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (manuela), otro nombre"
+      },
+      {
+        "id": "116fb119-c3a4-4c2a-8b8d-1be0aa793272",
+        "nombre": "Emanuel Veltri",
+        "inscripciones": 3,
+        "puntos": 400,
+        "equipos": 0,
+        "coincidencia": "mismo apellido (emanuel), otro nombre"
+      }
+    ],
+    "elegido": "Abdusetir Juan Manuel"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Marcos Kilmuda",
+    "veces": 3,
+    "donde": [
+      "Monte Carlo — Caballeros Segunda",
+      "Roland Garros — Caballeros Segunda",
+      "Monte Carlo — Caballeros Tercera"
+    ],
+    "candidatos": [
+      {
+        "id": "e6bc5646-bf7a-4295-90e6-32932616b429",
+        "nombre": "Kilmunda Marcos",
+        "inscripciones": 1,
+        "puntos": 1450,
+        "equipos": 1,
+        "coincidencia": "nombre parecido"
+      },
+      {
+        "id": "3e7c84f1-1a47-4035-87cb-26996be55294",
+        "nombre": "Godoy Marcos",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      },
+      {
+        "id": "d640e89f-7f5a-41e8-899a-27f144a389f9",
+        "nombre": "Avgustin Marcos",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      },
+      {
+        "id": "5d4cf098-43b8-455e-b5c2-ad4675715fa9",
+        "nombre": "Plauwequi Ricardo Marcos",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      },
+      {
+        "id": "5940f6a8-eaa4-4da6-82c7-6df0202e1dfc",
+        "nombre": "Marcos Lucas",
+        "inscripciones": 11,
+        "puntos": 8600,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      },
+      {
+        "id": "b4c3edfc-6482-4023-a557-f1278306ec89",
+        "nombre": "Rojo Marcos",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      }
+    ],
+    "elegido": "Kilmunda Marcos"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Marcos Perez",
+    "veces": 1,
+    "donde": [
+      "Wimbledon — Caballeros Intermedia"
+    ],
+    "candidatos": [
+      {
+        "id": "c540ca12-e95d-4e18-92e5-ee6977aecbc3",
+        "nombre": "Gerez Carla",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (gerez), otro nombre"
+      },
+      {
+        "id": "3e7c84f1-1a47-4035-87cb-26996be55294",
+        "nombre": "Godoy Marcos",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      },
+      {
+        "id": "d640e89f-7f5a-41e8-899a-27f144a389f9",
+        "nombre": "Avgustin Marcos",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      },
+      {
+        "id": "b416e677-8175-46e3-ae42-9a27bdbea088",
+        "nombre": "Perez Claudio",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (perez), otro nombre"
+      },
+      {
+        "id": "58a7bb11-b368-4b3a-b1f8-1ef5501dab73",
+        "nombre": "Perez Fernando Daniel",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (perez), otro nombre"
+      },
+      {
+        "id": "5d4cf098-43b8-455e-b5c2-ad4675715fa9",
+        "nombre": "Plauwequi Ricardo Marcos",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      }
+    ],
+    "crear": "Perez Marcos",
+    "elegido": null
+  },
+  {
+    "tipo": "single",
+    "nombre": "Marcos Pérez",
+    "veces": 1,
+    "donde": [
+      "Wimbledon — Caballeros Segunda"
+    ],
+    "candidatos": [
+      {
+        "id": "c540ca12-e95d-4e18-92e5-ee6977aecbc3",
+        "nombre": "Gerez Carla",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (gerez), otro nombre"
+      },
+      {
+        "id": "3e7c84f1-1a47-4035-87cb-26996be55294",
+        "nombre": "Godoy Marcos",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      },
+      {
+        "id": "d640e89f-7f5a-41e8-899a-27f144a389f9",
+        "nombre": "Avgustin Marcos",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      },
+      {
+        "id": "b416e677-8175-46e3-ae42-9a27bdbea088",
+        "nombre": "Perez Claudio",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (perez), otro nombre"
+      },
+      {
+        "id": "58a7bb11-b368-4b3a-b1f8-1ef5501dab73",
+        "nombre": "Perez Fernando Daniel",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (perez), otro nombre"
+      },
+      {
+        "id": "5d4cf098-43b8-455e-b5c2-ad4675715fa9",
+        "nombre": "Plauwequi Ricardo Marcos",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      }
+    ],
+    "crear": "Perez Marcos",
+    "elegido": null
+  },
+  {
+    "tipo": "single",
+    "nombre": "Marcos Trimunka",
+    "veces": 1,
+    "donde": [
+      "Miami Open — Caballeros Tercera"
+    ],
+    "candidatos": [
+      {
+        "id": "3e7c84f1-1a47-4035-87cb-26996be55294",
+        "nombre": "Godoy Marcos",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      },
+      {
+        "id": "d640e89f-7f5a-41e8-899a-27f144a389f9",
+        "nombre": "Avgustin Marcos",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      },
+      {
+        "id": "5d4cf098-43b8-455e-b5c2-ad4675715fa9",
+        "nombre": "Plauwequi Ricardo Marcos",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      },
+      {
+        "id": "5940f6a8-eaa4-4da6-82c7-6df0202e1dfc",
+        "nombre": "Marcos Lucas",
+        "inscripciones": 11,
+        "puntos": 8600,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      },
+      {
+        "id": "b4c3edfc-6482-4023-a557-f1278306ec89",
+        "nombre": "Rojo Marcos",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      },
+      {
+        "id": "e6bc5646-bf7a-4295-90e6-32932616b429",
+        "nombre": "Kilmunda Marcos",
+        "inscripciones": 1,
+        "puntos": 1450,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (marcos), otro nombre"
+      }
+    ],
+    "elegido": "Kilmunda Marcos"
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Marcos/Romero",
+    "veces": 1,
+    "donde": [
+      "Roland Garros — Mixto Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "Marcos",
+        "candidatos": [
+          {
+            "id": "3e7c84f1-1a47-4035-87cb-26996be55294",
+            "nombre": "Godoy Marcos",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (marcos)"
+          },
+          {
+            "id": "d640e89f-7f5a-41e8-899a-27f144a389f9",
+            "nombre": "Avgustin Marcos",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (marcos)"
+          },
+          {
+            "id": "5d4cf098-43b8-455e-b5c2-ad4675715fa9",
+            "nombre": "Plauwequi Ricardo Marcos",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (marcos)"
+          },
+          {
+            "id": "5940f6a8-eaa4-4da6-82c7-6df0202e1dfc",
+            "nombre": "Marcos Lucas",
+            "inscripciones": 11,
+            "puntos": 8600,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (marcos)"
+          },
+          {
+            "id": "b4c3edfc-6482-4023-a557-f1278306ec89",
+            "nombre": "Rojo Marcos",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (marcos)"
+          },
+          {
+            "id": "e6bc5646-bf7a-4295-90e6-32932616b429",
+            "nombre": "Kilmunda Marcos",
+            "inscripciones": 1,
+            "puntos": 1450,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (marcos)"
+          }
+        ],
+        "elegido": "Marcos Lucas"
+      },
+      {
+        "texto": "Romero",
+        "candidatos": [
+          {
+            "id": "9876b731-ec2e-4fbe-abfb-8e44d144870a",
+            "nombre": "Romero",
+            "inscripciones": 1,
+            "puntos": 1700,
+            "equipos": 0,
+            "coincidencia": "mismo nombre"
+          },
+          {
+            "id": "d71baa5d-082e-46db-9496-6015687bf8d7",
+            "nombre": "Romero Franco",
+            "inscripciones": 1,
+            "puntos": 0,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (romero)"
+          },
+          {
+            "id": "a3147f02-2b51-4e3b-936e-b71ba1c7340d",
+            "nombre": "Romero Marcela",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (romero)"
+          },
+          {
+            "id": "2f5d9395-5404-4169-b619-4f0efb5c41d9",
+            "nombre": "Romero Graciela",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (romero)"
+          },
+          {
+            "id": "f7163f6f-4771-4cf1-86f3-b0366d7c5a13",
+            "nombre": "Romeo Axel",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (romeo)"
+          }
+        ],
+        "elegido": "Romero Marcela"
+      }
+    ]
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Martinez/Zapiola",
+    "veces": 1,
+    "donde": [
+      "Australia Open — Mixto Intermedia"
+    ],
+    "partes": [
+      {
+        "texto": "Martinez",
+        "candidatos": [
+          {
+            "id": "7a78df40-2b7d-48a7-8e08-6d459c554463",
+            "nombre": "Martinez Silvana",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (martinez)"
+          },
+          {
+            "id": "6b8819a4-973f-4f13-8288-945ff9025608",
+            "nombre": "Martinez Ariel Hernan",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 3,
+            "coincidencia": "mismo apellido (martinez)"
+          },
+          {
+            "id": "86d038c5-170f-411d-9d7e-b94861cd0af2",
+            "nombre": "Martinez Leonel",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (martinez)"
+          },
+          {
+            "id": "3a56303f-cca2-426f-941e-4193bcffc1e7",
+            "nombre": "Martínez Nicolás",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (martinez)"
+          }
+        ],
+        "elegido": "Martinez Ariel Hernan"
+      },
+      {
+        "texto": "Zapiola",
+        "candidatos": [],
+        "crear": "Zapiola Ana",
+        "elegido": null
+      }
+    ]
+  },
+  {
+    "tipo": "single",
+    "nombre": "Mauricio Yebne",
+    "veces": 1,
+    "donde": [
+      "Halle Open — Caballeros Intermedia"
+    ],
+    "candidatos": [],
+    "crear": "Yebne Mauricio",
+    "elegido": null
+  },
+  {
+    "tipo": "single",
+    "nombre": "Maxi Rodriguez Alves",
+    "veces": 1,
+    "donde": [
+      "Cincinnati Open — Caballeros Intermedia"
+    ],
+    "candidatos": [
+      {
+        "id": "d1d44271-f202-475b-aeb2-4c03df51d954",
+        "nombre": "Rodriguez Alves Maximo",
+        "inscripciones": 2,
+        "puntos": 400,
+        "equipos": 0,
+        "coincidencia": "apellido + nombre compatible (apodo/abreviatura)"
+      },
+      {
+        "id": "a9ce120f-ff6e-4f7d-824e-aad1b74566bb",
+        "nombre": "Rodriguez Cecilia Andrea",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (rodriguez), otro nombre"
+      },
+      {
+        "id": "3f6d9eae-5bad-4b2d-83e3-a4ec7eba820f",
+        "nombre": "Rodriguez Natalia Noelia",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (rodriguez), otro nombre"
+      },
+      {
+        "id": "1fd777c5-a991-4049-8c9f-c2204e815528",
+        "nombre": "Rodriguez Guillermo",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (rodriguez), otro nombre"
+      },
+      {
+        "id": "516a8214-635e-4d33-8f80-b9e44306e0d5",
+        "nombre": "Julian Rodriguez",
+        "inscripciones": 1,
+        "puntos": 100,
+        "equipos": 0,
+        "coincidencia": "mismo apellido (rodriguez), otro nombre"
+      },
+      {
+        "id": "b630eb32-8440-4027-9462-96263961de96",
+        "nombre": "Rodriguez Hernan",
+        "inscripciones": 4,
+        "puntos": 950,
+        "equipos": 0,
+        "coincidencia": "mismo apellido (rodriguez), otro nombre"
+      }
+    ],
+    "elegido": "Rodriguez Alves Maximo"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Maxy Rende",
+    "veces": 2,
+    "donde": [
+      "Roland Garros — Caballeros +50",
+      "Miami Open — Caballeros +50"
+    ],
+    "candidatos": [
+      {
+        "id": "0d243e3f-f925-47db-af96-1d9eae15f208",
+        "nombre": "Maximiliano Rende",
+        "inscripciones": 1,
+        "puntos": 2400,
+        "equipos": 0,
+        "coincidencia": "apellido + nombre compatible (apodo/abreviatura)"
+      }
+    ],
+    "elegido": "Maximiliano Rende",
+    "renombrar": "Rende Maximiliano"
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Michel /",
+    "veces": 1,
+    "donde": [
+      "Australia Open — Mixto Intermedia"
+    ],
+    "partes": [
+      {
+        "texto": "Michel",
+        "elegido": "Michel Omar",
+        "candidatos": []
+      },
+      {
+        "texto": "(falta la pareja)",
+        "elegido": "Toro Mariana",
+        "candidatos": []
+      }
+    ]
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Michel/Llanos",
+    "veces": 1,
+    "donde": [
+      "Roland Garros — Caballeros Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "Michel",
+        "candidatos": [
+          {
+            "id": "110c3890-965d-4d65-a317-087f9762b642",
+            "nombre": "Michel Omar",
+            "inscripciones": 1,
+            "puntos": 6300,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (michel)"
+          },
+          {
+            "id": "42d50601-eabb-4cf6-b348-5e22d0d7f6c6",
+            "nombre": "Michel Alex",
+            "inscripciones": 1,
+            "puntos": 200,
+            "equipos": 0,
+            "coincidencia": "mismo apellido (michel)"
+          }
+        ],
+        "elegido": "Michel Omar"
+      },
+      {
+        "texto": "Llanos",
+        "candidatos": [
+          {
+            "id": "02fd6313-5662-4265-bed0-8515837fa0ea",
+            "nombre": "Llanos Sebastian",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (llanos)"
+          },
+          {
+            "id": "cbe85a22-836b-4125-8479-c8941f382494",
+            "nombre": "Llanos Boscato Jeronimo",
+            "inscripciones": 0,
+            "puntos": 1700,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (llanos)"
+          }
+        ],
+        "elegido": "Llanos Boscato Jeronimo"
+      }
+    ]
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Michel/toro",
+    "veces": 1,
+    "donde": [
+      "Roland Garros — Mixto Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "Michel",
+        "candidatos": [
+          {
+            "id": "110c3890-965d-4d65-a317-087f9762b642",
+            "nombre": "Michel Omar",
+            "inscripciones": 1,
+            "puntos": 6300,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (michel)"
+          },
+          {
+            "id": "42d50601-eabb-4cf6-b348-5e22d0d7f6c6",
+            "nombre": "Michel Alex",
+            "inscripciones": 1,
+            "puntos": 200,
+            "equipos": 0,
+            "coincidencia": "mismo apellido (michel)"
+          }
+        ],
+        "elegido": "Michel Omar"
+      },
+      {
+        "texto": "toro",
+        "candidatos": [
+          {
+            "id": "ca38fde4-5418-406d-b3bd-aea51e540e4d",
+            "nombre": "Toro",
+            "inscripciones": 1,
+            "puntos": 5000,
+            "equipos": 0,
+            "coincidencia": "mismo nombre"
+          },
+          {
+            "id": "8af017c4-bdd4-4b0c-ad80-01fbc0ba5f64",
+            "nombre": "Toro Mariana",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (toro)"
+          }
+        ],
+        "elegido": "Toro Mariana"
+      }
+    ]
+  },
+  {
+    "tipo": "single",
+    "nombre": "Nacho Ciarlantini",
+    "veces": 15,
+    "donde": [
+      "Halle Open — Caballeros Intermedia",
+      "Roland Garros — Caballeros Primera",
+      "Monte Carlo — Caballeros Primera",
+      "Monte Carlo — Caballeros Segunda",
+      "Roland Garros — Caballeros Segunda",
+      "Roland Garros — Caballeros Intermedia",
+      "Argentina Open — Caballeros Intermedia",
+      "Monte Carlo — Caballeros Intermedia",
+      "Argentina Open — Caballeros Primera",
+      "Miami Open — Caballeros Intermedia",
+      "Argentina Open — Caballeros Segunda",
+      "Australia Open — Caballeros Intermedia",
+      "Australia Open — Caballeros Primera",
+      "Cincinnati Open — Caballeros Intermedia",
+      "Halle Open — Caballeros Segunda"
+    ],
+    "candidatos": [
+      {
+        "id": "ebba15f7-171e-422d-822f-6ce1ed70049c",
+        "nombre": "Ciarlantini Ignacio",
+        "inscripciones": 1,
+        "puntos": 4150,
+        "equipos": 2,
+        "coincidencia": "apellido + nombre compatible (apodo/abreviatura)"
+      }
+    ],
+    "elegido": "Ciarlantini Ignacio"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Nacho Godoy",
+    "veces": 1,
+    "donde": [
+      "Cincinnati Open — Caballeros Tercera"
+    ],
+    "candidatos": [
+      {
+        "id": "6e25fdc2-3a8e-4725-96fa-32b37504018f",
+        "nombre": "Ignacio Godoy",
+        "inscripciones": 1,
+        "puntos": 100,
+        "equipos": 0,
+        "coincidencia": "apellido + nombre compatible (apodo/abreviatura)"
+      },
+      {
+        "id": "3e7c84f1-1a47-4035-87cb-26996be55294",
+        "nombre": "Godoy Marcos",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (godoy), otro nombre"
+      },
+      {
+        "id": "c7f4402a-f5f8-40cd-8fe7-60601bd96085",
+        "nombre": "Sebastian Godoy",
+        "inscripciones": 4,
+        "puntos": 1000,
+        "equipos": 0,
+        "coincidencia": "mismo apellido (godoy), otro nombre"
+      }
+    ],
+    "elegido": "Ignacio Godoy",
+    "renombrar": "Godoy Ignacio"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Paola Hernandez",
+    "veces": 1,
+    "donde": [
+      "Cincinnati Open — Damas Segunda"
+    ],
+    "candidatos": [
+      {
+        "id": "a95afc15-16af-4202-aeba-5579a75d328e",
+        "nombre": "Paola Hernandez",
+        "inscripciones": 1,
+        "puntos": 400,
+        "equipos": 0,
+        "coincidencia": "mismo nombre"
+      },
+      {
+        "id": "a86bb43c-e65f-483e-ac95-f080a47a8325",
+        "nombre": "Pablo Fernandez",
+        "inscripciones": 3,
+        "puntos": 200,
+        "equipos": 0,
+        "coincidencia": "apellido + nombre compatible (apodo/abreviatura)"
+      },
+      {
+        "id": "7279cca5-5ae7-40d6-bbd0-28df77d9799e",
+        "nombre": "Palla Laura Griselda",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (palla), otro nombre"
+      },
+      {
+        "id": "008a270e-2e3c-4926-a5b0-2729d563428a",
+        "nombre": "Escobar Paula",
+        "inscripciones": 0,
+        "puntos": 800,
+        "equipos": 3,
+        "coincidencia": "mismo apellido (paula), otro nombre"
+      },
+      {
+        "id": "271be1d9-3080-448b-b2a8-6783e16fb135",
+        "nombre": "Mira Paula",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (paula), otro nombre"
+      },
+      {
+        "id": "3aba94f8-d2f8-4eb7-98ea-177db936d9ec",
+        "nombre": "Federico Ana Paula",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (paula), otro nombre"
+      }
+    ],
+    "elegido": "Paola Hernandez",
+    "renombrar": "Hernandez Paola"
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Penen/De la Vega",
+    "veces": 1,
+    "donde": [
+      "Roland Garros — Caballeros Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "Penen",
+        "candidatos": [
+          {
+            "id": "6c002526-e114-45a9-bfa3-f093474e0773",
+            "nombre": "Penen Agustin",
+            "inscripciones": 0,
+            "puntos": 400,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (penen)"
+          },
+          {
+            "id": "cb4b0b06-f47f-4260-95e4-7d6f36264c2f",
+            "nombre": "Mario Penen",
+            "inscripciones": 1,
+            "puntos": 800,
+            "equipos": 0,
+            "coincidencia": "mismo apellido (penen)"
+          }
+        ],
+        "elegido": "Penen Agustin"
+      },
+      {
+        "texto": "De la Vega",
+        "candidatos": [
+          {
+            "id": "633e0f42-823a-4e8a-8696-4cf87ea1e51e",
+            "nombre": "Fernando De la Vega",
+            "inscripciones": 0,
+            "puntos": 400,
+            "equipos": 0,
+            "coincidencia": "nombre parecido"
+          },
+          {
+            "id": "91ba1be4-f99b-4908-b3f3-955d632d3c20",
+            "nombre": "Vega Mariano",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (vega), otro nombre"
+          },
+          {
+            "id": "1616f4e5-44cb-4390-beb1-ad1244ca911b",
+            "nombre": "Vega Anabela",
+            "inscripciones": 0,
+            "puntos": 0,
+            "equipos": 1,
+            "coincidencia": "mismo apellido (vega), otro nombre"
+          }
+        ],
+        "elegido": "Fernando De la Vega",
+        "renombrar": "De la Vega Fernando"
+      }
+    ]
+  },
+  {
+    "tipo": "single",
+    "nombre": "Ramiro Piñiero",
+    "veces": 2,
+    "donde": [
+      "Argentina Open — Caballeros Primera",
+      "Australia Open — Caballeros Primera"
+    ],
+    "candidatos": [
+      {
+        "id": "1249aba9-5b66-43c9-9e80-1d193c739326",
+        "nombre": "Ramiro Piñero",
+        "inscripciones": 0,
+        "puntos": 1000,
+        "equipos": 0,
+        "coincidencia": "nombre parecido"
+      }
+    ],
+    "elegido": "Ramiro Piñero"
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "Rivas/Fretes",
+    "veces": 1,
+    "donde": [
+      "Roland Garros — Caballeros Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "Rivas",
+        "candidatos": [
+          {
+            "id": "4b0b13b0-254f-41a0-bb38-b413c6f69941",
+            "nombre": "Federico Rivas",
+            "inscripciones": 8,
+            "puntos": 1400,
+            "equipos": 0,
+            "coincidencia": "mismo apellido (rivas)"
+          },
+          {
+            "id": "30d7dea5-c0c4-4f2a-87f1-0296195c8573",
+            "nombre": "Fede Rivas",
+            "inscripciones": 0,
+            "puntos": 800,
+            "equipos": 0,
+            "coincidencia": "mismo apellido (rivas)"
+          }
+        ],
+        "elegido": "Rivas Federico"
+      },
+      {
+        "texto": "Fretes",
+        "candidatos": [
+          {
+            "id": "c4a744ca-444f-4a2a-992e-7096897a3a1f",
+            "nombre": "Fretes",
+            "inscripciones": 1,
+            "puntos": 800,
+            "equipos": 0,
+            "coincidencia": "mismo nombre"
+          }
+        ],
+        "elegido": "Fretes"
+      }
+    ]
+  },
+  {
+    "tipo": "single",
+    "nombre": "Rodrigo Laviani",
+    "veces": 1,
+    "donde": [
+      "Halle Open — Caballeros Tercera"
+    ],
+    "candidatos": [
+      {
+        "id": "4dfda473-11b0-420f-9485-9bb52fff4a12",
+        "nombre": "Mina Rodrigo",
+        "inscripciones": 2,
+        "puntos": 300,
+        "equipos": 0,
+        "coincidencia": "mismo apellido (rodrigo), otro nombre"
+      }
+    ],
+    "crear": "Laviani Rodrigo",
+    "elegido": null
+  },
+  {
+    "tipo": "single",
+    "nombre": "Sebastain Benitez",
+    "veces": 1,
+    "donde": [
+      "Halle Open — Caballeros Tercera"
+    ],
+    "candidatos": [
+      {
+        "id": "b1ddcba0-b0d9-471e-9277-b1a1e553e318",
+        "nombre": "Sebastian Benitez",
+        "inscripciones": 1,
+        "puntos": 500,
+        "equipos": 0,
+        "coincidencia": "nombre parecido"
+      },
+      {
+        "id": "c565e898-11ac-462f-bcf1-8c851daf0a1d",
+        "nombre": "Villagra Sebastian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (sebastian), otro nombre"
+      },
+      {
+        "id": "7cfdd673-bed0-4c97-b5cc-a180b2eb8571",
+        "nombre": "Benitez Adriana",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 3,
+        "coincidencia": "mismo apellido (benitez), otro nombre"
+      },
+      {
+        "id": "822d99e7-6f45-4ee4-b183-e5fc9cdc5c5e",
+        "nombre": "Serrallonga Sebastian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 1,
+        "coincidencia": "mismo apellido (sebastian), otro nombre"
+      },
+      {
+        "id": "49a6ba1e-6409-40cd-93f3-2515ae3eb843",
+        "nombre": "Potito Sebastian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (sebastian), otro nombre"
+      },
+      {
+        "id": "02fd6313-5662-4265-bed0-8515837fa0ea",
+        "nombre": "Llanos Sebastian",
+        "inscripciones": 0,
+        "puntos": 0,
+        "equipos": 2,
+        "coincidencia": "mismo apellido (sebastian), otro nombre"
+      }
+    ],
+    "elegido": "Sebastian Benitez",
+    "renombrar": "Benitez Sebastian"
+  },
+  {
+    "tipo": "single",
+    "nombre": "Victoriio",
+    "veces": 1,
+    "donde": [
+      "Australia Open — Caballeros +50"
+    ],
+    "candidatos": [
+      {
+        "id": "c4e49bbf-e7c7-4307-9315-1e8bccc5878a",
+        "nombre": "Victorio Tebe",
+        "inscripciones": 0,
+        "puntos": 1300,
+        "equipos": 0,
+        "coincidencia": "mismo apellido (victorio)"
+      }
+    ],
+    "elegido": "Victorio Tebe",
+    "renombrar": "Tebe Victorio"
+  },
+  {
+    "tipo": "dobles",
+    "nombre": "leiter/scassera",
+    "veces": 1,
+    "donde": [
+      "Roland Garros — Caballeros Segunda"
+    ],
+    "partes": [
+      {
+        "texto": "leiter",
+        "candidatos": [
+          {
+            "id": "93faf3b5-f121-4616-ad1c-05887275931b",
+            "nombre": "Leiter Fabian",
+            "inscripciones": 7,
+            "puntos": 1950,
+            "equipos": 2,
+            "coincidencia": "mismo apellido (leiter)"
+          }
+        ],
+        "elegido": "Leiter Fabian"
+      },
+      {
+        "texto": "scassera",
+        "candidatos": [
+          {
+            "id": "eba1e914-d970-4740-b17f-5efa97f17c0f",
+            "nombre": "Scassera Mariano",
+            "inscripciones": 4,
+            "puntos": 1400,
+            "equipos": 0,
+            "coincidencia": "mismo apellido (scassera)"
+          }
+        ],
+        "elegido": "Scassera Mariano"
+      }
+    ]
+  }
+]

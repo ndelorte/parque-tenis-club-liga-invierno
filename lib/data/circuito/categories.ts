@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createPublicClient } from "@/lib/supabase/public"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { CIRCUITO_FIXED_CATEGORIES, categorySlug } from "@/lib/circuito/fixedCategories"
 import type { CircuitoCategoryRow } from "./types"
@@ -53,7 +53,7 @@ export async function addCategoryToEdition(input: {
 }
 
 export async function getCircuitoCategoriesForEdition(editionId: string): Promise<CircuitoCategoryRow[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data, error } = await supabase
     .from("circuito_categories")
     .select("*")
@@ -68,7 +68,7 @@ export async function getCircuitoCategoryBySlug(
   editionId: string,
   slug: string,
 ): Promise<CircuitoCategoryRow | null> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data, error } = await supabase
     .from("circuito_categories")
     .select("*")

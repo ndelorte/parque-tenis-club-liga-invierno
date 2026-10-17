@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createPublicClient } from "@/lib/supabase/public"
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { Database } from "@/lib/supabase/types"
 
@@ -31,7 +31,7 @@ function sponsorFromRow(row: SponsorRow): TournamentSponsor {
 }
 
 export async function getTournamentSponsors(tournamentId: string): Promise<TournamentSponsor[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data, error } = await supabase
     .from("tournament_sponsors")
     .select("*")

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createPublicClient } from "@/lib/supabase/public"
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { StandingsRow, Team, Series, CourtMatch } from "@/lib/tournament/types"
 import type { Database } from "@/lib/supabase/types"
@@ -33,7 +33,7 @@ type StandingsCourtMatchRow = Pick<
 >
 
 export async function getStandingsSnapshot(categoryId: string): Promise<StandingsRow[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase
     .from("standings_snapshot")

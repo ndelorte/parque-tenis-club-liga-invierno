@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createPublicClient } from "@/lib/supabase/public"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { calculateCircuitoMatchResult } from "@/lib/circuito/calculateCircuitoMatchResult"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
@@ -13,7 +13,7 @@ import type { CircuitoMatchRow } from "./types"
 type AdminClient = ReturnType<typeof createAdminClient>
 
 export async function getCircuitoMatches(categoryId: string): Promise<CircuitoMatchRow[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data, error } = await supabase
     .from("circuito_matches")
     .select("*")

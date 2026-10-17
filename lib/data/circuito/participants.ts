@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createPublicClient } from "@/lib/supabase/public"
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { Database } from "@/lib/supabase/types"
 import { findSimilarPlayers, SimilarPlayersError } from "@/lib/players/similarNames"
@@ -18,7 +18,7 @@ export interface SelectablePlayer {
 // entre módulos, ADR-002) — se necesita para vincular cada circuito_participant
 // a un jugador real: el ranking (circuito_ranking_points) es por player_id.
 export async function getPlayersForSelect(): Promise<SelectablePlayer[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data, error } = await supabase
     .from("players")
     .select("*")
@@ -63,7 +63,7 @@ export async function createPlayerByName(fullName: string, force = false): Promi
 }
 
 export async function getCircuitoParticipants(categoryId: string): Promise<CircuitoParticipantRow[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data, error } = await supabase
     .from("circuito_participants")
     .select("*")

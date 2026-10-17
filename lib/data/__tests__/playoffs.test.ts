@@ -146,8 +146,8 @@ const CATEGORIES_FIXTURE: FixtureRow[] = [
   },
 ]
 
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: async () =>
+vi.mock("@/lib/supabase/public", () => ({
+  createPublicClient: () =>
     makeFakeClient({ rounds: ROUNDS_FIXTURE, teams: TEAMS_FIXTURE, categories: CATEGORIES_FIXTURE }),
 }))
 

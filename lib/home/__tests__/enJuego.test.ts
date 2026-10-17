@@ -4,7 +4,7 @@ import {
   buildLigaEnJuego,
   countPlayedCategories,
   firstPendingRegularRound,
-  pickCircuitoEdition,
+  pickCircuitoEditions,
 } from "../enJuego"
 import type { Tournament } from "@/lib/tournament/types"
 
@@ -63,19 +63,24 @@ describe("buildLigaEnJuego", () => {
   })
 })
 
-describe("pickCircuitoEdition", () => {
+describe("pickCircuitoEditions", () => {
   const e = (slug: string, month: number, status: "upcoming" | "active" | "finished") => ({ slug, name: slug, year: 2026, month, status })
+  const slugs = (list: { slug: string }[]) => list.map((x) => x.slug)
 
-  it("elige la edición activa", () => {
-    expect(pickCircuitoEdition([e("ago", 8, "finished"), e("sep", 9, "active"), e("oct", 10, "upcoming")])?.slug).toBe("sep")
+  it("devuelve todas las ediciones activas", () => {
+    expect(slugs(pickCircuitoEditions([e("ago", 8, "finished"), e("oct", 10, "active"), e("sep", 9, "active"), e("nov", 11, "upcoming")]))).toEqual(["sep", "oct"])
   })
 
   it("sin activa, la próxima más cercana", () => {
-    expect(pickCircuitoEdition([e("nov", 11, "upcoming"), e("oct", 10, "upcoming")])?.slug).toBe("oct")
+    expect(slugs(pickCircuitoEditions([e("nov", 11, "upcoming"), e("oct", 10, "upcoming")]))).toEqual(["oct"])
   })
 
   it("sin activa ni próxima, la última jugada", () => {
-    expect(pickCircuitoEdition([e("jul", 7, "finished"), e("ago", 8, "finished")])?.slug).toBe("ago")
+    expect(slugs(pickCircuitoEditions([e("jul", 7, "finished"), e("ago", 8, "finished")]))).toEqual(["ago"])
+  })
+
+  it("sin ediciones, lista vacía", () => {
+    expect(pickCircuitoEditions([])).toEqual([])
   })
 })
 

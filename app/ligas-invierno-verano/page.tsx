@@ -4,7 +4,7 @@ import { getAllTournaments } from "@/lib/data/tournaments"
 import { getCategoriesForTournament } from "@/lib/data/categories"
 import { getPodiumForCategory } from "@/lib/data/playoffs"
 
-export const dynamic = "force-dynamic"
+export const revalidate = 60
 
 export const metadata = {
   title: "Ligas de Invierno y Verano | Parque Tenis Club",

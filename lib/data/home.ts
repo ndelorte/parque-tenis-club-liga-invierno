@@ -8,7 +8,7 @@ import {
   buildInterparqueEnJuego,
   buildLigaEnJuego,
   countPlayedCategories,
-  pickCircuitoEdition,
+  pickCircuitoEditions,
   type CircuitoEnJuego,
   type InterparqueEnJuego,
   type LigaEnJuego,
@@ -16,7 +16,7 @@ import {
 
 export type EnJuego = {
   liga: LigaEnJuego | null
-  circuito: CircuitoEnJuego | null
+  circuito: CircuitoEnJuego[]
   interparque: InterparqueEnJuego
 }
 
@@ -34,14 +34,13 @@ export async function getEnJuego(): Promise<EnJuego> {
     ? await Promise.all((await getCategoriesForTournament(active.id)).map((c) => getRoundsWithSeries(c.id)))
     : []
 
-  const edition = pickCircuitoEdition(editions)
-  const circuito = edition
-    ? {
-        title: edition.name,
-        slug: edition.slug,
-        categories: countPlayedCategories(await getCircuitoCategoriesForEdition(edition.id)),
-      }
-    : null
+  const circuito = await Promise.all(
+    pickCircuitoEditions(editions).map(async (edition) => ({
+      title: edition.name,
+      slug: edition.slug,
+      categories: countPlayedCategories(await getCircuitoCategoriesForEdition(edition.id)),
+    })),
+  )
 
   return {
     liga: buildLigaEnJuego(tournaments, activeRounds),

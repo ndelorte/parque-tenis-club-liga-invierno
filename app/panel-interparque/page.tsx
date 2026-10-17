@@ -8,6 +8,9 @@ import { MatchForm } from "@/components/admin/interparque/MatchForm"
 import { NewMatchForm } from "@/components/admin/interparque/NewMatchForm"
 import type { InterparqueMatch } from "@/lib/data/interparque"
 
+// El panel debe mostrar siempre datos frescos (las lecturas ya no usan cookies).
+export const dynamic = "force-dynamic"
+
 export const metadata: Metadata = {
   title: "Panel de carga | Interparque",
   description: "Dashboard interno para cargar partidos y resultados de Interparque.",

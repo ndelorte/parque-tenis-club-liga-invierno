@@ -1,0 +1,415 @@
+{
+  "cambios": [
+    {
+      "id": "9e1e5f76-c4ec-46e6-8e52-78dfa842a9c0",
+      "actual": "Adrian Alegre",
+      "propuesto": "Alegre Adrian",
+      "aplicar": true
+    },
+    {
+      "id": "8395266b-2914-4c16-b05a-45efc233d250",
+      "actual": "Alejo Arbona",
+      "propuesto": "Arbona Alejo",
+      "aplicar": true
+    },
+    {
+      "id": "f9c477e2-b19e-4cc8-b403-de32bdeb7199",
+      "actual": "Antonio Paulo Geronimo",
+      "propuesto": "Geronimo Antonio Paulo",
+      "aplicar": true
+    },
+    {
+      "id": "e1249988-1930-46bb-b188-6bbd279f7cd2",
+      "actual": "Daniela Di Santos",
+      "propuesto": "Di Santos Daniela",
+      "aplicar": true
+    },
+    {
+      "id": "5ffb8047-c234-4747-a13d-3e5556797367",
+      "actual": "Diego Carbone",
+      "propuesto": "Carbone Diego",
+      "aplicar": true
+    },
+    {
+      "id": "59aef23a-c243-4266-8c1f-b5464da22c18",
+      "actual": "Diego Cuenya",
+      "propuesto": "Cuenya Diego",
+      "aplicar": true
+    },
+    {
+      "id": "f4596b90-e9d3-417a-bc2f-d4674b1bc3f6",
+      "actual": "Diego Fernandez",
+      "propuesto": "Fernandez Diego",
+      "aplicar": true
+    },
+    {
+      "id": "116fb119-c3a4-4c2a-8b8d-1be0aa793272",
+      "actual": "Emanuel Veltri",
+      "propuesto": "Veltri Emanuel",
+      "aplicar": true
+    },
+    {
+      "id": "a0917156-ae42-4c95-a097-b1b1e9201db3",
+      "actual": "Emiliano Agesta",
+      "propuesto": "Agesta Emiliano",
+      "aplicar": true
+    },
+    {
+      "id": "e0f4d8ff-0fcd-45aa-994b-f01dc101acb7",
+      "actual": "Enzo Golnner",
+      "propuesto": "Golnner Enzo",
+      "aplicar": true
+    },
+    {
+      "id": "f956ad6a-90bb-4c96-8a5e-a0cdf9a1f3d9",
+      "actual": "Fabian Cartazzo",
+      "propuesto": "Cartazzo Fabian",
+      "aplicar": true
+    },
+    {
+      "id": "30d7dea5-c0c4-4f2a-87f1-0296195c8573",
+      "actual": "Fede Rivas",
+      "propuesto": "Rivas Fede",
+      "aplicar": true
+    },
+    {
+      "id": "c1360330-a84b-43a8-8d13-07066e070ecb",
+      "actual": "Federico Ortiz",
+      "propuesto": "Ortiz Federico",
+      "aplicar": true
+    },
+    {
+      "id": "2aa1e8f9-9b09-487b-94b9-0ddd0b5059e7",
+      "actual": "Fernando Barrios",
+      "propuesto": "Barrios Fernando",
+      "aplicar": true
+    },
+    {
+      "id": "26b7c5a1-499a-4d95-b9f9-11295f7f7d3f",
+      "actual": "Fernando Monroig",
+      "propuesto": "Monroig Fernando",
+      "aplicar": true
+    },
+    {
+      "id": "44430f80-4155-4e7f-88fe-a32d604df62c",
+      "actual": "Fernando Ortino",
+      "propuesto": "Ortino Fernando",
+      "aplicar": true
+    },
+    {
+      "id": "e5cc8472-73c4-4662-95d5-05b35e1cd109",
+      "actual": "Fernando Testa",
+      "propuesto": "Testa Fernando",
+      "aplicar": true
+    },
+    {
+      "id": "ef171d53-8545-454a-aca7-eff6cdc896d0",
+      "actual": "Francisco Venegas",
+      "propuesto": "Venegas Francisco",
+      "aplicar": true
+    },
+    {
+      "id": "4643f2b8-59b9-49f6-a6c2-1e05ce701a6b",
+      "actual": "Franco Bortoluzzi",
+      "propuesto": "Bortoluzzi Franco",
+      "aplicar": true
+    },
+    {
+      "id": "728ebd1c-0077-4645-bde6-8f70124960a5",
+      "actual": "Franco Niz",
+      "propuesto": "Niz Franco",
+      "aplicar": true
+    },
+    {
+      "id": "5f8ab10d-feb7-49f3-b29b-4448a2b72d46",
+      "actual": "Gabriel Blanco",
+      "propuesto": "Blanco Gabriel",
+      "aplicar": true
+    },
+    {
+      "id": "bab0de9a-7fff-49e9-b51e-e99e95a3bf4e",
+      "actual": "Gaston Lef",
+      "propuesto": "Lef Gaston",
+      "aplicar": true
+    },
+    {
+      "id": "b1cf4e65-1124-41ff-bb8a-bef423ded67f",
+      "actual": "Gustavo Di Giacomo",
+      "propuesto": "Di Giacomo Gustavo",
+      "aplicar": true
+    },
+    {
+      "id": "8bd260f1-75b0-4f4d-b64b-96fb6f09423b",
+      "actual": "Gustavo Dominguez",
+      "propuesto": "Dominguez Gustavo",
+      "aplicar": true
+    },
+    {
+      "id": "76715170-142d-4081-90bc-49b9ae659279",
+      "actual": "Ignacio Bernardi",
+      "propuesto": "Bernardi Ignacio",
+      "aplicar": true
+    },
+    {
+      "id": "667afbf4-025d-43a3-b942-7c5010a04733",
+      "actual": "Joao Paulo Dos Santos",
+      "propuesto": "Dos Santos Joao Paulo",
+      "aplicar": true
+    },
+    {
+      "id": "fbec8617-d96e-4a9e-8252-0b618d9f9839",
+      "actual": "Jonatan Juarez",
+      "propuesto": "Juarez Jonatan",
+      "aplicar": true
+    },
+    {
+      "id": "e0975a35-bf64-4b36-88d3-024ac16b261c",
+      "actual": "Jorge Tarachian",
+      "propuesto": "Tarachian Jorge",
+      "aplicar": true
+    },
+    {
+      "id": "0fc4c2bc-2002-4ace-9983-ac741e6c6001",
+      "actual": "Jose Di Meglio",
+      "propuesto": "Di Meglio Jose",
+      "aplicar": true
+    },
+    {
+      "id": "7a768f71-2bbd-4d13-b233-29f418ac02eb",
+      "actual": "Jose Sanchez",
+      "propuesto": "Sanchez Jose",
+      "aplicar": true
+    },
+    {
+      "id": "db4b4181-0bc1-49c5-b230-cc8818c8f23a",
+      "actual": "Juan Alexis Fernandez",
+      "propuesto": "Fernandez Juan Alexis",
+      "aplicar": true
+    },
+    {
+      "id": "a0e497ec-8f92-4ecc-a276-851b77e006cc",
+      "actual": "Juan Ignacio Pereyra",
+      "propuesto": "Pereyra Juan Ignacio",
+      "aplicar": true
+    },
+    {
+      "id": "770cced3-bd54-4b58-9ead-c29e45901bfa",
+      "actual": "Juan Martin Fernandez",
+      "propuesto": "Fernandez Juan Martin",
+      "aplicar": true
+    },
+    {
+      "id": "516a8214-635e-4d33-8f80-b9e44306e0d5",
+      "actual": "Julian Rodriguez",
+      "propuesto": "Rodriguez Julian",
+      "aplicar": true
+    },
+    {
+      "id": "8215f2da-bd2d-4266-b625-c791c60af9f0",
+      "actual": "Leandro Bell",
+      "propuesto": "Bell Leandro",
+      "aplicar": true
+    },
+    {
+      "id": "7cf3660e-3c72-422c-9abf-548f6d95d3b9",
+      "actual": "Leandro Castañares",
+      "propuesto": "Castañares Leandro",
+      "aplicar": true
+    },
+    {
+      "id": "6b75c4fd-5eaa-46a6-925a-8ea277d51953",
+      "actual": "Leo Cabral",
+      "propuesto": "Cabral Leo",
+      "aplicar": true
+    },
+    {
+      "id": "43131b0a-7ebc-40ce-8444-65806e5aa883",
+      "actual": "Leonardo Anagrafe",
+      "propuesto": "Anagrafe Leonardo",
+      "aplicar": true
+    },
+    {
+      "id": "c7a58356-c1eb-4c3e-b9b0-fb02d569f279",
+      "actual": "Leonardo Bodnar",
+      "propuesto": "Bodnar Leonardo",
+      "aplicar": true
+    },
+    {
+      "id": "2578d4da-9cf5-4f5e-97cb-02d6eebc5a4b",
+      "actual": "Leonardo Garrido",
+      "propuesto": "Garrido Leonardo",
+      "aplicar": true
+    },
+    {
+      "id": "74ff7a35-61de-40b2-8609-c3d4a0591899",
+      "actual": "Leonardo Martin Fullone",
+      "propuesto": "Fullone Leonardo Martin",
+      "aplicar": true
+    },
+    {
+      "id": "e50c5627-49dd-4729-9f7e-793eef3517b4",
+      "actual": "Leonel Monje",
+      "propuesto": "Monje Leonel",
+      "aplicar": true
+    },
+    {
+      "id": "6a799596-cb63-4711-8b7b-c29d502c474e",
+      "actual": "Liliana Longo",
+      "propuesto": "Longo Liliana",
+      "aplicar": true
+    },
+    {
+      "id": "e8f0ea0e-990f-4df7-ae08-e63077b79b5f",
+      "actual": "Lucas Corvalan",
+      "propuesto": "Corvalan Lucas",
+      "aplicar": true
+    },
+    {
+      "id": "ad23d7c2-d5e6-4827-88bc-018e559f9483",
+      "actual": "Luciano Castañares",
+      "propuesto": "Castañares Luciano",
+      "aplicar": true
+    },
+    {
+      "id": "30fa1958-c0ff-4b61-b741-059b75184165",
+      "actual": "Manuel Luna",
+      "propuesto": "Luna Manuel",
+      "aplicar": true
+    },
+    {
+      "id": "04300626-7bd8-4044-bf37-7b53c99fd8ab",
+      "actual": "Marcelo Budich",
+      "propuesto": "Budich Marcelo",
+      "aplicar": true
+    },
+    {
+      "id": "61157497-5ab8-4dd2-a6a4-e4958677f44f",
+      "actual": "Marcelo Centurion",
+      "propuesto": "Centurion Marcelo",
+      "aplicar": true
+    },
+    {
+      "id": "cb4b0b06-f47f-4260-95e4-7d6f36264c2f",
+      "actual": "Mario Penen",
+      "propuesto": "Penen Mario",
+      "aplicar": true
+    },
+    {
+      "id": "bc097920-1017-403c-b667-64b51c5e680e",
+      "actual": "Mario Vilca",
+      "propuesto": "Vilca Mario",
+      "aplicar": true
+    },
+    {
+      "id": "2ad12cc9-e838-4cf0-894d-45e8edea4da5",
+      "actual": "Mateo Molina",
+      "propuesto": "Molina Mateo",
+      "aplicar": true
+    },
+    {
+      "id": "751ab600-fec9-43d6-9d05-6725a59dc111",
+      "actual": "Matias Campoya",
+      "propuesto": "Campoya Matias",
+      "aplicar": true
+    },
+    {
+      "id": "77a712d7-2cf1-4121-9d87-426305507b16",
+      "actual": "Matias Rico",
+      "propuesto": "Rico Matias",
+      "aplicar": true
+    },
+    {
+      "id": "0db0d449-8851-48cc-8ca0-94b6dfe566dd",
+      "actual": "Miguel Marcano",
+      "propuesto": "Marcano Miguel",
+      "aplicar": true
+    },
+    {
+      "id": "6c3879f0-0a82-45ca-8cd0-311f312ca44b",
+      "actual": "Nestor Napoli",
+      "propuesto": "Napoli Nestor",
+      "aplicar": true
+    },
+    {
+      "id": "ad90b79d-1b0d-4d39-8326-8dd3df8af274",
+      "actual": "Nicolas Bermuglia",
+      "propuesto": "Bermuglia Nicolas",
+      "aplicar": true
+    },
+    {
+      "id": "a86bb43c-e65f-483e-ac95-f080a47a8325",
+      "actual": "Pablo Fernandez",
+      "propuesto": "Fernandez Pablo",
+      "aplicar": true
+    },
+    {
+      "id": "7ed93664-34b6-4e67-9805-f275d7c2012f",
+      "actual": "Pablo Lugo",
+      "propuesto": "Lugo Pablo",
+      "aplicar": true
+    },
+    {
+      "id": "1249aba9-5b66-43c9-9e80-1d193c739326",
+      "actual": "Ramiro Piñero",
+      "propuesto": "Piñero Ramiro",
+      "aplicar": true
+    },
+    {
+      "id": "7d353af4-f45b-405c-9dd7-5ab7e0127549",
+      "actual": "Santiago Fernandez",
+      "propuesto": "Fernandez Santiago",
+      "aplicar": true
+    },
+    {
+      "id": "9d161cf9-cc74-4b08-8674-7bf2a255b00a",
+      "actual": "Sebastian Berutti",
+      "propuesto": "Berutti Sebastian",
+      "aplicar": true
+    },
+    {
+      "id": "c7f4402a-f5f8-40cd-8fe7-60601bd96085",
+      "actual": "Sebastian Godoy",
+      "propuesto": "Godoy Sebastian",
+      "aplicar": true
+    },
+    {
+      "id": "312df52d-31e6-49f5-865b-c48bba20bee6",
+      "actual": "Silvia Dias Lourenco",
+      "propuesto": "Dias Lourenco Silvia",
+      "aplicar": true
+    },
+    {
+      "id": "0724cb20-1082-4131-a5f0-9d22a0cac0f8",
+      "actual": "Silvio Devicenzi",
+      "propuesto": "Devicenzi Silvio",
+      "aplicar": true
+    },
+    {
+      "id": "ac500d49-06e4-476c-b797-5d1c57b749ee",
+      "actual": "Tamara Gimenez",
+      "propuesto": "Gimenez Tamara",
+      "aplicar": true
+    },
+    {
+      "id": "721f079d-b021-4a45-98c6-2db38453dffe",
+      "actual": "Tomas Galvan",
+      "propuesto": "Galvan Tomas",
+      "aplicar": true
+    },
+    {
+      "id": "b0485483-1544-4444-8e84-325f462d51f1",
+      "actual": "Valentina De Tray",
+      "propuesto": "De Tray Valentina",
+      "aplicar": true
+    },
+    {
+      "id": "98ef0f1b-d4e2-49cc-84b2-80e55aad0f52",
+      "actual": "Veronica Sbarbati",
+      "propuesto": "Sbarbati Veronica",
+      "aplicar": true
+    }
+  ],
+  "dudosos_revisar_a_mano": [
+    "Marcos Lucas"
+  ]
+}

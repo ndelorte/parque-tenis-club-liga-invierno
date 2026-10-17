@@ -5,6 +5,8 @@ import { getMmActiveEdition } from "@/lib/data/mid-master"
 import { buildSeasonCalendar } from "@/lib/circuito/seasonCalendar"
 import { SeasonCalendar } from "@/components/circuito/season-calendar"
 
+export const revalidate = 60
+
 export const metadata: Metadata = {
   title: "Circuito del Parque | Parque Tenis Club",
   description: "Torneos mensuales por categoría, ranking anual y Final Master del Circuito del Parque.",

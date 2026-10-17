@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createPublicClient } from "@/lib/supabase/public"
 import type { Team, Player, TeamPlayer } from "@/lib/tournament/types"
 import type { Database } from "@/lib/supabase/types"
 
@@ -11,7 +11,7 @@ type TeamWithPlayersRow = TeamRow & {
 }
 
 export async function getTeamsByCategory(categoryId: string): Promise<Team[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase
     .from("teams")
@@ -33,7 +33,7 @@ export async function getTeamsByCategory(categoryId: string): Promise<Team[]> {
 }
 
 export async function getTeamById(id: string): Promise<Team | null> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase
     .from("teams")
@@ -57,7 +57,7 @@ export async function getTeamById(id: string): Promise<Team | null> {
 export async function getTeamsWithPlayersByCategory(
   categoryId: string,
 ): Promise<(Team & { players: (TeamPlayer & { player: Player })[] })[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase
     .from("teams")
@@ -97,7 +97,7 @@ export async function getTeamsWithPlayersByCategory(
 export async function getTeamBySlug(
   slug: string,
 ): Promise<(Team & { players: (TeamPlayer & { player: Player })[] }) | null> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase
     .from("teams")
@@ -146,7 +146,7 @@ export async function getTeamBySlugAndCategory(
   teamSlug: string,
   categoryId: string,
 ): Promise<(Team & { players: (TeamPlayer & { player: Player })[] }) | null> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data, error } = await supabase
     .from("teams")

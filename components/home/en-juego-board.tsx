@@ -18,13 +18,16 @@ function buildRows({ liga, circuito, interparque }: EnJuego): Row[] {
       figures: liga.kind === "fecha" ? [{ value: String(liga.round), label: "fecha", highlight: true }] : [],
     })
   }
-  if (circuito) {
+  if (circuito.length > 0) {
+    // Con varios torneos a la vez se muestran todos y la cantidad de
+    // categorías es la del que más tiene.
+    const categories = Math.max(...circuito.map((c) => c.categories))
     rows.push({
-      href: `/circuito-del-parque/torneos/${circuito.slug}`,
+      href: circuito.length === 1 ? `/circuito-del-parque/torneos/${circuito[0].slug}` : "/circuito-del-parque",
       identity: "circuito",
       name: "Circuito del Parque",
-      detail: circuito.title,
-      figures: circuito.categories > 0 ? [{ value: String(circuito.categories), label: "categorías" }] : [],
+      detail: circuito.map((c) => c.title).join(" - "),
+      figures: categories > 0 ? [{ value: String(categories), label: "categorías" }] : [],
     })
   }
   rows.push({

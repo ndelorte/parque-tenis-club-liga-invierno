@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createPublicClient } from "@/lib/supabase/public"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { calculateRankingPoints, type CircuitoBracketMatchResult } from "@/lib/circuito/calculateRankingPoints"
 import { selectDrawRule } from "@/lib/circuito/generateBracket"
@@ -163,7 +163,7 @@ export interface CircuitoRankingEntry {
 }
 
 export async function getCircuitRanking(editionId: string, categoryId?: string): Promise<CircuitoRankingEntry[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   let query = supabase
     .from("circuito_ranking_points")
     .select("player_id, points, players(display_name)")
@@ -203,7 +203,7 @@ export async function getAnnualCircuitRanking(
   categorySlug: string,
   beforeMonth?: number,
 ): Promise<AnnualRanking> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const query = supabase
     .from("circuito_ranking_points")
     .select(
@@ -242,7 +242,7 @@ export async function getAnnualCircuitRanking(
 // filas por respuesta de PostgREST a medida que avanza el año.
 // Categorías (fijas o agregadas a mano) con algún jugador con puntos en el año.
 export async function getCircuitoCategoriesWithRanking(year: number): Promise<RankedCategory[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data, error } = await supabase
     .from("circuito_ranking_points")
     .select("circuito_categories!inner(name, slug, type), circuito_editions!inner(year)")
