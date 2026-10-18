@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createPublicClient } from "@/lib/supabase/public"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { deriveEditionStatus, statusForMonth } from "@/lib/circuito/editionStatus"
 import type { CategoryStatusMatch } from "@/lib/circuito/categoryStatus"
@@ -11,7 +11,7 @@ const PAGE = 1000
 // deriveEditionStatus). Si una edición no tiene cuadros, queda el guardado.
 async function withDerivedStatus(editions: CircuitoEditionRow[]): Promise<CircuitoEditionRow[]> {
   if (editions.length === 0) return editions
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data: categoryRows } = await supabase
     .from("circuito_categories")
@@ -53,7 +53,7 @@ async function withDerivedStatus(editions: CircuitoEditionRow[]): Promise<Circui
 }
 
 export async function getCircuitoEditions(): Promise<CircuitoEditionRow[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data, error } = await supabase
     .from("circuito_editions")
     .select("*")
@@ -65,7 +65,7 @@ export async function getCircuitoEditions(): Promise<CircuitoEditionRow[]> {
 }
 
 export async function getCircuitoEditionBySlug(slug: string): Promise<CircuitoEditionRow | null> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data, error } = await supabase
     .from("circuito_editions")
     .select("*")
