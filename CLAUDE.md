@@ -81,8 +81,6 @@ Web real para **Parque Tenis Club** (Argentina). Secciones:
 │   ├── liga/                     # Componentes del torneo
 │   ├── interparque/               # Tabla de posiciones y partidos jugados (público)
 │   └── admin/interparque/         # Formularios del panel admin de Interparque
-├── content/
-│   └── site.ts                   # Textos y datos editables del club
 ├── proxy.ts                       # Protección de rutas /panel-liga/*, /panel-circuito/* y /panel-interparque/* (Next.js 16)
 ├── lib/
 │   ├── tournament/               # Lógica pura del torneo (sin UI)
@@ -114,8 +112,6 @@ Web real para **Parque Tenis Club** (Argentina). Secciones:
 │   │   └── admin.ts              # Server actions (service role — nunca al cliente)
 │   └── auth/
 │       └── admin.ts              # isAdminUser() — validación de rol
-├── mock/
-│   └── data.ts                   # Datos mockeados para desarrollo (Sprints 2-5)
 ├── scripts/
 │   └── import-fixture.ts
 └── product/                      # Documentación del producto
