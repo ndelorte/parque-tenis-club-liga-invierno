@@ -6,7 +6,7 @@ import { signOutInterparque } from "@/app/actions/interparque"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { PanelLogo, PanelSwitcher } from "./panel-switcher"
-import { PANELS, PANEL_LIST, PANEL_SECTIONS, type PanelKey } from "./panels"
+import { PANELS, PANEL_LIST, PANEL_SECTIONS, type PanelKey, type PanelSection } from "./panels"
 
 // Patrón elegido: cada página renderiza <AdminShell> (no el layout).
 // El layout no conoce la página, y el shell necesita cosas que solo la página
@@ -32,12 +32,14 @@ interface AdminShellProps {
   currentSection: string
   /** Página pública equivalente a lo que se está editando. Sin valor, no hay botón. */
   publicHref?: string
+  /** Secciones propias de la página, en lugar de PANEL_SECTIONS[panel] (ej. una edición de Interparque). */
+  sections?: PanelSection[]
   children: React.ReactNode
 }
 
-export function AdminShell({ panel, context, currentSection, publicHref, children }: AdminShellProps) {
+export function AdminShell({ panel, context, currentSection, publicHref, sections: sectionsProp, children }: AdminShellProps) {
   const info = PANELS[panel]
-  const sections = PANEL_SECTIONS[panel]
+  const sections = sectionsProp ?? PANEL_SECTIONS[panel]
   const currentLabel = sections.find((s) => s.key === currentSection)?.label ?? sections[0].label
   const signOutAction = SIGN_OUT[panel]
 
@@ -96,7 +98,7 @@ export function AdminShell({ panel, context, currentSection, publicHref, childre
           </summary>
           <div className="grid max-h-[70vh] gap-2 overflow-y-auto overscroll-contain border-t border-border px-3 pb-4 pt-1">
             <nav aria-label="Secciones del panel">
-              <SectionList panel={panel} current={currentSection} />
+              <SectionList sections={sections} current={currentSection} />
             </nav>
             <p className="px-3 pt-2.5 text-[13px] font-bold text-muted-foreground">Otros paneles</p>
             <ul role="list" className="grid gap-0.5">
@@ -126,7 +128,7 @@ export function AdminShell({ panel, context, currentSection, publicHref, childre
           aria-label="Secciones del panel"
           className="hidden border-r border-border py-5 pl-4 pr-3 md:sticky md:top-[76px] md:block"
         >
-          <SectionList panel={panel} current={currentSection} />
+          <SectionList sections={sections} current={currentSection} />
         </nav>
         <main
           id="contenido-panel"
@@ -140,10 +142,10 @@ export function AdminShell({ panel, context, currentSection, publicHref, childre
   )
 }
 
-function SectionList({ panel, current }: { panel: PanelKey; current: string }) {
+function SectionList({ sections, current }: { sections: PanelSection[]; current: string }) {
   return (
     <ul role="list" className="grid gap-0.5">
-      {PANEL_SECTIONS[panel].map(({ key, label, href, icon: Icon }) => (
+      {sections.map(({ key, label, href, icon: Icon }) => (
         <li key={key}>
           <Link
             href={href}

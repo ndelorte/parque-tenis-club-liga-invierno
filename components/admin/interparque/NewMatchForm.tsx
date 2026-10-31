@@ -7,10 +7,11 @@ import { PlayerSelect } from "./PlayerSelect"
 import type { InterparquePlayerRow } from "@/lib/data/interparque"
 
 interface Props {
+  editionId: string
   initialPlayers: InterparquePlayerRow[]
 }
 
-export function NewMatchForm({ initialPlayers }: Props) {
+export function NewMatchForm({ editionId, initialPlayers }: Props) {
   const [open, setOpen] = useState(false)
   const [players, setPlayers] = useState(initialPlayers)
   const [playerAId, setPlayerAId] = useState("")
@@ -26,7 +27,7 @@ export function NewMatchForm({ initialPlayers }: Props) {
   async function handleCreate() {
     setLoading(true)
     setError("")
-    const result = await createInterparqueMatch(playerAId, playerBId, matchDate)
+    const result = await createInterparqueMatch(editionId, playerAId, playerBId, matchDate)
     setLoading(false)
     if (!result.ok) {
       setError(result.error)
@@ -54,6 +55,7 @@ export function NewMatchForm({ initialPlayers }: Props) {
     <div className="rounded-lg border border-border bg-card p-4 space-y-3">
       <PlayerSelect
         label="Jugador A"
+        editionId={editionId}
         players={players}
         value={playerAId}
         onChange={setPlayerAId}
@@ -62,6 +64,7 @@ export function NewMatchForm({ initialPlayers }: Props) {
       />
       <PlayerSelect
         label="Jugador B"
+        editionId={editionId}
         players={players}
         value={playerBId}
         onChange={setPlayerBId}

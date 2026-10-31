@@ -1,7 +1,9 @@
 import {
   CalendarClock,
   CalendarDays,
+  Crown,
   ImagePlus,
+  Settings,
   ListChecks,
   Megaphone,
   PlusCircle,
@@ -56,7 +58,15 @@ export interface PanelSection {
 }
 
 // Secciones de la barra lateral. Liga usa ?seccion=; Circuito son dos rutas;
-// Interparque es una sola página, así que sus secciones son anclas.
+// Interparque: el listado de ediciones es una ruta y, dentro de una edición,
+// las secciones son anclas (ver interparqueEditionSections).
+const EDICIONES_SECTION: PanelSection = {
+  key: "ediciones",
+  label: "Ediciones",
+  href: "/panel-interparque",
+  icon: CalendarDays,
+}
+
 export const PANEL_SECTIONS: Record<PanelKey, PanelSection[]> = {
   liga: [
     { key: "resultados", label: "Resultados", href: "/panel-liga?seccion=resultados", icon: Trophy },
@@ -70,10 +80,17 @@ export const PANEL_SECTIONS: Record<PanelKey, PanelSection[]> = {
     { key: "mid-master", label: "Mid Master", href: "/panel-circuito", icon: Trophy },
     { key: "mensual", label: "Circuito mensual", href: "/panel-circuito/mensual", icon: CalendarDays },
   ],
-  interparque: [
-    { key: "nuevo-partido", label: "Nuevo partido", href: "#nuevo-partido", icon: PlusCircle },
-    { key: "partidos", label: "Partidos cargados", href: "#partidos", icon: ListChecks },
-  ],
+  interparque: [EDICIONES_SECTION],
 }
+
+// Barra lateral de la página de una edición: vuelve al listado y salta por
+// anclas a las secciones de esa misma página.
+export const INTERPARQUE_EDITION_SECTIONS: PanelSection[] = [
+  EDICIONES_SECTION,
+  { key: "nuevo-partido", label: "Nuevo partido", href: "#nuevo-partido", icon: PlusCircle },
+  { key: "partidos", label: "Partidos cargados", href: "#partidos", icon: ListChecks },
+  { key: "edicion", label: "Edición", href: "#edicion", icon: Settings },
+  { key: "campeones", label: "Campeones", href: "#campeones", icon: Crown },
+]
 
 export const LIGA_SECTION_KEYS = PANEL_SECTIONS.liga.map((s) => s.key)

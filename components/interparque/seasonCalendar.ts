@@ -1,16 +1,15 @@
-// Calendario de domingos de la temporada de Interparque — dirección "Domingos"
+// Calendario de domingos de una edición de Interparque — dirección "Domingos"
 // (product/refactor-visual/maquetas/fase-4/Opcion2-Interparque.dc.html).
 //
-// Regla deportiva ya documentada (product/reglas-interparque.md § Duración y
-// calendario): la temporada corre "desde el primer domingo de septiembre
-// hasta el último domingo de octubre". No hay en `lib/` un dato explícito de
-// "cuántas fechas tiene la temporada" ni de qué año es la temporada activa
-// (ver nota al final de este archivo) — este módulo deriva ambas cosas de
-// esa regla y de los partidos reales cargados, sin inventar fechas nuevas.
+// Cada edición define su primer domingo y cuántos domingos dura
+// (product/reglas-interparque.md § Duración y calendario, tabla
+// `interparque_editions`). Este módulo arma las fechas a partir de esos dos
+// datos; no deriva nada de los partidos cargados.
 //
-// Puramente presentacional: no toca `lib/` (instrucción explícita de esta
-// tarea) y no calcula puntaje ni resultados deportivos, solo agrupa partidos
-// ya calculados por fecha.
+// Puramente presentacional: no calcula puntaje ni resultados deportivos, solo
+// agrupa partidos ya calculados por fecha.
+
+import { editionSundays } from "@/lib/interparque/editions"
 
 export type SeasonDateStatus = "done" | "next" | "later"
 
@@ -23,84 +22,31 @@ export interface SeasonDate {
   status: SeasonDateStatus
 }
 
-function toISODateKey(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, "0")
-  const d = String(date.getDate()).padStart(2, "0")
-  return `${y}-${m}-${d}`
-}
-
-function firstSundayOnOrAfter(date: Date): Date {
-  const d = new Date(date)
-  const diff = (7 - d.getDay()) % 7
-  d.setDate(d.getDate() + diff)
-  return d
-}
-
-function lastSundayOnOrBefore(date: Date): Date {
-  const d = new Date(date)
-  d.setDate(d.getDate() - d.getDay())
-  return d
-}
-
-/** Todos los domingos entre el 1° de septiembre y el 31 de octubre de `year` (inclusive). */
-export function seasonSundays(year: number): Date[] {
-  const start = firstSundayOnOrAfter(new Date(year, 8, 1, 12))
-  const end = lastSundayOnOrBefore(new Date(year, 9, 31, 12))
-  const sundays: Date[] = []
-  const cur = new Date(start)
-  while (cur <= end) {
-    sundays.push(new Date(cur))
-    cur.setDate(cur.getDate() + 7)
-  }
-  return sundays
-}
-
-function modeYear(years: number[]): number | null {
-  if (years.length === 0) return null
-  const counts = new Map<number, number>()
-  for (const y of years) counts.set(y, (counts.get(y) ?? 0) + 1)
-  let best = years[0]
-  let bestCount = 0
-  for (const [year, count] of counts) {
-    if (count > bestCount) {
-      best = year
-      bestCount = count
-    }
-  }
-  return best
-}
-
-export interface SeasonMatchLike {
-  match_date: string | null
-  status: "scheduled" | "completed"
+export interface SeasonEditionLike {
+  start_date: string
+  sundays_count: number
 }
 
 /**
- * Arma las fechas (domingos) de la temporada activa: el año de la temporada
- * es el más frecuente entre los `match_date` de los partidos reales cargados
- * (si no hay ninguno, se usa el año actual). Una fecha queda "done" cuando ya
+ * Arma las fechas (domingos) de la edición. Una fecha queda "done" cuando ya
  * pasó (por calendario, no por si se cargó un partido ese día: si llovió y no
  * hay partido registrado, la fecha igual pasa a "jugada" al otro día); "next"
  * es la primera fecha que no pasó todavía; el resto queda "later".
  */
-export function buildSeasonCalendar(matches: SeasonMatchLike[], now: Date = new Date()): SeasonDate[] {
-  const years = matches
-    .map((m) => m.match_date)
-    .filter((d): d is string => Boolean(d))
-    .map((d) => Number.parseInt(d.slice(0, 4), 10))
-    .filter((y) => !Number.isNaN(y))
-
-  const year = modeYear(years) ?? now.getFullYear()
+export function buildSeasonCalendar(edition: SeasonEditionLike, now: Date = new Date()): SeasonDate[] {
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
-  const sundays = seasonSundays(year)
-  const doneFlags = sundays.map((date) => date < todayStart)
+  // Mediodía local: el `Date` solo se usa para mostrar día y mes sin corrimientos.
+  const sundays = editionSundays(edition.start_date, edition.sundays_count).map((key) => {
+    const [y, m, d] = key.split("-").map(Number)
+    return { key, date: new Date(y, m - 1, d, 12) }
+  })
+  const doneFlags = sundays.map(({ date }) => date < todayStart)
   const nextIndex = doneFlags.findIndex((done) => !done)
 
-  return sundays.map((date, i) => ({
+  return sundays.map(({ key, date }, i) => ({
     index: i + 1,
-    key: toISODateKey(date),
+    key,
     date,
     status: doneFlags[i] ? "done" : i === nextIndex ? "next" : "later",
   }))

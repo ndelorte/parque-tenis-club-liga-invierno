@@ -6,6 +6,8 @@ interface Props {
   players: InterparquePlayerRow[]
   page: number
   totalPages: number
+  /** Ruta de la edición, sin querystring (ej. "/interparque/1"). */
+  basePath: string
 }
 
 function playerName(players: InterparquePlayerRow[], id: string) {
@@ -28,7 +30,7 @@ const pagerLinkClasses =
 // Partidos jugados: lista plana del más nuevo al más viejo, paginada de a 8
 // con Anterior/Siguiente (sin dividir por "Fecha 1/2/3" como en el hero: el
 // usuario prefirió esto para esta sección puntual).
-export function MatchesList({ matches, players, page, totalPages }: Props) {
+export function MatchesList({ matches, players, page, totalPages, basePath }: Props) {
   if (matches.length === 0 && page === 1) {
     return (
       <p className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
@@ -56,7 +58,7 @@ export function MatchesList({ matches, players, page, totalPages }: Props) {
       {totalPages > 1 && (
         <nav aria-label="Paginación de partidos jugados" className="mt-4 flex items-center justify-between gap-3">
           {page > 1 ? (
-            <Link href={`/interparque?pagina=${page - 1}#partidos`} className={pagerLinkClasses}>
+            <Link href={`${basePath}?pagina=${page - 1}#partidos`} className={pagerLinkClasses}>
               ← Anterior
             </Link>
           ) : (
@@ -66,7 +68,7 @@ export function MatchesList({ matches, players, page, totalPages }: Props) {
             Página {page} de {totalPages}
           </span>
           {page < totalPages ? (
-            <Link href={`/interparque?pagina=${page + 1}#partidos`} className={pagerLinkClasses}>
+            <Link href={`${basePath}?pagina=${page + 1}#partidos`} className={pagerLinkClasses}>
               Siguiente →
             </Link>
           ) : (

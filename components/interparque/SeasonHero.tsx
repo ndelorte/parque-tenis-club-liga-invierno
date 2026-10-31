@@ -1,3 +1,6 @@
+import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
+import { editionLabel } from "@/lib/interparque/editions"
 import type { SeasonDate } from "./seasonCalendar"
 
 const STATUS_LABEL: Partial<Record<SeasonDate["status"], string>> = {
@@ -17,22 +20,35 @@ function fullDateLabel(date: Date) {
   return new Intl.DateTimeFormat("es-AR", { weekday: "long", day: "numeric", month: "long" }).format(date)
 }
 
-// Hero de Interparque — dirección "Domingos": el calendario de las fechas de
-// la temporada es la identidad de la sección (product/refactor-visual/maquetas/
-// fase-4/Opcion2-Interparque.dc.html, bloque .ip2-hero).
-export function SeasonHero({ seasonDates }: { seasonDates: SeasonDate[] }) {
+// Hero de una edición de Interparque — dirección "Domingos": el calendario de
+// las fechas de la edición es la identidad de la sección (product/refactor-visual/
+// maquetas/fase-4/Opcion2-Interparque.dc.html, bloque .ip2-hero).
+export function SeasonHero({ seasonDates, editionNumber }: { seasonDates: SeasonDate[]; editionNumber: number }) {
   return (
     <section className="border-b border-border bg-background">
       <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
         <div className="grid gap-4">
           <div>
+            <Link
+              href="/interparque"
+              className="mb-4 inline-flex min-h-8 items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              <ArrowLeft aria-hidden="true" className="size-4" />
+              Todas las ediciones
+            </Link>
+            <p className="mb-2 text-sm font-bold uppercase tracking-[0.08em] text-muted-foreground">
+              {editionLabel(editionNumber)}
+            </p>
             <h1 className="relative inline-block pb-2.5 font-heading text-5xl leading-[0.88] font-extrabold uppercase tracking-[0.01em] text-foreground sm:text-7xl">
               Interparque
               <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-2 w-18 bg-ball ring-1 ring-inset ring-ip-line" />
             </h1>
             <p className="mt-3 max-w-[52ch] text-base text-muted-foreground sm:text-lg">
-              Partidos de single entre alumnos del club. Hay fecha todos los domingos de
-              septiembre y octubre, y no hace falta jugarlas todas: cada partido suma.
+              Partidos de single entre alumnos del club. Hay fecha todos los domingos
+              {seasonDates.length > 0
+                ? ` — esta edición tiene ${seasonDates.length} ${seasonDates.length === 1 ? "fecha" : "fechas"},`
+                : ","} y no hace falta
+              jugarlas todas: cada partido suma.
             </p>
           </div>
 
@@ -79,7 +95,7 @@ export function SeasonHero({ seasonDates }: { seasonDates: SeasonDate[] }) {
             </>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Todavía no hay fechas cargadas para esta temporada.
+              Todavía no hay fechas cargadas para esta edición.
             </p>
           )}
         </div>

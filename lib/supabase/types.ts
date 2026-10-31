@@ -450,34 +450,66 @@ export type Database = {
           sort_order?: number
         }
       }
-      interparque_players: {
+      interparque_editions: {
         Row: {
           id: string
-          first_name: string
-          last_name: string
-          active: boolean
+          number: number
+          start_date: string
+          sundays_count: number
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
-          first_name: string
-          last_name: string
-          active?: boolean
+          number: number
+          start_date: string
+          sundays_count: number
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
+          number?: number
+          start_date?: string
+          sundays_count?: number
+          updated_at?: string
+        }
+      }
+      interparque_players: {
+        Row: {
+          id: string
+          edition_id: string
+          first_name: string
+          last_name: string
+          active: boolean
+          is_champion: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          edition_id: string
+          first_name: string
+          last_name: string
+          active?: boolean
+          is_champion?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          edition_id?: string
           first_name?: string
           last_name?: string
           active?: boolean
+          is_champion?: boolean
           updated_at?: string
         }
       }
       interparque_matches: {
         Row: {
           id: string
+          edition_id: string
           player_a_id: string
           player_b_id: string
           match_date: string | null
@@ -494,6 +526,7 @@ export type Database = {
         }
         Insert: {
           id?: string
+          edition_id: string
           player_a_id: string
           player_b_id: string
           match_date?: string | null
@@ -510,6 +543,7 @@ export type Database = {
         }
         Update: {
           id?: string
+          edition_id?: string
           player_a_id?: string
           player_b_id?: string
           match_date?: string | null

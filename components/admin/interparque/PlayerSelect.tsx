@@ -5,6 +5,7 @@ import { createInterparquePlayer } from "@/app/actions/interparque"
 import type { InterparquePlayerRow } from "@/lib/data/interparque"
 
 interface Props {
+  editionId: string
   players: InterparquePlayerRow[]
   value: string
   onChange: (playerId: string) => void
@@ -13,7 +14,7 @@ interface Props {
   label: string
 }
 
-export function PlayerSelect({ players, value, onChange, onPlayerCreated, excludeId, label }: Props) {
+export function PlayerSelect({ editionId, players, value, onChange, onPlayerCreated, excludeId, label }: Props) {
   const [adding, setAdding] = useState(false)
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
@@ -23,7 +24,7 @@ export function PlayerSelect({ players, value, onChange, onPlayerCreated, exclud
   async function handleAdd() {
     setLoading(true)
     setError("")
-    const result = await createInterparquePlayer(firstName, lastName)
+    const result = await createInterparquePlayer(editionId, firstName, lastName)
     setLoading(false)
     if (!result.ok) {
       setError(result.error)
@@ -31,6 +32,8 @@ export function PlayerSelect({ players, value, onChange, onPlayerCreated, exclud
     }
     onPlayerCreated({
       id: result.id,
+      edition_id: editionId,
+      is_champion: false,
       first_name: firstName.trim(),
       last_name: lastName.trim(),
       active: true,

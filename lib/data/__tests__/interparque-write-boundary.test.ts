@@ -5,7 +5,8 @@ import { join, extname, relative } from "path"
 // ADR-006: los puntos de interparque_matches se calculan una única vez al
 // cargar/corregir el score y nunca se editan a mano. Este test convierte
 // esa regla en un check mecánico: solo app/actions/interparque.ts puede
-// escribir interparque_matches (insert/update/delete).
+// escribir interparque_matches (insert/update/delete). Lo mismo vale para
+// interparque_editions: se escribe solo desde las server actions con guard admin.
 
 const ROOT = process.cwd()
 const ALLOWED_WRITER = "app/actions/interparque.ts"
@@ -22,7 +23,7 @@ const IGNORED_DIRS = new Set([
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx"])
 
 const WRITE_PATTERN =
-  /from\(\s*["']interparque_matches["']\s*\)[\s\S]{0,300}?\.(insert|upsert|update|delete)\(/g
+  /from\(\s*["']interparque_(?:matches|editions)["']\s*\)[\s\S]{0,300}?\.(insert|upsert|update|delete)\(/g
 
 function walk(dir: string, files: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
@@ -38,8 +39,8 @@ function walk(dir: string, files: string[] = []): string[] {
   return files
 }
 
-describe("interparque_matches write boundary", () => {
-  it("solo app/actions/interparque.ts escribe interparque_matches", () => {
+describe("interparque_matches / interparque_editions write boundary", () => {
+  it("solo app/actions/interparque.ts escribe interparque_matches e interparque_editions", () => {
     const offenders: string[] = []
 
     for (const file of walk(ROOT)) {
@@ -56,7 +57,7 @@ describe("interparque_matches write boundary", () => {
 
     expect(
       offenders,
-      `interparque_matches solo debe escribirse (insert/upsert/update/delete) desde ${ALLOWED_WRITER}, ` +
+      `interparque_matches e interparque_editions solo deben escribirse (insert/upsert/update/delete) desde ${ALLOWED_WRITER}, ` +
         `nunca calculado a mano en otro archivo. Ofensores: ${offenders.join(", ") || "ninguno"}`,
     ).toEqual([])
   })

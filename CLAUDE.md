@@ -66,7 +66,8 @@ Web real para **Parque Tenis Club** (Argentina). Secciones:
 │   │   ├── [season]/equipos/[catSlug]/[teamSlug]/page.tsx
 │   │   └── reglamento/page.tsx
 │   ├── interparque/              # Sección Interparque
-│   │   └── page.tsx              # Reglas + tabla + partidos jugados
+│   │   ├── page.tsx              # Selector de ediciones
+│   │   └── [edicion]/page.tsx    # Reglas + tabla + partidos jugados de una edición
 │   ├── panel-liga/                # Panel admin de Liga (protegido por proxy.ts)
 │   │   ├── login/page.tsx
 │   │   ├── page.tsx
@@ -74,7 +75,8 @@ Web real para **Parque Tenis Club** (Argentina). Secciones:
 │   ├── panel-circuito/            # Panel admin de Circuito del Parque / Mid Master
 │   └── panel-interparque/        # Panel admin Interparque (protegido por proxy.ts)
 │       ├── login/page.tsx
-│       └── page.tsx
+│       ├── page.tsx              # Listado de ediciones + alta
+│       └── [edicion]/page.tsx    # Partidos, edición y campeones de una edición
 ├── components/
 │   ├── ui/                       # shadcn/ui base
 │   ├── layout/                   # Navbar, Footer
@@ -107,7 +109,7 @@ Web real para **Parque Tenis Club** (Argentina). Secciones:
 │   │   ├── series.ts
 │   │   ├── standings.ts
 │   │   ├── playoffs.ts
-│   │   └── interparque/          # Lecturas de interparque_players / interparque_matches
+│   │   └── interparque/          # Lecturas de interparque_editions / _players / _matches
 │   ├── supabase/                 # Clientes Supabase tipados
 │   │   ├── client.ts             # Browser (anon key)
 │   │   ├── server.ts             # Server components (anon key + RLS)
@@ -162,7 +164,8 @@ No mostrar teléfonos en vistas públicas. No commitear `.env`. No exponer `SUPA
 | `/ligas-invierno-verano/[season]/categorias/[slug]` | Tabla, fixture y equipos de categoría en esa edición |
 | `/ligas-invierno-verano/[season]/equipos/[catSlug]/[teamSlug]` | Página de equipo con historial en esa edición |
 | `/ligas-invierno-verano/reglamento` | Reglamento resumido |
-| `/interparque` | Nueva area de partidos entre alumnos |
+| `/interparque` | Selector de ediciones de Interparque (estado, fechas, campeones) |
+| `/interparque/[edicion]` | Una edición (número: `/interparque/1`): fechas, reglas, tabla y partidos jugados |
 | `/circuito-del-parque` | Landing: torneos mensuales, acceso a ranking y Final Master |
 | `/circuito-del-parque/torneos/[edition]` | Categorías de una edición mensual |
 | `/circuito-del-parque/torneos/[edition]/[categoria]` | Cuadro principal + repechaje de una categoría |
@@ -191,7 +194,8 @@ Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]
 | `/panel-circuito/mensual/[editionSlug]` | Categorías de una edición mensual |
 | `/panel-circuito/mensual/[editionSlug]/[categorySlug]` | Inscripción de participantes, generar cuadro, carga de resultados |
 | `/panel-interparque/login` | Login con Supabase Auth (mismo rol admin) |
-| `/panel-interparque` | Dashboard: alta de jugadores, carga y edición de partidos/resultados |
+| `/panel-interparque` | Listado de ediciones + alta de edición nueva |
+| `/panel-interparque/[edicion]` | Alta de jugadores, carga y edición de partidos/resultados, fechas de la edición y campeones |
 
 Rutas viejas `/panel-parque/*` y `/panel-master/*` quedan como redirects 301 (ver `proxy.ts`) — no reintroducirlas.
 

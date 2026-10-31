@@ -23,7 +23,15 @@ separación por niveles todavía (ver OQ-IP-03 en `open-questions.md`).
 
 ## Duración y calendario
 
-- Desde el primer domingo de septiembre hasta el último domingo de octubre.
+- Interparque tiene **ediciones** (1ra, 2da, 3ra...). Cada edición define en el
+  panel su primer domingo y la cantidad de domingos que dura; no hay un
+  calendario fijo. La 1ra edición fue de septiembre a octubre de 2026
+  (desde el primer domingo de septiembre, 8 domingos).
+- El estado de la edición se deriva de esas fechas: "Próxima" antes del primer
+  domingo, "En juego" hasta el último domingo inclusive, "Finalizada" después.
+- Cada edición arranca de cero: sus propios jugadores, partidos y tabla.
+- El organizador marca a los campeones de la edición desde el panel (puede
+  haber más de uno); se muestran con una corona en la tabla y en el selector.
 - No es obligatorio jugar todas las fechas — cuantas más se juegan, más
   oportunidad de sumar puntos.
 - Hay fecha todos los domingos, en horario a convenir.

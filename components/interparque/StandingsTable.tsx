@@ -1,3 +1,4 @@
+import { Crown } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { InterparqueStandingRow } from "@/lib/interparque/calculateInterparqueStandings"
 import { describePlayedDates, playerDots, type PlayerDateDot, type SeasonDate } from "./seasonCalendar"
@@ -6,12 +7,14 @@ interface Props {
   standings: InterparqueStandingRow[]
   seasonDates: SeasonDate[]
   participation: Map<string, Set<string>>
+  /** Ids de los jugadores marcados como campeones de la edición. */
+  championIds?: Set<string>
 }
 
 // Tabla de posiciones — dirección "Domingos": 8 puntos por jugador muestran
 // qué fechas jugó, porque no es obligatorio jugarlas todas (ver
 // product/refactor-visual/maquetas/fase-4/Opcion2-Interparque.dc.html, .ip2-tbl).
-export function StandingsTable({ standings, seasonDates, participation }: Props) {
+export function StandingsTable({ standings, seasonDates, participation, championIds }: Props) {
   if (standings.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
@@ -49,6 +52,13 @@ export function StandingsTable({ standings, seasonDates, participation }: Props)
                   <TableCell className="align-middle text-muted-foreground">{i + 1}</TableCell>
                   <TableCell className="align-middle font-medium text-foreground">
                     <span>{row.displayName}</span>
+                    {championIds?.has(row.playerId) && (
+                      <Crown
+                        role="img"
+                        aria-label="Campeón"
+                        className="ml-1.5 inline size-4 align-[-2px] fill-ball text-ip-line"
+                      />
+                    )}
                     {seasonDates.length > 0 && (
                       <SeasonDots dots={dots} className="mt-1 flex sm:hidden" />
                     )}

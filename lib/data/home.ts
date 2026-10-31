@@ -3,7 +3,7 @@ import { getCategoriesForTournament } from "@/lib/data/categories"
 import { getRoundsWithSeries } from "@/lib/data/series"
 import { getCircuitoEditions } from "@/lib/data/circuito/editions"
 import { getCircuitoCategoriesForEdition } from "@/lib/data/circuito/categories"
-import { getInterparqueMatches, getInterparquePlayers } from "@/lib/data/interparque"
+import { getInterparqueMatches, getInterparquePlayers, getLatestInterparqueEdition } from "@/lib/data/interparque"
 import {
   buildInterparqueEnJuego,
   buildLigaEnJuego,
@@ -22,12 +22,15 @@ export type EnJuego = {
 
 // Datos del tablero "En juego" de la home. Solo lecturas existentes.
 export async function getEnJuego(): Promise<EnJuego> {
-  const [tournaments, editions, players, matches] = await Promise.all([
+  const [tournaments, editions, interparqueEdition] = await Promise.all([
     getAllTournaments(),
     getCircuitoEditions(),
-    getInterparquePlayers(),
-    getInterparqueMatches(),
+    getLatestInterparqueEdition(),
   ])
+  // Interparque: la última edición; sin ediciones, el tablero muestra ceros.
+  const [players, matches] = interparqueEdition
+    ? await Promise.all([getInterparquePlayers(interparqueEdition.id), getInterparqueMatches(interparqueEdition.id)])
+    : [[], []]
 
   const active = tournaments.find((t) => t.status === "active")
   const activeRounds = active

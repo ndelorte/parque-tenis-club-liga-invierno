@@ -261,11 +261,32 @@ Módulo aislado (ver ADR-006) — jugadores y partidos propios, sin relación
 con `players`/`teams` de Liga Invierno. Standings calculados en vivo desde
 `interparque_matches`, sin snapshot.
 
-### interparque_players
+### interparque_editions
+
+Una fila por edición (migración `012_interparque_ediciones.sql`). El estado
+(próxima / en juego / finalizada) no se guarda: se deriva de las fechas
+(`lib/interparque/editions.ts`). Lectura pública; escritura solo por service
+role desde `app/actions/interparque.ts`.
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
 | id | uuid PK | |
+| number | integer unique | > 0. La etiqueta sale del número (1ra edición, 2da edición...) |
+| start_date | date | Primer domingo (check: tiene que ser domingo) |
+| sundays_count | integer | 1 a 52 domingos |
+| created_at | timestamptz | |
+| updated_at | timestamptz | |
+
+### interparque_players
+
+Cada edición arranca de cero: una persona que juega dos ediciones tiene una
+fila por edición.
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | |
+| edition_id | uuid FK → interparque_editions | not null, on delete cascade |
+| is_champion | boolean | Default false. Puede haber varios campeones por edición |
 | first_name | text | |
 | last_name | text | |
 | active | boolean | Default true |
@@ -277,6 +298,7 @@ con `players`/`teams` de Liga Invierno. Standings calculados en vivo desde
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
 | id | uuid PK | |
+| edition_id | uuid FK → interparque_editions | not null, on delete cascade |
 | player_a_id | uuid FK → interparque_players | |
 | player_b_id | uuid FK → interparque_players | |
 | match_date | date nullable | |
