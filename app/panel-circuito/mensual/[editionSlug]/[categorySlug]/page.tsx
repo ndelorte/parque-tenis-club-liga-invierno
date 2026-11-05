@@ -90,6 +90,8 @@ export default async function CircuitoCategoryPage({
             participantSeeds={participantSeeds}
             editionSlug={editionSlug}
             categorySlug={categorySlug}
+            exportTitle={edition.name}
+            exportSubtitle={category.name}
             format={format}
           />
 
@@ -120,6 +122,8 @@ export default async function CircuitoCategoryPage({
               participantSeeds={participantSeeds}
               editionSlug={editionSlug}
               categorySlug={categorySlug}
+            exportTitle={edition.name}
+            exportSubtitle={category.name}
               format={format}
             />
           </section>
