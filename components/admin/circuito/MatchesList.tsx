@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { buildBracketTree } from "@/lib/circuito/bracketTree"
 import type { DrawFormatKind } from "@/lib/circuito/types"
 import { AdminBracketTree, type Reorder } from "./AdminBracketTree"
+import { ExportBracketButton } from "./ExportBracketButton"
 
 export interface CircuitoMatchView {
   id: string
@@ -37,6 +38,8 @@ interface Props {
   participantSeeds: Record<string, number | null>
   editionSlug: string
   categorySlug: string
+  exportTitle?: string
+  exportSubtitle?: string
   format: DrawFormatKind | null // null = cuadro importado: se asume eliminación directa
 }
 
@@ -278,6 +281,8 @@ export function MatchesList({
   participantSeeds,
   editionSlug,
   categorySlug,
+  exportTitle,
+  exportSubtitle,
   format,
 }: Props) {
   const [reordering, setReordering] = useState(false)
@@ -468,6 +473,16 @@ export function MatchesList({
       )}
 
       {listMatches.length > 0 && grouped(listMatches, true)}
+
+      {tree && exportTitle && (
+        <ExportBracketButton
+          tree={tree}
+          title={exportTitle}
+          subtitle={part === "repechaje" ? `${exportSubtitle ?? ""} · Repechaje` : (exportSubtitle ?? "")}
+          championLabel={part === "repechaje" ? "Ganó el repechaje" : "Campeón"}
+          fileName={`${categorySlug}-${part}`}
+        />
+      )}
 
       {tree && (
         <AdminBracketTree
