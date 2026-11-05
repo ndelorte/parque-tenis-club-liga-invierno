@@ -109,69 +109,65 @@ export async function renderBracketJpeg({ tree, title, subtitle, championLabel, 
   ctx.fillRect(0, 0, W, H)
   // Franja de polvo de ladrillo arriba
   ctx.fillStyle = C.clay
-  ctx.fillRect(0, 0, W, 14)
+  ctx.fillRect(0, 0, W, 10)
 
-  // ---- Encabezado
-  const pad = 56
-  const logoSize = format === "square" ? 96 : 120
-  const headTop = 52
+  // ---- Encabezado compacto (una sola franja con logo + textos)
+  const pad = 32
+  const logoSize = format === "square" ? 64 : 76
+  const headTop = 26
   if (logo) ctx.drawImage(logo, pad, headTop, logoSize, logoSize)
-  const textX = pad + (logo ? logoSize + 28 : 0)
+  const textX = pad + (logo ? logoSize + 20 : 0)
   const textW = W - textX - pad
   ctx.textBaseline = "alphabetic"
   ctx.fillStyle = C.clayLight
-  ctx.font = `700 26px ${heading}`
-  ctx.fillText("CIRCUITO DEL PARQUE", textX, headTop + 30)
+  ctx.font = `700 20px ${heading}`
+  ctx.fillText("PARQUE TENIS CLUB · CIRCUITO DEL PARQUE", textX, headTop + 20)
   ctx.fillStyle = C.boardFg
-  const titleSize = fitFont(ctx, title.toUpperCase(), textW, "800", format === "square" ? 52 : 60, heading, 30)
-  ctx.fillText(title.toUpperCase(), textX, headTop + 30 + titleSize)
+  const headLine = `${title} · ${subtitle}`.toUpperCase()
+  const titleSize = fitFont(ctx, headLine, textW, "800", format === "square" ? 42 : 48, heading, 26)
+  ctx.fillText(title.toUpperCase(), textX, headTop + 22 + titleSize)
+  const titleW = ctx.measureText(`${title.toUpperCase()} · `).width
   ctx.fillStyle = C.ball
-  const subSize = fitFont(ctx, subtitle.toUpperCase(), textW, "700", format === "square" ? 34 : 40, heading, 22)
-  ctx.fillText(subtitle.toUpperCase(), textX, headTop + 30 + titleSize + subSize + 6)
+  ctx.fillText(subtitle.toUpperCase(), textX + titleW, headTop + 22 + titleSize)
 
-  const headerBottom = Math.max(headTop + logoSize, headTop + 30 + titleSize + subSize + 6) + 36
+  const headerBottom = Math.max(headTop + logoSize, headTop + 22 + titleSize) + 18
 
-  // ---- Pie
-  const footerH = 64
-  ctx.fillStyle = "rgba(244, 246, 242, 0.7)"
-  ctx.font = `600 22px ${sans}`
-  ctx.textAlign = "center"
-  ctx.fillText("Parque Tenis Club", W / 2, H - 34)
-  ctx.textAlign = "left"
-
-  // ---- Cuadro: se diseña en unidades "naturales" y se escala para que entre.
+  // ---- Cuadro: se diseña en unidades "naturales" y se escala para ocupar
+  // todo el ancho; después se reparte el alto sobrante entre los partidos.
+  // El campeón va debajo de la final (no en otra columna) para ganar ancho.
   const rounds = tree.rounds
-  const R = rounds.length
+  const R = Math.max(rounds.length, 1)
   const n1 = Math.max(rounds[0]?.matches.length ?? 1, 1)
   const dense = n1 >= 8
   const sideH = dense ? 28 : 34
   const cardH = sideH * 2
-  const slot = dense ? 72 : 92
-  const gap = 34
-  const champW = 230
-  const headH = 44
-  const naturalH = headH + n1 * slot
+  const gap = 26
+  const headH = 40
+  const champGap = 22
+  const champH = dense ? 104 : 116
+  const minColW = 165
+  const minSlot = cardH + 8
 
   const areaX = pad
   const areaY = headerBottom
   const areaW = W - pad * 2
-  const areaH = H - headerBottom - footerH
+  const areaH = H - headerBottom - pad
 
-  let s = Math.min(areaH / naturalH, 2)
-  let colW = (areaW / s - champW - R * gap) / R
-  if (colW < 170) {
-    colW = 170
-    s = Math.min(s, areaW / (R * (colW + gap) + champW))
-  }
-  colW = Math.min(colW, 330)
-  const contentW = R * (colW + gap) + champW
+  const widthFor = (cw: number) => R * cw + (R - 1) * gap
+  // Alto mínimo: los partidos de 1ª ronda + lugar para el campeón bajo la final.
+  const minBodyH = Math.max(n1 * minSlot, cardH + 2 * (champGap + champH))
+  let s = Math.min(areaW / widthFor(minColW), (areaH) / (headH + minBodyH), 2.6)
+  const colW = Math.min((areaW / s - (R - 1) * gap) / R, 340)
+  const bodyH = Math.max(areaH / s - headH, minBodyH)
+  s = Math.min(s, areaH / (headH + bodyH))
+  const contentW = widthFor(colW)
+  const naturalH = headH + bodyH
 
   ctx.save()
   ctx.translate(areaX + (areaW - contentW * s) / 2, areaY + (areaH - naturalH * s) / 2)
   ctx.scale(s, s)
 
   const bodyTop = headH
-  const bodyH = n1 * slot
   const colX = (ri: number) => ri * (colW + gap)
   const centerY = (ri: number, i: number) => {
     const n = rounds[ri].matches.length
@@ -186,8 +182,8 @@ export async function renderBracketJpeg({ tree, title, subtitle, championLabel, 
     ctx.fillStyle = C.clay
     ctx.fillRect(x, headH - 8, w, 3)
   }
+  ctx.textBaseline = "alphabetic"
   rounds.forEach((round, ri) => roundTitle(round.label, colX(ri), colW))
-  roundTitle(championLabel, colX(R), champW)
 
   // Conectores
   ctx.strokeStyle = C.line
@@ -213,13 +209,14 @@ export async function renderBracketJpeg({ tree, title, subtitle, championLabel, 
       ctx.stroke()
     })
   }
-  if (R > 0) {
-    const y = centerY(R - 1, 0)
-    ctx.beginPath()
-    ctx.moveTo(colX(R - 1) + colW, y)
-    ctx.lineTo(colX(R), y)
-    ctx.stroke()
-  }
+  // Final → campeón (hacia abajo, en la misma columna)
+  const finalY = rounds.length > 0 ? centerY(rounds.length - 1, 0) : bodyTop + bodyH / 2
+  const champX = colX(R - 1)
+  const champY = finalY + cardH / 2 + champGap
+  ctx.beginPath()
+  ctx.moveTo(champX + colW / 2, finalY + cardH / 2)
+  ctx.lineTo(champX + colW / 2, champY)
+  ctx.stroke()
 
   // Partidos
   const nameSize = dense ? 15 : 17
@@ -283,27 +280,28 @@ export async function renderBracketJpeg({ tree, title, subtitle, championLabel, 
 
   // Campeón
   {
-    const x = colX(R)
-    const h = dense ? 120 : 140
-    const y = (R > 0 ? centerY(R - 1, 0) : bodyTop + bodyH / 2) - h / 2
-    roundRect(ctx, x, y, champW, h, 8)
+    const x = champX
+    const y = champY
+    const w = colW
+    const h = champH
+    roundRect(ctx, x, y, w, h, 8)
+    ctx.textBaseline = "alphabetic"
     if (tree.champion) {
       ctx.fillStyle = C.boardDeep
       ctx.fill()
       ctx.lineWidth = 3
       ctx.strokeStyle = C.ball
       ctx.stroke()
-      ctx.textBaseline = "alphabetic"
       ctx.fillStyle = C.ball
       ctx.font = `700 18px ${heading}`
-      ctx.fillText("🏆", x + 18, y + 34)
+      ctx.fillText(`🏆 ${championLabel.toUpperCase()}`, x + 16, y + 30)
       ctx.fillStyle = C.boardFg
-      const size = fitFont(ctx, tree.champion.name, champW - 36, "800", 34, heading, 18)
-      ctx.fillText(tree.champion.name, x + 18, y + 40 + size)
+      const size = fitFont(ctx, tree.champion.name, w - 32, "800", 32, heading, 18)
+      ctx.fillText(tree.champion.name, x + 16, y + 34 + size)
       if (tree.finalScore) {
         ctx.fillStyle = "rgba(244, 246, 242, 0.8)"
-        ctx.font = `500 16px ${sans}`
-        ctx.fillText(`Final: ${tree.finalScore}`, x + 18, y + h - 18)
+        ctx.font = `500 15px ${sans}`
+        ctx.fillText(`Final: ${tree.finalScore}`, x + 16, y + h - 14)
       }
     } else {
       ctx.setLineDash([8, 6])
@@ -311,10 +309,12 @@ export async function renderBracketJpeg({ tree, title, subtitle, championLabel, 
       ctx.strokeStyle = C.line
       ctx.stroke()
       ctx.setLineDash([])
-      ctx.textBaseline = "middle"
+      ctx.fillStyle = C.ball
+      ctx.font = `700 18px ${heading}`
+      ctx.fillText(championLabel.toUpperCase(), x + 16, y + 34)
       ctx.fillStyle = C.boardFg
       ctx.font = `800 30px ${heading}`
-      ctx.fillText("POR DEFINIR", x + 18, y + h / 2)
+      ctx.fillText("POR DEFINIR", x + 16, y + 74)
     }
   }
   ctx.restore()
