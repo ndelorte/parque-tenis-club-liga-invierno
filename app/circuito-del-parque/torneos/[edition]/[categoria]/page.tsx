@@ -3,7 +3,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { getCircuitoEditionBySlug } from "@/lib/data/circuito/editions"
 import { getCircuitoCategoryBySlug } from "@/lib/data/circuito/categories"
-import { getCircuitoParticipants } from "@/lib/data/circuito/participants"
+import { getCircuitoParticipants, getParticipantShownNames } from "@/lib/data/circuito/participants"
 import { getCircuitoMatches, refreshRepechajeStructure } from "@/lib/data/circuito/matches"
 import type { CircuitoMatchRow, CircuitoParticipantRow } from "@/lib/data/circuito/types"
 import type { CircuitoCategoryRow } from "@/lib/data/circuito/types"
@@ -48,8 +48,11 @@ function championWord(category: Pick<CircuitoCategoryRow, "type" | "name">): str
   return category.name.includes("Damas") ? "Campeona" : "Campeón"
 }
 
-function toParticipantsMap(participants: CircuitoParticipantRow[]): Record<string, BracketTreeParticipant> {
-  return Object.fromEntries(participants.map((p) => [p.id, { name: p.display_name, seed: p.seed }]))
+function toParticipantsMap(
+  participants: CircuitoParticipantRow[],
+  shownNames: Record<string, string>,
+): Record<string, BracketTreeParticipant> {
+  return Object.fromEntries(participants.map((p) => [p.id, { name: shownNames[p.id] ?? p.display_name, seed: p.seed }]))
 }
 
 // Re-numera round_number para que un tramo del cuadro (p. ej. semis+final, a
@@ -161,7 +164,9 @@ export default async function CircuitoTorneoCategoriaPage({
     getCircuitoParticipants(category.id),
     getCircuitoMatches(category.id),
   ])
-  const names = toParticipantsMap(participants)
+  // En dobles se muestra solo "Apellido / Apellido".
+  const shownNames = await getParticipantShownNames(participants, category.type)
+  const names = toParticipantsMap(participants, shownNames)
   const circuitoParticipants: CircuitoParticipant[] = participants.map((p) => ({ id: p.id, seed: p.seed }))
 
   const grandSlam = isGrandSlamMonth(edition.month)

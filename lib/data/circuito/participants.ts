@@ -5,6 +5,7 @@ import { findSimilarPlayers, SimilarPlayersError } from "@/lib/players/similarNa
 import { mergePlayers } from "@/lib/players/mergePlayers"
 import { recalculateAndPersistCircuitRanking } from "./ranking"
 import { assertBracketResettable, regenerateCircuitoBracket } from "./bracket"
+import { pairDisplayName } from "@/lib/circuito/pairDisplayName"
 import type { CircuitoParticipantRow } from "./types"
 
 type PlayerRow = Database["public"]["Tables"]["players"]["Row"]
@@ -72,6 +73,34 @@ export async function getCircuitoParticipants(categoryId: string): Promise<Circu
 
   if (error || !data) return []
   return data
+}
+
+// Nombre a mostrar de cada participante, por id. En dobles es solo la pareja de
+// apellidos ("Michel / Toro", ver pairDisplayName); en single, el display_name
+// completo tal cual. Es solo de presentación: no toca el display_name guardado.
+export async function getParticipantShownNames(
+  participants: CircuitoParticipantRow[],
+  categoryType: string,
+): Promise<Record<string, string>> {
+  if (categoryType !== "dobles") return Object.fromEntries(participants.map((p) => [p.id, p.display_name]))
+
+  const playerIds = [...new Set(participants.flatMap((p) => [p.player_id, p.player_2_id]).filter((id): id is string => !!id))]
+  const byId = new Map<string, string>()
+  if (playerIds.length > 0) {
+    const supabase = createPublicClient()
+    const { data } = await supabase.from("players").select("*").in("id", playerIds)
+    for (const pl of (data ?? []) as PlayerRow[]) byId.set(pl.id, pl.display_name)
+  }
+  return Object.fromEntries(
+    participants.map((p) => [
+      p.id,
+      pairDisplayName({
+        displayName: p.display_name,
+        player1Name: p.player_id ? byId.get(p.player_id) : null,
+        player2Name: p.player_2_id ? byId.get(p.player_2_id) : null,
+      }),
+    ]),
+  )
 }
 
 // El participante se vincula a un jugador real de `players` — el ranking

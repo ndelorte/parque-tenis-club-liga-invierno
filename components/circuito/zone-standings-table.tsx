@@ -54,7 +54,7 @@ export function ZoneStandingsTable({
           {rows.map((row) => (
             <tr key={row.id} className="border-b border-border last:border-0">
               <td
-                className={`px-3 py-2.5 text-left tabular-nums ${row.qualifies ? "font-bold text-foreground shadow-[inset_4px_0_0_var(--color-clay)]" : "text-foreground"}`}
+                className={`break-words px-3 py-2.5 text-left tabular-nums ${row.qualifies ? "font-bold text-foreground shadow-[inset_4px_0_0_var(--color-clay)]" : "text-foreground"}`}
               >
                 {row.name}
               </td>
@@ -69,7 +69,7 @@ export function ZoneStandingsTable({
       <ul aria-label={`Partidos de la ${zoneName}`} className="m-0 flex list-none flex-col gap-1.5 p-0">
         {matches.map((m) => (
           <li key={m.id} className="flex justify-between gap-3 border-b border-dashed border-border py-2 text-sm">
-            <span>
+            <span className="min-w-0 break-words">
               <strong className="font-semibold text-foreground">{m.winnerName}</strong> le ganó a {m.loserName}
             </span>
             <span className="shrink-0 font-semibold tabular-nums text-foreground">{m.score}</span>

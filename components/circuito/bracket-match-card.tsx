@@ -33,7 +33,7 @@ function Side({
   isWalkover: boolean
   compact?: boolean
 }) {
-  const height = compact ? "min-h-11" : "h-[34px]"
+  const height = compact ? "min-h-11" : "min-h-[34px] py-0.5"
   return (
     <div
       className={`flex items-center gap-2 border-t border-border px-3 text-sm first:border-t-0 ${height} ${
@@ -43,7 +43,7 @@ function Side({
       {side ? (
         <>
           <span className="w-5 shrink-0 tabular-nums text-xs text-muted-foreground">{side.seed ? `[${side.seed}]` : ""}</span>
-          <span className="min-w-0 flex-1 truncate">{side.name}</span>
+          <span className="min-w-0 flex-1 break-words leading-tight">{side.name}</span>
           {isWinner && (
             <span className="shrink-0 whitespace-nowrap text-sm font-semibold tabular-nums">
               {isWalkover ? "W.O." : score}
@@ -69,7 +69,7 @@ export function BracketMatchCard({ match, compact }: Props) {
       <div aria-hidden="true">
         <Side side={a} isWinner={!!winnerId && winnerId === a?.id} score={score} isWalkover={isWalkover} compact={compact} />
         {isBye ? (
-          <div className={`flex items-center border-t border-border px-3 text-sm italic text-muted-foreground ${compact ? "min-h-11" : "h-[34px]"}`}>
+          <div className={`flex items-center border-t border-border px-3 text-sm italic text-muted-foreground ${compact ? "min-h-11" : "min-h-[34px]"}`}>
             Pase libre
           </div>
         ) : (

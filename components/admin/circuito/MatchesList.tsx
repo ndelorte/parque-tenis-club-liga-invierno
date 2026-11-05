@@ -193,7 +193,7 @@ function MatchRow({
             <div className="flex items-center gap-2">
               {nameCell(
                 match.participant_a_id,
-                `truncate ${match.winner_id === match.participant_a_id ? "font-semibold text-foreground" : "text-muted-foreground"}`,
+                `break-words ${match.winner_id === match.participant_a_id ? "font-semibold text-foreground" : "text-muted-foreground"}`,
               )}
               {isPlayed ? (
                 <span className="shrink-0 font-mono text-xs font-semibold text-foreground">{match.score}</span>
@@ -202,7 +202,7 @@ function MatchRow({
               )}
               {nameCell(
                 match.participant_b_id,
-                `truncate text-right ${match.winner_id === match.participant_b_id ? "font-semibold text-foreground" : "text-muted-foreground"}`,
+                `break-words text-right ${match.winner_id === match.participant_b_id ? "font-semibold text-foreground" : "text-muted-foreground"}`,
               )}
             </div>
           )}

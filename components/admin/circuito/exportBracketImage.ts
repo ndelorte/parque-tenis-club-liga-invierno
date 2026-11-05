@@ -64,6 +64,43 @@ function fit(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): str
   return `${t.trimEnd()}…`
 }
 
+// Nombre de un participante dentro de una caja de ancho maxWidth. Single: se
+// recorta con "…" como siempre. Pareja de dobles ("Michel / Toro"): primero se
+// achica la fuente (de `size` hasta `min`); si aun así no entra, se acorta cada
+// apellido por separado para que se vean los dos (nunca "Michel / To…" sin el
+// compañero). Deja ctx.font puesto y devuelve el texto a dibujar.
+export function fitName(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  weight: string | number,
+  size: number,
+  family: string,
+  min: number,
+): string {
+  ctx.font = `${weight} ${size}px ${family}`
+  if (!text.includes(" / ")) return fit(ctx, text, maxWidth)
+  let s = size
+  while (s > min && ctx.measureText(text).width > maxWidth) {
+    s -= 1
+    ctx.font = `${weight} ${s}px ${family}`
+  }
+  if (ctx.measureText(text).width <= maxWidth) return text
+  const [left, ...rest] = text.split(" / ")
+  const right = rest.join(" / ")
+  const slashW = ctx.measureText(" / ").width
+  const budget = Math.max(maxWidth - slashW, 0)
+  const leftW = ctx.measureText(left).width
+  const rightW = ctx.measureText(right).width
+  // Reparte el ancho: el apellido corto conserva lo que necesita y el otro
+  // se queda con el resto (con un mínimo de la mitad para cada uno).
+  let leftBudget = budget / 2
+  let rightBudget = budget / 2
+  if (leftW < leftBudget) rightBudget = budget - leftW
+  else if (rightW < rightBudget) leftBudget = budget - rightW
+  return `${fit(ctx, left, leftBudget)} / ${fit(ctx, right, rightBudget)}`
+}
+
 // Achica la fuente hasta que el texto entre (para títulos largos).
 function fitFont(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, weight: string, size: number, family: string, min: number) {
   let s = size
@@ -180,8 +217,8 @@ function drawChampionCard(
     ctx.font = `700 18px ${f.heading}`
     ctx.fillText(`🏆 ${label.toUpperCase()}`, x + 16, y + 30)
     ctx.fillStyle = C.boardFg
-    const size = fitFont(ctx, champion.name, w - 32, "800", 32, f.heading, 18)
-    ctx.fillText(champion.name, x + 16, y + 34 + size)
+    const nameText = fitName(ctx, champion.name, w - 32, "800", 32, f.heading, 14)
+    ctx.fillText(nameText, x + 16, y + 34 + parseInt(ctx.font.match(/(\d+)px/)?.[1] ?? "32", 10))
     if (finalScore) {
       ctx.fillStyle = "rgba(244, 246, 242, 0.8)"
       ctx.font = `500 15px ${f.sans}`
@@ -207,11 +244,12 @@ function drawChampionCard(
 
 const BR = { gap: 26, headH: 40, champGap: 22, minColW: 165, maxColW: 340 }
 
-function bracketDims(tree: BracketTree) {
+function bracketDims(tree: BracketTree, stacked = false) {
   const R = Math.max(tree.rounds.length, 1)
   const n1 = Math.max(tree.rounds[0]?.matches.length ?? 1, 1)
   const dense = n1 >= 8
-  const sideH = dense ? 28 : 34
+  // stacked: parejas de dobles en 2 líneas (un apellido arriba del otro).
+  const sideH = stacked ? (dense ? 40 : 46) : dense ? 28 : 34
   const cardH = sideH * 2
   const champH = dense ? 104 : 116
   const minSlot = cardH + 8
@@ -240,13 +278,42 @@ function drawBracket(
 ) {
   const { sans } = opts.fonts
   const rounds = tree.rounds
-  const { R, dense, sideH, cardH, champH, minBodyH, widthFor } = bracketDims(tree)
   const { gap, headH, champGap } = BR
-
-  let s = Math.min(area.w / widthFor(BR.minColW), area.h / (headH + minBodyH), opts.maxScale)
-  const colW = Math.min((area.w / s - (R - 1) * gap) / R, BR.maxColW)
-  const bodyH = Math.min(Math.max(area.h / s - headH, minBodyH), minBodyH * (opts.maxStretch ?? Infinity))
-  s = Math.min(s, area.h / (headH + bodyH))
+  const layout = (stacked: boolean) => {
+    const d = bracketDims(tree, stacked)
+    let s = Math.min(area.w / d.widthFor(BR.minColW), area.h / (headH + d.minBodyH), opts.maxScale)
+    const colW = Math.min((area.w / s - (d.R - 1) * gap) / d.R, BR.maxColW)
+    const bodyH = Math.min(Math.max(area.h / s - headH, d.minBodyH), d.minBodyH * (opts.maxStretch ?? Infinity))
+    s = Math.min(s, area.h / (headH + bodyH))
+    return { ...d, s, colW, bodyH }
+  }
+  const nameSizeFor = (dense: boolean) => (dense ? 15 : 17)
+  const winnerOf = (m: BracketTreeMatch) => (m.winnerId && m.a?.id === m.winnerId ? m.a : m.b?.id === m.winnerId ? m.b : null)
+  // Lugar para el nombre en una fila: caja − margen − seed − (resultado, en el ganador).
+  const nameRoom = (side: BracketTreeSide, m: BracketTreeMatch, colW: number, nameSize: number) => {
+    let room = colW - 12 - (side.seed ? 22 : 0) - 10
+    if (winnerOf(m)?.id === side.id) {
+      ctx.font = `700 ${nameSize - 1}px ${sans}`
+      room -= ctx.measureText(m.isWalkover ? "W.O." : (m.score ?? "")).width + 10
+    }
+    return room
+  }
+  // Si alguna pareja de dobles no entra en una línea con letra de 13px o
+  // más, todo el cuadro pasa a cajas más altas con la pareja en 2 líneas.
+  const first = layout(false)
+  const needsStack = rounds.some((round) =>
+    round.matches.some((m) =>
+      [m.a, m.b].some((side) => {
+        if (!side || !side.name.includes(" / ")) return false
+        ctx.font = `${winnerOf(m)?.id === side.id ? 700 : 500} 13px ${sans}`
+        return ctx.measureText(side.name).width > nameRoom(side, m, first.colW, nameSizeFor(first.dense))
+      }),
+    ),
+  )
+  const L = needsStack ? layout(true) : first
+  const { R, dense, sideH, cardH, champH, colW, bodyH } = L
+  const s = L.s
+  const widthFor = L.widthFor
   const contentW = widthFor(colW)
   const naturalH = headH + bodyH
 
@@ -295,7 +362,7 @@ function drawBracket(
   ctx.stroke()
 
   // Partidos
-  const nameSize = dense ? 15 : 17
+  const nameSize = nameSizeFor(dense)
   const drawSide = (side: BracketTreeSide | null, m: BracketTreeMatch, x: number, y: number, isB: boolean) => {
     const mid = y + sideH / 2
     const isWinner = !!m.winnerId && !!side && m.winnerId === side.id
@@ -327,15 +394,26 @@ function drawBracket(
     let right = x + colW - 10
     if (isWinner) {
       const score = m.isWalkover ? "W.O." : (m.score ?? "")
-      ctx.font = `700 ${nameSize - 1}px ${sans}`
+      ctx.font = `700 ${needsStack ? nameSize - 3 : nameSize - 1}px ${sans}`
       ctx.fillStyle = C.text
       const sw = ctx.measureText(score).width
       ctx.fillText(score, right - sw, mid)
       right -= sw + 10
     }
     ctx.fillStyle = isWinner || !m.winnerId ? C.text : C.muted
-    ctx.font = `${isWinner ? 700 : 500} ${nameSize}px ${sans}`
-    ctx.fillText(fit(ctx, side.name, right - nx), nx, mid)
+    const weight = isWinner ? 700 : 500
+    ctx.font = `${weight} ${nameSize}px ${sans}`
+    if (needsStack && side.name.includes(" / ") && ctx.measureText(side.name).width > right - nx) {
+      // Un apellido por línea: "Apellido /" arriba y "Apellido" abajo.
+      const [p1, ...rest] = side.name.split(" / ")
+      const lines = [`${p1} /`, rest.join(" / ")]
+      const size = Math.min(...lines.map((l) => fitFont(ctx, l, right - nx, String(weight), nameSize - 1, sans, 11)))
+      ctx.font = `${weight} ${size}px ${sans}`
+      const lh = size + 2
+      lines.forEach((l, li) => ctx.fillText(fit(ctx, l, right - nx), nx, mid + (li - 0.5) * lh))
+    } else {
+      ctx.fillText(fitName(ctx, side.name, right - nx, weight, nameSize, sans, 11), nx, mid)
+    }
   }
 
   rounds.forEach((round, ri) => {
@@ -453,8 +531,7 @@ function drawGroup(
     ctx.fillText(`${r + 1}`, x + GR.posW / 2 + 2, mid)
     ctx.textAlign = "left"
     ctx.fillStyle = C.text
-    ctx.font = `${qualifies ? 700 : 500} 19px ${f.sans}`
-    ctx.fillText(fit(ctx, row.name, nameW - 10), x + GR.posW, mid)
+    ctx.fillText(fitName(ctx, row.name, nameW - 10, qualifies ? 700 : 500, 19, f.sans, 12), x + GR.posW, mid)
 
     // Celdas contra cada rival
     g.rows.forEach((col, c) => {

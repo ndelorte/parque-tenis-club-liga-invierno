@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { getCircuitoEditionBySlug } from "@/lib/data/circuito/editions"
 import { getCircuitoCategoryBySlug } from "@/lib/data/circuito/categories"
-import { getCircuitoParticipants, getPlayersForSelect } from "@/lib/data/circuito/participants"
+import { getCircuitoParticipants, getParticipantShownNames, getPlayersForSelect } from "@/lib/data/circuito/participants"
 import { getCircuitoMatches, refreshRepechajeStructure } from "@/lib/data/circuito/matches"
 import { getCircuitRanking } from "@/lib/data/circuito/ranking"
 import { selectDrawRule } from "@/lib/circuito/generateBracket"
@@ -37,7 +37,7 @@ export default async function CircuitoCategoryPage({
   const ranking = hasBracket ? await getCircuitRanking(edition.id, category.id) : []
   const players = await getPlayersForSelect()
 
-  const participantNames = Object.fromEntries(participants.map((p) => [p.id, p.display_name]))
+  const participantNames = await getParticipantShownNames(participants, category.type)
   const participantSeeds = Object.fromEntries(participants.map((p) => [p.id, p.seed]))
   const mainMatches = matches.filter((m) => m.bracket === "main")
   const repechajeMatches = matches.filter((m) => m.bracket === "repechaje")

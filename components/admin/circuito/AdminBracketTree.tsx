@@ -40,7 +40,7 @@ function SideRow({
   isWalkover: boolean
   reorder?: Reorder
 }) {
-  const base = `flex h-[34px] items-center gap-2 border-t border-border px-3 text-sm first:border-t-0 ${
+  const base = `flex min-h-[34px] items-center gap-2 py-0.5 border-t border-border px-3 text-sm first:border-t-0 ${
     isWinner ? "font-bold text-foreground shadow-[inset_4px_0_0_var(--color-clay)]" : "text-muted-foreground"
   }`
   if (!side) {
@@ -53,7 +53,7 @@ function SideRow({
   const content = (
     <>
       <span className="w-5 shrink-0 tabular-nums text-xs text-muted-foreground">{side.seed ? `[${side.seed}]` : ""}</span>
-      <span className="min-w-0 flex-1 truncate text-left">{side.name}</span>
+      <span className="min-w-0 flex-1 break-words text-left leading-tight">{side.name}</span>
       {isWinner && (
         <span className="shrink-0 whitespace-nowrap text-sm font-semibold tabular-nums">{isWalkover ? "W.O." : score}</span>
       )}

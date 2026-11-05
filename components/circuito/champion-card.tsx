@@ -32,7 +32,7 @@ export function ChampionCard({ champion, finalScore, points, compact, label }: P
         <Trophy aria-hidden="true" className="size-7 shrink-0 text-ball" />
         <div className="flex min-w-0 flex-col gap-0.5">
           {label && <span className="text-[13px] text-board-foreground/80">{label}</span>}
-          <span className="truncate font-heading text-xl font-extrabold leading-none">{champion.name}</span>
+          <span className="break-words font-heading text-xl font-extrabold leading-tight">{champion.name}</span>
         </div>
       </div>
     )
@@ -42,7 +42,7 @@ export function ChampionCard({ champion, finalScore, points, compact, label }: P
     <div className="flex flex-1 items-center">
       <div className="flex w-full flex-col gap-2.5 rounded-md border-[3px] border-draw-line bg-board p-5 text-board-foreground">
         <Trophy aria-hidden="true" className="size-9 text-ball" />
-        <span className="font-heading text-3xl font-extrabold leading-[0.95]">{champion.name}</span>
+        <span className="break-words font-heading text-3xl font-extrabold leading-[0.95]">{champion.name}</span>
         {finalScore && <span className="text-sm tabular-nums text-board-foreground/80">Final: {finalScore}</span>}
         {points !== undefined && (
           <span className="text-sm tabular-nums text-board-foreground/80">{points} puntos para el ranking</span>
