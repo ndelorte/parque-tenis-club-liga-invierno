@@ -9,6 +9,8 @@ import { buildBracketTree } from "@/lib/circuito/bracketTree"
 import type { DrawFormatKind } from "@/lib/circuito/types"
 import { AdminBracketTree, type Reorder } from "./AdminBracketTree"
 import { ExportBracketButton } from "./ExportBracketButton"
+import { renderBracketJpeg, renderGroupStageJpeg } from "./exportBracketImage"
+import { buildGroupStageExport, isGroupFormat } from "./groupStageExport"
 
 export interface CircuitoMatchView {
   id: string
@@ -336,6 +338,10 @@ export function MatchesList({
         : []
   const tree = treeMatches.length > 0 ? buildBracketTree(treeMatches, treeNames, { fromPanel }) : null
 
+  // Formatos con grupos: la imagen lleva las tablas y, si hay, la llave.
+  const groupExport =
+    part === "main" && isGroupFormat(format) ? buildGroupStageExport(format, matches, treeNames) : null
+
   const listMatches =
     part === "main" && format === "groups_then_knockout"
       ? matches.filter((m) => m.round_number === 1)
@@ -472,14 +478,35 @@ export function MatchesList({
         </div>
       )}
 
+      {groupExport && exportTitle && (
+        <ExportBracketButton
+          description="Exportá los grupos y la llave como imagen para Instagram."
+          renderImage={(igFormat) =>
+            renderGroupStageJpeg({
+              data: groupExport,
+              title: exportTitle,
+              subtitle: exportSubtitle ?? "",
+              championLabel: "Campeón",
+              format: igFormat,
+            })
+          }
+          fileName={`${categorySlug}-${part}`}
+        />
+      )}
+
       {listMatches.length > 0 && grouped(listMatches, true)}
 
-      {tree && exportTitle && (
+      {tree && exportTitle && !groupExport && (
         <ExportBracketButton
-          tree={tree}
-          title={exportTitle}
-          subtitle={part === "repechaje" ? `${exportSubtitle ?? ""} · Repechaje` : (exportSubtitle ?? "")}
-          championLabel={part === "repechaje" ? "Ganó el repechaje" : "Campeón"}
+          renderImage={(igFormat) =>
+            renderBracketJpeg({
+              tree,
+              title: exportTitle,
+              subtitle: part === "repechaje" ? `${exportSubtitle ?? ""} · Repechaje` : (exportSubtitle ?? ""),
+              championLabel: part === "repechaje" ? "Ganó el repechaje" : "Campeón",
+              format: igFormat,
+            })
+          }
           fileName={`${categorySlug}-${part}`}
         />
       )}

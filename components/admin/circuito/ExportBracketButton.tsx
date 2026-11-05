@@ -3,18 +3,17 @@
 import { useState } from "react"
 import { ImageDown, Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import type { BracketTree } from "@/lib/circuito/bracketTree"
-import { IG_FORMATS, renderBracketJpeg, type IgFormat } from "./exportBracketImage"
+import { IG_FORMATS, type IgFormat } from "./exportBracketImage"
 
 interface Props {
-  tree: BracketTree
-  title: string
-  subtitle: string
-  championLabel: string
+  // Dibuja la imagen en el formato elegido: el cuadro de eliminación
+  // (renderBracketJpeg) o las tablas de grupos (renderGroupStageJpeg).
+  renderImage: (format: IgFormat) => Promise<Blob>
   fileName: string
+  description?: string
 }
 
-export function ExportBracketButton({ tree, title, subtitle, championLabel, fileName }: Props) {
+export function ExportBracketButton({ renderImage, fileName, description = "Exportá el cuadro como imagen para Instagram." }: Props) {
   const [format, setFormat] = useState<IgFormat>("feed")
   const [busy, setBusy] = useState<"download" | "share" | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -23,7 +22,7 @@ export function ExportBracketButton({ tree, title, subtitle, championLabel, file
   const name = `${fileName}-${format}.jpg`
 
   async function render(): Promise<Blob> {
-    return renderBracketJpeg({ tree, title, subtitle, championLabel, format })
+    return renderImage(format)
   }
 
   async function download() {
@@ -71,7 +70,7 @@ export function ExportBracketButton({ tree, title, subtitle, championLabel, file
   return (
     <div className="mb-4 rounded-lg border border-border bg-card p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">Exportá el cuadro como imagen para Instagram.</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
         <div className="flex flex-wrap items-center gap-2">
           <label htmlFor={selectId} className="sr-only">
             Formato de la imagen

@@ -6,6 +6,7 @@
 // horizontal del cuadro, y siempre entra completo en el formato elegido.
 
 import type { BracketTree, BracketTreeMatch, BracketTreeSide } from "@/lib/circuito/bracketTree"
+import type { GroupStageExport, GroupTable } from "./groupStageExport"
 
 export type IgFormat = "feed" | "square" | "story"
 
@@ -29,14 +30,6 @@ const C = {
   clayLight: "#e8844f",
   ball: "#d4e04a",
   line: "rgba(244, 246, 242, 0.55)",
-}
-
-interface ExportOptions {
-  tree: BracketTree
-  title: string // p. ej. nombre de la edición
-  subtitle: string // p. ej. categoría
-  championLabel: string
-  format: IgFormat
 }
 
 function fontFamily(variable: string, fallback: string): string {
@@ -82,7 +75,22 @@ function fitFont(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, 
   return s
 }
 
-export async function renderBracketJpeg({ tree, title, subtitle, championLabel, format }: ExportOptions): Promise<Blob> {
+
+interface Fonts {
+  sans: string
+  heading: string
+}
+
+interface Area {
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+// Fondo + encabezado (logo, club, edición · categoría). Devuelve el lienzo y
+// el área libre para el contenido.
+async function setupCanvas(format: IgFormat, title: string, subtitle: string) {
   const { width: W, height: H } = IG_FORMATS[format]
   const sans = fontFamily("--font-barlow", "system-ui, sans-serif")
   const heading = fontFamily("--font-barlow-condensed", sans)
@@ -131,59 +139,127 @@ export async function renderBracketJpeg({ tree, title, subtitle, championLabel, 
   ctx.fillText(subtitle.toUpperCase(), textX + titleW, headTop + 22 + titleSize)
 
   const headerBottom = Math.max(headTop + logoSize, headTop + 22 + titleSize) + 18
+  const area: Area = { x: pad, y: headerBottom, w: W - pad * 2, h: H - headerBottom - pad }
+  return { canvas, ctx, area, fonts: { sans, heading } as Fonts }
+}
 
-  // ---- Cuadro: se diseña en unidades "naturales" y se escala para ocupar
-  // todo el ancho; después se reparte el alto sobrante entre los partidos.
-  // El campeón va debajo de la final (no en otra columna) para ganar ancho.
-  const rounds = tree.rounds
-  const R = Math.max(rounds.length, 1)
-  const n1 = Math.max(rounds[0]?.matches.length ?? 1, 1)
+function toJpeg(canvas: HTMLCanvasElement): Promise<Blob> {
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("No se pudo generar la imagen."))), "image/jpeg", 0.92),
+  )
+}
+
+// Título de sección (ronda o grupo) con la raya de polvo de ladrillo abajo.
+function sectionTitle(ctx: CanvasRenderingContext2D, label: string, x: number, w: number, baseY: number, size: number, f: Fonts) {
+  ctx.textBaseline = "alphabetic"
+  ctx.fillStyle = C.boardFg
+  ctx.font = `700 ${size}px ${f.heading}`
+  ctx.fillText(fit(ctx, label.toUpperCase(), w), x, baseY)
+  ctx.fillStyle = C.clay
+  ctx.fillRect(x, baseY + 8, w, 3)
+}
+
+function drawChampionCard(
+  ctx: CanvasRenderingContext2D,
+  box: Area,
+  champion: { name: string } | null,
+  finalScore: string | null,
+  label: string,
+  f: Fonts,
+) {
+  const { x, y, w, h } = box
+  roundRect(ctx, x, y, w, h, 8)
+  ctx.textBaseline = "alphabetic"
+  if (champion) {
+    ctx.fillStyle = C.boardDeep
+    ctx.fill()
+    ctx.lineWidth = 3
+    ctx.strokeStyle = C.ball
+    ctx.stroke()
+    ctx.fillStyle = C.ball
+    ctx.font = `700 18px ${f.heading}`
+    ctx.fillText(`🏆 ${label.toUpperCase()}`, x + 16, y + 30)
+    ctx.fillStyle = C.boardFg
+    const size = fitFont(ctx, champion.name, w - 32, "800", 32, f.heading, 18)
+    ctx.fillText(champion.name, x + 16, y + 34 + size)
+    if (finalScore) {
+      ctx.fillStyle = "rgba(244, 246, 242, 0.8)"
+      ctx.font = `500 15px ${f.sans}`
+      ctx.fillText(`Final: ${finalScore}`, x + 16, y + h - 14)
+    }
+  } else {
+    ctx.setLineDash([8, 6])
+    ctx.lineWidth = 2
+    ctx.strokeStyle = C.line
+    ctx.stroke()
+    ctx.setLineDash([])
+    ctx.fillStyle = C.ball
+    ctx.font = `700 18px ${f.heading}`
+    ctx.fillText(label.toUpperCase(), x + 16, y + 34)
+    ctx.fillStyle = C.boardFg
+    ctx.font = `800 30px ${f.heading}`
+    ctx.fillText("POR DEFINIR", x + 16, y + 74)
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Cuadro de eliminación directa
+
+const BR = { gap: 26, headH: 40, champGap: 22, minColW: 165, maxColW: 340 }
+
+function bracketDims(tree: BracketTree) {
+  const R = Math.max(tree.rounds.length, 1)
+  const n1 = Math.max(tree.rounds[0]?.matches.length ?? 1, 1)
   const dense = n1 >= 8
   const sideH = dense ? 28 : 34
   const cardH = sideH * 2
-  const gap = 26
-  const headH = 40
-  const champGap = 22
   const champH = dense ? 104 : 116
-  const minColW = 165
   const minSlot = cardH + 8
-
-  const areaX = pad
-  const areaY = headerBottom
-  const areaW = W - pad * 2
-  const areaH = H - headerBottom - pad
-
-  const widthFor = (cw: number) => R * cw + (R - 1) * gap
   // Alto mínimo: los partidos de 1ª ronda + lugar para el campeón bajo la final.
-  const minBodyH = Math.max(n1 * minSlot, cardH + 2 * (champGap + champH))
-  let s = Math.min(areaW / widthFor(minColW), (areaH) / (headH + minBodyH), 2.6)
-  const colW = Math.min((areaW / s - (R - 1) * gap) / R, 340)
-  const bodyH = Math.max(areaH / s - headH, minBodyH)
-  s = Math.min(s, areaH / (headH + bodyH))
+  // Con una sola ronda (final sola) la final va arriba y el campeón justo abajo.
+  const minBodyH = R === 1 ? cardH + BR.champGap + champH + 12 : Math.max(n1 * minSlot, cardH + 2 * (BR.champGap + champH))
+  const widthFor = (cw: number) => R * cw + (R - 1) * BR.gap
+  return { R, n1, dense, sideH, cardH, champH, minBodyH, widthFor, minW: widthFor(BR.minColW), minH: BR.headH + minBodyH }
+}
+
+// Dibuja el cuadro dentro de `area`: se diseña en unidades "naturales" y se
+// escala (hasta maxScale) para ocupar todo el ancho; después se reparte el
+// alto sobrante entre los partidos. El campeón va debajo de la final.
+function drawBracket(
+  ctx: CanvasRenderingContext2D,
+  tree: BracketTree,
+  area: Area,
+  opts: {
+    championLabel: string
+    placeholders?: Record<string, [string, string]>
+    maxScale: number
+    // Cuánto puede estirarse el alto del cuadro respecto del mínimo (sin tope si no se pasa).
+    maxStretch?: number
+    fonts: Fonts
+  },
+) {
+  const { sans } = opts.fonts
+  const rounds = tree.rounds
+  const { R, dense, sideH, cardH, champH, minBodyH, widthFor } = bracketDims(tree)
+  const { gap, headH, champGap } = BR
+
+  let s = Math.min(area.w / widthFor(BR.minColW), area.h / (headH + minBodyH), opts.maxScale)
+  const colW = Math.min((area.w / s - (R - 1) * gap) / R, BR.maxColW)
+  const bodyH = Math.min(Math.max(area.h / s - headH, minBodyH), minBodyH * (opts.maxStretch ?? Infinity))
+  s = Math.min(s, area.h / (headH + bodyH))
   const contentW = widthFor(colW)
   const naturalH = headH + bodyH
 
   ctx.save()
-  ctx.translate(areaX + (areaW - contentW * s) / 2, areaY + (areaH - naturalH * s) / 2)
+  ctx.translate(area.x + (area.w - contentW * s) / 2, area.y + (area.h - naturalH * s) / 2)
   ctx.scale(s, s)
 
   const bodyTop = headH
   const colX = (ri: number) => ri * (colW + gap)
-  const centerY = (ri: number, i: number) => {
-    const n = rounds[ri].matches.length
-    return bodyTop + (i + 0.5) * (bodyH / n)
-  }
+  const centerY = (ri: number, i: number) =>
+    R === 1 ? bodyTop + 6 + cardH / 2 : bodyTop + (i + 0.5) * (bodyH / rounds[ri].matches.length)
 
-  // Encabezados de ronda
-  const roundTitle = (label: string, x: number, w: number) => {
-    ctx.fillStyle = C.boardFg
-    ctx.font = `700 ${dense ? 20 : 22}px ${heading}`
-    ctx.fillText(fit(ctx, label.toUpperCase(), w), x, headH - 16)
-    ctx.fillStyle = C.clay
-    ctx.fillRect(x, headH - 8, w, 3)
-  }
-  ctx.textBaseline = "alphabetic"
-  rounds.forEach((round, ri) => roundTitle(round.label, colX(ri), colW))
+  rounds.forEach((round, ri) => sectionTitle(ctx, round.label, colX(ri), colW, headH - 16, dense ? 20 : 22, opts.fonts))
 
   // Conectores
   ctx.strokeStyle = C.line
@@ -235,9 +311,10 @@ export async function renderBracketJpeg({ tree, title, subtitle, championLabel, 
       return
     }
     if (!side) {
+      const placeholder = opts.placeholders?.[m.id]?.[isB ? 1 : 0]
       ctx.fillStyle = C.muted
-      ctx.font = `italic 400 ${nameSize - 1}px ${sans}`
-      ctx.fillText("Por definir", x + 12, mid)
+      ctx.font = placeholder ? `600 ${nameSize - 1}px ${sans}` : `italic 400 ${nameSize - 1}px ${sans}`
+      ctx.fillText(fit(ctx, placeholder ?? "Por definir", colW - 24), x + 12, mid)
       return
     }
     let nx = x + 12
@@ -278,48 +355,233 @@ export async function renderBracketJpeg({ tree, title, subtitle, championLabel, 
     })
   })
 
-  // Campeón
-  {
-    const x = champX
-    const y = champY
-    const w = colW
-    const h = champH
-    roundRect(ctx, x, y, w, h, 8)
-    ctx.textBaseline = "alphabetic"
-    if (tree.champion) {
-      ctx.fillStyle = C.boardDeep
-      ctx.fill()
-      ctx.lineWidth = 3
-      ctx.strokeStyle = C.ball
-      ctx.stroke()
-      ctx.fillStyle = C.ball
-      ctx.font = `700 18px ${heading}`
-      ctx.fillText(`🏆 ${championLabel.toUpperCase()}`, x + 16, y + 30)
-      ctx.fillStyle = C.boardFg
-      const size = fitFont(ctx, tree.champion.name, w - 32, "800", 32, heading, 18)
-      ctx.fillText(tree.champion.name, x + 16, y + 34 + size)
-      if (tree.finalScore) {
-        ctx.fillStyle = "rgba(244, 246, 242, 0.8)"
-        ctx.font = `500 15px ${sans}`
-        ctx.fillText(`Final: ${tree.finalScore}`, x + 16, y + h - 14)
-      }
-    } else {
-      ctx.setLineDash([8, 6])
-      ctx.lineWidth = 2
-      ctx.strokeStyle = C.line
-      ctx.stroke()
-      ctx.setLineDash([])
-      ctx.fillStyle = C.ball
-      ctx.font = `700 18px ${heading}`
-      ctx.fillText(championLabel.toUpperCase(), x + 16, y + 34)
-      ctx.fillStyle = C.boardFg
-      ctx.font = `800 30px ${heading}`
-      ctx.fillText("POR DEFINIR", x + 16, y + 74)
+  drawChampionCard(ctx, { x: champX, y: champY, w: colW, h: champH }, tree.champion, tree.finalScore, opts.championLabel, opts.fonts)
+  ctx.restore()
+}
+
+interface ExportOptions {
+  tree: BracketTree
+  title: string // p. ej. nombre de la edición
+  subtitle: string // p. ej. categoría
+  championLabel: string
+  format: IgFormat
+}
+
+export async function renderBracketJpeg({ tree, title, subtitle, championLabel, format }: ExportOptions): Promise<Blob> {
+  const { canvas, ctx, area, fonts } = await setupCanvas(format, title, subtitle)
+  drawBracket(ctx, tree, area, { championLabel, maxScale: 2.6, fonts })
+  return toJpeg(canvas)
+}
+
+// ---------------------------------------------------------------------------
+// Fase de grupos (todos contra todos): una tabla de doble entrada por grupo.
+// Cada fila es un jugador (en orden de posición) y cada columna su rival; la
+// celda muestra el resultado desde el lado de la fila.
+
+const GR = { titleH: 40, hdrH: 36, rowH: 50, posW: 32, nameMinW: 160, cellW: 64, pgW: 46, legendH: 30, gap: 26 }
+
+function groupNaturalW(g: GroupTable) {
+  return GR.posW + GR.nameMinW + g.rows.length * GR.cellW + GR.pgW
+}
+
+function groupNaturalH(g: GroupTable, rowH = GR.rowH) {
+  return GR.titleH + GR.hdrH + g.rows.length * rowH + GR.legendH
+}
+
+// "6-4 3-6 7-6" visto desde el lado B → "4-6 6-3 6-7".
+function flipScore(score: string): string {
+  return score.replace(/(\d+)-(\d+)/g, "$2-$1")
+}
+
+function drawGroup(
+  ctx: CanvasRenderingContext2D,
+  g: GroupTable,
+  x: number,
+  y: number,
+  w: number,
+  rowH: number,
+  legend: string[], // se van sacando partes del final si no entra
+  f: Fonts,
+) {
+  const n = g.rows.length
+  const nameW = w - GR.posW - n * GR.cellW - GR.pgW
+  sectionTitle(ctx, `${g.name} · Todos contra todos`, x, w, y + GR.titleH - 16, 22, f)
+
+  const top = y + GR.titleH
+  const tableH = GR.hdrH + n * rowH
+  const cellX = (c: number) => x + GR.posW + nameW + c * GR.cellW
+  const pgX = x + w - GR.pgW
+  const started = g.played > 0
+
+  const wins = new Map(g.rows.map((r) => [r.id, 0]))
+  for (const m of g.matches) if (m.winnerId) wins.set(m.winnerId, (wins.get(m.winnerId) ?? 0) + 1)
+  const matchOf = (a: string, b: string) => g.matches.find((m) => (m.aId === a && m.bId === b) || (m.aId === b && m.bId === a))
+
+  ctx.save()
+  roundRect(ctx, x, top, w, tableH, 8)
+  ctx.fillStyle = C.card
+  ctx.fill()
+  ctx.clip()
+
+  // Encabezado: Jugador · 1 2 3 … · PG
+  ctx.fillStyle = "#eef1eb"
+  ctx.fillRect(x, top, w, GR.hdrH)
+  ctx.textBaseline = "middle"
+  ctx.fillStyle = C.muted
+  ctx.font = `700 15px ${f.sans}`
+  const hMid = top + GR.hdrH / 2
+  ctx.textAlign = "left"
+  ctx.fillText("JUGADOR", x + GR.posW, hMid)
+  ctx.textAlign = "center"
+  for (let c = 0; c < n; c++) ctx.fillText(`${c + 1}`, cellX(c) + GR.cellW / 2, hMid)
+  ctx.fillText("PG", pgX + GR.pgW / 2, hMid)
+
+  g.rows.forEach((row, r) => {
+    const ry = top + GR.hdrH + r * rowH
+    const mid = ry + rowH / 2
+    const qualifies = started && r < g.qualifies
+    ctx.fillStyle = C.divider
+    ctx.fillRect(x, ry, w, 1)
+    if (qualifies) {
+      ctx.fillStyle = C.clay
+      ctx.fillRect(x, ry, 5, rowH)
     }
+    // Posición + nombre
+    ctx.textAlign = "center"
+    ctx.fillStyle = C.muted
+    ctx.font = `700 16px ${f.sans}`
+    ctx.fillText(`${r + 1}`, x + GR.posW / 2 + 2, mid)
+    ctx.textAlign = "left"
+    ctx.fillStyle = C.text
+    ctx.font = `${qualifies ? 700 : 500} 19px ${f.sans}`
+    ctx.fillText(fit(ctx, row.name, nameW - 10), x + GR.posW, mid)
+
+    // Celdas contra cada rival
+    g.rows.forEach((col, c) => {
+      const cx = cellX(c)
+      ctx.fillStyle = C.divider
+      ctx.fillRect(cx, ry, 1, rowH)
+      if (c === r) {
+        ctx.fillStyle = "#e3e8df"
+        ctx.fillRect(cx + 1, ry + 1, GR.cellW - 1, rowH - 1)
+        return
+      }
+      const m = matchOf(row.id, col.id)
+      const cMid = cx + GR.cellW / 2
+      ctx.textAlign = "center"
+      if (!m || !m.winnerId) {
+        ctx.fillStyle = "#b5bfb7"
+        ctx.font = `500 16px ${f.sans}`
+        ctx.fillText("–", cMid, mid)
+        return
+      }
+      const won = m.winnerId === row.id
+      if (won) {
+        ctx.fillStyle = "rgba(212, 98, 42, 0.12)"
+        ctx.fillRect(cx + 1, ry + 1, GR.cellW - 1, rowH - 1)
+      }
+      ctx.fillStyle = won ? C.text : C.muted
+      const text = m.isWalkover ? "W.O." : m.score ? (m.aId === row.id ? m.score : flipScore(m.score)) : ""
+      const sets = text.split(/\s+/)
+      const lines = sets.length > 2 ? [sets.slice(0, 2).join(" "), sets.slice(2).join(" ")] : [text]
+      const size = lines.length > 1 ? 14 : 15
+      ctx.font = `${won ? 700 : 500} ${size}px ${f.sans}`
+      lines.forEach((line, li) => {
+        const ly = mid + (li - (lines.length - 1) / 2) * (size + 3)
+        ctx.fillText(fit(ctx, line, GR.cellW - 6), cMid, ly)
+      })
+    })
+
+    // Partidos ganados
+    ctx.fillStyle = C.divider
+    ctx.fillRect(pgX, ry, 1, rowH)
+    ctx.textAlign = "center"
+    ctx.fillStyle = C.text
+    ctx.font = `700 20px ${f.sans}`
+    ctx.fillText(`${wins.get(row.id) ?? 0}`, pgX + GR.pgW / 2, mid)
+  })
+  ctx.restore()
+  ctx.textAlign = "left"
+
+  // Leyenda debajo de la tabla
+  ctx.textBaseline = "alphabetic"
+  ctx.fillStyle = "rgba(244, 246, 242, 0.75)"
+  ctx.font = `500 14px ${f.sans}`
+  let parts = legend
+  while (parts.length > 1 && ctx.measureText(parts.join(" · ")).width > w) parts = parts.slice(0, -1)
+  ctx.fillText(fit(ctx, parts.join(" · "), w), x, top + tableH + 22)
+}
+
+interface GroupStageOptions {
+  data: GroupStageExport
+  title: string
+  subtitle: string
+  championLabel: string
+  format: IgFormat
+}
+
+export async function renderGroupStageJpeg({ data, title, subtitle, championLabel, format }: GroupStageOptions): Promise<Blob> {
+  const { canvas, ctx, area, fonts } = await setupCanvas(format, title, subtitle)
+  const { groups, knockout } = data
+
+  const natW = groups.reduce((sum, g) => sum + groupNaturalW(g), 0) + GR.gap * (groups.length - 1)
+  const maxRows = Math.max(...groups.map((g) => g.rows.length))
+  const natH = Math.max(...groups.map((g) => groupNaturalH(g)))
+  const blockGap = 30
+  const champH = 116
+  const legendFor = (g: GroupTable) => [
+    `${g.played} de ${g.total} partidos jugados`,
+    ...(knockout ? [`Clasifican los ${g.qualifies} primeros`] : []),
+    "PG: partidos ganados",
+  ]
+
+  // Escala común para grupos y cuadro, así los textos quedan del mismo tamaño.
+  const below = knockout ? bracketDims(knockout) : null
+  const belowW = below ? below.minW : 300
+  const belowH = below ? below.minH : champH
+  const s = Math.min(area.w / natW, area.w / belowW, area.h / (natH + blockGap + belowH), 2)
+
+  // El alto que sobra va primero a filas más altas en los grupos (hasta
+  // +60%). Con cuadro abajo, el resto es para el cuadro (que puede agrandarse
+  // un poco más que los grupos); sin cuadro, se centra todo en vertical.
+  let spare = area.h / s - (natH + blockGap + belowH)
+  const rowExtra = Math.min(spare / maxRows, GR.rowH * 0.6)
+  const rowH = GR.rowH + Math.max(rowExtra, 0)
+  spare -= (rowH - GR.rowH) * maxRows
+  const groupsH = Math.max(...groups.map((g) => groupNaturalH(g, rowH)))
+  const top = knockout ? area.y : area.y + (Math.max(spare, 0) * s) / 2
+
+  // Grupos: el ancho sobrante se reparte en la columna de nombres.
+  const innerW = area.w / s
+  const extra = (innerW - natW) / groups.length
+  ctx.save()
+  ctx.translate(area.x, top)
+  ctx.scale(s, s)
+  let gx = 0
+  for (const g of groups) {
+    const w = groupNaturalW(g) + extra
+    drawGroup(ctx, g, gx, 0, w, rowH, legendFor(g), fonts)
+    gx += w + GR.gap
   }
   ctx.restore()
 
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("No se pudo generar la imagen."))), "image/jpeg", 0.92),
-  )
+  const groupsBottom = top + (groupsH + blockGap) * s
+  if (knockout) {
+    drawBracket(ctx, knockout, { x: area.x, y: groupsBottom, w: area.w, h: area.y + area.h - groupsBottom }, {
+      championLabel,
+      placeholders: data.placeholders,
+      maxScale: s * 1.4,
+      maxStretch: 1.4,
+      fonts,
+    })
+  } else {
+    // Sin final (5 inscriptos): el campeón es el 1º del grupo.
+    const w = Math.min(area.w / s, 420)
+    ctx.save()
+    ctx.translate(area.x + (area.w - w * s) / 2, groupsBottom)
+    ctx.scale(s, s)
+    drawChampionCard(ctx, { x: 0, y: 0, w, h: champH }, data.champion, null, championLabel, fonts)
+    ctx.restore()
+  }
+  return toJpeg(canvas)
 }
