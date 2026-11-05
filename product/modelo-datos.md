@@ -418,7 +418,7 @@ Liga/Mid Master (ADR-002). Todavía sin UI ni motor de cuadros (Sprint C4) ni re
 |-------|------|-------------|
 | id | uuid PK | |
 | edition_id | uuid FK → circuito_editions | |
-| name | text | Una de las 14 categorías fijas (ver reglas) |
+| name | text | Una de las 13 categorías fijas (ver reglas) |
 | slug | text | Único por `edition_id` |
 | type | text | `single`, `dobles` |
 | draw_size | int nullable | Cantidad de inscriptos ese mes — **no es fijo**, varía mes a mes; `null` hasta que cierran inscripciones |

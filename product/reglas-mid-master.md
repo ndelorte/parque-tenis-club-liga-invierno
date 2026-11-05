@@ -16,7 +16,7 @@
 | Single Caballeros +50 | Singles | 2 | 4 |
 | Single Damas Segunda | Singles | 2 | 3 |
 | Doble Caballeros Segunda | Dobles | 2 | 4 |
-| Doble Mixto Segunda | Dobles | 2 | 4 |
+| Doble Mixto Intermedia | Dobles | 2 | 4 |
 
 **Excepción**: Single Damas Segunda tiene 2 zonas de 3 jugadoras (no 4).
 

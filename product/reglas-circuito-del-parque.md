@@ -13,7 +13,7 @@
 
 ## Categorías 2026
 
-14 categorías. El `draw_size` (cantidad de inscriptos) **no es fijo**: varía mes a mes según
+13 categorías. El `draw_size` (cantidad de inscriptos) **no es fijo**: varía mes a mes según
 quién se anota. Mínimo **4 inscriptos** para que una categoría se juegue ese mes — con menos, la
 categoría no se disputa ese mes.
 
@@ -31,8 +31,12 @@ categoría no se disputa ese mes.
 | Caballeros Segunda | Dobles |
 | Damas Primera | Dobles |
 | Damas Segunda | Dobles |
-| Mixto Intermedia | Dobles |
-| Mixto Segunda | Dobles |
+| Doble Mixto Intermedia | Dobles |
+
+> **2026-11-05**: el ranking mixto se unificó en una sola categoría, **Doble Mixto Intermedia**
+> (slug `mixto-intermedia-dobles`), por decisión del organizador. "Mixto Segunda" se eliminó. En
+> Monte Carlo y Roland Garros se conservan los puntos de la planilla (cargados en Mixto
+> Intermedia); las categorías Mixto Segunda importadas de Challonge se borraron con sus partidos.
 
 Todas las categorías comparten la misma `CircuitoFormatSpec` (formato según inscriptos, seeding,
 repechaje, puntaje) — no hay reglas diferenciadas por categoría.

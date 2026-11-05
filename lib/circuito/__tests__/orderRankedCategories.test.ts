@@ -17,7 +17,7 @@ describe("orderRankedCategories", () => {
     ])
   })
 
-  it("una categoría nueva con puntos aparece aunque no esté entre las 14 fijas", () => {
+  it("una categoría nueva con puntos aparece aunque no esté entre las 13 fijas", () => {
     const found = [{ name: "Caballeros Cuarta", slug: "caballeros-cuarta-single", type: "single" as const }]
     expect(orderRankedCategories(found)).toHaveLength(1)
   })

@@ -1,4 +1,4 @@
-// 14 categorías fijas del Circuito del Parque (reglas-circuito-del-parque.md,
+// 13 categorías fijas del Circuito del Parque (reglas-circuito-del-parque.md,
 // respuesta a OQ-23). Dato puro (sin acceso a Supabase) para que lo puedan
 // importar tanto componentes de servidor como de cliente — lib/data/circuito
 // arrastra lib/supabase/server (next/headers), que rompe en componentes
@@ -16,12 +16,11 @@ export const CIRCUITO_FIXED_CATEGORIES: Array<{ name: string; slug: string; type
   { name: "Caballeros Segunda", slug: "caballeros-segunda-dobles", type: "dobles" },
   { name: "Damas Primera", slug: "damas-primera-dobles", type: "dobles" },
   { name: "Damas Segunda", slug: "damas-segunda-dobles", type: "dobles" },
-  { name: "Mixto Intermedia", slug: "mixto-intermedia-dobles", type: "dobles" },
-  { name: "Mixto Segunda", slug: "mixto-segunda-dobles", type: "dobles" },
+  { name: "Doble Mixto Intermedia", slug: "mixto-intermedia-dobles", type: "dobles" },
 ]
 
 // Slug de una categoría agregada a mano: "Caballeros +50" + dobles →
-// "caballeros-mas50-dobles" (mismo criterio que las 14 fijas).
+// "caballeros-mas50-dobles" (mismo criterio que las 13 fijas).
 export function categorySlug(name: string, type: "single" | "dobles"): string {
   const base = name
     .normalize("NFD")
@@ -40,7 +39,7 @@ export interface RankedCategory {
 }
 
 // Categorías que tienen jugadores con puntos, en el orden de siempre (primero
-// las 14 fijas) y, a continuación, las que se agregaron a mano a algún torneo
+// las 13 fijas) y, a continuación, las que se agregaron a mano a algún torneo
 // (por tipo y nombre) — así una categoría nueva aparece en el ranking apenas
 // suma puntos.
 export function orderRankedCategories(found: RankedCategory[]): RankedCategory[] {

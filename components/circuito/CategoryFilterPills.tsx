@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 interface Props {
   basePath: string
   selectedSlug: string
-  // Categorías a mostrar (por defecto, las 14 fijas). El ranking y la Final
+  // Categorías a mostrar (por defecto, las 13 fijas). El ranking y la Final
   // Master pasan solo las que tienen jugadores con puntos en el año.
   categories?: typeof CIRCUITO_FIXED_CATEGORIES
   className?: string

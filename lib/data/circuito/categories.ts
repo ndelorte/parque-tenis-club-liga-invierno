@@ -21,7 +21,7 @@ export async function createFixedCategoriesForEdition(editionId: string): Promis
   if (error) throw new Error(`Error al crear las categorías de la edición: ${error.message}`)
 }
 
-// Agrega una categoría que no está entre las 14 fijas (o que falta en esa
+// Agrega una categoría que no está entre las 13 fijas (o que falta en esa
 // edición) a una edición ya creada. Va al final de la lista.
 export async function addCategoryToEdition(input: {
   editionId: string

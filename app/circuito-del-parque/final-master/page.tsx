@@ -18,7 +18,7 @@ export default async function CircuitoFinalMasterPage({
 }) {
   const { categoria } = await searchParams
   const year = new Date().getFullYear()
-  // Todas las categorías que se jugaron en el año (las 14 fijas y las que se
+  // Todas las categorías que se jugaron en el año (las 13 fijas y las que se
   // agregaron a mano a algún torneo): las que tienen jugadores con puntos. Si
   // la pedida no tiene, se muestra la primera que sí.
   const categories = await getCircuitoCategoriesWithRanking(year)

@@ -307,10 +307,13 @@ Volcadas en `reglas-circuito-del-parque.md` (canónico).
 
 ### ~~OQ-23~~: Lista definitiva de categorías 2026 (+ draw_size/tipo)
 
-**Respuesta**: 14 categorías — Single: Caballeros Primera/Intermedia/Segunda/Tercera/+50, Damas
-Primera/Segunda. Dobles: Caballeros Primera/Intermedia/Segunda, Damas Primera/Segunda, Mixto
-Intermedia/Segunda. `draw_size` no es fijo (varía mes a mes según inscriptos); mínimo 4 inscriptos
+**Respuesta**: 13 categorías (eran 14; ver nota 2026-11-05) — Single: Caballeros Primera/Intermedia/Segunda/Tercera/+50, Damas
+Primera/Segunda. Dobles: Caballeros Primera/Intermedia/Segunda, Damas Primera/Segunda, Doble Mixto
+Intermedia. `draw_size` no es fijo (varía mes a mes según inscriptos); mínimo 4 inscriptos
 para que la categoría se juegue ese mes.
+
+**Nota 2026-11-05**: Mixto Intermedia y Mixto Segunda se unificaron en "Doble Mixto Intermedia"
+por decisión del organizador. Monte Carlo y Roland Garros conservan los puntos de la planilla.
 
 ---
 

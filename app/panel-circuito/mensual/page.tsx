@@ -26,7 +26,7 @@ export default async function CircuitoMensualPage() {
     >
       <AdminPageHeader
         title="Circuito mensual"
-        lede="Torneos mensuales por categoría. Cada edición crea automáticamente las 14 categorías fijas."
+        lede="Torneos mensuales por categoría. Cada edición crea automáticamente las 13 categorías fijas."
       />
 
       <div className="mb-8">
@@ -35,7 +35,7 @@ export default async function CircuitoMensualPage() {
 
       {editions.length === 0 ? (
         <EmptyState title="Todavía no hay ninguna edición creada" icon={CalendarDays}>
-          Cuando crees la primera aparece acá, con sus 14 categorías.
+          Cuando crees la primera aparece acá, con sus 13 categorías.
         </EmptyState>
       ) : (
         <ul role="list" className="divide-y divide-border overflow-hidden rounded-lg border border-border">

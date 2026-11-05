@@ -3,7 +3,9 @@ import { CIRCUITO_FIXED_CATEGORIES, categorySlug } from "../fixedCategories"
 
 describe("categorySlug", () => {
   it("coincide con el slug de las categorías fijas", () => {
-    for (const c of CIRCUITO_FIXED_CATEGORIES) {
+    // "Doble Mixto Intermedia" conserva el slug histórico `mixto-intermedia-dobles`
+    // (unificación del 2026-11-05) para no romper URLs ni el agrupado del ranking.
+    for (const c of CIRCUITO_FIXED_CATEGORIES.filter((c) => c.slug !== "mixto-intermedia-dobles")) {
       expect(categorySlug(c.name, c.type)).toBe(c.slug)
     }
   })
