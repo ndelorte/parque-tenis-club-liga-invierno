@@ -27,6 +27,23 @@ const nextConfig: NextConfig = {
         destination: "/circuito-del-parque/especiales/mid-master-2026",
         permanent: true,
       },
+      // El mixto del Mid Master 2026 se renombró a Doble Mixto Intermedia
+      // (2026-11-05): los links viejos con el slug anterior siguen andando.
+      {
+        source: "/mid-master/categorias/doble-mixto-segunda",
+        destination: "/circuito-del-parque/especiales/mid-master-2026/categorias/doble-mixto-intermedia",
+        permanent: true,
+      },
+      {
+        source: "/circuito-del-parque/especiales/mid-master-2026/categorias/doble-mixto-segunda",
+        destination: "/circuito-del-parque/especiales/mid-master-2026/categorias/doble-mixto-intermedia",
+        permanent: true,
+      },
+      {
+        source: "/panel-circuito/categorias/doble-mixto-segunda",
+        destination: "/panel-circuito/categorias/doble-mixto-intermedia",
+        permanent: true,
+      },
       {
         source: "/mid-master/categorias/:slug",
         destination: "/circuito-del-parque/especiales/mid-master-2026/categorias/:slug",
