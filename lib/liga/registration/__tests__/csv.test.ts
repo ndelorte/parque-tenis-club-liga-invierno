@@ -11,6 +11,7 @@ const row: RegistrationCsvRow = {
   firstName: "Ana",
   lastName: "Gómez",
   dni: "30123456",
+  birthDate: "1990-03-07",
   notes: "Solo sábados, \"tarde\"\nGracias",
 }
 
@@ -19,11 +20,16 @@ describe("buildRegistrationsCsv", () => {
     const csv = buildRegistrationsCsv([row, { ...row, isCaptain: false, firstName: "Luz", lastName: "Paz" }])
     expect(csv.charCodeAt(0)).toBe(0xfeff)
     const lines = csv.slice(1).split("\r\n")
-    expect(lines[0]).toBe("Edición,Categoría,Equipo,Estado,Capitán,Teléfono,Nombre,Apellido,DNI,Observaciones")
+    expect(lines[0]).toBe("Edición,Categoría,Equipo,Estado,Capitán,Teléfono,Nombre,Apellido,DNI,Fecha de nacimiento,Observaciones")
     expect(csv).toContain("Las Ñandú")
     expect(csv).toContain(",Sí,")
     expect(csv).toContain(",No,")
     expect(csv.endsWith("\r\n")).toBe(true)
+  })
+  it("la fecha de nacimiento va como dd/mm/aaaa y vacía si no hay", () => {
+    const lines = buildRegistrationsCsv([row, { ...row, birthDate: null }]).slice(1).split("\r\n")
+    expect(lines[1]).toContain(",30123456,07/03/1990,")
+    expect(lines[2]).toContain(",30123456,,")
   })
   it("escapa comillas, comas y saltos de línea", () => {
     const csv = buildRegistrationsCsv([row])

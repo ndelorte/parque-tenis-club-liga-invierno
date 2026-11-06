@@ -13,6 +13,8 @@
 --   tildadas y las guarda en la misma transacción. Se reemplaza la versión
 --   de 1 parámetro por una de 2 (con default), porque dejar las dos haría
 --   ambigua la llamada con un solo argumento.
+-- - Requiere 014_liga_fecha_nacimiento.sql: conserva su copiado de birth_date
+--   a player_private (al insertar y al completar vacías, sin pisar valores).
 -- ============================================================
 
 create table if not exists public.team_medals (
@@ -102,7 +104,8 @@ begin
       insert into public.players (first_name, last_name, display_name, active)
       values (v_player.first_name, v_player.last_name, v_player.last_name || ' ' || v_player.first_name, true)
       returning id into v_player_id;
-      insert into public.player_private (player_id, dni) values (v_player_id, v_player.dni);
+      insert into public.player_private (player_id, dni, birth_date)
+      values (v_player_id, v_player.dni, v_player.birth_date);
     else
       v_player_id := v_player.resolved_player_id;
       -- Si el jugador no tenía DNI, se guarda; si ya tiene uno, no se pisa.
@@ -111,7 +114,13 @@ begin
         if found then
           raise exception 'El DNI % ya está cargado en otro jugador.', v_player.dni;
         end if;
-        insert into public.player_private (player_id, dni) values (v_player_id, v_player.dni);
+        insert into public.player_private (player_id, dni, birth_date)
+        values (v_player_id, v_player.dni, v_player.birth_date);
+      elsif v_player.birth_date is not null then
+        -- Solo se completa si estaba vacía: nunca se pisa un valor existente.
+        update public.player_private
+          set birth_date = v_player.birth_date, updated_at = now()
+          where player_id = v_player_id and birth_date is null;
       end if;
     end if;
 

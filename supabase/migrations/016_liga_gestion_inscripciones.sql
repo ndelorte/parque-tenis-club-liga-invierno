@@ -11,7 +11,7 @@
 --   (p_events = [{kind, summary}]) lo arma la app; p_actor es el email del admin.
 --
 -- Todas las funciones son security definer, con search_path fijo, y solo las
--- ejecuta service_role (mismo criterio que 013 y 014).
+-- ejecuta service_role (mismo criterio que 013, 014 y 015).
 -- Las migraciones las aplica el organizador a mano en Supabase.
 -- ============================================================
 
@@ -211,9 +211,11 @@ revoke all on function public.change_liga_registration_category(uuid, text, uuid
 grant execute on function public.change_liga_registration_category(uuid, text, uuid, jsonb) to service_role;
 
 -- 6. Jugadores de una solicitud PENDIENTE: recibe la lista completa deseada
---    [{id|null, first_name, last_name, dni, is_captain}]. Quita los que no
+--    [{id|null, first_name, last_name, dni, birth_date?, is_captain}]. Quita los que no
 --    están, agrega los nuevos y actualiza el resto; un jugador cuyo nombre o
---    DNI cambió vuelve a resolution = 'pending'.
+--    DNI cambió vuelve a resolution = 'pending'. birth_date (opcional, date) es
+--    lo declarado en la solicitud: si la clave viene, se guarda (null la borra);
+--    si no viene, se conserva. Cambiarla NO pide revalidar al jugador.
 create or replace function public.save_liga_registration_players(
   p_registration_id uuid,
   p_actor           text,
@@ -234,6 +236,7 @@ declare
   v_first   text;
   v_last    text;
   v_dni     text;
+  v_birth   date;
   v_cap     boolean;
   v_captains int := 0;
   v_keep    uuid[] := '{}';
@@ -258,6 +261,13 @@ begin
     end if;
     if coalesce(v_item->>'dni', '') !~ '^[0-9]{7,8}$' then
       raise exception 'El DNI de % tiene que tener 7 u 8 dígitos.', (v_item->>'last_name') || ' ' || (v_item->>'first_name');
+    end if;
+    if nullif(v_item->>'birth_date', '') is not null then
+      if (v_item->>'birth_date') !~ '^\d{4}-\d{2}-\d{2}$'
+         or (v_item->>'birth_date')::date > current_date
+         or (v_item->>'birth_date')::date < date '1920-01-01' then
+        raise exception 'La fecha de nacimiento de % es inválida.', (v_item->>'last_name') || ' ' || (v_item->>'first_name');
+      end if;
     end if;
     if coalesce((v_item->>'is_captain')::boolean, false) then
       v_captains := v_captains + 1;
@@ -294,6 +304,7 @@ begin
     v_first := regexp_replace(trim(v_item->>'first_name'), '\s+', ' ', 'g');
     v_last  := regexp_replace(trim(v_item->>'last_name'), '\s+', ' ', 'g');
     v_dni   := v_item->>'dni';
+    v_birth := nullif(v_item->>'birth_date', '')::date;
     v_cap   := coalesce((v_item->>'is_captain')::boolean, false);
 
     if v_item->>'id' is not null then
@@ -309,10 +320,13 @@ begin
           set is_captain = v_cap, sort_order = v_idx
           where id = v_old.id;
       end if;
+      if v_item ? 'birth_date' then
+        update public.liga_registration_players set birth_date = v_birth where id = v_old.id;
+      end if;
     else
       insert into public.liga_registration_players
-        (registration_id, first_name, last_name, dni, is_captain, sort_order)
-      values (p_registration_id, v_first, v_last, v_dni, v_cap, v_idx);
+        (registration_id, first_name, last_name, dni, birth_date, is_captain, sort_order)
+      values (p_registration_id, v_first, v_last, v_dni, v_birth, v_cap, v_idx);
     end if;
     v_idx := v_idx + 1;
   end loop;
@@ -325,7 +339,7 @@ $$;
 revoke all on function public.save_liga_registration_players(uuid, text, jsonb, jsonb) from public, anon, authenticated;
 grant execute on function public.save_liga_registration_players(uuid, text, jsonb, jsonb) to service_role;
 
--- 7. Aprobar (13/014) + historial en la misma transacción
+-- 7. Aprobar (015) + historial en la misma transacción
 create or replace function public.approve_liga_registration_logged(
   p_registration_id uuid,
   p_medals          jsonb,
@@ -415,6 +429,8 @@ grant execute on function public.reopen_liga_registration(uuid, text, jsonb) to 
 -- 9. Plantel de un equipo aprobado ----------------------------------------
 
 -- Agregar un jugador: p_mode = 'existing' (p_player_id) o 'new' (se crea).
+-- p_birth_date (opcional): se guarda en player_private al crear el jugador o
+-- al completar uno que no tenía; nunca pisa una fecha existente.
 create or replace function public.add_liga_team_player(
   p_registration_id uuid,
   p_actor           text,
@@ -423,7 +439,8 @@ create or replace function public.add_liga_team_player(
   p_dni             text,
   p_mode            text,
   p_player_id       uuid,
-  p_events          jsonb
+  p_events          jsonb,
+  p_birth_date      date default null
 )
 returns uuid
 language plpgsql
@@ -462,7 +479,11 @@ begin
       if found then
         raise exception 'El DNI % ya está cargado en otro jugador.', p_dni;
       end if;
-      insert into public.player_private (player_id, dni) values (v_player_id, p_dni);
+      insert into public.player_private (player_id, dni, birth_date) values (v_player_id, p_dni, p_birth_date);
+    elsif p_birth_date is not null then
+      update public.player_private
+        set birth_date = p_birth_date, updated_at = now()
+        where player_id = v_player_id and birth_date is null;
     end if;
   elsif p_mode = 'new' then
     if v_first = '' or v_last = '' then
@@ -475,7 +496,7 @@ begin
     insert into public.players (first_name, last_name, display_name, active)
     values (v_first, v_last, v_last || ' ' || v_first, true)
     returning id into v_player_id;
-    insert into public.player_private (player_id, dni) values (v_player_id, p_dni);
+    insert into public.player_private (player_id, dni, birth_date) values (v_player_id, p_dni, p_birth_date);
   else
     raise exception 'Modo de alta inválido.';
   end if;
@@ -506,8 +527,8 @@ begin
 end;
 $$;
 
-revoke all on function public.add_liga_team_player(uuid, text, text, text, text, text, uuid, jsonb) from public, anon, authenticated;
-grant execute on function public.add_liga_team_player(uuid, text, text, text, text, text, uuid, jsonb) to service_role;
+revoke all on function public.add_liga_team_player(uuid, text, text, text, text, text, uuid, jsonb, date) from public, anon, authenticated;
+grant execute on function public.add_liga_team_player(uuid, text, text, text, text, text, uuid, jsonb, date) to service_role;
 
 -- Quitar un jugador del plantel (team_players.active = false). No quita al capitán.
 create or replace function public.remove_liga_team_player(
@@ -593,7 +614,8 @@ grant execute on function public.set_liga_team_captain(uuid, text, uuid, jsonb) 
 
 -- Corregir nombre / apellido / DNI de un jugador del plantel. La ficha del
 -- jugador (players) es una sola para Liga y Circuito. Un DNI que ya es de otro
--- jugador no se pisa.
+-- jugador no se pisa. p_birth_date: corrección explícita del admin, SÍ pisa la
+-- fecha guardada; null significa "no tocar" (no se puede borrar desde acá).
 create or replace function public.correct_liga_team_player(
   p_registration_id uuid,
   p_actor           text,
@@ -601,7 +623,8 @@ create or replace function public.correct_liga_team_player(
   p_first_name      text,
   p_last_name       text,
   p_dni             text,
-  p_events          jsonb
+  p_events          jsonb,
+  p_birth_date      date default null
 )
 returns void
 language plpgsql
@@ -641,10 +664,14 @@ begin
       raise exception 'El DNI % ya es de otro jugador: no se puede pisar.', p_dni;
     end if;
     if v_cur is null then
-      insert into public.player_private (player_id, dni) values (p_player_id, p_dni);
+      insert into public.player_private (player_id, dni, birth_date) values (p_player_id, p_dni, p_birth_date);
     else
       update public.player_private set dni = p_dni, updated_at = now() where player_id = p_player_id;
     end if;
+  end if;
+
+  if p_birth_date is not null then
+    update public.player_private set birth_date = p_birth_date, updated_at = now() where player_id = p_player_id;
   end if;
 
   update public.players
@@ -664,8 +691,8 @@ begin
 end;
 $$;
 
-revoke all on function public.correct_liga_team_player(uuid, text, uuid, text, text, text, jsonb) from public, anon, authenticated;
-grant execute on function public.correct_liga_team_player(uuid, text, uuid, text, text, text, jsonb) to service_role;
+revoke all on function public.correct_liga_team_player(uuid, text, uuid, text, text, text, jsonb, date) from public, anon, authenticated;
+grant execute on function public.correct_liga_team_player(uuid, text, uuid, text, text, text, jsonb, date) to service_role;
 
 -- Dar de baja el equipo: teams.active = false, plantel inactivo (igual que la
 -- baja del panel Jugadores) y la inscripción pasa a 'withdrawn'. NO toca

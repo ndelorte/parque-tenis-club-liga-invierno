@@ -39,6 +39,15 @@ describe("textos del historial", () => {
     )
     expect(ev?.summary).toBe("Se corrigió a Perez Juan: nombre Perez Juan → Pérez Juan, DNI 30111222 → 30111223")
   })
+  it("cambio de fecha de nacimiento: lo avisa sin mostrar la fecha", () => {
+    const base = { firstName: "Juan", lastName: "Perez", dni: "30111222" }
+    const ev = playerCorrected({ ...base, birthDate: null }, { ...base, birthDate: "1990-01-02" })
+    expect(ev?.summary).toBe("Se corrigió la fecha de nacimiento de Perez Juan")
+    expect(ev?.summary).not.toMatch(/1990/)
+    const both = playerCorrected({ ...base, birthDate: "1990-01-02" }, { ...base, dni: "30111223", birthDate: "1991-01-02" })
+    expect(both?.summary).toBe("Se corrigió a Perez Juan: DNI 30111222 → 30111223, fecha de nacimiento")
+    expect(playerCorrected({ ...base, birthDate: "1990-01-02" }, { ...base, birthDate: "1990-01-02" })).toBeNull()
+  })
   it("sin cambios no hay evento", () => {
     const same = { firstName: "A", lastName: "B", dni: "30111222" }
     expect(playerCorrected(same, { ...same })).toBeNull()

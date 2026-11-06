@@ -275,8 +275,8 @@ escribe. Teléfono y DNI nunca llegan a un cliente público.
 | team_name | text | Máx. 80 |
 | captain_phone | text | Solo para el organizador |
 | notes | text nullable | Restricciones de horario / sugerencias (máx. 1000) |
-| status | text | `pending` (default), `approved`, `rejected`, `withdrawn` (equipo dado de baja, migración 015) |
-| rejection_reason | text nullable | Motivo interno del rechazo, máx. 500 (migración 015) |
+| status | text | `pending` (default), `approved`, `rejected`, `withdrawn` (equipo dado de baja, migración 016) |
+| rejection_reason | text nullable | Motivo interno del rechazo, máx. 500 (migración 016) |
 | team_id | uuid FK → teams nullable | Lo completa la aprobación |
 | reviewed_at | timestamptz nullable | |
 | created_at / updated_at | timestamptz | |
@@ -289,6 +289,7 @@ escribe. Teléfono y DNI nunca llegan a un cliente público.
 | registration_id | uuid FK → liga_registrations (cascade) | |
 | first_name / last_name | text | Como los escribió el capitán |
 | dni | text | Solo dígitos, 7 u 8 |
+| birth_date | date nullable | Fecha de nacimiento opcional y privada (migración 014) |
 | is_captain | boolean | Índice único parcial: a lo sumo uno por inscripción |
 | sort_order | integer | |
 | resolved_player_id | uuid FK → players nullable | Jugador elegido en la validación |
@@ -302,11 +303,12 @@ DNI de los jugadores, aparte de `players` porque esa tabla tiene lectura públic
 |-------|------|-------------|
 | player_id | uuid PK FK → players (cascade) | |
 | dni | text unique | Solo dígitos, 7 u 8 |
+| birth_date | date nullable | Opcional y privada (migración 014). Las RPC la completan si está vacía y nunca la pisan, salvo la corrección explícita del admin (`correct_liga_team_player`) |
 | created_at / updated_at | timestamptz | |
 
 ### approve_liga_registration(p_registration_id uuid, p_medals jsonb default '[]') → uuid
 
-Función `security definer`, ejecutable solo por `service_role` (migración 014 reemplaza la
+Función `security definer`, ejecutable solo por `service_role` (migración 015 reemplaza la
 de 1 parámetro de la 013). En una transacción:
 crea el equipo (slug único por categoría), los `players` nuevos (`display_name` =
 "Apellido Nombre"), guarda los DNI en `player_private` (no pisa uno existente),
@@ -315,7 +317,7 @@ crea los `team_players`, setea `teams.captain_name`, guarda las medallas de `p_m
 Falla (y revierte todo) si faltan jugadores por resolver, si un DNI ya es de otro
 jugador, si alguien ya está activo en otro equipo de la categoría o si una medalla es inválida.
 
-## Gestión de inscripciones y equipos (migración 015, Fase V3)
+## Gestión de inscripciones y equipos (migración 016, Fase V3)
 
 La ficha del equipo en el panel (`/panel-liga?seccion=inscripciones`) edita la solicitud antes y
 después de aprobar. Los cambios de varios pasos pasan por funciones `security definer`
@@ -354,7 +356,7 @@ RLS activada sin policies (solo service role). Se muestra en la ficha, del más 
 Reglas: "cuadro sorteado" = la categoría tiene series (`roundsHaveSeries`). Con el cuadro sorteado
 solo se bloquea el cambio de categoría (en la app y en la función SQL).
 
-## team_medals (migración 014, Fase V2)
+## team_medals (migración 015, Fase V2)
 
 Medallas de podio que lleva un equipo por ediciones anteriores (Verano e Invierno).
 

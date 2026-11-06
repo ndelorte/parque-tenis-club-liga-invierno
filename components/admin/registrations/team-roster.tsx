@@ -9,7 +9,7 @@ import { addTeamPlayer, checkPlayerToAdd, correctTeamPlayer, removeTeamPlayer, s
 import type { AddCandidate, AddCheck } from "@/app/actions/liga-registration-team"
 import type { RosterPlayer } from "@/app/actions/liga-registrations"
 import { isValidDni } from "@/lib/liga/registration/normalizeDni"
-import { LIMITS } from "@/lib/liga/registration/schema"
+import { BIRTH_DATE_MIN, LIMITS, todayIsoDate } from "@/lib/liga/registration/schema"
 
 const MATCH_LABEL: Record<AddCandidate["match"], string> = {
   dni: "Mismo DNI",
@@ -23,6 +23,8 @@ function CorrectForm({ registrationId, player, onDone, onCancel }: { registratio
   const [firstName, setFirstName] = useState(player.firstName)
   const [lastName, setLastName] = useState(player.lastName)
   const [dni, setDni] = useState(player.dni ?? "")
+  // Si se carga una fecha, pisa la guardada; si queda vacía, no se toca.
+  const [birthDate, setBirthDate] = useState(player.birthDate ?? "")
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -35,10 +37,11 @@ function CorrectForm({ registrationId, player, onDone, onCancel }: { registratio
     if (!firstName.trim()) next.firstName = "Completá el nombre"
     if (!lastName.trim()) next.lastName = "Completá el apellido"
     if (!isValidDni(dni)) next.dni = "El DNI tiene que tener 7 u 8 dígitos"
+    if (birthDate && (birthDate < BIRTH_DATE_MIN || birthDate > todayIsoDate())) next.birthDate = "La fecha de nacimiento no es válida"
     setErrors(next)
     if (Object.keys(next).length > 0) return
     setBusy(true)
-    const result = await correctTeamPlayer(registrationId, player.playerId, { firstName, lastName, dni })
+    const result = await correctTeamPlayer(registrationId, player.playerId, { firstName, lastName, dni, birthDate })
     setBusy(false)
     if (!result.success) return setFormError(result.error ?? "No se pudo guardar")
     onDone()
@@ -47,12 +50,13 @@ function CorrectForm({ registrationId, player, onDone, onCancel }: { registratio
   return (
     <form onSubmit={save} noValidate className="mt-3 grid gap-3 rounded-lg bg-muted/40 p-3">
       <Notice variant="error" title="Esta ficha es una sola para Liga y Circuito">
-        El cambio de nombre o DNI de {player.displayName} se ve en todos lados (Liga, Circuito y rankings). Un DNI que ya es de otro jugador no se puede pisar.
+        El cambio de nombre, DNI o fecha de nacimiento de {player.displayName} se ve en todos lados (Liga, Circuito y rankings). Un DNI que ya es de otro jugador no se puede pisar.
       </Notice>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <TextField id={`${idp}-first`} label="Nombre" value={firstName} onChange={setFirstName} error={errors.firstName} maxLength={LIMITS.personName} />
         <TextField id={`${idp}-last`} label="Apellido" value={lastName} onChange={setLastName} error={errors.lastName} maxLength={LIMITS.personName} />
         <TextField id={`${idp}-dni`} label="DNI" inputMode="numeric" value={dni} onChange={setDni} error={errors.dni} maxLength={12} />
+        <TextField id={`${idp}-birth`} label="Fecha de nacimiento (opcional)" type="date" value={birthDate} onChange={setBirthDate} error={errors.birthDate} hint="Si la cargás, reemplaza la guardada." />
       </div>
       {formError && <InlineError>{formError}</InlineError>}
       <div className="flex flex-wrap gap-3">
@@ -74,6 +78,7 @@ function AddPlayerForm({ registrationId, onDone }: { registrationId: string; onD
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [dni, setDni] = useState("")
+  const [birthDate, setBirthDate] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [check, setCheck] = useState<AddCheck | null>(null)
@@ -94,10 +99,11 @@ function AddPlayerForm({ registrationId, onDone }: { registrationId: string; onD
     if (!firstName.trim()) next.firstName = "Completá el nombre"
     if (!lastName.trim()) next.lastName = "Completá el apellido"
     if (!isValidDni(dni)) next.dni = "El DNI tiene que tener 7 u 8 dígitos"
+    if (birthDate && (birthDate < BIRTH_DATE_MIN || birthDate > todayIsoDate())) next.birthDate = "La fecha de nacimiento no es válida"
     setErrors(next)
     if (Object.keys(next).length > 0) return
     setBusy(true)
-    const result = await checkPlayerToAdd(registrationId, { firstName, lastName, dni })
+    const result = await checkPlayerToAdd(registrationId, { firstName, lastName, dni, birthDate })
     setBusy(false)
     if (!result.success) return setFormError(result.error ?? "No se pudo validar")
     setCheck(result)
@@ -111,6 +117,7 @@ function AddPlayerForm({ registrationId, onDone }: { registrationId: string; onD
       firstName,
       lastName,
       dni,
+      birthDate,
       mode: choice === "new" ? "new" : "existing",
       playerId: choice === "new" ? null : choice,
     })
@@ -119,6 +126,7 @@ function AddPlayerForm({ registrationId, onDone }: { registrationId: string; onD
     setFirstName("")
     setLastName("")
     setDni("")
+    setBirthDate("")
     setCheck(null)
     onDone()
   }
@@ -130,10 +138,11 @@ function AddPlayerForm({ registrationId, onDone }: { registrationId: string; onD
     <div className="grid gap-3 rounded-lg border border-border p-3">
       <h4 className="font-bold">Agregar un jugador</h4>
       <form onSubmit={search} noValidate className="grid gap-3">
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <TextField id={`${idp}-first`} label="Nombre" value={firstName} onChange={(v) => { setFirstName(v); reset() }} error={errors.firstName} maxLength={LIMITS.personName} />
           <TextField id={`${idp}-last`} label="Apellido" value={lastName} onChange={(v) => { setLastName(v); reset() }} error={errors.lastName} maxLength={LIMITS.personName} />
           <TextField id={`${idp}-dni`} label="DNI" inputMode="numeric" value={dni} onChange={(v) => { setDni(v); reset() }} error={errors.dni} maxLength={12} />
+          <TextField id={`${idp}-birth`} label="Fecha de nacimiento (opcional)" type="date" value={birthDate} onChange={(v) => { setBirthDate(v); reset() }} error={errors.birthDate} hint="Si el jugador ya existe y tiene fecha, no se pisa." />
         </div>
         {!check && (
           <div>
@@ -219,6 +228,7 @@ export function TeamRoster({ registrationId, roster, editable, onChanged }: { re
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <p className="font-bold">{p.displayName}</p>
               <p className="text-sm text-muted-foreground">{p.dni ? `DNI ${p.dni}` : "Sin DNI cargado"}</p>
+              {p.birthDate && <p className="text-sm text-muted-foreground">Nacimiento {p.birthDate.split("-").reverse().join("/")}</p>}
               {p.isCaptain && <span className="rounded-full bg-brand-light px-2 py-0.5 text-xs font-bold text-brand">Capitán</span>}
               {!p.active && <span className="text-xs font-bold text-muted-foreground">Fuera del plantel</span>}
             </div>

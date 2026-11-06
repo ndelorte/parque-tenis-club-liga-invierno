@@ -188,6 +188,8 @@ export type RosterPlayer = {
   lastName: string
   displayName: string
   dni: string | null
+  // Dato privado: solo llega al panel admin.
+  birthDate: string | null
   isCaptain: boolean
   active: boolean
 }
@@ -361,9 +363,9 @@ async function fetchRoster(supabase: ReturnType<typeof createAdminClient>, teamI
   }
   const rows = (data ?? []) as unknown as Row[]
   const { data: privates } = rows.length
-    ? await supabase.from("player_private").select("player_id, dni").in("player_id", rows.map((r) => r.player_id))
+    ? await supabase.from("player_private").select("player_id, dni, birth_date").in("player_id", rows.map((r) => r.player_id))
     : { data: [] }
-  const dniById = new Map(((privates ?? []) as Array<{ player_id: string; dni: string }>).map((r) => [r.player_id, r.dni]))
+  const privateById = new Map(((privates ?? []) as Array<{ player_id: string; dni: string; birth_date: string | null }>).map((r) => [r.player_id, r]))
   return rows
     .map((r): RosterPlayer => ({
       playerId: r.player_id,
@@ -371,7 +373,8 @@ async function fetchRoster(supabase: ReturnType<typeof createAdminClient>, teamI
       firstName: r.players?.last_name ? r.players.first_name : "",
       lastName: r.players?.last_name ? r.players.last_name : (r.players?.display_name ?? ""),
       displayName: r.players?.display_name ?? "—",
-      dni: dniById.get(r.player_id) ?? null,
+      dni: privateById.get(r.player_id)?.dni ?? null,
+      birthDate: privateById.get(r.player_id)?.birth_date ?? null,
       isCaptain: r.is_captain,
       active: r.active,
     }))

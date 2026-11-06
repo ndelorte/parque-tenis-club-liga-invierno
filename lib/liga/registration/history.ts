@@ -7,7 +7,8 @@ export type HistoryEvent = { kind: string; summary: string }
 
 type NamePart = { firstName: string; lastName: string }
 
-export type EditablePlayer = NamePart & { id: string | null; dni: string; isCaptain: boolean }
+// birthDate (yyyy-mm-dd) es opcional y privado: el historial dice que cambió, nunca el valor.
+export type EditablePlayer = NamePart & { id: string | null; dni: string; birthDate?: string | null; isCaptain: boolean }
 
 export const name = (p: NamePart) => toDisplayName(p)
 
@@ -24,10 +25,17 @@ export const categoryChanged = (from: string, to: string): HistoryEvent => ({
   summary: `Categoría: ${from} → ${to}`,
 })
 
-export function playerCorrected(before: NamePart & { dni: string }, after: NamePart & { dni: string }): HistoryEvent | null {
+type CorrectablePlayer = NamePart & { dni: string; birthDate?: string | null }
+
+export function playerCorrected(before: CorrectablePlayer, after: CorrectablePlayer): HistoryEvent | null {
   const parts: string[] = []
   if (name(before) !== name(after)) parts.push(`nombre ${name(before)} → ${name(after)}`)
   if (before.dni !== after.dni) parts.push(`DNI ${before.dni} → ${after.dni}`)
+  const birthChanged = (before.birthDate ?? null) !== (after.birthDate ?? null)
+  if (parts.length === 0 && birthChanged) {
+    return { kind: "player_corrected", summary: `Se corrigió la fecha de nacimiento de ${name(before)}` }
+  }
+  if (birthChanged) parts.push("fecha de nacimiento")
   if (parts.length === 0) return null
   return { kind: "player_corrected", summary: `Se corrigió a ${name(before)}: ${parts.join(", ")}` }
 }

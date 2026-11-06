@@ -200,3 +200,10 @@ antes y después de aprobar.
 
 - Notificaciones por email/WhatsApp al aprobar o rechazar.
 - Pago de inscripción.
+
+---
+
+## Fecha de nacimiento (migración 014) y numeración de migraciones
+
+- `014_liga_fecha_nacimiento.sql` (inscripción): fecha opcional y privada. La V2 pasa a `015_team_medals.sql` y la V3 a `016_liga_gestion_inscripciones.sql`; ambas conservan el copiado de `birth_date` a `player_private`.
+- Aprobar, agregar jugador y editar la solicitud completan la fecha solo si estaba vacía. Corregir un jugador del plantel con una fecha cargada la reemplaza (corrección explícita); vacía no la toca. El historial dice "Se corrigió la fecha de nacimiento de X", sin el valor.

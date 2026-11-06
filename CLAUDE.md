@@ -185,7 +185,7 @@ Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]
 |------|-------------|
 | `/panel-liga/login` | Login con Supabase Auth |
 | `/panel-liga` | Dashboard de Liga |
-| `/panel-liga?seccion=inscripciones` | Inscripciones: configuración (abierta, cierre, min/max), solicitudes y validación jugador por jugador antes de crear el equipo. Paso "Podios anteriores": medallas sugeridas por nombre de equipo (se guardan al aprobar; también se agregan/quitan en una inscripción aprobada). Cada solicitud es la **ficha del equipo**: editar datos, categoría y jugadores (pendiente) o plantel, capitán y baja (aprobada), con historial; carga manual, exportar CSV y WhatsApp al capitán (`liga-registration-team.ts`, migración 015) |
+| `/panel-liga?seccion=inscripciones` | Inscripciones: configuración (abierta, cierre, min/max), solicitudes y validación jugador por jugador antes de crear el equipo. Paso "Podios anteriores": medallas sugeridas por nombre de equipo (se guardan al aprobar; también se agregan/quitan en una inscripción aprobada). Cada solicitud es la **ficha del equipo**: editar datos, categoría y jugadores (pendiente) o plantel, capitán y baja (aprobada), con historial; carga manual, exportar CSV y WhatsApp al capitán (`liga-registration-team.ts`, migración 016) |
 | `/panel-liga/liga-invierno/equipos` | CRUD equipos |
 | `/panel-liga/liga-invierno/jugadores` | CRUD jugadores (en ediciones con inscripción online avisa que el plantel se edita desde Inscripciones y no da de baja equipos aprobados) |
 | `/panel-liga/liga-invierno/fixture` | Cargar y editar fixture |

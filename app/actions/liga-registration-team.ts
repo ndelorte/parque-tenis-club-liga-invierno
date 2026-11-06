@@ -3,7 +3,7 @@
 // Gestión de inscripciones y equipos desde el panel (Fase V3): la "ficha" del
 // equipo. Toda action valida el rol admin en la primera línea
 // (admin-guard.test.ts). Los cambios de varios pasos pasan por RPC de la
-// migración 015, que hace el cambio y escribe el historial en la misma
+// migración 016, que hace el cambio y escribe el historial en la misma
 // transacción. `actor` es el email del admin.
 //
 // Nada de acá toca series ni la tabla de posiciones: qué pasa con los partidos
@@ -177,14 +177,15 @@ export async function savePendingPlayers(registrationId: string, players: Editab
   const supabase = createAdminClient()
   const { data: current } = await supabase
     .from("liga_registration_players")
-    .select("id, first_name, last_name, dni, is_captain, sort_order")
+    .select("id, first_name, last_name, dni, birth_date, is_captain, sort_order")
     .eq("registration_id", registrationId)
     .order("sort_order")
-  const before: EditablePlayer[] = ((current ?? []) as Array<{ id: string; first_name: string; last_name: string; dni: string; is_captain: boolean }>).map((r) => ({
+  const before: EditablePlayer[] = ((current ?? []) as Array<{ id: string; first_name: string; last_name: string; dni: string; birth_date: string | null; is_captain: boolean }>).map((r) => ({
     id: r.id,
     firstName: r.first_name,
     lastName: r.last_name,
     dni: r.dni,
+    birthDate: r.birth_date,
     isCaptain: r.is_captain,
   }))
   const after: EditablePlayer[] = parsed.data.map((p) => ({
@@ -192,6 +193,7 @@ export async function savePendingPlayers(registrationId: string, players: Editab
     firstName: p.firstName.replace(/\s+/g, " "),
     lastName: p.lastName.replace(/\s+/g, " "),
     dni: normalizeDni(p.dni),
+    birthDate: p.birthDate || null,
     isCaptain: p.isCaptain,
   }))
   const events = describePlayerListChanges(before, after)
@@ -199,7 +201,7 @@ export async function savePendingPlayers(registrationId: string, players: Editab
   const { error } = await supabase.rpc("save_liga_registration_players", {
     p_registration_id: registrationId,
     p_actor: actor,
-    p_players: after.map((p) => ({ id: p.id, first_name: p.firstName, last_name: p.lastName, dni: p.dni, is_captain: p.isCaptain })),
+    p_players: after.map((p) => ({ id: p.id, first_name: p.firstName, last_name: p.lastName, dni: p.dni, birth_date: p.birthDate ?? null, is_captain: p.isCaptain })),
     p_events: events,
   })
   if (error) return fail(error)
@@ -328,6 +330,7 @@ export async function addTeamPlayer(registrationId: string, input: z.input<typeo
     p_mode: mode,
     p_player_id: mode === "existing" ? playerId : null,
     p_events: [{ kind: "player_added", summary: `Se agregó a ${displayName}` }],
+    p_birth_date: parsed.data.birthDate ? parsed.data.birthDate : null,
   })
   if (error) return fail(error)
   revalidate()
@@ -379,7 +382,7 @@ export async function setTeamCaptain(registrationId: string, playerId: string): 
   return { success: true }
 }
 
-// Corrige nombre / apellido / DNI. La ficha del jugador es una sola (Liga y
+// Corrige nombre / apellido / DNI / fecha de nacimiento. La ficha del jugador es una sola (Liga y
 // Circuito): la UI avisa antes de guardar.
 export async function correctTeamPlayer(registrationId: string, playerId: string, input: z.input<typeof playerSchema>): Promise<Result> {
   const actor = await requireAdminActor()
@@ -393,7 +396,7 @@ export async function correctTeamPlayer(registrationId: string, playerId: string
   const supabase = createAdminClient()
   const [{ data: player }, { data: priv }] = await Promise.all([
     supabase.from("players").select("first_name, last_name, display_name").eq("id", playerId).maybeSingle(),
-    supabase.from("player_private").select("dni").eq("player_id", playerId).maybeSingle(),
+    supabase.from("player_private").select("dni, birth_date").eq("player_id", playerId).maybeSingle(),
   ])
   if (!player) return { success: false, error: "El jugador no existe" }
   // Un DNI que ya es de otro jugador no se pisa (la RPC también lo chequea).
@@ -404,10 +407,15 @@ export async function correctTeamPlayer(registrationId: string, playerId: string
     firstName: player.last_name ? player.first_name : player.display_name,
     lastName: player.last_name ?? "",
     dni: priv?.dni ?? "(sin cargar)",
+    birthDate: priv?.birth_date ?? null,
   }
-  const unchanged = before.firstName === next.firstName && before.lastName === next.lastName && before.dni === next.dni
+  // Corrección explícita: una fecha cargada pisa la guardada. Vacía = no se toca.
+  const newBirth = parsed.data.birthDate ? parsed.data.birthDate : null
+  const nextWithBirth = { ...next, birthDate: newBirth ?? before.birthDate }
+  const unchanged =
+    before.firstName === next.firstName && before.lastName === next.lastName && before.dni === next.dni && before.birthDate === nextWithBirth.birthDate
   if (unchanged) return { success: true }
-  const event = playerCorrected(before, next)
+  const event = playerCorrected(before, nextWithBirth)
 
   const { error } = await supabase.rpc("correct_liga_team_player", {
     p_registration_id: registrationId,
@@ -417,6 +425,7 @@ export async function correctTeamPlayer(registrationId: string, playerId: string
     p_last_name: next.lastName,
     p_dni: next.dni,
     p_events: event ? [event] : [],
+    p_birth_date: newBirth,
   })
   if (error) return fail(error)
   revalidate()
@@ -492,7 +501,7 @@ export async function exportRegistrationsCsv(tournamentId: string): Promise<Resu
   const { data: regs, error } = await supabase
     .from("liga_registrations")
     .select(
-      "id, team_name, captain_phone, notes, status, team_id, created_at, categories(name), liga_registration_players(first_name, last_name, dni, is_captain, sort_order)",
+      "id, team_name, captain_phone, notes, status, team_id, created_at, categories(name), liga_registration_players(first_name, last_name, dni, birth_date, is_captain, sort_order)",
     )
     .eq("tournament_id", tournamentId)
   if (error) return { success: false, error: "No se pudo leer las inscripciones" }
@@ -505,7 +514,7 @@ export async function exportRegistrationsCsv(tournamentId: string): Promise<Resu
     team_id: string | null
     created_at: string
     categories: { name: string } | null
-    liga_registration_players: Array<{ first_name: string; last_name: string; dni: string; is_captain: boolean; sort_order: number }>
+    liga_registration_players: Array<{ first_name: string; last_name: string; dni: string; birth_date: string | null; is_captain: boolean; sort_order: number }>
   }
   const rows = (regs ?? []) as unknown as RegRow[]
 
@@ -521,9 +530,13 @@ export async function exportRegistrationsCsv(tournamentId: string): Promise<Resu
     tps.push(...((data ?? []) as unknown as TpRow[]))
   }
   const dniById = new Map<string, string>()
+  const birthById = new Map<string, string | null>()
   for (const ids of chunk([...new Set(tps.map((t) => t.player_id))], 100)) {
-    const { data } = await supabase.from("player_private").select("player_id, dni").in("player_id", ids)
-    for (const r of (data ?? []) as Array<{ player_id: string; dni: string }>) dniById.set(r.player_id, r.dni)
+    const { data } = await supabase.from("player_private").select("player_id, dni, birth_date").in("player_id", ids)
+    for (const r of (data ?? []) as Array<{ player_id: string; dni: string; birth_date: string | null }>) {
+      dniById.set(r.player_id, r.dni)
+      birthById.set(r.player_id, r.birth_date)
+    }
   }
 
   const edition = `${tournament.name} ${tournament.season}`
@@ -547,11 +560,12 @@ export async function exportRegistrationsCsv(tournamentId: string): Promise<Resu
           firstName: hasSplit ? (m.players?.first_name ?? "") : "",
           lastName: hasSplit ? (m.players?.last_name ?? "") : (m.players?.display_name ?? ""),
           dni: dniById.get(m.player_id) ?? "",
+          birthDate: birthById.get(m.player_id) ?? null,
         })
       }
     } else {
       for (const p of [...r.liga_registration_players].sort((a, b) => a.sort_order - b.sort_order)) {
-        csvRows.push({ ...base, isCaptain: p.is_captain, firstName: p.first_name, lastName: p.last_name, dni: p.dni })
+        csvRows.push({ ...base, isCaptain: p.is_captain, firstName: p.first_name, lastName: p.last_name, dni: p.dni, birthDate: p.birth_date })
       }
     }
   }

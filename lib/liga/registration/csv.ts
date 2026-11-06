@@ -12,6 +12,8 @@ export type RegistrationCsvRow = {
   firstName: string
   lastName: string
   dni: string
+  // yyyy-mm-dd o null/vacío si no se cargó (dato privado, solo para el organizador).
+  birthDate: string | null
   notes: string
 }
 
@@ -25,6 +27,7 @@ export const CSV_HEADERS = [
   "Nombre",
   "Apellido",
   "DNI",
+  "Fecha de nacimiento",
   "Observaciones",
 ] as const
 
@@ -43,6 +46,12 @@ export function neutralizeFormula(value: string): string {
 export function escapeCsvCell(value: string): string {
   const safe = neutralizeFormula(value)
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
+}
+
+// yyyy-mm-dd → dd/mm/aaaa; vacío si no hay fecha.
+export function formatBirthDateForCsv(value: string | null | undefined): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value ?? "")
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : ""
 }
 
 export function statusLabelForCsv(status: string): string {
@@ -69,6 +78,7 @@ export function buildRegistrationsCsv(rows: RegistrationCsvRow[]): string {
         r.firstName,
         r.lastName,
         r.dni,
+        formatBirthDateForCsv(r.birthDate),
         r.notes,
       ]
         .map(escapeCsvCell)
