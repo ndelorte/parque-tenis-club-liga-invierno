@@ -14,6 +14,10 @@
 | Campos del formulario | Nombre del equipo · Categoría (Damas A, Damas B, Caballeros A, Caballeros B, Mixto A, Mixto B) · Jugadores: nombre, apellido y DNI de cada uno · Capitán: se marca uno de los jugadores cargados · Teléfono del capitán · Observaciones (opcional; el texto aclara que es para restricciones de horario o sugerencias). |
 | Cantidad de jugadores y cierre | Se configuran **desde el panel** por edición: inscripción abierta/cerrada, fecha de cierre, mínimo y máximo de jugadores. |
 | DNI | Se guarda al confirmar el jugador, en una tabla **privada** (`player_private`). No va en `players`, porque `players` tiene `select using (true)` público (002_rls.sql). Si el DNI ya existe, el match es exacto. |
+| Mínimo y máximo por defecto | **6 y 12** jugadores, mientras el organizador no los configure desde el panel. |
+| DNI ya asignado a otro jugador | **No frena el envío del formulario**: el formulario público no consulta `player_private`. Frena la **aprobación** en el panel, que avisa y no permite pisar el DNI. |
+| Fecha de cierre | La inscripción sigue abierta hasta el final del día elegido (hora Argentina). |
+| Límite de envíos | No hay límite por persona. Solo el honeypot anti-bots; las solicitudes duplicadas se rechazan desde el panel. |
 | Medallas | Cuentan los podios de **Verano e Invierno**. La medalla aclara la temporada: "Campeón Verano 2025/26", "Subcampeón Invierno 2025". |
 
 ---
@@ -60,8 +64,11 @@
   3. El resumen del reglamento: reusar `components/liga/liga-reglamento.tsx` y sus datos actuales.
      No inventar reglas nuevas.
   4. El link al reglamento completo (`/ligas-invierno-verano/reglamento` y el PDF).
-     **Pendiente:** el organizador todavía tiene que actualizar el reglamento completo de Verano 2026/27.
-     Cuando lo pase, se reemplaza el contenido o el PDF.
+     **Pendiente:** por ahora se usa el reglamento actual tal como está (06/11/2026). El organizador
+     va a pasar después los cambios de Verano 2026/27: fechas, precios y algunas reglas, en especial
+     los avisos de WO en el mismo día. Esas reglas no se infieren: cuando lleguen, se actualizan
+     `reglas-liga-invierno.md` (o un archivo de reglas de verano), el resumen, la página del
+     reglamento y el PDF.
 
   En esta etapa no hay tabla, fixture, categorías con equipos ni listado de equipos.
 - **Etapa "inscripción cerrada, sin sorteo"** (`registration_open = false` y sin series): se muestra

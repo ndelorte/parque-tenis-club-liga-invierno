@@ -1,7 +1,7 @@
 import type { Tournament } from "@/lib/tournament/types"
 
 // Mínimo/máximo por defecto cuando el organizador todavía no los configuró.
-export const DEFAULT_MIN_PLAYERS = 2
+export const DEFAULT_MIN_PLAYERS = 6
 export const DEFAULT_MAX_PLAYERS = 12
 
 export type RegistrationAvailability =
