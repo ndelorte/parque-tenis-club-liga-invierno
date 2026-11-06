@@ -13,7 +13,13 @@ export function DialogSheet({
   title,
   description,
   children,
+  stretchedLabel,
 }: {
+  // Con `stretchedLabel` el disparador NO es un <button> que envuelve el
+  // contenido: es un <div> con un botón vacío que lo cubre entero (el texto
+  // del botón es `stretchedLabel`). Así el contenido puede llevar otros
+  // botones, como las medallas, sin anidar botón dentro de botón.
+  stretchedLabel?: string
   trigger: ReactNode
   triggerClassName: string
   title: ReactNode
@@ -28,17 +34,33 @@ export function DialogSheet({
 
   return (
     <>
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={() => {
-          dialog.current?.showModal()
-          closeButton.current?.focus()
-        }}
-        className={triggerClassName}
-      >
-        {trigger}
-      </button>
+      {stretchedLabel ? (
+        <div className={`${triggerClassName} pointer-events-none relative`}>
+          <button
+            ref={triggerRef}
+            type="button"
+            onClick={() => {
+              dialog.current?.showModal()
+              closeButton.current?.focus()
+            }}
+            aria-label={stretchedLabel}
+            className="pointer-events-auto absolute inset-0 rounded-[inherit] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          />
+          {trigger}
+        </div>
+      ) : (
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={() => {
+            dialog.current?.showModal()
+            closeButton.current?.focus()
+          }}
+          className={triggerClassName}
+        >
+          {trigger}
+        </button>
+      )}
       <dialog
         ref={dialog}
         aria-labelledby={titleId}

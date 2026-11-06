@@ -131,17 +131,72 @@
 - Al validar una inscripción, el panel sugiere los podios cuyo nombre de equipo se parezca al nombre
   inscripto. Usa el mismo fuzzy, pero también acepta nombres de una sola palabra cuando coinciden
   exactamente ("Pinamar"). El admin tilda los que corresponden.
-- Tabla `team_medals` (`team_id`, `source_category_id`, `place` 1|2|3, `label`); se guarda al aprobar.
+- Tabla `team_medals` (`team_id`, `source_category_id`, `place` 1|2|3); se guarda al aprobar. El texto
+  (`label`) no se guarda: se calcula al leer con la categoría y su torneo, para que las reglas de redacción
+  vivan en un solo lugar (`lib/liga/medals/`).
   Lectura pública (solo nombre, puesto y temporada).
-- UI: componente `TeamMedals`, con oro/plata/bronce y texto "Campeón Verano 2025/26". Aparece en la
-  tarjeta del equipo, en la página del equipo, en el fixture y en los partidos. Un equipo puede tener
-  varias medallas, ordenadas por año (la más reciente primero).
-- La maqueta visual de la medalla se aprueba antes de implementarla.
+- UI (maqueta aprobada en lo conceptual el 06/11/2026: https://claude.ai/artifact/1efgZts2GrAScD3Lh748zm):
+  - Medalla oro/plata/bronce con el número del puesto dentro del disco y las cintas en el verde del club.
+  - **Ficha** (medalla + descripción): solo en la **página de cada equipo**, con todas las medallas.
+  - **Solo la medalla** (el logito): en las páginas generales, o sea listados de equipos, fixture,
+    cuadros/playoffs y partidos. Al pasar el mouse, o al tocarla en el celular, **se despliega la misma
+    ficha** (medalla + descripción). Es accesible con teclado, y el lector de pantalla lee el texto.
+  - Se muestran **todas** las medallas, sin "+N", ordenadas de la más reciente a la más vieja.
+  - Textos: 1° "Campeón", 2° "Subcampeón", 3° "3° puesto". En las categorías de Damas: "Campeonas" y
+    "Subcampeonas". En Mixto y Caballeros, masculino.
+  - Año: Verano "2025/26", Invierno "2025". Ej.: "Subcampeonas Verano 2025/26", "Campeón Invierno 2025".
+
+---
+
+## Fase V3 — Gestión de inscripciones y equipos desde el panel
+
+> Pedido del organizador (06/11/2026): darle al admin todas las facilidades para organizar, por ejemplo
+> cuando un capitán avisa que inscribió mal a un jugador o que le falta o le sobra uno, o para cambiar
+> el capitán. Se hace después de la V2, sobre la misma rama, porque toca el mismo detalle de inscripción.
+
+El detalle de la inscripción pasa a ser la **ficha del equipo** para el admin: desde ahí se edita todo,
+antes y después de aprobar.
+
+**Solicitud pendiente**
+- Editar el nombre del equipo, la categoría, el teléfono, las observaciones y el capitán.
+- Jugadores: agregar, quitar y corregir nombre, apellido o DNI. Un jugador corregido vuelve a
+  `resolution = 'pending'` y hay que validarlo de nuevo.
+- Rechazar con un motivo interno (opcional) y **reabrir** una rechazada (vuelve a pendiente).
+
+**Inscripción aprobada (el equipo ya existe)**
+- Cambiar el nombre del equipo (el slug no cambia, para no romper links), el capitán (`team_players.is_captain`
+  y `teams.captain_name`), el teléfono y las observaciones.
+- Plantel: agregar un jugador con la misma validación de la V1 (DNI exacto → fuzzy → "¿es el mismo que X?" o
+  crear nuevo) o quitarlo (`team_players.active = false`).
+- Corregir el nombre o el DNI de un jugador. Antes de guardar se avisa que la ficha del jugador es una sola
+  (Liga y Circuito) y que el cambio se ve en todos lados. Un DNI que ya es de otro jugador no se pisa.
+- Cambiar la categoría (mueve el equipo) y dar de baja el equipo (`teams.active = false` y
+  `registration.status = 'withdrawn'`).
+- **Con el cuadro sorteado** (la categoría tiene series): todo sigue permitido, salvo cambiar de categoría,
+  que queda **bloqueado**. Se muestra el aviso "El cuadro ya está sorteado: revisá que el reglamento lo
+  permita". Qué pasa con los partidos de un equipo dado de baja es una regla deportiva: no se infiere; el
+  panel no toca series ni la tabla.
+- Coherencia: la sección "Jugadores" existente (`TeamManager` / `saveTeamPlayers`) no maneja capitán ni DNI.
+  En ediciones con inscripción online, el plantel se edita desde Inscripciones; Jugadores muestra un aviso y
+  un link a la ficha. Hay que revisar que `saveTeamPlayers` no desactive equipos aprobados que no vea.
+
+**Extras confirmados**
+- **Cargar una inscripción a mano** desde el panel (por ejemplo, cuando el capitán la manda por WhatsApp).
+  Usa el mismo formulario y la misma validación, y entra como pendiente. Puede saltear la fecha de cierre
+  y el estado abierto/cerrado.
+- **Historial de cambios** por inscripción: tabla `liga_registration_events` (`registration_id`, `at`,
+  `actor` = email del admin, `kind`, `summary` en texto legible, p. ej. "Se agregó a Pérez Juan"). Se
+  muestra en la ficha, del más nuevo al más viejo. Lo escriben las mismas actions o RPC que hacen el
+  cambio, en la misma transacción.
+- **Exportar a planilla (CSV)** las inscripciones de la edición: una fila por jugador, con edición,
+  categoría, equipo, estado, capitán, teléfono, nombre, apellido, DNI y observaciones. Solo admin;
+  la genera una action o route handler con guardia admin, y se descarga desde la sección Inscripciones.
+- **Link de WhatsApp al capitán**: el teléfono como botón `https://wa.me/<número normalizado>` (formato
+  argentino: código de país 54 y el 9 de celular), solo en el panel.
 
 ---
 
 ## Fuera de alcance (por ahora)
 
 - Notificaciones por email/WhatsApp al aprobar o rechazar.
-- Editar desde el panel los datos de una inscripción ya enviada (si hace falta, se rechaza y se vuelve a inscribir).
 - Pago de inscripción.

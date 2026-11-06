@@ -1,5 +1,6 @@
 import type { Series } from "@/lib/tournament/types";
 import { CourtMatchDetail } from "./CourtMatchDetail";
+import { TeamMedals } from "./medals/medal-badges";
 
 interface SeriesDetailProps {
   series: Series;
@@ -15,10 +16,10 @@ export function SeriesDetail({ series }: SeriesDetailProps) {
         </span>
         {series.walkover_winner_team_id === series.home_team_id
           ? series.away_team?.name ?? "Visitante"
-          : series.home_team?.name ?? "Local"} no se presentó.{" "}
+          : series.home_team?.name ?? "Local"}<TeamMedals teamId={series.walkover_winner_team_id === series.home_team_id ? series.away_team_id : series.home_team_id} /> no se presentó.{" "}
         Ganador: <strong>{series.walkover_winner_team_id === series.home_team_id
           ? series.home_team?.name ?? "Local"
-          : series.away_team?.name ?? "Visitante"}</strong>
+          : series.away_team?.name ?? "Visitante"}</strong><TeamMedals teamId={series.walkover_winner_team_id} />
       </p>}
       {courts.length === 0 && <p className="text-sm text-muted-foreground">Sin detalle de canchas disponible.</p>}
       <div className="grid gap-3 sm:grid-cols-3">
@@ -29,6 +30,7 @@ export function SeriesDetail({ series }: SeriesDetailProps) {
           homeTeamName={series.home_team?.name ?? "Local"}
           awayTeamName={series.away_team?.name ?? "Visitante"}
           homeTeamId={series.home_team_id}
+          awayTeamId={series.away_team_id}
         />
       ))}
       </div>

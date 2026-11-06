@@ -1,10 +1,12 @@
 import type { CourtMatch } from "@/lib/tournament/types";
+import { TeamMedals } from "./medals/medal-badges";
 
 interface CourtMatchDetailProps {
   courtMatch: CourtMatch;
   homeTeamName: string;
   awayTeamName: string;
   homeTeamId: string;
+  awayTeamId?: string;
 }
 
 export function CourtMatchDetail({
@@ -12,6 +14,7 @@ export function CourtMatchDetail({
   homeTeamName,
   awayTeamName,
   homeTeamId,
+  awayTeamId,
 }: CourtMatchDetailProps) {
   const homeWon = courtMatch.winner_team_id === homeTeamId;
 
@@ -30,11 +33,11 @@ export function CourtMatchDetail({
 
       <div className="mt-2 flex items-center justify-between gap-2">
         <span className={homeWon ? "min-w-0 font-semibold text-foreground" : "min-w-0 text-muted-foreground"}>
-          {homeTeamName}
+          {homeTeamName}<TeamMedals teamId={homeTeamId} />
         </span>
         <span className="shrink-0 text-xs font-bold tabular-nums text-foreground">{courtMatch.score || "—"}</span>
         <span className={!homeWon ? "min-w-0 text-right font-semibold text-foreground" : "min-w-0 text-right text-muted-foreground"}>
-          {awayTeamName}
+          {awayTeamName}<TeamMedals teamId={awayTeamId} />
         </span>
       </div>
 

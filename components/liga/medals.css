@@ -1,0 +1,43 @@
+/* Medallas de podio por equipo (Fase V2). Colores del glifo y de la ficha por
+   puesto; en .dark la ficha se oscurece (texto >= 4.5:1) y las cintas se
+   aclaran para seguir leyéndose sobre fondo oscuro. */
+:root{
+  --medal-ribbon:#2c5a41;
+  --medal-1-disc:#e3b341;--medal-1-rim:#b8871b;--medal-1-num:#4a3500;--medal-1-bg:#fbf1d3;--medal-1-border:#e8c766;--medal-1-text:#5c4300;
+  --medal-2-disc:#b7bfc8;--medal-2-rim:#8a939d;--medal-2-num:#2e353c;--medal-2-bg:#eef1f4;--medal-2-border:#c3cad2;--medal-2-text:#3a434d;
+  --medal-3-disc:#c7834f;--medal-3-rim:#9a5b2d;--medal-3-num:#3e1d08;--medal-3-bg:#f7e6da;--medal-3-border:#ddb08f;--medal-3-text:#6e3514;
+}
+.dark{
+  --medal-ribbon:#6fb592;
+  --medal-1-bg:#3a2e0c;--medal-1-border:#8a6d1a;--medal-1-text:#f3dfa0;
+  --medal-2-bg:#2b3138;--medal-2-border:#5b6570;--medal-2-text:#dde2e8;
+  --medal-3-bg:#3b2517;--medal-3-border:#8a5a38;--medal-3-text:#f0cfb4;
+}
+
+.liga-medal-glyph{display:block;flex:none;overflow:visible}
+.liga-medal-ribbon{stroke:var(--medal-ribbon);fill:none}
+.liga-medal-glyph--1{--m-disc:var(--medal-1-disc);--m-rim:var(--medal-1-rim);--m-num:var(--medal-1-num)}
+.liga-medal-glyph--2{--m-disc:var(--medal-2-disc);--m-rim:var(--medal-2-rim);--m-num:var(--medal-2-num)}
+.liga-medal-glyph--3{--m-disc:var(--medal-3-disc);--m-rim:var(--medal-3-rim);--m-num:var(--medal-3-num)}
+.liga-medal-disc{fill:var(--m-disc);stroke:var(--m-rim)}
+.liga-medal-number{fill:var(--m-num)}
+
+/* Ficha: medalla + descripción */
+.liga-medal-ficha{display:inline-flex;font-family:var(--font-sans),system-ui,sans-serif;align-items:center;gap:.375rem;min-height:1.75rem;padding:.125rem .625rem .125rem .3125rem;border:1px solid var(--f-border);border-radius:999px;background:var(--f-bg);color:var(--f-text);font-size:.8125rem;font-weight:600;line-height:1.2;white-space:nowrap}
+.liga-medal-ficha--1{--f-bg:var(--medal-1-bg);--f-border:var(--medal-1-border);--f-text:var(--medal-1-text)}
+.liga-medal-ficha--2{--f-bg:var(--medal-2-bg);--f-border:var(--medal-2-border);--f-text:var(--medal-2-text)}
+.liga-medal-ficha--3{--f-bg:var(--medal-3-bg);--f-border:var(--medal-3-border);--f-text:var(--medal-3-text)}
+
+/* Bloque "Palmarés en la Liga" de la página del equipo */
+.liga-palmares{display:flex;flex-wrap:wrap;gap:.5rem}
+
+/* Logitos junto al nombre: el grupo envuelve entero, el nombre no se parte. */
+.liga-medals{display:inline-flex;flex-wrap:wrap;align-items:center;gap:0;margin-inline-start:.25rem;vertical-align:middle;pointer-events:auto}
+.liga-medal-button{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:1.5rem;min-height:1.5rem;padding:.1875rem .3125rem;border:0;border-radius:.375rem;background:transparent;color:inherit;cursor:pointer;touch-action:manipulation}
+/* Área táctil de 44px sin ocupar lugar en el layout */
+.liga-medal-button::after{content:"";position:absolute;inset:50% auto auto 50%;width:max(100%,2.75rem);height:max(100%,2.75rem);transform:translate(-50%,-50%)}
+.liga-medal-button:focus-visible{outline:2px solid var(--ring,currentColor);outline-offset:1px}
+@media(hover:hover) and (pointer:fine){.liga-medal-button:hover{background:color-mix(in srgb,currentColor 10%,transparent)}}
+
+.liga-medal-popover{position:fixed;z-index:80;max-width:min(16rem,calc(100vw - 1rem));pointer-events:none;filter:drop-shadow(0 4px 10px rgb(0 0 0 / .22))}
+.liga-medal-popover .liga-medal-ficha{white-space:normal}
