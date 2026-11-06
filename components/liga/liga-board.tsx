@@ -34,6 +34,7 @@ import {
 import { cn, formatDate } from "@/lib/utils"
 import type { Season } from "@/components/liga/season-theme"
 import { DialogSheet } from "@/components/liga/DialogSheet"
+import { TeamMedals } from "@/components/liga/medals/medal-badges"
 
 type CategoryBundle = {
   category: Category
@@ -204,11 +205,12 @@ export function LigaBoard({ bundles, initialCategory, seasonSlug, season }: Liga
                         </span>
                       </TableCell>
                       <TableCell className="font-medium text-foreground">
-                        <span className="flex items-center gap-1.5">
+                        <span className="flex flex-wrap items-center gap-x-1.5">
                           {r.position <= 3 && (
                             <Medal aria-hidden="true" className={cn("size-4", podiumIcon(r.position))} />
                           )}
-                          {r.team.name}
+                          <span>{r.team.name}</span>
+                          <TeamMedals teamId={r.team_id} />
                         </span>
                       </TableCell>
                       <TableCell className="text-center tabular-nums">
@@ -265,9 +267,9 @@ export function LigaBoard({ bundles, initialCategory, seasonSlug, season }: Liga
                   className="liga-board-next-series rounded-md border border-border border-l-4 p-3"
                 >
                   <div className="flex items-center justify-between gap-2 text-sm font-semibold text-foreground">
-                    <span className="text-pretty">{s.home_team?.name ?? s.home_team_id}</span>
+                    <span className="text-pretty">{s.home_team?.name ?? s.home_team_id}<TeamMedals teamId={s.home_team_id} /></span>
                     <span className="text-xs font-normal text-muted-foreground">vs</span>
-                    <span className="text-pretty text-right">{s.away_team?.name ?? s.away_team_id}</span>
+                    <span className="text-pretty text-right">{s.away_team?.name ?? s.away_team_id}<TeamMedals teamId={s.away_team_id} /></span>
                   </div>
                   <p className="mt-1.5 text-xs text-muted-foreground">
                     {dateLabel(s.scheduled_date, s.scheduled_time?.slice(0, 5))}
@@ -327,9 +329,9 @@ export function LigaBoard({ bundles, initialCategory, seasonSlug, season }: Liga
                           </p>
                         </TableCell>
                         <TableCell className="text-sm font-medium text-foreground">
-                          {s.home_team?.name ?? s.home_team_id}{" "}
+                          {s.home_team?.name ?? s.home_team_id}<TeamMedals teamId={s.home_team_id} />{" "}
                           <span className="text-muted-foreground">vs</span>{" "}
-                          {s.away_team?.name ?? s.away_team_id}
+                          {s.away_team?.name ?? s.away_team_id}<TeamMedals teamId={s.away_team_id} />
                         </TableCell>
                         <TableCell className="text-center text-sm font-semibold tabular-nums text-foreground">
                           {isDone
@@ -366,10 +368,11 @@ export function LigaBoard({ bundles, initialCategory, seasonSlug, season }: Liga
           </h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {activeBundle.teams.map((t, i) => (
-              <Link
+              // Link "estirado": el <a> cubre la tarjeta con un ::after y las medallas
+              // (botones) quedan afuera del <a>, por encima.
+              <div
                 key={t.id}
-                href={teamHref(seasonSlug, activeBundle.category.slug, t.slug)}
-                className="liga-board-team-link group flex min-h-11 items-start gap-3 rounded-md border border-border bg-card p-4 transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                className="liga-board-team-link group relative flex min-h-11 items-start gap-3 rounded-md border border-border bg-card p-4 transition-colors duration-150 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-ring"
               >
                 <span
                   className={cn(
@@ -380,15 +383,21 @@ export function LigaBoard({ bundles, initialCategory, seasonSlug, season }: Liga
                   {t.name.charAt(0)}
                 </span>
                 <div className="min-w-0">
-                  <p className="flex items-center gap-1 font-heading font-bold text-foreground">
-                    {t.name}
+                  <p className="flex flex-wrap items-center gap-x-1 font-heading font-bold text-foreground">
+                    <Link
+                      href={teamHref(seasonSlug, activeBundle.category.slug, t.slug)}
+                      className="outline-none after:absolute after:inset-0 after:content-['']"
+                    >
+                      {t.name}
+                    </Link>
+                    <span className="relative z-10"><TeamMedals teamId={t.id} /></span>
                     <ChevronRight aria-hidden="true" className="liga-board-team-chevron size-4 shrink-0 text-muted-foreground" />
                   </p>
                   {t.captain_name && (
                     <p className="mt-1 text-sm text-muted-foreground">{t.captain_name}</p>
                   )}
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>
@@ -479,8 +488,8 @@ function BracketCard({
             <div className="col-start-3 row-start-2 flex min-h-[176px] items-center">
               <SFMatchup
                 label="SF 1"
-                home={{ name: bracket.byes[0].team.name, seed: 1, known: true }}
-                away={{ name: qfTopWinnerName ?? "Ganador CF 1", known: !!qfTopWinnerName }}
+                home={{ name: bracket.byes[0].team.name, id: bracket.byes[0].team.id, seed: 1, known: true }}
+                away={{ name: qfTopWinnerName ?? "Ganador CF 1", id: qfTop.winnerTeamId, known: !!qfTopWinnerName }}
                 series={sf1}
               />
             </div>
@@ -504,13 +513,13 @@ function BracketCard({
                 label="SF 2"
                 home={
                   isFiveTeam
-                    ? { name: bracket.byes[1].team.name, seed: 2, known: true }
-                    : { name: qfBottomWinnerName ?? "Ganador CF 2", known: !!qfBottomWinnerName }
+                    ? { name: bracket.byes[1].team.name, id: bracket.byes[1].team.id, seed: 2, known: true }
+                    : { name: qfBottomWinnerName ?? "Ganador CF 2", id: qfBottom?.winnerTeamId, known: !!qfBottomWinnerName }
                 }
                 away={
                   isFiveTeam
-                    ? { name: bracket.byes[2].team.name, seed: 3, known: true }
-                    : { name: bracket.byes[1].team.name, seed: 2, known: true }
+                    ? { name: bracket.byes[2].team.name, id: bracket.byes[2].team.id, seed: 3, known: true }
+                    : { name: bracket.byes[1].team.name, id: bracket.byes[1].team.id, seed: 2, known: true }
                 }
                 series={sf2}
               />
@@ -522,8 +531,8 @@ function BracketCard({
             <div className="col-start-5 row-span-2 row-start-2 flex items-center">
               <SFMatchup
                 label="Final"
-                home={{ name: sf1WinnerName ?? "Ganador SF 1", known: !!sf1WinnerName }}
-                away={{ name: sf2WinnerName ?? "Ganador SF 2", known: !!sf2WinnerName }}
+                home={{ name: sf1WinnerName ?? "Ganador SF 1", id: sf1?.winner_team_id ?? undefined, known: !!sf1WinnerName }}
+                away={{ name: sf2WinnerName ?? "Ganador SF 2", id: sf2?.winner_team_id ?? undefined, known: !!sf2WinnerName }}
                 series={finalSeries}
               />
             </div>
@@ -567,7 +576,7 @@ function RoundLabel({ label }: { label: string }) {
   )
 }
 
-type SlotInfo = { name: string; seed?: number; known: boolean }
+type SlotInfo = { name: string; id?: string; seed?: number; known: boolean }
 
 function SFMatchup({
   label,
@@ -631,6 +640,7 @@ function SFSlot({ slot }: { slot: SlotInfo }) {
     )}>
       {slot.seed && <SeedBadge seed={slot.seed} small />}
       <span className="max-w-[130px] truncate sm:max-w-none">{slot.name}</span>
+      <TeamMedals teamId={slot.id} />
     </span>
   )
 }
@@ -642,6 +652,7 @@ function ByePill({ slot }: { slot: ProvisionalBracket["byes"][0] }) {
       <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
         {slot.team.name}
       </span>
+      <TeamMedals teamId={slot.team.id} />
       <Badge className="shrink-0 bg-primary/10 text-xs text-primary hover:bg-primary/10">
         BYE → SF
       </Badge>
@@ -726,6 +737,7 @@ function BracketTeamPill({
         {slot.team.name}
         {isWinner && <span className="sr-only">, ganó</span>}
       </span>
+      <TeamMedals teamId={slot.team.id} />
       {isWinner && <Trophy aria-hidden="true" className="size-3.5 shrink-0 text-primary" />}
     </div>
   )
@@ -800,6 +812,7 @@ function SeriesCard({ series }: { series: SeriesWithRound }) {
     <DialogSheet
       triggerClassName="liga-board-series-button flex min-h-11 w-full items-center gap-3 overflow-hidden rounded-md border border-border border-l-4 border-l-primary bg-card px-4 py-3 text-left transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       title={`${homeName} ${scoreLabel} ${awayName}`}
+      stretchedLabel={`Ver canchas: ${homeName} ${scoreLabel} ${awayName}`}
       description={`${series.roundName} · Detalle de canchas`}
       trigger={
         <>
@@ -807,10 +820,10 @@ function SeriesCard({ series }: { series: SeriesWithRound }) {
             <ListChecks aria-hidden="true" className="size-5" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate font-heading text-sm font-bold text-foreground">
-              <span className={cn(homeWon && "text-primary")}>{homeName}{homeWon && <span className="sr-only">, ganó</span>}</span>{" "}
+            <span className="block font-heading text-sm font-bold text-foreground">
+              <span className={cn(homeWon && "text-primary")}>{homeName}{homeWon && <span className="sr-only">, ganó</span>}</span><TeamMedals teamId={series.home_team_id} />{" "}
               <span className="text-muted-foreground">vs</span>{" "}
-              <span className={cn(awayWon && "text-primary")}>{awayName}{awayWon && <span className="sr-only">, ganó</span>}</span>
+              <span className={cn(awayWon && "text-primary")}>{awayName}{awayWon && <span className="sr-only">, ganó</span>}</span><TeamMedals teamId={series.away_team_id} />
             </span>
             <span className="block text-xs text-muted-foreground">
               {series.roundName} · {dateLabel(series.scheduled_date)}

@@ -3,11 +3,14 @@
 import { useState } from "react"
 import { Trophy } from "lucide-react"
 import { formatDate } from "@/lib/utils"
+import { TeamMedals } from "./medals/medal-badges"
 import type { ProvisionalBracket, QuarterFinalMatchup, PlayoffSlot } from "@/lib/playoffs/types"
 
 type ScheduledMatch = {
   homeTeamName: string
   awayTeamName: string
+  homeTeamId?: string
+  awayTeamId?: string
   scheduledDate?: string | null
   scheduledTime?: string | null
   status: string
@@ -34,8 +37,8 @@ function MatchCard({ label, home, away, date, time, status, winnerId, homeId, aw
   return <li className="rounded-md border border-border bg-card p-3">
     <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
     <div className="space-y-1 font-heading text-base font-semibold">
-      <p className={winnerId && homeId === winnerId ? "text-primary" : "text-foreground"}>{home}{winnerId && homeId === winnerId && <span className="ml-2 text-xs">Ganó</span>}</p>
-      <p className={winnerId && awayId === winnerId ? "text-primary" : "text-foreground"}>{away}{winnerId && awayId === winnerId && <span className="ml-2 text-xs">Ganó</span>}</p>
+      <p className={winnerId && homeId === winnerId ? "text-primary" : "text-foreground"}>{home}<TeamMedals teamId={homeId} />{winnerId && homeId === winnerId && <span className="ml-2 text-xs">Ganó</span>}</p>
+      <p className={winnerId && awayId === winnerId ? "text-primary" : "text-foreground"}>{away}<TeamMedals teamId={awayId} />{winnerId && awayId === winnerId && <span className="ml-2 text-xs">Ganó</span>}</p>
     </div>
     <p className="mt-2 text-xs text-muted-foreground">{dateLabel(date, time)}{played ? " · Jugado" : ""}</p>
     {note && <p className="mt-2 border-t border-border pt-2 text-xs font-medium text-primary">{note}</p>}
@@ -46,7 +49,7 @@ function Quarterfinal({ qf, note }: { qf: QuarterFinalMatchup; note: string }) {
   return <MatchCard label="Cuartos de final" home={`${qf.home.seed}° ${qf.home.team.name}`} away={`${qf.away.seed}° ${qf.away.team.name}`} homeId={qf.home.team.id} awayId={qf.away.team.id} winnerId={qf.winnerTeamId} date={qf.scheduledDate} time={qf.scheduledTime} status={qf.status} note={note} />
 }
 function Bye({ slot, note }: { slot: PlayoffSlot; note: string }) {
-  return <li className="rounded-md border border-primary/30 bg-primary/5 p-3"><p className="text-xs font-bold uppercase tracking-wide text-primary">Pasa directo a semifinal</p><p className="mt-2 font-heading text-base font-semibold text-foreground">{slot.seed}° {slot.team.name}</p><p className="mt-2 text-xs text-muted-foreground">{note}</p></li>
+  return <li className="rounded-md border border-primary/30 bg-primary/5 p-3"><p className="text-xs font-bold uppercase tracking-wide text-primary">Pasa directo a semifinal</p><p className="mt-2 font-heading text-base font-semibold text-foreground">{slot.seed}° {slot.team.name}<TeamMedals teamId={slot.team.id} /></p><p className="mt-2 text-xs text-muted-foreground">{note}</p></li>
 }
 
 export function PlayoffBracket({ bracket, semifinals, final, thirdPlace, provisional = true }: Props) {
@@ -69,15 +72,15 @@ export function PlayoffBracket({ bracket, semifinals, final, thirdPlace, provisi
           {!five && second && <Bye slot={second} note="Semifinal contra ganador de 4° vs 5°" />}
         </ol></section>
         <section className={round === 1 ? "" : "hidden md:block"}><h4 className="mb-3 border-b-2 border-primary pb-2 font-heading text-lg font-bold">Semifinales</h4><ol className="space-y-3">
-          <MatchCard label="Cruce proyectado" home={first?.team.name ?? "1°"} away={five ? second?.team.name ?? "2°" : "Ganador 3° vs 6°"} note="Ganador a la final" />
-          <MatchCard label="Cruce proyectado" home={five ? third?.team.name ?? "3°" : second?.team.name ?? "2°"} away="Ganador de cuartos" note="Ganador a la final" />
+          <MatchCard label="Cruce proyectado" homeId={first?.team.id} awayId={five ? second?.team.id : undefined} home={first?.team.name ?? "1°"} away={five ? second?.team.name ?? "2°" : "Ganador 3° vs 6°"} note="Ganador a la final" />
+          <MatchCard label="Cruce proyectado" homeId={five ? third?.team.id : second?.team.id} home={five ? third?.team.name ?? "3°" : second?.team.name ?? "2°"} away="Ganador de cuartos" note="Ganador a la final" />
         </ol></section>
-        <section className={round === 2 ? "" : "hidden md:block"}><h4 className="mb-3 border-b-2 border-primary pb-2 font-heading text-lg font-bold">Final</h4><ol><MatchCard label="Final" home={final?.homeTeamName ?? "Ganador semifinal 1"} away={final?.awayTeamName ?? "Ganador semifinal 2"} date={final?.scheduledDate} time={final?.scheduledTime} status={final?.status} /></ol>
+        <section className={round === 2 ? "" : "hidden md:block"}><h4 className="mb-3 border-b-2 border-primary pb-2 font-heading text-lg font-bold">Final</h4><ol><MatchCard label="Final" homeId={final?.homeTeamId} awayId={final?.awayTeamId} home={final?.homeTeamName ?? "Ganador semifinal 1"} away={final?.awayTeamName ?? "Ganador semifinal 2"} date={final?.scheduledDate} time={final?.scheduledTime} status={final?.status} /></ol>
           {final?.status === "completed" && <p className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary"><Trophy aria-hidden="true" className="size-4" /> Final disputada</p>}
         </section>
       </div>
     </div>
-    {semifinals && semifinals.length > 0 && <section className="mt-5"><h4 className="mb-2 font-heading text-lg font-bold">Semifinales programadas</h4><p className="mb-3 text-xs text-muted-foreground">Partidos cargados, mostrados por separado del cuadro proyectado.</p><ol className="grid gap-3 sm:grid-cols-2">{semifinals.map((match, index) => <MatchCard key={`${match.homeTeamName}-${match.awayTeamName}-${index}`} label="Semifinal" home={match.homeTeamName} away={match.awayTeamName} date={match.scheduledDate} time={match.scheduledTime} status={match.status} />)}</ol></section>}
-    {thirdPlace && <section className="mt-5 max-w-sm"><h4 className="mb-2 font-heading text-lg font-bold">3.º y 4.º puesto</h4><p className="mb-2 text-xs text-muted-foreground">Partido separado entre perdedores de semifinal.</p><ol><MatchCard label="3.º y 4.º puesto" home={thirdPlace.homeTeamName ?? "A definir"} away={thirdPlace.awayTeamName ?? "A definir"} date={thirdPlace.scheduledDate} time={thirdPlace.scheduledTime} status={thirdPlace.status} /></ol></section>}
+    {semifinals && semifinals.length > 0 && <section className="mt-5"><h4 className="mb-2 font-heading text-lg font-bold">Semifinales programadas</h4><p className="mb-3 text-xs text-muted-foreground">Partidos cargados, mostrados por separado del cuadro proyectado.</p><ol className="grid gap-3 sm:grid-cols-2">{semifinals.map((match, index) => <MatchCard key={`${match.homeTeamName}-${match.awayTeamName}-${index}`} label="Semifinal" homeId={match.homeTeamId} awayId={match.awayTeamId} home={match.homeTeamName} away={match.awayTeamName} date={match.scheduledDate} time={match.scheduledTime} status={match.status} />)}</ol></section>}
+    {thirdPlace && <section className="mt-5 max-w-sm"><h4 className="mb-2 font-heading text-lg font-bold">3.º y 4.º puesto</h4><p className="mb-2 text-xs text-muted-foreground">Partido separado entre perdedores de semifinal.</p><ol><MatchCard label="3.º y 4.º puesto" homeId={thirdPlace.homeTeamId} awayId={thirdPlace.awayTeamId} home={thirdPlace.homeTeamName ?? "A definir"} away={thirdPlace.awayTeamName ?? "A definir"} date={thirdPlace.scheduledDate} time={thirdPlace.scheduledTime} status={thirdPlace.status} /></ol></section>}
   </div>
 }

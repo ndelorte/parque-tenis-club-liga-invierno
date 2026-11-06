@@ -303,14 +303,39 @@ DNI de los jugadores, aparte de `players` porque esa tabla tiene lectura públic
 | dni | text unique | Solo dígitos, 7 u 8 |
 | created_at / updated_at | timestamptz | |
 
-### approve_liga_registration(p_registration_id uuid) → uuid
+### approve_liga_registration(p_registration_id uuid, p_medals jsonb default '[]') → uuid
 
-Función `security definer`, ejecutable solo por `service_role`. En una transacción:
+Función `security definer`, ejecutable solo por `service_role` (migración 014 reemplaza la
+de 1 parámetro de la 013). En una transacción:
 crea el equipo (slug único por categoría), los `players` nuevos (`display_name` =
 "Apellido Nombre"), guarda los DNI en `player_private` (no pisa uno existente),
-crea los `team_players`, setea `teams.captain_name` y marca la solicitud `approved`.
+crea los `team_players`, setea `teams.captain_name`, guarda las medallas de `p_medals`
+(arreglo de `{source_category_id, place}`) en `team_medals` y marca la solicitud `approved`.
 Falla (y revierte todo) si faltan jugadores por resolver, si un DNI ya es de otro
-jugador o si alguien ya está activo en otro equipo de la categoría.
+jugador, si alguien ya está activo en otro equipo de la categoría o si una medalla es inválida.
+
+## team_medals (migración 014, Fase V2)
+
+Medallas de podio que lleva un equipo por ediciones anteriores (Verano e Invierno).
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | |
+| team_id | uuid FK → teams (cascade) | Equipo que lleva la medalla |
+| source_category_id | uuid FK → categories | Categoría donde salió el podio (de ahí se saca la edición) |
+| place | smallint | 1, 2 o 3 (check) |
+| created_at | timestamptz | |
+
+- Unique `(team_id, source_category_id)`: una medalla por equipo y categoría de origen.
+- **No se guarda el texto.** "Subcampeonas Verano 2025/26" se calcula al leer con la categoría
+  (Damas → femenino) y su torneo (`lib/liga/medals/label.ts`), así las reglas de redacción
+  viven en un solo lugar.
+- RLS: `select` público (no hay datos sensibles); sin policies de escritura → solo `service_role`.
+- Fuente de los podios: `getPodiumForCategory` (series reales; `manual_*` como respaldo) sobre
+  todas las categorías de torneos `finished` (`lib/data/podium-history.ts`).
+- Lectura: `getMedalsForTeams(ids)` (`lib/data/team-medals.ts`), una consulta para muchos equipos,
+  de la más reciente a la más vieja. Orden: Invierno 2026 > Verano 2025/26 > Invierno 2025 >
+  Verano 2024/25 (`lib/liga/medals/sort.ts`).
 
 ---
 

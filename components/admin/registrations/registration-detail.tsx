@@ -7,10 +7,13 @@ import { InlineError, Notice } from "@/components/admin/states"
 import {
   approveRegistration,
   getRegistrationDetail,
+  listMedalCandidates,
   rejectRegistration,
+  saveTeamMedals,
   setPlayerResolution,
 } from "@/app/actions/liga-registrations"
-import type { DetailCandidate, DetailPlayer, RegistrationDetail } from "@/app/actions/liga-registrations"
+import type { DetailCandidate, DetailPlayer, MedalCandidates, MedalInput, RegistrationDetail } from "@/app/actions/liga-registrations"
+import { MedalsStep } from "@/components/admin/registrations/medals-step"
 
 const MATCH_LABEL: Record<DetailCandidate["match"], string> = {
   dni: "Mismo DNI",
@@ -110,6 +113,15 @@ export function RegistrationDetailView({
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Podios anteriores: candidatos, lo tildado y lo que ya estaba guardado.
+  const [medals, setMedals] = useState<MedalCandidates | null>(null)
+  const [ticked, setTicked] = useState<Set<string>>(new Set())
+
+  const loadMedals = useCallback(async () => {
+    const data = await listMedalCandidates(registrationId)
+    setMedals(data)
+    setTicked(new Set(data?.selected ?? []))
+  }, [registrationId])
 
   const load = useCallback(async () => {
     const data = await getRegistrationDetail(registrationId)
@@ -123,6 +135,13 @@ export function RegistrationDetailView({
       if (!current) return
       setDetail(data)
       setLoading(false)
+      if (data && data.status !== "rejected") {
+        listMedalCandidates(registrationId).then((m) => {
+          if (!current) return
+          setMedals(m)
+          setTicked(new Set(m?.selected ?? []))
+        })
+      }
     })
     return () => {
       current = false
@@ -151,16 +170,47 @@ export function RegistrationDetailView({
     setBusy(false)
   }
 
+  function toggleMedal(key: string) {
+    setTicked((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  function tickedMedals(): MedalInput[] {
+    return (medals?.candidates ?? [])
+      .filter((c) => ticked.has(`${c.categoryId}:${c.place}`))
+      .map((c) => ({ categoryId: c.categoryId, place: c.place }))
+  }
+
+  // Equipo ya aprobado: se guardan solo las diferencias con lo que tenía.
+  async function saveMedals() {
+    if (!medals) return
+    const initial = new Set(medals.selected)
+    const add = tickedMedals().filter((m) => !initial.has(`${m.categoryId}:${m.place}`))
+    const removeCategoryIds = medals.candidates
+      .filter((c) => initial.has(`${c.categoryId}:${c.place}`) && !ticked.has(`${c.categoryId}:${c.place}`))
+      .map((c) => c.categoryId)
+    setBusy(true)
+    setError(null)
+    const result = await saveTeamMedals(registrationId, { add, removeCategoryIds })
+    if (!result.success) setError(result.error ?? "No se pudieron guardar las medallas")
+    await loadMedals()
+    setBusy(false)
+  }
+
   async function approve() {
     setBusy(true)
     setError(null)
-    const result = await approveRegistration(registrationId)
+    const result = await approveRegistration(registrationId, tickedMedals())
     if (!result.success) {
       setError(result.error ?? "No se pudo aprobar")
       setBusy(false)
       return
     }
-    await load()
+    await Promise.all([load(), loadMedals()])
     setBusy(false)
     onChanged()
   }
@@ -200,6 +250,20 @@ export function RegistrationDetailView({
           <PlayerRow key={p.id} player={p} editable={editable} busy={busy} onResolve={(res, pid) => resolve(p.id, res, pid)} />
         ))}
       </ul>
+
+      {medals && (
+        <>
+          <MedalsStep candidates={medals.candidates} selected={ticked} disabled={busy} onToggle={toggleMedal} />
+          {!editable && detail.status === "approved" && (
+            <div>
+              <Button onClick={saveMedals} disabled={busy} variant="outline" className="min-h-11 px-5 font-bold">
+                {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
+                Guardar medallas
+              </Button>
+            </div>
+          )}
+        </>
+      )}
 
       {error && <Notice variant="error" title="No se pudo completar">{error}</Notice>}
 

@@ -11,6 +11,8 @@ import { isRequestFromAdmin } from "@/lib/auth/requireAdmin"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { suggestPlayerMatches, type KnownPlayer } from "@/lib/liga/registration/suggestPlayerMatches"
 import type { NameMatch } from "@/lib/players/similarNames"
+import { listHistoricalPodiums } from "@/lib/data/podium-history"
+import { buildMedalCandidates, candidateKey, preselectedKeys, type MedalCandidate } from "@/lib/liga/medals/candidates"
 
 type Result = { success: boolean; error?: string }
 
@@ -351,13 +353,34 @@ export async function setPlayerResolution(
 
 // ——— Aprobar / rechazar ———
 
-export async function approveRegistration(registrationId: string): Promise<Result & { teamId?: string }> {
+// Medalla elegida por el organizador: categoría de origen del podio + puesto.
+const medalInputSchema = z.object({
+  categoryId: z.string().uuid(),
+  place: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+})
+export type MedalInput = z.infer<typeof medalInputSchema>
+
+// Un equipo lleva a lo sumo una medalla por categoría de origen.
+const medalListSchema = z
+  .array(medalInputSchema)
+  .max(30, "Demasiadas medallas")
+  .refine((list) => new Set(list.map((m) => m.categoryId)).size === list.length, "Hay dos medallas de la misma categoría")
+
+export async function approveRegistration(
+  registrationId: string,
+  medals: MedalInput[] = [],
+): Promise<Result & { teamId?: string }> {
   if (!(await isRequestFromAdmin())) return { success: false, error: NO_AUTH }
+  const parsedMedals = medalListSchema.safeParse(medals)
+  if (!parsedMedals.success) return { success: false, error: parsedMedals.error.issues[0]?.message ?? "Medallas inválidas" }
   const supabase = createAdminClient()
 
-  // Una sola función SQL: crea equipo, jugadores nuevos, DNI y plantel, y
-  // marca la solicitud. Si algo falla se revierte todo.
-  const { data, error } = await supabase.rpc("approve_liga_registration", { p_registration_id: registrationId })
+  // Una sola función SQL: crea equipo, jugadores nuevos, DNI, plantel y
+  // medallas, y marca la solicitud. Si algo falla se revierte todo.
+  const { data, error } = await supabase.rpc("approve_liga_registration", {
+    p_registration_id: registrationId,
+    p_medals: parsedMedals.data.map((m) => ({ source_category_id: m.categoryId, place: m.place })),
+  })
   if (error) return { success: false, error: error.message || "No se pudo aprobar la inscripción" }
 
   revalidatePath("/panel-liga")
@@ -377,5 +400,76 @@ export async function rejectRegistration(registrationId: string): Promise<Result
   if (error) return { success: false, error: "No se pudo rechazar la inscripción" }
   if (!data || data.length === 0) return { success: false, error: "La inscripción ya fue revisada" }
   revalidatePath("/panel-liga")
+  return { success: true }
+}
+
+// ——— Medallas de podios anteriores ———
+
+export type MedalCandidates = {
+  candidates: MedalCandidate[]
+  // Claves (`categoryId:place`) tildadas de entrada. Pendiente: las
+  // coincidencias exactas de nombre. Aprobada: las medallas que el equipo ya tiene.
+  selected: string[]
+}
+
+export async function listMedalCandidates(registrationId: string): Promise<MedalCandidates | null> {
+  if (!(await isRequestFromAdmin())) return null
+  const supabase = createAdminClient()
+  const { data: reg } = await supabase
+    .from("liga_registrations")
+    .select("team_name, status, team_id")
+    .eq("id", registrationId)
+    .maybeSingle()
+  if (!reg || reg.status === "rejected") return null
+
+  const candidates = buildMedalCandidates(await listHistoricalPodiums(), reg.team_name)
+  if (reg.status === "pending" || !reg.team_id) return { candidates, selected: preselectedKeys(candidates) }
+
+  const { data: current } = await supabase.from("team_medals").select("source_category_id, place").eq("team_id", reg.team_id)
+  const selected = ((current ?? []) as Array<{ source_category_id: string; place: number }>).map((m) =>
+    candidateKey({ categoryId: m.source_category_id, place: m.place as 1 | 2 | 3 }),
+  )
+  return { candidates, selected }
+}
+
+// Alta y baja de medallas de un equipo ya aprobado (el cruce por nombre puede
+// fallar). Recibe solo las diferencias: lo que no se toca queda como está.
+export async function saveTeamMedals(
+  registrationId: string,
+  changes: { add: MedalInput[]; removeCategoryIds: string[] },
+): Promise<Result> {
+  if (!(await isRequestFromAdmin())) return { success: false, error: NO_AUTH }
+  const parsedAdd = medalListSchema.safeParse(changes.add)
+  const parsedRemove = z.array(z.string().uuid()).max(30).safeParse(changes.removeCategoryIds)
+  if (!parsedAdd.success) return { success: false, error: parsedAdd.error.issues[0]?.message ?? "Medallas inválidas" }
+  if (!parsedRemove.success) return { success: false, error: "Medallas inválidas" }
+
+  const supabase = createAdminClient()
+  const { data: reg } = await supabase
+    .from("liga_registrations")
+    .select("status, team_id")
+    .eq("id", registrationId)
+    .maybeSingle()
+  if (!reg || reg.status !== "approved" || !reg.team_id) {
+    return { success: false, error: "Las medallas se editan una vez aprobada la inscripción" }
+  }
+
+  if (parsedRemove.data.length > 0) {
+    const { error } = await supabase
+      .from("team_medals")
+      .delete()
+      .eq("team_id", reg.team_id)
+      .in("source_category_id", parsedRemove.data)
+    if (error) return { success: false, error: "No se pudieron quitar las medallas" }
+  }
+  if (parsedAdd.data.length > 0) {
+    const { error } = await supabase.from("team_medals").upsert(
+      parsedAdd.data.map((m) => ({ team_id: reg.team_id, source_category_id: m.categoryId, place: m.place })),
+      { onConflict: "team_id,source_category_id" },
+    )
+    if (error) return { success: false, error: "No se pudieron guardar las medallas" }
+  }
+
+  revalidatePath("/ligas-invierno-verano", "layout")
   return { success: true }
 }

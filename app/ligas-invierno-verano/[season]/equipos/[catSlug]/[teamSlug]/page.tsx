@@ -6,6 +6,8 @@ import { getTeamBySlugAndCategory } from "@/lib/data/teams"
 import { areTeamsPublic, roundsHaveSeries } from "@/lib/liga/editionStage"
 import { getRoundsWithSeries, getSeriesForTeam } from "@/lib/data/series"
 import { getStandingsSnapshot } from "@/lib/data/standings"
+import { getMedalsForTeams } from "@/lib/data/team-medals"
+import { TeamMedalsProvider } from "@/components/liga/medals/medal-badges"
 import { TeamDetailView } from "@/components/liga/team-detail"
 import type { TeamDetail, PlayedDate, PendingDate, CourtDetail } from "@/lib/team-detail-types"
 import { formatTournamentTitle } from "@/lib/tournament/formatTournamentTitle"
@@ -77,6 +79,12 @@ export default async function EquipoPage({ params }: Props) {
     getStandingsSnapshot(team.category_id),
   ])
 
+  // Una sola consulta para las medallas del equipo y de todos sus rivales.
+  const medalsByTeam = await getMedalsForTeams([
+    team.id,
+    ...allSeries.flatMap((s) => [s.home_team_id, s.away_team_id]),
+  ])
+
   const myStanding = allStandings.find((s) => s.team_id === team.id)
 
   const played: PlayedDate[] = []
@@ -85,6 +93,7 @@ export default async function EquipoPage({ params }: Props) {
   for (const s of allSeries) {
     const isHome = s.home_team_id === team.id
     const opponentTeam = isHome ? s.away_team : s.home_team
+    const opponentId = isHome ? s.away_team_id : s.home_team_id
     const opponentName = opponentTeam?.name ?? (isHome ? s.away_team_id : s.home_team_id)
     const roundName = s.round?.name ?? ""
 
@@ -100,6 +109,7 @@ export default async function EquipoPage({ params }: Props) {
         round: roundName,
         date: s.scheduled_date ?? "",
         opponent: opponentName,
+        opponentId,
         isHome,
         courtsWon: teamCourtsWon,
         courtsLost: teamCourtsLost,
@@ -115,6 +125,7 @@ export default async function EquipoPage({ params }: Props) {
         date: s.scheduled_date ?? "",
         time: s.scheduled_time ?? "—",
         opponent: opponentName,
+        opponentId,
         isHome,
       })
     }
@@ -145,7 +156,12 @@ export default async function EquipoPage({ params }: Props) {
     },
     played,
     pending,
+    medals: medalsByTeam[team.id] ?? [],
   }
 
-  return <TeamDetailView team={teamDetail} />
+  return (
+    <TeamMedalsProvider medals={medalsByTeam}>
+      <TeamDetailView team={teamDetail} />
+    </TeamMedalsProvider>
+  )
 }

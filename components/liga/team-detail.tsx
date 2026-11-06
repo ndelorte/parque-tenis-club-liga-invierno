@@ -5,6 +5,9 @@ import { categoryHref } from "@/lib/tournament/seasonRoutes"
 import { formatDate } from "@/lib/utils"
 import { seasonFromSlug } from "./season-theme"
 import { PlayedDateCard } from "./PlayedDateCard"
+import { MedalFicha } from "./medals/medal-ficha"
+import { TeamMedals } from "./medals/medal-badges"
+import { medalDescription } from "@/lib/liga/medals/label"
 
 function dateLabel(value: string) {
   return formatDate(value, { month: "short", utc: true, emptyLabel: "Fecha a confirmar" })
@@ -32,6 +35,18 @@ export function TeamDetailView({ team }: { team: TeamDetail }) {
       </div>
     </header>
     <div className="mx-auto max-w-6xl space-y-10 px-4 py-8 sm:px-6">
+      {team.medals.length > 0 && (
+        <section aria-labelledby="palmares-titulo">
+          <h2 id="palmares-titulo" className="mb-3 font-heading text-2xl font-bold">Palmarés en la Liga</h2>
+          <ul className="liga-palmares">
+            {team.medals.map((medal, index) => (
+              <li key={`${medal.tournamentSlug}-${medal.categorySlug}-${medal.place}-${index}`}>
+                <MedalFicha place={medal.place} text={medalDescription(medal)} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <section aria-label="Números del equipo" className="grid grid-cols-2 gap-2 sm:grid-cols-5">
         {stats.map(([label, value]) => <div key={label} className="border-t-2 border-primary bg-card p-4"><p className="font-heading text-2xl font-extrabold tabular-nums text-foreground">{value}</p><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p></div>)}
       </section>
@@ -43,7 +58,7 @@ export function TeamDetailView({ team }: { team: TeamDetail }) {
             </div>}
           </section>
           <section><h2 className="mb-4 border-b border-border pb-3 font-heading text-2xl font-bold">Próximas fechas</h2>
-            {team.pending.length === 0 ? <p className="text-sm text-muted-foreground">No hay fechas pendientes por el momento.</p> : <ul className="space-y-2">{team.pending.map((date, index) => <li key={`${date.round}-${index}`} className="flex min-h-16 flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-card px-4 py-3"><span><span className="block text-xs text-muted-foreground">{date.round}</span><strong className="font-heading">vs {date.opponent}</strong></span><span className="text-sm font-semibold tabular-nums text-primary">{dateLabel(date.date)}{date.time !== "—" ? ` · ${date.time.slice(0, 5)} hs` : ""}</span></li>)}</ul>}
+            {team.pending.length === 0 ? <p className="text-sm text-muted-foreground">No hay fechas pendientes por el momento.</p> : <ul className="space-y-2">{team.pending.map((date, index) => <li key={`${date.round}-${index}`} className="flex min-h-16 flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-card px-4 py-3"><span><span className="block text-xs text-muted-foreground">{date.round}</span><strong className="font-heading">vs {date.opponent}</strong><TeamMedals teamId={date.opponentId} /></span><span className="text-sm font-semibold tabular-nums text-primary">{dateLabel(date.date)}{date.time !== "—" ? ` · ${date.time.slice(0, 5)} hs` : ""}</span></li>)}</ul>}
           </section>
         </div>
         <aside><h2 className="mb-4 border-b border-border pb-3 font-heading text-2xl font-bold">Lista de buena fe</h2><p className="mb-3 text-sm text-muted-foreground">{team.roster.length} jugadores</p><ol className="divide-y divide-border">{team.roster.map((name, index) => <li key={`${name}-${index}`} className="flex min-h-11 items-center justify-between gap-2 py-2 text-sm"><span>{name}</span>{name === team.captain && <span className="text-xs font-bold text-primary">Capitán</span>}</li>)}</ol></aside>

@@ -1,4 +1,5 @@
 import type { StandingsRow } from "@/lib/tournament/types";
+import { TeamMedals } from "./medals/medal-badges";
 
 interface StandingsTableProps {
   standings: StandingsRow[];
@@ -39,7 +40,7 @@ export function StandingsTable({ standings }: StandingsTableProps) {
               className="border-b border-border last:border-0 hover:bg-surface transition-colors"
             >
               <td className="px-3 py-2.5 text-muted-foreground font-medium">{row.position}</td>
-              <th scope="row" className="sticky left-0 z-10 bg-card px-3 py-2.5 text-left font-semibold text-foreground">{row.team.name}</th>
+              <th scope="row" className="sticky left-0 z-10 bg-card px-3 py-2.5 text-left font-semibold text-foreground">{row.team.name}<TeamMedals teamId={row.team_id} /></th>
               <td className="text-center px-2 py-2.5 text-foreground">{row.played}</td>
               <td className="text-center px-2 py-2.5 text-foreground">{row.won}</td>
               <td className="text-center px-2 py-2.5 text-foreground">{row.lost}</td>

@@ -2,6 +2,7 @@
 
 import type { PlayedDate } from "@/lib/team-detail-types"
 import { DialogSheet } from "@/components/liga/DialogSheet"
+import { TeamMedals } from "@/components/liga/medals/medal-badges"
 
 // Fecha jugada de un equipo: abre el detalle de canchas en el mismo diálogo
 // que la serie de la categoría (components/liga/DialogSheet.tsx), en vez del
@@ -10,7 +11,8 @@ export function PlayedDateCard({ date, label }: { date: PlayedDate; label: strin
   return (
     <DialogSheet
       triggerClassName="flex min-h-16 w-full items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 text-left transition-colors hover:border-primary/50 hover:bg-secondary/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-      title={`vs ${date.opponent}`}
+      title={<>vs {date.opponent}<TeamMedals teamId={date.opponentId} /></>}
+      stretchedLabel={`Ver canchas: vs ${date.opponent}, ${date.round}`}
       description={`${date.round} · ${label}`}
       trigger={
         <>
@@ -18,7 +20,7 @@ export function PlayedDateCard({ date, label }: { date: PlayedDate; label: strin
             <span className="block text-xs text-muted-foreground">
               {date.round} · {label}
             </span>
-            <span className="font-heading font-bold text-foreground">vs {date.opponent}</span>
+            <span className="font-heading font-bold text-foreground">vs {date.opponent}<TeamMedals teamId={date.opponentId} /></span>
           </span>
           <span
             className={

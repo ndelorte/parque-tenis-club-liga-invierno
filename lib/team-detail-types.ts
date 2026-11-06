@@ -1,3 +1,5 @@
+import type { MedalView } from "@/lib/liga/medals/types"
+
 export type CourtDetail = {
   court: number
   homePlayers: [string, string]
@@ -11,6 +13,7 @@ export type PlayedDate = {
   round: string
   date: string
   opponent: string
+  opponentId?: string
   isHome: boolean
   courtsWon: number
   courtsLost: number
@@ -23,6 +26,7 @@ export type PendingDate = {
   date: string
   time: string
   opponent: string
+  opponentId?: string
   isHome: boolean
 }
 
@@ -48,4 +52,6 @@ export type TeamDetail = {
   stats: TeamStats
   played: PlayedDate[]
   pending: PendingDate[]
+  // Medallas de podios anteriores del equipo (más reciente primero).
+  medals: MedalView[]
 }

@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation"
 import { SectionHero } from "@/components/liga/SectionHero"
+import { getMedalsForTeams } from "@/lib/data/team-medals"
+import { TeamMedalsProvider } from "@/components/liga/medals/medal-badges"
 import { LigaBoard } from "@/components/liga/liga-board"
 import { LigaReglamento } from "@/components/liga/liga-reglamento"
 import { SponsorsBanner } from "@/components/liga/sponsors-banner"
@@ -175,7 +177,16 @@ export default async function SeasonPage({ params, searchParams }: Props) {
     areTeamsPublic(tournament, roundsHaveSeries(b.rounds)) ? b : { ...b, standings: [], teams: [], bracket: null, playoffSeries: [] },
   )
 
+  // Una sola consulta para las medallas de todos los equipos de la edición.
+  const medals = await getMedalsForTeams(
+    visibleBundles.flatMap((b) => [
+      ...b.teams.map((t) => t.id),
+      ...b.rounds.flatMap((round) => round.series.flatMap((s) => [s.home_team_id, s.away_team_id])),
+    ]),
+  )
+
   return (
+    <TeamMedalsProvider medals={medals}>
     <main className="min-h-dvh bg-background" data-identity={theme.identity}>
       <SectionHero tournament={tournament} />
       <LigaBoard bundles={visibleBundles} initialCategory={categoria} seasonSlug={tournament.slug} season={theme.season} />
@@ -183,5 +194,6 @@ export default async function SeasonPage({ params, searchParams }: Props) {
       <SponsorsBanner sponsors={sponsors} />
       <WhatsappFab />
     </main>
+    </TeamMedalsProvider>
   )
 }

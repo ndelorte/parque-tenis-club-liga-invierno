@@ -7,6 +7,8 @@ import { getStandingsSnapshot } from "@/lib/data/standings"
 import { getRoundsWithSeries } from "@/lib/data/series"
 import { areTeamsPublic, roundsHaveSeries } from "@/lib/liga/editionStage"
 import { getPlayoffSeries, getChampionForCategory } from "@/lib/data/playoffs"
+import { getMedalsForTeams } from "@/lib/data/team-medals"
+import { TeamMedalsProvider } from "@/components/liga/medals/medal-badges"
 import { SectionHero } from "@/components/liga/SectionHero"
 import { StandingsTable } from "@/components/liga/StandingsTable"
 import { FixtureList } from "@/components/liga/FixtureList"
@@ -75,7 +77,10 @@ export default async function CategoriaPage({ params }: Props) {
       status: finalSeries.status,
     } : undefined
 
+    const medals = await getMedalsForTeams(teams.map((t) => t.id))
+
     return (
+      <TeamMedalsProvider medals={medals}>
       <main data-identity={getSeasonTheme(tournament).identity}>
         <SectionHero tournament={tournament} />
         <CategoryTabs categories={categories} seasonSlug={tournament.slug} />
@@ -94,6 +99,7 @@ export default async function CategoriaPage({ params }: Props) {
           )}
         </div>
       </main>
+      </TeamMedalsProvider>
     )
   }
 
@@ -195,7 +201,14 @@ export default async function CategoriaPage({ params }: Props) {
       }
     : undefined
 
+  // Una sola consulta para las medallas de todos los equipos de la página.
+  const medals = await getMedalsForTeams([
+    ...teams.map((t) => t.id),
+    ...series.flatMap((s) => [s.home_team_id, s.away_team_id]),
+  ])
+
   return (
+    <TeamMedalsProvider medals={medals}>
     <main data-identity={getSeasonTheme(tournament).identity}>
       <SectionHero tournament={tournament} />
       <CategoryTabs categories={categories} seasonSlug={tournament.slug} />
@@ -235,5 +248,6 @@ export default async function CategoriaPage({ params }: Props) {
         )}
       </div>
     </main>
+    </TeamMedalsProvider>
   )
 }

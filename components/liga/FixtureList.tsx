@@ -1,6 +1,7 @@
 import type { Series } from "@/lib/tournament/types";
 import { formatDate } from "@/lib/utils";
 import { ResultCard } from "./ResultCard";
+import { TeamMedals } from "./medals/medal-badges";
 
 interface FixtureListProps {
   series: Series[];
@@ -56,8 +57,8 @@ export function FixtureList({ series, title }: FixtureListProps) {
                     )}
                   </p>
                   <p className="font-heading text-base font-bold text-foreground">
-                    {s.home_team?.name ?? s.home_team_id} vs{" "}
-                    {s.away_team?.name ?? s.away_team_id}
+                    {s.home_team?.name ?? s.home_team_id}<TeamMedals teamId={s.home_team_id} /> vs{" "}
+                    {s.away_team?.name ?? s.away_team_id}<TeamMedals teamId={s.away_team_id} />
                   </p>
                 </div>
                 <div className="sm:text-right">

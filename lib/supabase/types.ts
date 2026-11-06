@@ -138,6 +138,28 @@ export type Database = {
           updated_at?: string
         }
       }
+      team_medals: {
+        Row: {
+          id: string
+          team_id: string
+          source_category_id: string
+          place: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          team_id: string
+          source_category_id: string
+          place: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          team_id?: string
+          source_category_id?: string
+          place?: number
+        }
+      }
       players: {
         Row: {
           id: string
