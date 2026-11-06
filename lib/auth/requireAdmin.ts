@@ -14,3 +14,14 @@ export async function isRequestFromAdmin(): Promise<boolean> {
   } = await supabase.auth.getUser()
   return isAdminUser(user)
 }
+
+// Igual que isRequestFromAdmin, pero devuelve quién es (el email del admin)
+// para dejarlo en el historial de cambios. null = no es admin.
+export async function requireAdminActor(): Promise<string | null> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!isAdminUser(user)) return null
+  return user?.email ?? user?.id ?? "admin"
+}

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronDown, ChevronUp, Loader2 } from "lucide-react"
+import { ChevronDown, ChevronUp, Download, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label"
 import { EmptyState, InlineError } from "@/components/admin/states"
 import { RegistrationDetailView } from "@/components/admin/registrations/registration-detail"
 import { updateRegistrationSettings } from "@/app/actions/liga-registrations"
+import { createManualRegistration, exportRegistrationsCsv } from "@/app/actions/liga-registration-team"
+import { RegistrationForm } from "@/components/liga/RegistrationForm"
 import type {
   RegistrationListItem,
   RegistrationSettings,
@@ -21,12 +23,14 @@ const STATUS_LABEL: Record<RegistrationStatus, string> = {
   pending: "Pendiente",
   approved: "Aprobada",
   rejected: "Rechazada",
+  withdrawn: "Dada de baja",
 }
 
 const STATUS_CLASS: Record<RegistrationStatus, string> = {
   pending: "bg-brand-light text-brand",
   approved: "bg-win-soft text-foreground",
   rejected: "bg-loss-soft text-foreground",
+  withdrawn: "bg-muted text-foreground",
 }
 
 function formatCreatedAt(iso: string): string {
@@ -113,6 +117,81 @@ function SettingsForm({ settings }: { settings: RegistrationSettings }) {
   )
 }
 
+// Descarga la planilla de inscripciones (CSV en UTF-8 con BOM).
+function ExportButton({ tournamentId }: { tournamentId: string }) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function download() {
+    setBusy(true)
+    setError(null)
+    const result = await exportRegistrationsCsv(tournamentId)
+    setBusy(false)
+    if (!result.success || !result.csv) return setError(result.error ?? "No se pudo exportar")
+    const blob = new Blob([result.csv], { type: "text/csv;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = result.filename ?? "inscripciones.csv"
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <div className="grid gap-1.5">
+      <Button type="button" variant="outline" onClick={download} disabled={busy} className="min-h-11 px-5 font-bold">
+        {busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Download className="size-4" aria-hidden />}
+        Exportar a planilla (CSV)
+      </Button>
+      {error && <InlineError>{error}</InlineError>}
+    </div>
+  )
+}
+
+// Carga de una inscripción que el capitán mandó por otro medio (WhatsApp).
+// Mismo formulario y misma validación que el público; entra como pendiente y
+// puede saltear el cierre de la inscripción.
+function ManualEntry({ settings, onSaved }: { settings: RegistrationSettings; onSaved: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [sent, setSent] = useState<string | null>(null)
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Cargar una inscripción a mano</CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        {sent && (
+          <p role="status" className="text-sm font-semibold">
+            Se cargó la inscripción de {sent}. Quedó pendiente en la lista.
+          </p>
+        )}
+        <div>
+          <Button type="button" variant="outline" aria-expanded={open} onClick={() => setOpen(!open)} className="min-h-11 px-5 font-bold">
+            {open ? "Ocultar el formulario" : "Abrir el formulario"}
+          </Button>
+        </div>
+        {open && (
+          <RegistrationForm
+            seasonSlug={settings.slug}
+            categories={settings.categories}
+            min={settings.effectiveMin}
+            max={settings.effectiveMax}
+            submit={createManualRegistration}
+            onSent={(team) => {
+              setSent(team)
+              onSaved()
+            }}
+            buttonClassName="inline-flex min-h-11 items-center justify-center gap-2 justify-self-start rounded-lg bg-primary px-5 font-bold text-primary-foreground disabled:opacity-60"
+          />
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
 export function RegistrationsManager({
   settings,
   registrations,
@@ -136,11 +215,15 @@ export function RegistrationsManager({
   return (
     <div className="grid gap-6">
       <SettingsForm settings={settings} />
+      <ManualEntry settings={settings} onSaved={() => router.refresh()} />
 
       <section aria-labelledby="reg-list-title" className="grid gap-3">
-        <h2 id="reg-list-title" className="font-heading text-2xl font-extrabold uppercase">
-          Solicitudes{pendingCount > 0 && ` (${pendingCount} pendientes)`}
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="reg-list-title" className="font-heading text-2xl font-extrabold uppercase">
+            Solicitudes{pendingCount > 0 && ` (${pendingCount} pendientes)`}
+          </h2>
+          <ExportButton tournamentId={settings.tournamentId} />
+        </div>
         {registrations.length === 0 ? (
           <EmptyState title="Todavía no hay solicitudes">Cuando alguien se inscriba desde la web, aparece acá.</EmptyState>
         ) : (

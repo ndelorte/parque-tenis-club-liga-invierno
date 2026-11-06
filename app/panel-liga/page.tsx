@@ -15,7 +15,7 @@ import {
   getMissingFinalsForTournament,
   getTournamentsForPhotoAdmin,
 } from "@/app/actions/admin"
-import { getRegistrationSettings, listRegistrations } from "@/app/actions/liga-registrations"
+import { getRegistrationSettings, hasOnlineRegistration, listRegistrations } from "@/app/actions/liga-registrations"
 import { getActiveTournament } from "@/lib/data/tournaments"
 
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 const SECTION_HEADERS: Record<string, { title: string; lede: string }> = {
   inscripciones: {
     title: "Inscripciones",
-    lede: "Configurá la inscripción online y validá las solicitudes de equipos antes de crearlos.",
+    lede: "Configurá la inscripción online, validá las solicitudes y gestioná cada equipo: plantel, capitán, categoría y bajas.",
   },
   resultados: {
     title: "Resultados",
@@ -74,6 +74,7 @@ export default async function PanelPage({
 
   const header = SECTION_HEADERS[section]
   const registrationSettings = section === "inscripciones" ? await getRegistrationSettings() : null
+  const onlineRegistration = section === "jugadores" ? await hasOnlineRegistration() : false
   const registrations = registrationSettings ? await listRegistrations(registrationSettings.tournamentId) : []
 
   return (
@@ -106,7 +107,7 @@ export default async function PanelPage({
           <ResultLoader categories={categories} />
         </>
       )}
-      {section === "jugadores" && <TeamManager categories={categories} />}
+      {section === "jugadores" && <TeamManager categories={categories} onlineRegistration={onlineRegistration} />}
       {section === "fixture" && <FixtureManager categories={categories} />}
       {section === "playoffs" && <PlayoffManager categories={categories} />}
       {section === "fotos" && <PhotoManager tournaments={photoTournaments} />}

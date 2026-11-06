@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { CheckCircle2, Loader2, Plus, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { submitLigaRegistration } from "@/app/actions/liga-registration-public"
+import { submitLigaRegistration, type SubmitRegistrationResult } from "@/app/actions/liga-registration-public"
 import { buildRegistrationSchema, LIMITS, type RegistrationInput } from "@/lib/liga/registration/schema"
 
 interface Props {
@@ -14,6 +14,11 @@ interface Props {
   categories: Array<{ id: string; name: string }>
   min: number
   max: number
+  // Carga manual desde el panel: otra action (con guardia admin) y qué hacer
+  // al guardar, en vez de la confirmación pública.
+  submit?: (values: RegistrationInput) => Promise<SubmitRegistrationResult>
+  onSent?: (teamName: string) => void
+  buttonClassName?: string
 }
 
 const field = "min-h-11 text-base"
@@ -28,7 +33,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   )
 }
 
-export function RegistrationForm({ seasonSlug, categories, min, max }: Props) {
+export function RegistrationForm({ seasonSlug, categories, min, max, submit, onSent, buttonClassName }: Props) {
   const schema = useMemo(() => buildRegistrationSchema({ min, max }), [min, max])
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [sentTeam, setSentTeam] = useState<string | null>(null)
@@ -38,6 +43,7 @@ export function RegistrationForm({ seasonSlug, categories, min, max }: Props) {
     control,
     handleSubmit,
     setError,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<RegistrationInput>({
     resolver: zodResolver(schema),
@@ -55,7 +61,12 @@ export function RegistrationForm({ seasonSlug, categories, min, max }: Props) {
 
   async function onSubmit(values: RegistrationInput) {
     setSubmitError(null)
-    const result = await submitLigaRegistration(seasonSlug, values)
+    const result = submit ? await submit(values) : await submitLigaRegistration(seasonSlug, values)
+    if (result.success && onSent) {
+      reset()
+      onSent(result.teamName)
+      return
+    }
     if (result.success) {
       setSentTeam(result.teamName)
       window.scrollTo({ top: 0, behavior: "smooth" })
@@ -272,7 +283,7 @@ export function RegistrationForm({ seasonSlug, categories, min, max }: Props) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="liga-solid-link justify-center justify-self-start disabled:opacity-60"
+        className={buttonClassName ?? "liga-solid-link justify-center justify-self-start disabled:opacity-60"}
       >
         {isSubmitting && <Loader2 className="size-4 animate-spin" aria-hidden />}
         Enviar inscripción

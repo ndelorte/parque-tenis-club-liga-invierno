@@ -11,7 +11,7 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getRegistrationAvailability } from "@/lib/liga/registration/availability"
 import { buildRegistrationSchema } from "@/lib/liga/registration/schema"
-import { normalizeDni } from "@/lib/liga/registration/normalizeDni"
+import { insertRegistration } from "@/lib/liga/registration/insertRegistration"
 import type { Tournament } from "@/lib/tournament/types"
 
 export type SubmitRegistrationResult =
@@ -69,34 +69,9 @@ export async function submitLigaRegistration(
     return { success: false, error: "Revisá los datos marcados en el formulario.", fieldErrors: { categoryId: "Elegí una categoría válida" } }
   }
 
-  const { data: registration, error: regError } = await supabase
-    .from("liga_registrations")
-    .insert({
-      tournament_id: row.id,
-      category_id: category.id,
-      team_name: data.teamName.replace(/\s+/g, " "),
-      captain_phone: data.captainPhone,
-      notes: data.notes ? data.notes : null,
-    })
-    .select("id")
-    .single()
-  if (regError || !registration) return { success: false, error: generic }
-
-  const { error: playersError } = await supabase.from("liga_registration_players").insert(
-    data.players.map((player, index) => ({
-      registration_id: registration.id,
-      first_name: player.firstName.replace(/\s+/g, " "),
-      last_name: player.lastName.replace(/\s+/g, " "),
-      dni: normalizeDni(player.dni),
-      is_captain: index === data.captainIndex,
-      sort_order: index,
-    })),
-  )
-  if (playersError) {
-    // Sin jugadores la solicitud no sirve: se borra para no dejar basura.
-    await supabase.from("liga_registrations").delete().eq("id", registration.id)
-    return { success: false, error: generic }
-  }
+  // Sin jugadores la solicitud no sirve: insertRegistration la borra si fallan.
+  const registrationId = await insertRegistration(supabase, row.id, data, "Formulario público", "Llegó por el formulario de inscripción")
+  if (!registrationId) return { success: false, error: generic }
 
   return { success: true, teamName: data.teamName }
 }

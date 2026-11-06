@@ -17,7 +17,9 @@ const PUBLIC_ACTIONS: Record<string, string[]> = {
   // Inscripción pública a la Liga: formulario sin login.
   "liga-registration-public.ts": ["submitLigaRegistration"],
 }
-const GUARD_PATTERN = /isRequestFromAdmin\(\)|isAdminUser\(/
+// requireAdminActor() es la misma guardia, pero devuelve el email del admin
+// (null si no es admin) para el historial de cambios.
+const GUARD_PATTERN = /isRequestFromAdmin\(\)|isAdminUser\(|requireAdminActor\(\)/
 // Cuánto del cuerpo de la función se mira: la guardia tiene que estar al
 // principio, no enterrada después de una escritura.
 const GUARD_WINDOW = 400

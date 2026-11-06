@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition, useEffect } from "react"
+import Link from "next/link"
 import {
   Users,
   UserPlus,
@@ -65,7 +66,7 @@ function uid() {
   return `local-${++seq}`
 }
 
-export function TeamManager({ categories }: { categories: CategoryForAdmin[] }) {
+export function TeamManager({ categories, onlineRegistration = false }: { categories: CategoryForAdmin[]; onlineRegistration?: boolean }) {
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "")
   const [drafts, setDrafts] = useState<TeamDraft[]>([])
   const [isPending, startTransition] = useTransition()
@@ -254,6 +255,18 @@ export function TeamManager({ categories }: { categories: CategoryForAdmin[] }) 
 
   return (
     <div className="space-y-5">
+      {onlineRegistration && (
+        <div role="note" className="rounded-lg border-l-4 border-brand bg-brand-light px-4 py-3.5 text-foreground">
+          <p className="font-bold">Esta edición tiene inscripción online</p>
+          <p className="text-sm">
+            Los planteles, los capitanes y los DNI de los equipos inscriptos se editan desde la ficha de cada equipo en{" "}
+            <Link href="/panel-liga?seccion=inscripciones" className="font-bold underline underline-offset-2">
+              Inscripciones
+            </Link>
+            . Esta pantalla no maneja capitán ni DNI y no da de baja equipos aprobados.
+          </p>
+        </div>
+      )}
       <Card className="border-t-4 border-t-winter">
         <CardContent className="flex flex-col gap-4 py-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="w-full sm:max-w-xs">

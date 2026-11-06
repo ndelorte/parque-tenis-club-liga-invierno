@@ -152,7 +152,7 @@ No mostrar teléfonos ni DNI en vistas públicas (el DNI vive en `player_private
 
 ### Server actions validan admin
 
-`proxy.ts` protege las páginas `/panel-*`, no las server actions (son endpoints POST invocables desde cualquier ruta). Toda action exportada en `app/actions/` que escribe tiene que validar el rol admin en su primera línea (`isRequestFromAdmin()` de `lib/auth/requireAdmin.ts`, o `isAdminUser` como en `admin.ts`). Reforzado por `app/actions/__tests__/admin-guard.test.ts`. Única excepción: `submitLigaRegistration` (`liga-registration-public.ts`), la inscripción pública sin login, que se endurece con Zod en el servidor, honeypot y chequeo de la ventana de inscripción.
+`proxy.ts` protege las páginas `/panel-*`, no las server actions (son endpoints POST invocables desde cualquier ruta). Toda action exportada en `app/actions/` que escribe tiene que validar el rol admin en su primera línea (`isRequestFromAdmin()` de `lib/auth/requireAdmin.ts`, o `isAdminUser` como en `admin.ts`). Reforzado por `app/actions/__tests__/admin-guard.test.ts`. `requireAdminActor()` (devuelve el email para el historial) cuenta como guardia. Única excepción: `submitLigaRegistration` (`liga-registration-public.ts`), la inscripción pública sin login, que se endurece con Zod en el servidor, honeypot y chequeo de la ventana de inscripción.
 
 ---
 
@@ -185,9 +185,9 @@ Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]
 |------|-------------|
 | `/panel-liga/login` | Login con Supabase Auth |
 | `/panel-liga` | Dashboard de Liga |
-| `/panel-liga?seccion=inscripciones` | Inscripciones: configuración (abierta, cierre, min/max), solicitudes y validación jugador por jugador antes de crear el equipo. Paso "Podios anteriores": medallas sugeridas por nombre de equipo (se guardan al aprobar; también se agregan/quitan en una inscripción aprobada) |
+| `/panel-liga?seccion=inscripciones` | Inscripciones: configuración (abierta, cierre, min/max), solicitudes y validación jugador por jugador antes de crear el equipo. Paso "Podios anteriores": medallas sugeridas por nombre de equipo (se guardan al aprobar; también se agregan/quitan en una inscripción aprobada). Cada solicitud es la **ficha del equipo**: editar datos, categoría y jugadores (pendiente) o plantel, capitán y baja (aprobada), con historial; carga manual, exportar CSV y WhatsApp al capitán (`liga-registration-team.ts`, migración 015) |
 | `/panel-liga/liga-invierno/equipos` | CRUD equipos |
-| `/panel-liga/liga-invierno/jugadores` | CRUD jugadores |
+| `/panel-liga/liga-invierno/jugadores` | CRUD jugadores (en ediciones con inscripción online avisa que el plantel se edita desde Inscripciones y no da de baja equipos aprobados) |
 | `/panel-liga/liga-invierno/fixture` | Cargar y editar fixture |
 | `/panel-liga/liga-invierno/resultados` | Cargar y editar resultados |
 | `/panel-liga/liga-invierno/reprogramaciones` | Reprogramar series |
