@@ -8,6 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { isAdminUser } from "@/lib/auth/admin"
 import { generalWalkoverCourts } from "@/lib/tournament/generalWalkoverCourts"
+import { validateCourtWalkovers } from "@/lib/tournament/courtWalkoverRule"
 import { resolveSeriesWinner } from "@/lib/tournament/calculateSeriesResult"
 import { recalculateAndPersistStandings } from "@/lib/data/standings"
 import { isCategoryReadyToClose } from "@/lib/tournament/isCategoryReadyToClose"
@@ -424,6 +425,12 @@ export async function saveSeriesResult(
   } = await authClient.auth.getUser()
   if (!isAdminUser(user)) {
     return { success: false, error: "No autorizado" }
+  }
+
+  // El WO de cancha solo puede ser en la cancha 3 (WO general no usa input.courts).
+  if (!input.isGeneralWalkover) {
+    const woError = validateCourtWalkovers(input.courts)
+    if (woError) return { success: false, error: woError }
   }
 
   const supabase = createAdminClient()

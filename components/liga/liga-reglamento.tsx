@@ -6,6 +6,9 @@ const RULES = [
   "Gana la serie el equipo que se impone en 2 de las 3 canchas.",
   "Se otorgan 2 puntos por serie ganada y 1 punto por serie perdida.",
   "Los desempates siguen puntos, diferencia de canchas, sets y games; si persiste el empate se arma una mini-tabla solo con los equipos empatados.",
+  "El WO de cancha es siempre la cancha 3: se juegan las canchas 1 y 2 y la 3 queda 6-0 6-0 para el rival. Si se avisa con menos de 24 hs, el equipo abona la fecha completa.",
+  "Inscripción por equipo: $150.000. Cada fecha jugada: $110.000, a pagar el día del partido antes de comenzar.",
+  "Liga de Verano 26/27: sorteo el 2 de diciembre de 2026; se juega del 9 de diciembre de 2026 al 14 de marzo de 2027.",
 ]
 
 export function LigaReglamento() {
@@ -30,7 +33,7 @@ export function LigaReglamento() {
           ))}
         </ul>
         <a
-          href="/REGLAMENTO%20LIGA%20DE%20VERANO_INVIERNO.docx.pdf"
+          href="/reglamento-liga.pdf"
           target="_blank"
           rel="noopener noreferrer"
           className="mt-7 inline-flex min-h-12 items-center gap-2 rounded-md bg-accent px-5 font-semibold text-accent-foreground hover:bg-accent-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"

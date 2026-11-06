@@ -170,6 +170,8 @@ export type DetailPlayer = {
   firstName: string
   lastName: string
   dni: string
+  // Dato privado: solo llega al panel admin.
+  birthDate: string | null
   isCaptain: boolean
   displayName: string
   resolution: "pending" | "existing" | "new"
@@ -229,7 +231,7 @@ export async function getRegistrationDetail(registrationId: string): Promise<Reg
 
   const { data: rawPlayers } = await supabase
     .from("liga_registration_players")
-    .select("id, first_name, last_name, dni, is_captain, sort_order, resolved_player_id, resolution")
+    .select("id, first_name, last_name, dni, birth_date, is_captain, sort_order, resolved_player_id, resolution")
     .eq("registration_id", registrationId)
     .order("sort_order")
   type PlayerRow = {
@@ -237,6 +239,7 @@ export async function getRegistrationDetail(registrationId: string): Promise<Reg
     first_name: string
     last_name: string
     dni: string
+    birth_date: string | null
     is_captain: boolean
     resolved_player_id: string | null
     resolution: "pending" | "existing" | "new"
@@ -301,6 +304,7 @@ export async function getRegistrationDetail(registrationId: string): Promise<Reg
       firstName: row.first_name,
       lastName: row.last_name,
       dni: row.dni,
+      birthDate: row.birth_date,
       isCaptain: row.is_captain,
       displayName: s.displayName,
       resolution: row.resolution,

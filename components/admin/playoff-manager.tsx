@@ -48,6 +48,7 @@ import {
 } from "@/lib/playoffs/generateProvisionalBracket"
 import type { ProvisionalBracket, QuarterFinalMatchup } from "@/lib/playoffs/types"
 import type { StandingsRow } from "@/lib/tournament/types"
+import { canMarkCourtWalkover } from "@/lib/tournament/courtWalkoverRule"
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -1116,6 +1117,8 @@ function PlayoffSeriesEditor({
               <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-foreground">
                 <Checkbox
                   checked={court.wo}
+                  disabled={!canMarkCourtWalkover(i + 1) && !court.wo}
+                  title={canMarkCourtWalkover(i + 1) ? undefined : "El WO de cancha es siempre la cancha 3"}
                   onCheckedChange={(v) => setCourt(i, { wo: v === true, score: v === true ? "W.O." : "" })}
                 />W.O.
               </label>

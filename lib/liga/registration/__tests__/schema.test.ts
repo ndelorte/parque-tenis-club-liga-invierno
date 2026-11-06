@@ -54,3 +54,31 @@ describe("buildRegistrationSchema", () => {
     expect(schema.safeParse({ ...valid, notes: "x".repeat(501) }).success).toBe(false)
   })
 })
+
+describe("fecha de nacimiento (opcional)", () => {
+  const withBirth = (birthDate?: string) => ({ ...valid, players: [{ ...player(1), birthDate }, player(2)] })
+
+  it("es opcional: sin valor o vacía es válida", () => {
+    expect(schema.safeParse(withBirth(undefined)).success).toBe(true)
+    expect(schema.safeParse(withBirth("")).success).toBe(true)
+  })
+
+  it("acepta una fecha real dentro del rango", () => {
+    expect(schema.safeParse(withBirth("1985-03-14")).success).toBe(true)
+    expect(schema.safeParse(withBirth("1920-01-01")).success).toBe(true)
+  })
+
+  it("rechaza fechas anteriores a 1920", () => {
+    expect(schema.safeParse(withBirth("1919-12-31")).success).toBe(false)
+  })
+
+  it("rechaza fechas futuras", () => {
+    expect(schema.safeParse(withBirth("2999-01-01")).success).toBe(false)
+  })
+
+  it("rechaza formatos inválidos y fechas inexistentes", () => {
+    expect(schema.safeParse(withBirth("14/03/1985")).success).toBe(false)
+    expect(schema.safeParse(withBirth("1985-02-30")).success).toBe(false)
+    expect(schema.safeParse(withBirth("abc")).success).toBe(false)
+  })
+})
