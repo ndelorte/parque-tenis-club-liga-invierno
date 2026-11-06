@@ -13,6 +13,10 @@ export type Database = {
           description: string | null
           start_date: string | null
           end_date: string | null
+          registration_open: boolean
+          registration_deadline: string | null
+          registration_min_players: number | null
+          registration_max_players: number | null
           created_at: string
           updated_at: string
         }
@@ -25,6 +29,10 @@ export type Database = {
           description?: string | null
           start_date?: string | null
           end_date?: string | null
+          registration_open?: boolean
+          registration_deadline?: string | null
+          registration_min_players?: number | null
+          registration_max_players?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -37,6 +45,10 @@ export type Database = {
           description?: string | null
           start_date?: string | null
           end_date?: string | null
+          registration_open?: boolean
+          registration_deadline?: string | null
+          registration_min_players?: number | null
+          registration_max_players?: number | null
           updated_at?: string
         }
       }

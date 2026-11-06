@@ -1,4 +1,5 @@
 import type { Tournament, Round } from "@/lib/tournament/types"
+import { getEditionStage, roundsHaveSeries } from "@/lib/liga/editionStage"
 import { formatTournamentTitle } from "@/lib/tournament/formatTournamentTitle"
 
 // Tablero "En juego" de la home (plan-refactor-visual.md §4.2, PR 1B): qué se
@@ -11,6 +12,8 @@ type RoundLike = Pick<Round, "phase" | "round_number" | "name"> & { series: Seri
 export type LigaEnJuego =
   | { kind: "fecha"; title: string; slug: string; round: number }
   | { kind: "playoffs"; title: string; slug: string }
+  | { kind: "inscripcion"; title: string; slug: string }
+  | { kind: "sorteo"; title: string; slug: string }
   | { kind: "proximamente"; title: string; slug: string }
 
 export type CircuitoEnJuego = { title: string; slug: string; categories: number }
@@ -43,6 +46,11 @@ export function buildLigaEnJuego(
   const active = tournaments.find((t) => t.status === "active")
   if (active) {
     const title = formatTournamentTitle(active)
+    // Sin series cargadas la edición todavía no arrancó: inscripción o sorteo.
+    const hasSeries = activeRoundsByCategory.some((rounds) => roundsHaveSeries(rounds))
+    const stage = getEditionStage(active, hasSeries)
+    if (stage === "registration") return { kind: "inscripcion", title, slug: active.slug }
+    if (stage === "drawing") return { kind: "sorteo", title, slug: active.slug }
     const round = firstPendingRegularRound(activeRoundsByCategory)
     return round === null
       ? { kind: "playoffs", title, slug: active.slug }

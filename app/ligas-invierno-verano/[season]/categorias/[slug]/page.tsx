@@ -5,6 +5,7 @@ import { getTournamentBySlug } from "@/lib/data/tournaments"
 import { getTeamsByCategory } from "@/lib/data/teams"
 import { getStandingsSnapshot } from "@/lib/data/standings"
 import { getRoundsWithSeries } from "@/lib/data/series"
+import { areTeamsPublic, roundsHaveSeries } from "@/lib/liga/editionStage"
 import { getPlayoffSeries, getChampionForCategory } from "@/lib/data/playoffs"
 import { SectionHero } from "@/components/liga/SectionHero"
 import { StandingsTable } from "@/components/liga/StandingsTable"
@@ -103,6 +104,9 @@ export default async function CategoriaPage({ params }: Props) {
     getRoundsWithSeries(category.id),
     getPlayoffSeries(category.id),
   ])
+
+  // Edición en curso: los equipos se ven recién con la inscripción cerrada y cuadros sorteados.
+  if (!areTeamsPublic(tournament, roundsHaveSeries(rounds))) notFound()
 
   const series = rounds
     .filter((r) => r.phase === "regular")

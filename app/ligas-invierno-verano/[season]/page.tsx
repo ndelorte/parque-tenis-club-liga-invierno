@@ -4,6 +4,9 @@ import { LigaBoard } from "@/components/liga/liga-board"
 import { LigaReglamento } from "@/components/liga/liga-reglamento"
 import { SponsorsBanner } from "@/components/liga/sponsors-banner"
 import { WhatsappFab } from "@/components/whatsapp-fab"
+import { RegistrationSection } from "@/components/liga/RegistrationSection"
+import { getEditionStage, areTeamsPublic, roundsHaveSeries } from "@/lib/liga/editionStage"
+import { getRegistrationAvailability } from "@/lib/liga/registration/availability"
 import { ClosedSeasonView } from "@/components/liga/ClosedSeasonView"
 import { ComingSoonView } from "@/components/liga/ComingSoonView"
 import { getTournamentBySlug } from "@/lib/data/tournaments"
@@ -45,7 +48,9 @@ export default async function SeasonPage({ params, searchParams }: Props) {
   if (!tournament) notFound()
   const theme = getSeasonTheme(tournament)
 
-  if (tournament.status === "upcoming") {
+  const registration = getRegistrationAvailability(tournament)
+
+  if (tournament.status === "upcoming" && !registration.open) {
     return (
       <main className="min-h-dvh bg-background" data-identity={theme.identity}>
         <SectionHero tournament={tournament} />
@@ -81,6 +86,21 @@ export default async function SeasonPage({ params, searchParams }: Props) {
       <main className="min-h-dvh bg-background" data-identity={theme.identity}>
         <SectionHero tournament={tournament} />
         <ClosedSeasonView tournament={tournament} bundles={closedBundles} generalPhotos={generalPhotos} />
+        <WhatsappFab />
+      </main>
+    )
+  }
+
+  // Inscripción abierta: la página es el formulario, con el resumen del
+  // reglamento y el link al completo. Sin tablas ni equipos.
+  if (registration.open) {
+    return (
+      <main className="min-h-dvh bg-background" data-identity={theme.identity}>
+        <SectionHero tournament={tournament} />
+        <div className="liga-container liga-registration-page" data-identity={theme.identity}>
+          <RegistrationSection seasonSlug={tournament.slug} categories={categories} availability={registration} />
+        </div>
+        <LigaReglamento />
         <WhatsappFab />
       </main>
     )
@@ -131,10 +151,34 @@ export default async function SeasonPage({ params, searchParams }: Props) {
     getTournamentSponsors(tournament.id),
   ])
 
+  const stage = getEditionStage(tournament, bundles.some((b) => roundsHaveSeries(b.rounds)))
+
+  // Cuadros sin sortear: nada de tablas vacías ni equipos.
+  if (stage === "drawing") {
+    return (
+      <main className="min-h-dvh bg-background" data-identity={theme.identity}>
+        <SectionHero tournament={tournament} />
+        <div className="liga-container liga-registration-page" data-identity={theme.identity}>
+          <section role="status" aria-labelledby="liga-drawing-title" className="liga-registration-closed">
+            <h2 id="liga-drawing-title" className="liga-registration-closed-title">Inscripción cerrada — estamos armando los cuadros</h2>
+            <p>Cuando estén sorteados, vas a encontrar acá las categorías, los equipos, la tabla y el fixture.</p>
+          </section>
+        </div>
+        <LigaReglamento />
+        <WhatsappFab />
+      </main>
+    )
+  }
+
+  // Una categoría sin series todavía no muestra sus equipos.
+  const visibleBundles = bundles.map((b) =>
+    areTeamsPublic(tournament, roundsHaveSeries(b.rounds)) ? b : { ...b, standings: [], teams: [], bracket: null, playoffSeries: [] },
+  )
+
   return (
     <main className="min-h-dvh bg-background" data-identity={theme.identity}>
       <SectionHero tournament={tournament} />
-      <LigaBoard bundles={bundles} initialCategory={categoria} seasonSlug={tournament.slug} season={theme.season} />
+      <LigaBoard bundles={visibleBundles} initialCategory={categoria} seasonSlug={tournament.slug} season={theme.season} />
       <LigaReglamento />
       <SponsorsBanner sponsors={sponsors} />
       <WhatsappFab />
