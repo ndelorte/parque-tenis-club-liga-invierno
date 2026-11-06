@@ -52,7 +52,7 @@ export function ReglamentoNav({ sections }: { sections: ReglamentoSection[] }) {
         ))}
       </ol>
       <a
-        href="/REGLAMENTO%20LIGA%20DE%20VERANO_INVIERNO.docx.pdf"
+        href="/reglamento-liga.pdf"
         target="_blank"
         rel="noopener noreferrer"
         className="mt-4 flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"

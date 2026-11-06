@@ -19,10 +19,33 @@ const requiredText = (label: string, max: number) =>
     .min(1, `Completá ${label}`)
     .max(max, `${label} es demasiado largo (máximo ${max} caracteres)`)
 
+export const BIRTH_DATE_MIN = "1920-01-01"
+
+// "YYYY-MM-DD" de hoy en UTC (el servidor corre en UTC; Argentina va atrás,
+// así que nunca rechaza una fecha válida del día).
+export function todayIsoDate(now: Date = new Date()): string {
+  return now.toISOString().slice(0, 10)
+}
+
+// Fecha de nacimiento opcional: vacía es válida; si viene, tiene que ser una
+// fecha real entre 1920-01-01 y hoy.
+const birthDateSchema = z
+  .string()
+  .trim()
+  .optional()
+  .refine((v) => {
+    if (!v) return true
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false
+    const d = new Date(`${v}T00:00:00Z`)
+    if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v) return false
+    return v >= BIRTH_DATE_MIN && v <= todayIsoDate()
+  }, "La fecha de nacimiento no es válida")
+
 export const playerSchema = z.object({
   firstName: requiredText("el nombre", LIMITS.personName),
   lastName: requiredText("el apellido", LIMITS.personName),
   dni: z.string().trim().refine(isValidDni, "El DNI tiene que tener 7 u 8 dígitos"),
+  birthDate: birthDateSchema,
 })
 
 export type RegistrationPlayerInput = z.infer<typeof playerSchema>

@@ -12,6 +12,18 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // PDF del reglamento anterior (exportado de Word): pudo haberse compartido
+      // por WhatsApp/Instagram, así que redirige al reglamento vigente.
+      {
+        source: "/REGLAMENTO LIGA DE VERANO_INVIERNO.docx.pdf",
+        destination: "/reglamento-liga.pdf",
+        permanent: true,
+      },
+      {
+        source: "/REGLAMENTO%20LIGA%20DE%20VERANO_INVIERNO.docx.pdf",
+        destination: "/reglamento-liga.pdf",
+        permanent: true,
+      },
       {
         source: "/liga-invierno",
         destination: "/ligas-invierno-verano",

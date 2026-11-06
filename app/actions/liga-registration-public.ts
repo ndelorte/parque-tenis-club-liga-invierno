@@ -88,6 +88,7 @@ export async function submitLigaRegistration(
       first_name: player.firstName.replace(/\s+/g, " "),
       last_name: player.lastName.replace(/\s+/g, " "),
       dni: normalizeDni(player.dni),
+      birth_date: player.birthDate ? player.birthDate : null,
       is_captain: index === data.captainIndex,
       sort_order: index,
     })),

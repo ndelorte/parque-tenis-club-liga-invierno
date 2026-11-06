@@ -7,7 +7,7 @@ import { CheckCircle2, Loader2, Plus, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { submitLigaRegistration } from "@/app/actions/liga-registration-public"
-import { buildRegistrationSchema, LIMITS, type RegistrationInput } from "@/lib/liga/registration/schema"
+import { BIRTH_DATE_MIN, buildRegistrationSchema, LIMITS, type RegistrationInput } from "@/lib/liga/registration/schema"
 
 interface Props {
   seasonSlug: string
@@ -44,7 +44,7 @@ export function RegistrationForm({ seasonSlug, categories, min, max }: Props) {
     defaultValues: {
       teamName: "",
       categoryId: "",
-      players: Array.from({ length: min }, () => ({ firstName: "", lastName: "", dni: "" })),
+      players: Array.from({ length: min }, () => ({ firstName: "", lastName: "", dni: "", birthDate: "" })),
       captainIndex: -1,
       captainPhone: "",
       notes: "",
@@ -128,7 +128,7 @@ export function RegistrationForm({ seasonSlug, categories, min, max }: Props) {
       <fieldset className="grid gap-3">
         <legend className="mb-1 font-heading text-2xl font-extrabold uppercase">Jugadores</legend>
         <p className="text-sm text-muted-foreground">
-          Entre {min} y {max} jugadores. Marcá quién es el capitán. El DNI se usa solo para identificar a cada jugador y no se muestra en el sitio.
+          Entre {min} y {max} jugadores. Marcá quién es el capitán. El DNI y la fecha de nacimiento se usan solo para identificar a cada jugador y no se muestran en el sitio.
         </p>
 
         <ul className="grid gap-4">
@@ -190,6 +190,21 @@ export function RegistrationForm({ seasonSlug, categories, min, max }: Props) {
                     />
                     <FieldError id={`reg-p${index}-dni-error`} message={e?.dni?.message} />
                   </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor={`reg-p${index}-birth`}>Fecha de nacimiento (opcional)</Label>
+                    <Input
+                      id={`reg-p${index}-birth`}
+                      type="date"
+                      min={BIRTH_DATE_MIN}
+                      max={new Date().toLocaleDateString("en-CA")}
+                      autoComplete="off"
+                      className={field}
+                      aria-invalid={!!e?.birthDate}
+                      aria-describedby={e?.birthDate ? `reg-p${index}-birth-error` : undefined}
+                      {...register(`players.${index}.birthDate`)}
+                    />
+                    <FieldError id={`reg-p${index}-birth-error`} message={e?.birthDate?.message} />
+                  </div>
                 </div>
                 <Controller
                   control={control}
@@ -218,7 +233,7 @@ export function RegistrationForm({ seasonSlug, categories, min, max }: Props) {
         {fields.length < max && (
           <button
             type="button"
-            onClick={() => append({ firstName: "", lastName: "", dni: "" })}
+            onClick={() => append({ firstName: "", lastName: "", dni: "", birthDate: "" })}
             className="inline-flex min-h-11 items-center justify-center gap-2 justify-self-start rounded-md border-[1.5px] border-border bg-background px-4 font-bold focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             <Plus className="size-4" aria-hidden /> Agregar jugador

@@ -41,6 +41,11 @@ function PlayerRow({
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <p className="font-bold">{player.displayName}</p>
         <p className="text-sm text-muted-foreground">DNI {player.dni}</p>
+        {player.birthDate && (
+          <p className="text-sm text-muted-foreground">
+            Nacimiento {player.birthDate.split("-").reverse().join("/")}
+          </p>
+        )}
         {player.isCaptain && <span className="rounded-full bg-brand-light px-2 py-0.5 text-xs font-bold text-brand">Capitán</span>}
         <span className="ml-auto text-xs font-bold">
           {player.resolution === "pending" && "Sin resolver"}

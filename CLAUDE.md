@@ -214,7 +214,7 @@ Ver `/product/reglas-liga-invierno.md` para el detalle completo.
 | Serie ganada | 2 puntos |
 | Serie perdida | 1 punto |
 | WO general (ausente) | 0 puntos; rival +2pts, +3c, +6s, +36g (las 3 canchas quedan 6-0 6-0) |
-| WO de cancha | Score 6-0 6-0, solo 1 cancha posible por serie |
+| WO de cancha | Siempre la cancha 3: 6-0 6-0, se juegan 1 y 2 |
 | Tercer set | Siempre registrado como 7-6 |
 | Desempate | Pts → Δcanchas → Δsets → Δgames → mini-tabla H2H → sorteo |
 | Mixto B | 5 equipos (resto tienen 6) |
