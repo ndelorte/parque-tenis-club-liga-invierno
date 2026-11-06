@@ -63,6 +63,7 @@ export function RoundsView({ tree, championLabel }: Props) {
   const round = tree.rounds[selected]
   const isLastRound = selected === tree.rounds.length - 1
   const nextLabel = nextRoundLabel(tree, selected)
+  const showPairs = !isLastRound && round.matches.length > 1
 
   return (
     <div>
@@ -87,15 +88,34 @@ export function RoundsView({ tree, championLabel }: Props) {
         ))}
       </div>
 
-      <ol aria-label={round.label} className="mt-4 flex list-none flex-col gap-3.5 p-0">
-        {round.matches.map((m) => (
-          <li key={m.id} className="flex flex-col gap-1.5">
-            <BracketMatchCard match={m} compact />
-            <span className="pl-0.5 text-[13px] text-muted-foreground">
-              {matchOutcomeNote(m, isLastRound, nextLabel, championLabel)}
-            </span>
-          </li>
-        ))}
+      <ol aria-label={round.label} className={`mt-4 flex list-none flex-col gap-3.5 p-0 ${showPairs ? "pr-4" : ""}`}>
+        {round.matches.map((m, i) => {
+          // Corchete que une a los dos partidos cuyos ganadores se cruzan en
+          // la ronda siguiente (mismo trazo que los conectores del cuadro de
+          // escritorio). Se arma en piezas con CSS, sin medir en JS: el de
+          // arriba baja desde el medio de su tarjeta hasta la mitad del gap, y
+          // el de abajo sube desde el medio de la suya hasta ahí.
+          const pairPos = showPairs && round.matches.length > (i ^ 1) ? (i % 2 === 0 ? "top" : "bottom") : null
+          return (
+            <li key={m.id} className={`flex flex-col gap-1.5 ${pairPos === "top" && i > 0 ? "mt-3" : ""}`}>
+              <div className="relative">
+                <BracketMatchCard match={m} compact />
+                {pairPos === "top" && (
+                  <span aria-hidden className="absolute left-full top-1/2 -bottom-1.5 w-3 border-t-2 border-r-2 border-draw-line" />
+                )}
+                {pairPos === "bottom" && (
+                  <span aria-hidden className="absolute left-full -top-[7px] bottom-1/2 w-3 border-b-2 border-r-2 border-draw-line" />
+                )}
+              </div>
+              <span className="relative pl-0.5 text-[13px] text-muted-foreground">
+                {matchOutcomeNote(m, isLastRound, nextLabel, championLabel)}
+                {pairPos === "top" && (
+                  <span aria-hidden className="absolute left-full top-0 -bottom-[7px] w-3 border-r-2 border-draw-line" />
+                )}
+              </span>
+            </li>
+          )
+        })}
       </ol>
     </div>
   )
