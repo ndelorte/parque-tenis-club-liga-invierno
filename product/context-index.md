@@ -24,6 +24,7 @@ tener que abrirlos todos para saber cuál corresponde antes de tocar código.
 | Qué falta, próximos sprints | `backlog.md` |
 | Refactor visual del sitio (sistema visual, fases, relevamiento de pantallas) | `plan-refactor-visual.md` |
 | Un gap o una duda sobre una regla existente | `open-questions.md` |
+| Inscripción online a la Liga (formulario público, validación en el panel, DNI privado) y medallas de podio | `plan-liga-verano-inscripcion.md` |
 
 ## Arquitectura y decisiones
 

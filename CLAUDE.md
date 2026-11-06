@@ -146,11 +146,11 @@ Esta regla está reforzada por un test (`lib/data/__tests__/standings-write-boun
 
 ### Datos sensibles
 
-No mostrar teléfonos en vistas públicas. No commitear `.env`. No exponer `SUPABASE_SERVICE_ROLE_KEY` al cliente.
+No mostrar teléfonos ni DNI en vistas públicas (el DNI vive en `player_private`, nunca en `players`, que es de lectura pública). No commitear `.env`. No exponer `SUPABASE_SERVICE_ROLE_KEY` al cliente.
 
 ### Server actions validan admin
 
-`proxy.ts` protege las páginas `/panel-*`, no las server actions (son endpoints POST invocables desde cualquier ruta). Toda action exportada en `app/actions/` que escribe tiene que validar el rol admin en su primera línea (`isRequestFromAdmin()` de `lib/auth/requireAdmin.ts`, o `isAdminUser` como en `admin.ts`). Reforzado por `app/actions/__tests__/admin-guard.test.ts`.
+`proxy.ts` protege las páginas `/panel-*`, no las server actions (son endpoints POST invocables desde cualquier ruta). Toda action exportada en `app/actions/` que escribe tiene que validar el rol admin en su primera línea (`isRequestFromAdmin()` de `lib/auth/requireAdmin.ts`, o `isAdminUser` como en `admin.ts`). Reforzado por `app/actions/__tests__/admin-guard.test.ts`. Única excepción: `submitLigaRegistration` (`liga-registration-public.ts`), la inscripción pública sin login, que se endurece con Zod en el servidor, honeypot y chequeo de la ventana de inscripción.
 
 ---
 
@@ -160,9 +160,10 @@ No mostrar teléfonos en vistas públicas. No commitear `.env`. No exponer `SUPA
 |------|-------------|
 | `/` | Home institucional |
 | `/ligas-invierno-verano` | Selector de ediciones (Invierno/Verano, pasada/activa/próxima) |
-| `/ligas-invierno-verano/[season]` | Vista de una edición según su status (activa/cerrada/próxima) |
+| `/ligas-invierno-verano/[season]` | Vista de una edición según su status y etapa (`lib/liga/editionStage.ts`): inscripción abierta → formulario embebido + resumen del reglamento; cerrada sin series → "estamos armando los cuadros"; con series → vista activa. Ediciones finalizadas, sin cambios |
 | `/ligas-invierno-verano/[season]/categorias/[slug]` | Tabla, fixture y equipos de categoría en esa edición |
 | `/ligas-invierno-verano/[season]/equipos/[catSlug]/[teamSlug]` | Página de equipo con historial en esa edición |
+| `/ligas-invierno-verano/[season]/inscripcion` | Acceso directo al mismo formulario de inscripción (si está cerrada: "La inscripción está cerrada"). Categoría y equipo de una edición en curso dan 404 hasta cerrar la inscripción y cargar series |
 | `/ligas-invierno-verano/reglamento` | Reglamento resumido |
 | `/interparque` | Selector de ediciones de Interparque (estado, fechas, campeones) |
 | `/interparque/[edicion]` | Una edición (número: `/interparque/1`): fechas, reglas, tabla y partidos jugados |
@@ -182,6 +183,7 @@ Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]
 |------|-------------|
 | `/panel-liga/login` | Login con Supabase Auth |
 | `/panel-liga` | Dashboard de Liga |
+| `/panel-liga?seccion=inscripciones` | Inscripciones: configuración (abierta, cierre, min/max), solicitudes y validación jugador por jugador antes de crear el equipo |
 | `/panel-liga/liga-invierno/equipos` | CRUD equipos |
 | `/panel-liga/liga-invierno/jugadores` | CRUD jugadores |
 | `/panel-liga/liga-invierno/fixture` | Cargar y editar fixture |

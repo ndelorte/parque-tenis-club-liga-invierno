@@ -137,3 +137,18 @@
 .dark .liga-board[data-identity="liga-verano"]{--liga-ink:#f5c754;--liga-soft:#302710}
 .dark .liga-team-header[data-identity="liga-invierno"]{--liga-ink:#9cc7ea;--liga-soft:#15293a}
 .dark .liga-team-header[data-identity="liga-verano"]{--liga-ink:#f5c754;--liga-soft:#302710}
+
+/* Inscripción online (Fase V1) */
+.liga-registration-page{--liga-season:var(--clay);--liga-ink:var(--accent);--liga-soft:var(--accent-light)}
+.liga-registration-page[data-identity="liga-invierno"]{--liga-season:var(--section-accent);--liga-ink:#245f8f;--liga-soft:#e3eff8}
+.liga-registration-page[data-identity="liga-verano"]{--liga-season:var(--section-accent);--liga-ink:#7a5200;--liga-soft:#fdf1d2}
+.dark .liga-registration-page[data-identity="liga-invierno"]{--liga-ink:#9cc7ea;--liga-soft:#15293a}
+.dark .liga-registration-page[data-identity="liga-verano"]{--liga-ink:#f5c754;--liga-soft:#302710}
+.liga-registration-page{display:grid;gap:1.25rem;max-width:56rem;padding-block:2rem 3rem}
+.liga-registration-page .liga-back-link{justify-self:start;display:inline-flex;align-items:center;min-height:2.75rem;font-weight:700;color:var(--liga-ink)}
+.liga-registration-page h2{font-family:var(--font-heading);font-weight:800;text-transform:uppercase;line-height:.95;font-size:clamp(2rem,5vw,3rem)}
+.liga-registration-lede{max-width:55ch;color:var(--muted-foreground)}
+.liga-registration-page form{position:relative}
+.liga-registration-closed{padding:1.25rem;border:1.5px solid var(--border);border-radius:.5rem;background:var(--liga-soft)}
+.liga-registration-closed-title{font-family:var(--font-heading);font-weight:800;text-transform:uppercase;font-size:1.75rem;line-height:1}
+.liga-registration-more{display:flex;flex-wrap:wrap;gap:.75rem;padding-bottom:4rem}

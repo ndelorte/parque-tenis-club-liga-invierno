@@ -32,6 +32,10 @@ tournaments
 | description | text nullable | |
 | start_date | date nullable | |
 | end_date | date nullable | |
+| registration_open | boolean | Default false. Inscripción online abierta (migración 013) |
+| registration_deadline | date nullable | Último día para inscribirse, inclusive (hora Argentina) |
+| registration_min_players | integer nullable | Mínimo de jugadores por equipo en la inscripción (sin valor: 2) |
+| registration_max_players | integer nullable | Máximo (sin valor: 12) |
 | created_at | timestamptz | |
 | updated_at | timestamptz | |
 
@@ -252,6 +256,61 @@ La tabla puede calcularse en vivo desde los resultados, pero este snapshot permi
 - Los campos `_diff` en `standings_snapshot` son calculados (`courts_won - courts_lost`, etc.) y pueden mantenerse como columnas computadas o actualizarse en cada recálculo.
 - `standings_snapshot` tiene una entrada por equipo por categoría (no por ronda).
 - El cálculo de desempate por enfrentamiento directo requiere acceder a la tabla `series` en el momento del sort, no se persiste en el snapshot.
+
+---
+
+## Inscripción online a la Liga (migración 013)
+
+Plan: `plan-liga-verano-inscripcion.md`. Las tres tablas tienen RLS activada **sin
+policies** para anon/authenticated: solo la service role (server actions) las lee y
+escribe. Teléfono y DNI nunca llegan a un cliente público.
+
+### liga_registrations
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | |
+| tournament_id | uuid FK → tournaments | |
+| category_id | uuid FK → categories | |
+| team_name | text | Máx. 80 |
+| captain_phone | text | Solo para el organizador |
+| notes | text nullable | Restricciones de horario / sugerencias (máx. 1000) |
+| status | text | `pending` (default), `approved`, `rejected` |
+| team_id | uuid FK → teams nullable | Lo completa la aprobación |
+| reviewed_at | timestamptz nullable | |
+| created_at / updated_at | timestamptz | |
+
+### liga_registration_players
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | |
+| registration_id | uuid FK → liga_registrations (cascade) | |
+| first_name / last_name | text | Como los escribió el capitán |
+| dni | text | Solo dígitos, 7 u 8 |
+| is_captain | boolean | Índice único parcial: a lo sumo uno por inscripción |
+| sort_order | integer | |
+| resolved_player_id | uuid FK → players nullable | Jugador elegido en la validación |
+| resolution | text | `pending` (default), `existing`, `new` |
+
+### player_private
+
+DNI de los jugadores, aparte de `players` porque esa tabla tiene lectura pública.
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| player_id | uuid PK FK → players (cascade) | |
+| dni | text unique | Solo dígitos, 7 u 8 |
+| created_at / updated_at | timestamptz | |
+
+### approve_liga_registration(p_registration_id uuid) → uuid
+
+Función `security definer`, ejecutable solo por `service_role`. En una transacción:
+crea el equipo (slug único por categoría), los `players` nuevos (`display_name` =
+"Apellido Nombre"), guarda los DNI en `player_private` (no pisa uno existente),
+crea los `team_players`, setea `teams.captain_name` y marca la solicitud `approved`.
+Falla (y revierte todo) si faltan jugadores por resolver, si un DNI ya es de otro
+jugador o si alguien ya está activo en otro equipo de la categoría.
 
 ---
 

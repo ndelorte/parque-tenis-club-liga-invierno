@@ -15,6 +15,10 @@ function mapTournamentRow(row: TournamentRow): Tournament {
     description: row.description ?? undefined,
     start_date: row.start_date ?? undefined,
     end_date: row.end_date ?? undefined,
+    registration_open: row.registration_open ?? false,
+    registration_deadline: row.registration_deadline ?? undefined,
+    registration_min_players: row.registration_min_players ?? undefined,
+    registration_max_players: row.registration_max_players ?? undefined,
   }
 }
 
