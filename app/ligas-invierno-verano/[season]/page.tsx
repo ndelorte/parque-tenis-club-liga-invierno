@@ -4,7 +4,6 @@ import { LigaBoard } from "@/components/liga/liga-board"
 import { LigaReglamento } from "@/components/liga/liga-reglamento"
 import { SponsorsBanner } from "@/components/liga/sponsors-banner"
 import { WhatsappFab } from "@/components/whatsapp-fab"
-import Link from "next/link"
 import { RegistrationSection } from "@/components/liga/RegistrationSection"
 import { getEditionStage, areTeamsPublic, roundsHaveSeries } from "@/lib/liga/editionStage"
 import { getRegistrationAvailability } from "@/lib/liga/registration/availability"
@@ -39,14 +38,6 @@ export async function generateMetadata({ params }: Props) {
     description:
       "Torneo por equipos de dobles. Posiciones, fixture, resultados y equipos de las categorías Caballeros, Damas y Mixto.",
   }
-}
-
-function ReglamentoLinks() {
-  return (
-    <div className="liga-container liga-registration-more">
-      <Link href="/ligas-invierno-verano/reglamento" className="liga-solid-link">Ver el reglamento completo</Link>
-    </div>
-  )
 }
 
 export default async function SeasonPage({ params, searchParams }: Props) {
@@ -110,7 +101,6 @@ export default async function SeasonPage({ params, searchParams }: Props) {
           <RegistrationSection seasonSlug={tournament.slug} categories={categories} availability={registration} />
         </div>
         <LigaReglamento />
-        <ReglamentoLinks />
         <WhatsappFab />
       </main>
     )
@@ -175,7 +165,6 @@ export default async function SeasonPage({ params, searchParams }: Props) {
           </section>
         </div>
         <LigaReglamento />
-        <ReglamentoLinks />
         <WhatsappFab />
       </main>
     )

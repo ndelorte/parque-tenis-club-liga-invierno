@@ -6,6 +6,21 @@ import { seasonFromSlug } from "@/components/liga/season-theme"
 type Figure = { value: string; label: string; highlight?: boolean; delay?: number }
 type Row = { href: string; identity: SectionIdentity; name: string; detail: string; figures: Figure[] }
 
+function ligaDetail(liga: NonNullable<EnJuego["liga"]>): string {
+  switch (liga.kind) {
+    case "proximamente":
+      return liga.title
+    case "inscripcion":
+      return "Inscripciones abiertas"
+    case "sorteo":
+      return "Armando los cuadros"
+    case "playoffs":
+      return "Playoffs"
+    case "fecha":
+      return "Fase regular"
+  }
+}
+
 function buildRows({ liga, circuito, interparque }: EnJuego): Row[] {
   const rows: Row[] = []
   if (liga) {
@@ -14,7 +29,7 @@ function buildRows({ liga, circuito, interparque }: EnJuego): Row[] {
       href: `/ligas-invierno-verano/${liga.slug}`,
       identity: season === "verano" ? "liga-verano" : "liga-invierno",
       name: liga.kind === "proximamente" ? "Próximamente" : liga.title,
-      detail: liga.kind === "proximamente" ? liga.title : liga.kind === "playoffs" ? "Playoffs" : "Fase regular",
+      detail: ligaDetail(liga),
       figures: liga.kind === "fecha" ? [{ value: String(liga.round), label: "fecha", highlight: true }] : [],
     })
   }

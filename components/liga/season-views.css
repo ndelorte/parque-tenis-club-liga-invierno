@@ -151,4 +151,3 @@
 .liga-registration-page form{position:relative}
 .liga-registration-closed{padding:1.25rem;border:1.5px solid var(--border);border-radius:.5rem;background:var(--liga-soft)}
 .liga-registration-closed-title{font-family:var(--font-heading);font-weight:800;text-transform:uppercase;font-size:1.75rem;line-height:1}
-.liga-registration-more{display:flex;flex-wrap:wrap;gap:.75rem;padding-bottom:4rem}

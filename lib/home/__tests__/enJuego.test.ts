@@ -13,7 +13,7 @@ function round(round_number: number, statuses: string[], phase: "regular" | "sem
 }
 
 function tournament(overrides: Partial<Tournament>): Tournament {
-  return { id: "t", name: "Liga de Invierno", slug: "liga-invierno-2026", season: 2026, status: "active", ...overrides }
+  return { id: "t", name: "Liga de Invierno", slug: "liga-invierno-2026", season: 2026, status: "active", registration_open: false, ...overrides }
 }
 
 describe("firstPendingRegularRound", () => {
@@ -43,6 +43,16 @@ describe("buildLigaEnJuego", () => {
   it("temporada activa sin fechas regulares pendientes: playoffs", () => {
     const result = buildLigaEnJuego([tournament({})], [[round(1, ["completed"])]])
     expect(result?.kind).toBe("playoffs")
+  })
+
+  it("activa con inscripción abierta y sin series: inscripcion", () => {
+    const result = buildLigaEnJuego([tournament({ registration_open: true })], [[]])
+    expect(result).toEqual({ kind: "inscripcion", title: "Liga de Invierno 2026", slug: "liga-invierno-2026" })
+  })
+
+  it("activa cerrada y sin series: sorteo", () => {
+    expect(buildLigaEnJuego([tournament({})], [[round(1, [])]])?.kind).toBe("sorteo")
+    expect(buildLigaEnJuego([tournament({})], [])?.kind).toBe("sorteo")
   })
 
   it("sin temporada activa: anuncia la próxima", () => {
