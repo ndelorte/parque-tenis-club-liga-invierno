@@ -11,6 +11,8 @@
     @bottom-right { content: "Página " counter(page); font: 8.5pt Helvetica, Arial, sans-serif; color: #444; }
   }
   @page :first { margin: 0; @bottom-left { content: none; } @bottom-right { content: none; } }
+  /* Los logos chicos de cada página no van acá: Chrome no dibuja imágenes en
+     los márgenes de página. Los estampa scripts/stamp-reglamento-logos.mjs. */
   * { box-sizing: border-box; }
   html { font-family: Helvetica, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #111; }
   body { margin: 0; }
@@ -19,6 +21,9 @@
   .cover h1 { font-size: 30pt; line-height: 1.2; margin: 0 0 8mm; letter-spacing: .02em; }
   .cover p { font-size: 13pt; margin: 0; }
   .cover .org { position: absolute; bottom: 20mm; font-size: 10pt; letter-spacing: .08em; }
+  .cover .logos { display: flex; gap: 14mm; justify-content: center; margin: 0 0 14mm; }
+  .cover .logos span { display: flex; align-items: center; justify-content: center; width: 58mm; height: 58mm; border-radius: 50%; background: #fff; }
+  .cover .logos img { width: 50mm; height: 50mm; object-fit: contain; }
   .toc { page-break-after: always; break-after: page; }
   .toc h1 { font-size: 15pt; text-align: center; margin: 0 0 8mm; }
   .toc ul { list-style: none; padding: 0; margin: 0; }
@@ -45,6 +50,10 @@
 <body>
 
 <section class="cover">
+  <div class="logos">
+    <span><img src="../../public/images/logoligadeinvierno.png" alt="Logo de la Liga de Invierno"></span>
+    <span><img src="../../public/images/logoligaverano.png" alt="Logo de la Liga de Verano"></span>
+  </div>
   <h1>REGLAMENTO DEL CAMPEONATO — LIGA DE VERANO 26/27</h1>
   <p class="org">ORGANIZADORES JAVIER DELORTE – NICOLAS DELORTE</p>
 </section>

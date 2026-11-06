@@ -16,4 +16,7 @@ fi
 PROFILE="$(mktemp -d "${TMPDIR:-/tmp}/reglamento-chrome.XXXXXX")"
 trap 'rm -rf "$PROFILE"' EXIT
 "$CHROME" --user-data-dir="$PROFILE" --headless --disable-gpu --no-pdf-header-footer --print-to-pdf="$OUT" "file://$SRC"
+# Chrome no dibuja imágenes en los márgenes de página: los logos de cada hoja
+# se estampan después con pdf-lib.
+node "$ROOT/scripts/stamp-reglamento-logos.mjs" "$OUT"
 echo "PDF generado: $OUT"
