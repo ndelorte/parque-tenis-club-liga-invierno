@@ -4,12 +4,9 @@ import { cn } from "@/lib/utils"
 const RULES = [
   "El torneo es por equipos en modalidad dobles.",
   "Cada serie enfrenta a dos equipos y se juega en 3 canchas.",
-  "Gana la serie el equipo que se impone en 2 de las 3 canchas.",
   "Se otorgan 2 puntos por serie ganada y 1 punto por serie perdida.",
-  "Los desempates siguen puntos, diferencia de canchas, sets y games; si persiste el empate se arma una mini-tabla solo con los equipos empatados.",
-  "El WO de cancha es siempre la cancha 3: se juegan las canchas 1 y 2 y la 3 queda 6-0 6-0 para el rival. Si se avisa con menos de 24 hs, el equipo abona la fecha completa.",
-  "Inscripción por equipo: $150.000. Cada fecha: $108.000 por equipo, a pagar el día del partido antes de comenzar.",
   "Liga de Verano 26/27: sorteo el 2 de diciembre de 2026; se juega del 9 de diciembre de 2026 al 14 de marzo de 2027.",
+  "Días y horarios de juego: lunes a viernes a las 21 hs; martes, jueves y viernes también a las 19:30 hs; sábados a las 14, 16 y 18 hs; domingos a las 9, 10:30, 15, 16:30 y 18 hs.",
 ]
 
 // `className` ajusta el espaciado según dónde va: en la etapa de inscripción
