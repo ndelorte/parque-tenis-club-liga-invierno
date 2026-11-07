@@ -63,7 +63,7 @@ describe("buildLigaEnJuego", () => {
     ]
     expect(buildLigaEnJuego(tournaments, [])).toEqual({
       kind: "proximamente",
-      title: "Liga de Verano 2026/2027",
+      title: "Liga de Verano 26/27",
       slug: "liga-verano-2026-2027",
     })
   })

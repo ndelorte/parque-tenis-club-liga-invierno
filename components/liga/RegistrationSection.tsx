@@ -1,3 +1,4 @@
+import { isRegistrationPreview, PREVIEW_SEASON } from "@/lib/liga/registration/preview"
 import { RegistrationForm } from "@/components/liga/RegistrationForm"
 import { formatDate } from "@/lib/utils"
 import type { RegistrationAvailability } from "@/lib/liga/registration/availability"
@@ -25,6 +26,11 @@ export function RegistrationSection({
   }
   return (
     <section aria-labelledby={headingId} className="grid gap-4">
+      {isRegistrationPreview() && seasonSlug === PREVIEW_SEASON && (
+        <p role="status" className="rounded-lg border border-border bg-card p-4">
+          Vista de prueba. Podés completar el formulario para revisarlo; no se envían ni guardan inscripciones.
+        </p>
+      )}
       <h2 id={headingId}>Inscribí tu equipo</h2>
       <p className="liga-registration-lede">
         Completá los datos del equipo. El organizador revisa cada inscripción y se comunica con el capitán.

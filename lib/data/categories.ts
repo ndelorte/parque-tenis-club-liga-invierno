@@ -1,3 +1,4 @@
+import { isRegistrationPreview, getPreviewCategories, PREVIEW_TOURNAMENT_ID } from "@/lib/liga/registration/preview"
 import { createPublicClient } from "@/lib/supabase/public"
 import type { Category } from "@/lib/tournament/types"
 import type { Database } from "@/lib/supabase/types"
@@ -23,6 +24,7 @@ function mapCategoryRow(row: CategoryRow): Category {
 }
 
 export async function getCategoriesForTournament(tournamentId: string): Promise<Category[]> {
+  if (isRegistrationPreview() && tournamentId === PREVIEW_TOURNAMENT_ID) return getPreviewCategories()
   const supabase = createPublicClient()
 
   const { data, error } = await supabase

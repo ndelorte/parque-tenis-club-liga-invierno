@@ -7,11 +7,11 @@ describe("formatSeasonLabel", () => {
   });
 
   it("Liga de Verano muestra el rango de dos años", () => {
-    expect(formatSeasonLabel({ name: "Liga de Verano", season: 2025 })).toBe("2025/2026");
+    expect(formatSeasonLabel({ name: "Liga de Verano", season: 2025 })).toBe("25/26");
   });
 
   it("detecta \"verano\" sin importar mayúsculas", () => {
-    expect(formatSeasonLabel({ name: "LIGA DE VERANO", season: 2026 })).toBe("2026/2027");
+    expect(formatSeasonLabel({ name: "LIGA DE VERANO", season: 2026 })).toBe("26/27");
   });
 });
 
@@ -24,7 +24,7 @@ describe("formatTournamentTitle", () => {
 
   it("combina nombre y rango de temporada para verano", () => {
     expect(formatTournamentTitle({ name: "Liga de Verano", season: 2026 })).toBe(
-      "Liga de Verano 2026/2027"
+      "Liga de Verano 26/27"
     );
   });
 });
