@@ -7,16 +7,23 @@
 
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
-import { isRequestFromAdmin } from "@/lib/auth/requireAdmin"
+import { isRequestFromAdmin, requireAdminActor } from "@/lib/auth/requireAdmin"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { suggestPlayerMatches, type KnownPlayer } from "@/lib/liga/registration/suggestPlayerMatches"
+import { fetchKnownPlayers } from "@/lib/liga/registration/fetchKnownPlayers"
+import { isCategoryDrawn } from "@/lib/liga/registration/isCategoryDrawn"
+import { registrationApproved, registrationRejected } from "@/lib/liga/registration/history"
+import { DEFAULT_MAX_PLAYERS, DEFAULT_MIN_PLAYERS } from "@/lib/liga/registration/availability"
+import { toWhatsappUrl } from "@/lib/phone/toWhatsappUrl"
 import type { NameMatch } from "@/lib/players/similarNames"
+import { listHistoricalPodiums } from "@/lib/data/podium-history"
+import { buildMedalCandidates, candidateKey, preselectedKeys, type MedalCandidate } from "@/lib/liga/medals/candidates"
 
 type Result = { success: boolean; error?: string }
 
 const NO_AUTH = "No autorizado"
 
-export type RegistrationStatus = "pending" | "approved" | "rejected"
+export type RegistrationStatus = "pending" | "approved" | "rejected" | "withdrawn"
 
 // ——— Configuración de la edición ———
 
@@ -28,6 +35,10 @@ export type RegistrationSettings = {
   deadline: string | null
   min: number | null
   max: number | null
+  // Mínimo y máximo que usa el formulario (los configurados o los por defecto).
+  effectiveMin: number
+  effectiveMax: number
+  categories: Array<{ id: string; name: string }>
 }
 
 export async function getRegistrationSettings(): Promise<RegistrationSettings | null> {
@@ -41,6 +52,8 @@ export async function getRegistrationSettings(): Promise<RegistrationSettings | 
     .limit(1)
     .maybeSingle()
   if (!data) return null
+  const { data: cats } = await supabase.from("categories").select("id, name").eq("tournament_id", data.id).order("name")
+  const effectiveMin = data.registration_min_players ?? DEFAULT_MIN_PLAYERS
   return {
     tournamentId: data.id,
     tournamentName: `${data.name} ${data.season}`,
@@ -49,6 +62,9 @@ export async function getRegistrationSettings(): Promise<RegistrationSettings | 
     deadline: data.registration_deadline,
     min: data.registration_min_players,
     max: data.registration_max_players,
+    effectiveMin,
+    effectiveMax: Math.max(effectiveMin, data.registration_max_players ?? DEFAULT_MAX_PLAYERS),
+    categories: (cats ?? []) as Array<{ id: string; name: string }>,
   }
 }
 
@@ -133,7 +149,7 @@ export async function listRegistrations(tournamentId: string): Promise<Registrat
     }
   })
   // Pendientes primero; dentro de cada estado, ya vienen de más nueva a más vieja.
-  const rank: Record<RegistrationStatus, number> = { pending: 0, approved: 1, rejected: 2 }
+  const rank: Record<RegistrationStatus, number> = { pending: 0, approved: 1, withdrawn: 2, rejected: 3 }
   return items.sort((a, b) => rank[a.status] - rank[b.status])
 }
 
@@ -165,41 +181,43 @@ export type DetailPlayer = {
   candidates: DetailCandidate[]
 }
 
+// Jugador del plantel de un equipo ya aprobado (team_players + player_private).
+export type RosterPlayer = {
+  playerId: string
+  firstName: string
+  lastName: string
+  displayName: string
+  dni: string | null
+  // Dato privado: solo llega al panel admin.
+  birthDate: string | null
+  isCaptain: boolean
+  active: boolean
+}
+
+export type HistoryItem = { id: string; at: string; actor: string; kind: string; summary: string }
+
 export type RegistrationDetail = {
   id: string
   teamName: string
+  categoryId: string
   categoryName: string
   captainPhone: string
+  // https://wa.me/... del capitán, o null si el teléfono no alcanza para armarlo.
+  whatsappUrl: string | null
   notes: string | null
   status: RegistrationStatus
+  rejectionReason: string | null
   createdAt: string
   teamId: string | null
+  // Solicitud pendiente o rechazada: los jugadores como los anotó el capitán.
   players: DetailPlayer[]
-}
-
-async function fetchAllPlayers(supabase: ReturnType<typeof createAdminClient>): Promise<KnownPlayer[]> {
-  // Supabase corta en 1000 filas por consulta: se pagina.
-  const PAGE = 1000
-  const players: Array<{ id: string; display_name: string }> = []
-  for (let from = 0; ; from += PAGE) {
-    const { data } = await supabase
-      .from("players")
-      .select("id, display_name")
-      .eq("active", true)
-      .order("id")
-      .range(from, from + PAGE - 1)
-    const rows = (data ?? []) as Array<{ id: string; display_name: string }>
-    players.push(...rows)
-    if (rows.length < PAGE) break
-  }
-  const dniById = new Map<string, string>()
-  for (let from = 0; ; from += PAGE) {
-    const { data } = await supabase.from("player_private").select("player_id, dni").order("player_id").range(from, from + PAGE - 1)
-    const rows = (data ?? []) as Array<{ player_id: string; dni: string }>
-    rows.forEach((r) => dniById.set(r.player_id, r.dni))
-    if (rows.length < PAGE) break
-  }
-  return players.map((p) => ({ id: p.id, displayName: p.display_name, dni: dniById.get(p.id) ?? null }))
+  // Aprobada o dada de baja: el plantel real del equipo.
+  roster: RosterPlayer[]
+  // La categoría ya tiene series: el cuadro está sorteado.
+  drawn: boolean
+  categories: Array<{ id: string; name: string }>
+  // Del más nuevo al más viejo.
+  history: HistoryItem[]
 }
 
 export async function getRegistrationDetail(registrationId: string): Promise<RegistrationDetail | null> {
@@ -208,7 +226,7 @@ export async function getRegistrationDetail(registrationId: string): Promise<Reg
 
   const { data: reg } = await supabase
     .from("liga_registrations")
-    .select("id, team_name, captain_phone, notes, status, created_at, team_id, category_id, categories(name)")
+    .select("id, tournament_id, team_name, captain_phone, notes, status, rejection_reason, created_at, team_id, category_id, categories(name)")
     .eq("id", registrationId)
     .maybeSingle()
   if (!reg) return null
@@ -229,7 +247,7 @@ export async function getRegistrationDetail(registrationId: string): Promise<Reg
     resolution: "pending" | "existing" | "new"
   }
   const rows = (rawPlayers ?? []) as PlayerRow[]
-  const known = await fetchAllPlayers(supabase)
+  const known = await fetchKnownPlayers(supabase)
   const knownById = new Map(known.map((k) => [k.id, k]))
 
   const suggestions = rows.map((row) =>
@@ -265,6 +283,7 @@ export async function getRegistrationDetail(registrationId: string): Promise<Reg
       .select("player_id, teams!inner(name, category_id)")
       .eq("active", true)
       .eq("teams.category_id", reg.category_id)
+      .eq("teams.active", true)
       .in("player_id", [...involvedIds])
     for (const m of (memberships ?? []) as unknown as Array<{ player_id: string; teams: { name: string } }>) {
       otherTeamByPlayer.set(m.player_id, m.teams.name)
@@ -297,17 +316,69 @@ export async function getRegistrationDetail(registrationId: string): Promise<Reg
     }
   })
 
+  const hasTeam = (reg.status === "approved" || reg.status === "withdrawn") && !!reg.team_id
+  const roster = hasTeam ? await fetchRoster(supabase, reg.team_id as string, reg.status === "approved") : []
+  const [drawn, categoriesRes, historyRes] = await Promise.all([
+    isCategoryDrawn(supabase, reg.category_id),
+    supabase.from("categories").select("id, name").eq("tournament_id", reg.tournament_id).order("name"),
+    supabase
+      .from("liga_registration_events")
+      .select("id, at, actor, kind, summary")
+      .eq("registration_id", registrationId)
+      .order("at", { ascending: false }),
+  ])
+
   return {
     id: reg.id,
     teamName: reg.team_name,
+    categoryId: reg.category_id,
     categoryName: (reg.categories as unknown as { name: string } | null)?.name ?? "—",
     captainPhone: reg.captain_phone,
+    whatsappUrl: toWhatsappUrl(reg.captain_phone),
     notes: reg.notes,
     status: reg.status,
+    rejectionReason: reg.rejection_reason ?? null,
     createdAt: reg.created_at,
     teamId: reg.team_id,
-    players,
+    players: hasTeam ? [] : players,
+    roster,
+    drawn,
+    categories: (categoriesRes.data ?? []) as Array<{ id: string; name: string }>,
+    history: (historyRes.data ?? []) as HistoryItem[],
   }
+}
+
+async function fetchRoster(supabase: ReturnType<typeof createAdminClient>, teamId: string, onlyActive: boolean): Promise<RosterPlayer[]> {
+  let query = supabase
+    .from("team_players")
+    .select("player_id, is_captain, active, players(first_name, last_name, display_name)")
+    .eq("team_id", teamId)
+  if (onlyActive) query = query.eq("active", true)
+  const { data } = await query
+  type Row = {
+    player_id: string
+    is_captain: boolean
+    active: boolean
+    players: { first_name: string; last_name: string; display_name: string } | null
+  }
+  const rows = (data ?? []) as unknown as Row[]
+  const { data: privates } = rows.length
+    ? await supabase.from("player_private").select("player_id, dni, birth_date").in("player_id", rows.map((r) => r.player_id))
+    : { data: [] }
+  const privateById = new Map(((privates ?? []) as Array<{ player_id: string; dni: string; birth_date: string | null }>).map((r) => [r.player_id, r]))
+  return rows
+    .map((r): RosterPlayer => ({
+      playerId: r.player_id,
+      // Los jugadores del panel viejo tienen todo el nombre en first_name.
+      firstName: r.players?.last_name ? r.players.first_name : "",
+      lastName: r.players?.last_name ? r.players.last_name : (r.players?.display_name ?? ""),
+      displayName: r.players?.display_name ?? "—",
+      dni: privateById.get(r.player_id)?.dni ?? null,
+      birthDate: privateById.get(r.player_id)?.birth_date ?? null,
+      isCaptain: r.is_captain,
+      active: r.active,
+    }))
+    .sort((a, b) => Number(b.isCaptain) - Number(a.isCaptain) || a.displayName.localeCompare(b.displayName, "es"))
 }
 
 // ——— Resolución de cada jugador ———
@@ -355,13 +426,38 @@ export async function setPlayerResolution(
 
 // ——— Aprobar / rechazar ———
 
-export async function approveRegistration(registrationId: string): Promise<Result & { teamId?: string }> {
-  if (!(await isRequestFromAdmin())) return { success: false, error: NO_AUTH }
-  const supabase = createAdminClient()
+// Medalla elegida por el organizador: categoría de origen del podio + puesto.
+const medalInputSchema = z.object({
+  categoryId: z.string().uuid(),
+  place: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+})
+export type MedalInput = z.infer<typeof medalInputSchema>
 
-  // Una sola función SQL: crea equipo, jugadores nuevos, DNI y plantel, y
-  // marca la solicitud. Si algo falla se revierte todo.
-  const { data, error } = await supabase.rpc("approve_liga_registration", { p_registration_id: registrationId })
+// Un equipo lleva a lo sumo una medalla por categoría de origen.
+const medalListSchema = z
+  .array(medalInputSchema)
+  .max(30, "Demasiadas medallas")
+  .refine((list) => new Set(list.map((m) => m.categoryId)).size === list.length, "Hay dos medallas de la misma categoría")
+
+export async function approveRegistration(
+  registrationId: string,
+  medals: MedalInput[] = [],
+): Promise<Result & { teamId?: string }> {
+  const actor = await requireAdminActor()
+  if (!actor) return { success: false, error: NO_AUTH }
+  const parsedMedals = medalListSchema.safeParse(medals)
+  if (!parsedMedals.success) return { success: false, error: parsedMedals.error.issues[0]?.message ?? "Medallas inválidas" }
+  const supabase = createAdminClient()
+  const { data: reg } = await supabase.from("liga_registrations").select("team_name").eq("id", registrationId).maybeSingle()
+
+  // Una sola función SQL: crea equipo, jugadores nuevos, DNI, plantel y
+  // medallas, marca la solicitud y deja el historial. Si algo falla se revierte todo.
+  const { data, error } = await supabase.rpc("approve_liga_registration_logged", {
+    p_registration_id: registrationId,
+    p_medals: parsedMedals.data.map((m) => ({ source_category_id: m.categoryId, place: m.place })),
+    p_actor: actor,
+    p_events: [registrationApproved(reg?.team_name ?? "")],
+  })
   if (error) return { success: false, error: error.message || "No se pudo aprobar la inscripción" }
 
   revalidatePath("/panel-liga")
@@ -369,17 +465,110 @@ export async function approveRegistration(registrationId: string): Promise<Resul
   return { success: true, teamId: data as string }
 }
 
-export async function rejectRegistration(registrationId: string): Promise<Result> {
-  if (!(await isRequestFromAdmin())) return { success: false, error: NO_AUTH }
+export async function rejectRegistration(registrationId: string, reason?: string): Promise<Result> {
+  const actor = await requireAdminActor()
+  if (!actor) return { success: false, error: NO_AUTH }
+  const cleanReason = (reason ?? "").trim().slice(0, 500) || null
   const supabase = createAdminClient()
-  const { data, error } = await supabase
-    .from("liga_registrations")
-    .update({ status: "rejected", reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-    .eq("id", registrationId)
-    .eq("status", "pending")
-    .select("id")
-  if (error) return { success: false, error: "No se pudo rechazar la inscripción" }
-  if (!data || data.length === 0) return { success: false, error: "La inscripción ya fue revisada" }
+  const { error } = await supabase.rpc("reject_liga_registration", {
+    p_registration_id: registrationId,
+    p_actor: actor,
+    p_reason: cleanReason,
+    p_events: [registrationRejected(cleanReason)],
+  })
+  if (error) return { success: false, error: error.message || "No se pudo rechazar la inscripción" }
   revalidatePath("/panel-liga")
+  return { success: true }
+}
+
+// ¿La edición activa usa inscripción online? (abierta o con solicitudes). El
+// panel "Jugadores" lo usa para avisar que el plantel se edita desde Inscripciones.
+export async function hasOnlineRegistration(): Promise<boolean> {
+  if (!(await isRequestFromAdmin())) return false
+  const supabase = createAdminClient()
+  const { data: t } = await supabase
+    .from("tournaments")
+    .select("id, registration_open")
+    .eq("status", "active")
+    .order("season", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (!t) return false
+  if (t.registration_open) return true
+  const { count } = await supabase
+    .from("liga_registrations")
+    .select("id", { count: "exact", head: true })
+    .eq("tournament_id", t.id)
+  return (count ?? 0) > 0
+}
+
+// ——— Medallas de podios anteriores ———
+
+export type MedalCandidates = {
+  candidates: MedalCandidate[]
+  // Claves (`categoryId:place`) tildadas de entrada. Pendiente: las
+  // coincidencias exactas de nombre. Aprobada: las medallas que el equipo ya tiene.
+  selected: string[]
+}
+
+export async function listMedalCandidates(registrationId: string): Promise<MedalCandidates | null> {
+  if (!(await isRequestFromAdmin())) return null
+  const supabase = createAdminClient()
+  const { data: reg } = await supabase
+    .from("liga_registrations")
+    .select("team_name, status, team_id")
+    .eq("id", registrationId)
+    .maybeSingle()
+  if (!reg || reg.status === "rejected") return null
+
+  const candidates = buildMedalCandidates(await listHistoricalPodiums(), reg.team_name)
+  if (reg.status === "pending" || !reg.team_id) return { candidates, selected: preselectedKeys(candidates) }
+
+  const { data: current } = await supabase.from("team_medals").select("source_category_id, place").eq("team_id", reg.team_id)
+  const selected = ((current ?? []) as Array<{ source_category_id: string; place: number }>).map((m) =>
+    candidateKey({ categoryId: m.source_category_id, place: m.place as 1 | 2 | 3 }),
+  )
+  return { candidates, selected }
+}
+
+// Alta y baja de medallas de un equipo ya aprobado (el cruce por nombre puede
+// fallar). Recibe solo las diferencias: lo que no se toca queda como está.
+export async function saveTeamMedals(
+  registrationId: string,
+  changes: { add: MedalInput[]; removeCategoryIds: string[] },
+): Promise<Result> {
+  if (!(await isRequestFromAdmin())) return { success: false, error: NO_AUTH }
+  const parsedAdd = medalListSchema.safeParse(changes.add)
+  const parsedRemove = z.array(z.string().uuid()).max(30).safeParse(changes.removeCategoryIds)
+  if (!parsedAdd.success) return { success: false, error: parsedAdd.error.issues[0]?.message ?? "Medallas inválidas" }
+  if (!parsedRemove.success) return { success: false, error: "Medallas inválidas" }
+
+  const supabase = createAdminClient()
+  const { data: reg } = await supabase
+    .from("liga_registrations")
+    .select("status, team_id")
+    .eq("id", registrationId)
+    .maybeSingle()
+  if (!reg || reg.status !== "approved" || !reg.team_id) {
+    return { success: false, error: "Las medallas se editan una vez aprobada la inscripción" }
+  }
+
+  if (parsedRemove.data.length > 0) {
+    const { error } = await supabase
+      .from("team_medals")
+      .delete()
+      .eq("team_id", reg.team_id)
+      .in("source_category_id", parsedRemove.data)
+    if (error) return { success: false, error: "No se pudieron quitar las medallas" }
+  }
+  if (parsedAdd.data.length > 0) {
+    const { error } = await supabase.from("team_medals").upsert(
+      parsedAdd.data.map((m) => ({ team_id: reg.team_id, source_category_id: m.categoryId, place: m.place })),
+      { onConflict: "team_id,source_category_id" },
+    )
+    if (error) return { success: false, error: "No se pudieron guardar las medallas" }
+  }
+
+  revalidatePath("/ligas-invierno-verano", "layout")
   return { success: true }
 }

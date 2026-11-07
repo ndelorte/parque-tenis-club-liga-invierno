@@ -1,6 +1,7 @@
 "use server"
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { teamsToDeactivate } from "@/lib/liga/registration/protectedTeams"
 import { revalidatePath } from "next/cache"
 import { findLigaNameConflicts, type LigaNameConflict } from "@/lib/players/ligaNameConflicts"
 import { createAdminClient } from "@/lib/supabase/admin"
@@ -280,11 +281,18 @@ export async function saveTeamPlayers(
 
     const inputIds = new Set(teams.filter((t) => t.id).map((t) => t.id!))
 
-    for (const { id } of (currentTeams ?? []) as any[]) {
-      if (!inputIds.has(id)) {
-        await supabase.from("team_players").update({ active: false }).eq("team_id", id)
-        await supabase.from("teams").update({ active: false }).eq("id", id)
-      }
+    // Los equipos aprobados desde una inscripción online no se dan de baja
+    // por no figurar en esta lista: la baja se hace desde Inscripciones, con
+    // su historial.
+    const currentIds = ((currentTeams ?? []) as Array<{ id: string }>).map((t) => t.id)
+    const { data: registered } = currentIds.length
+      ? await supabase.from("liga_registrations").select("team_id").eq("status", "approved").in("team_id", currentIds)
+      : { data: [] }
+    const protectedIds = ((registered ?? []) as Array<{ team_id: string }>).map((r) => r.team_id)
+
+    for (const id of teamsToDeactivate(currentIds, inputIds, protectedIds)) {
+      await supabase.from("team_players").update({ active: false }).eq("team_id", id)
+      await supabase.from("teams").update({ active: false }).eq("id", id)
     }
 
     for (const team of teams) {

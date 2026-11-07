@@ -275,7 +275,8 @@ escribe. Teléfono y DNI nunca llegan a un cliente público.
 | team_name | text | Máx. 80 |
 | captain_phone | text | Solo para el organizador |
 | notes | text nullable | Restricciones de horario / sugerencias (máx. 1000) |
-| status | text | `pending` (default), `approved`, `rejected` |
+| status | text | `pending` (default), `approved`, `rejected`, `withdrawn` (equipo dado de baja, migración 016) |
+| rejection_reason | text nullable | Motivo interno del rechazo, máx. 500 (migración 016) |
 | team_id | uuid FK → teams nullable | Lo completa la aprobación |
 | reviewed_at | timestamptz nullable | |
 | created_at / updated_at | timestamptz | |
@@ -288,6 +289,7 @@ escribe. Teléfono y DNI nunca llegan a un cliente público.
 | registration_id | uuid FK → liga_registrations (cascade) | |
 | first_name / last_name | text | Como los escribió el capitán |
 | dni | text | Solo dígitos, 7 u 8 |
+| birth_date | date nullable | Fecha de nacimiento opcional y privada (migración 014) |
 | is_captain | boolean | Índice único parcial: a lo sumo uno por inscripción |
 | sort_order | integer | |
 | resolved_player_id | uuid FK → players nullable | Jugador elegido en la validación |
@@ -301,16 +303,81 @@ DNI de los jugadores, aparte de `players` porque esa tabla tiene lectura públic
 |-------|------|-------------|
 | player_id | uuid PK FK → players (cascade) | |
 | dni | text unique | Solo dígitos, 7 u 8 |
+| birth_date | date nullable | Opcional y privada (migración 014). Las RPC la completan si está vacía y nunca la pisan, salvo la corrección explícita del admin (`correct_liga_team_player`) |
 | created_at / updated_at | timestamptz | |
 
-### approve_liga_registration(p_registration_id uuid) → uuid
+### approve_liga_registration(p_registration_id uuid, p_medals jsonb default '[]') → uuid
 
-Función `security definer`, ejecutable solo por `service_role`. En una transacción:
+Función `security definer`, ejecutable solo por `service_role` (migración 015 reemplaza la
+de 1 parámetro de la 013). En una transacción:
 crea el equipo (slug único por categoría), los `players` nuevos (`display_name` =
 "Apellido Nombre"), guarda los DNI en `player_private` (no pisa uno existente),
-crea los `team_players`, setea `teams.captain_name` y marca la solicitud `approved`.
+crea los `team_players`, setea `teams.captain_name`, guarda las medallas de `p_medals`
+(arreglo de `{source_category_id, place}`) en `team_medals` y marca la solicitud `approved`.
 Falla (y revierte todo) si faltan jugadores por resolver, si un DNI ya es de otro
-jugador o si alguien ya está activo en otro equipo de la categoría.
+jugador, si alguien ya está activo en otro equipo de la categoría o si una medalla es inválida.
+
+## Gestión de inscripciones y equipos (migración 016, Fase V3)
+
+La ficha del equipo en el panel (`/panel-liga?seccion=inscripciones`) edita la solicitud antes y
+después de aprobar. Los cambios de varios pasos pasan por funciones `security definer`
+(`set search_path = public`, solo `service_role`) que hacen el cambio **y** escriben el historial
+en la misma transacción. Reciben `p_actor` (email del admin) y `p_events` (`[{kind, summary}]`,
+el texto legible lo arma la app en `lib/liga/registration/history.ts`).
+
+### liga_registration_events
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | |
+| registration_id | uuid FK → liga_registrations (cascade) | |
+| at | timestamptz | `clock_timestamp()`, para ordenar eventos de una misma transacción |
+| actor | text | Email del admin (o "Formulario público" al crearse) |
+| kind | text | `created`, `approved`, `rejected`, `reopened`, `info`, `category`, `captain`, `player_added`, `player_removed`, `player_corrected`, `withdrawn` |
+| summary | text | Texto legible: "Se agregó a Pérez Juan", "Capitán: Gómez Ana → Pérez Juan", "Categoría: Damas B → Damas A" |
+
+RLS activada sin policies (solo service role). Se muestra en la ficha, del más nuevo al más viejo.
+
+### Funciones
+
+| Función | Qué hace |
+|---------|----------|
+| `update_liga_registration_info` | Equipo, teléfono y observaciones (pendiente o aprobada). Renombrar no cambia el slug |
+| `change_liga_registration_category` | Cambia la categoría; con series en la categoría (cuadro sorteado) falla. Mueve el equipo aprobado y verifica que nadie del plantel juegue en otro equipo de destino |
+| `save_liga_registration_players` | Pendiente: recibe la lista completa; un jugador corregido vuelve a `resolution = 'pending'` |
+| `approve_liga_registration_logged` | `approve_liga_registration` + historial |
+| `reject_liga_registration` / `reopen_liga_registration` | Rechazar con motivo / volver a pendiente |
+| `add_liga_team_player` | Aprobada: alta de un jugador (existente o nuevo + `player_private`), sin pisar DNI |
+| `remove_liga_team_player` | `team_players.active = false`; no permite quitar al capitán |
+| `set_liga_team_captain` | Un solo `team_players.is_captain` y `teams.captain_name` |
+| `correct_liga_team_player` | Nombre/apellido/DNI del jugador (ficha compartida con Circuito); un DNI ajeno no se pisa |
+| `withdraw_liga_team` | `teams.active = false`, plantel inactivo e inscripción `withdrawn`. No toca series ni tabla |
+
+Reglas: "cuadro sorteado" = la categoría tiene series (`roundsHaveSeries`). Con el cuadro sorteado
+solo se bloquea el cambio de categoría (en la app y en la función SQL).
+
+## team_medals (migración 015, Fase V2)
+
+Medallas de podio que lleva un equipo por ediciones anteriores (Verano e Invierno).
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | |
+| team_id | uuid FK → teams (cascade) | Equipo que lleva la medalla |
+| source_category_id | uuid FK → categories | Categoría donde salió el podio (de ahí se saca la edición) |
+| place | smallint | 1, 2 o 3 (check) |
+| created_at | timestamptz | |
+
+- Unique `(team_id, source_category_id)`: una medalla por equipo y categoría de origen.
+- **No se guarda el texto.** "Subcampeonas Verano 2025/26" se calcula al leer con la categoría
+  (Damas → femenino) y su torneo (`lib/liga/medals/label.ts`), así las reglas de redacción
+  viven en un solo lugar.
+- RLS: `select` público (no hay datos sensibles); sin policies de escritura → solo `service_role`.
+- Fuente de los podios: `getPodiumForCategory` (series reales; `manual_*` como respaldo) sobre
+  todas las categorías de torneos `finished` (`lib/data/podium-history.ts`).
+- Lectura: `getMedalsForTeams(ids)` (`lib/data/team-medals.ts`), una consulta para muchos equipos,
+  de la más reciente a la más vieja. Orden: Invierno 2026 > Verano 2025/26 > Invierno 2025 >
+  Verano 2024/25 (`lib/liga/medals/sort.ts`).
 
 ---
 

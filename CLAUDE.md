@@ -81,6 +81,7 @@ Web real para **Parque Tenis Club** (Argentina). Secciones:
 │   ├── ui/                       # shadcn/ui base
 │   ├── layout/                   # Navbar, Footer
 │   ├── liga/                     # Componentes del torneo
+│   │   └── medals/               # Medallas de podio por equipo (glifo, ficha, popover accesible) + medals.css
 │   ├── interparque/               # Tabla de posiciones y partidos jugados (público)
 │   └── admin/interparque/         # Formularios del panel admin de Interparque
 ├── content/
@@ -96,6 +97,7 @@ Web real para **Parque Tenis Club** (Argentina). Secciones:
 │   │   ├── calculateStandings.ts
 │   │   ├── sortStandings.ts
 │   │   └── getTeamSchedule.ts
+│   ├── liga/                     # Lógica pura de Liga: editionStage, registration/, medals/ (textos, orden, cruce de nombres)
 │   ├── interparque/              # Lógica pura de Interparque (sin UI)
 │   │   ├── parseInterparqueScore.ts
 │   │   ├── calculateInterparqueMatchResult.ts
@@ -150,7 +152,7 @@ No mostrar teléfonos ni DNI en vistas públicas (el DNI vive en `player_private
 
 ### Server actions validan admin
 
-`proxy.ts` protege las páginas `/panel-*`, no las server actions (son endpoints POST invocables desde cualquier ruta). Toda action exportada en `app/actions/` que escribe tiene que validar el rol admin en su primera línea (`isRequestFromAdmin()` de `lib/auth/requireAdmin.ts`, o `isAdminUser` como en `admin.ts`). Reforzado por `app/actions/__tests__/admin-guard.test.ts`. Única excepción: `submitLigaRegistration` (`liga-registration-public.ts`), la inscripción pública sin login, que se endurece con Zod en el servidor, honeypot y chequeo de la ventana de inscripción.
+`proxy.ts` protege las páginas `/panel-*`, no las server actions (son endpoints POST invocables desde cualquier ruta). Toda action exportada en `app/actions/` que escribe tiene que validar el rol admin en su primera línea (`isRequestFromAdmin()` de `lib/auth/requireAdmin.ts`, o `isAdminUser` como en `admin.ts`). Reforzado por `app/actions/__tests__/admin-guard.test.ts`. `requireAdminActor()` (devuelve el email para el historial) cuenta como guardia. Única excepción: `submitLigaRegistration` (`liga-registration-public.ts`), la inscripción pública sin login, que se endurece con Zod en el servidor, honeypot y chequeo de la ventana de inscripción.
 
 ---
 
@@ -162,7 +164,7 @@ No mostrar teléfonos ni DNI en vistas públicas (el DNI vive en `player_private
 | `/ligas-invierno-verano` | Selector de ediciones (Invierno/Verano, pasada/activa/próxima) |
 | `/ligas-invierno-verano/[season]` | Vista de una edición según su status y etapa (`lib/liga/editionStage.ts`): inscripción abierta → formulario embebido + resumen del reglamento; cerrada sin series → "estamos armando los cuadros"; con series → vista activa. Ediciones finalizadas, sin cambios |
 | `/ligas-invierno-verano/[season]/categorias/[slug]` | Tabla, fixture y equipos de categoría en esa edición |
-| `/ligas-invierno-verano/[season]/equipos/[catSlug]/[teamSlug]` | Página de equipo con historial en esa edición |
+| `/ligas-invierno-verano/[season]/equipos/[catSlug]/[teamSlug]` | Página de equipo con historial en esa edición y bloque "Palmarés en la Liga" (fichas de medallas de podios anteriores). En listados, fixture, cuadros, resultados y tabla, el nombre del equipo lleva solo el logo de cada medalla, que abre la ficha al pasar el mouse, tocar o enfocar |
 | `/ligas-invierno-verano/[season]/inscripcion` | Acceso directo al mismo formulario de inscripción (si está cerrada: "La inscripción está cerrada"). Categoría y equipo de una edición en curso dan 404 hasta cerrar la inscripción y cargar series |
 | `/ligas-invierno-verano/reglamento` | Reglamento resumido |
 | `/interparque` | Selector de ediciones de Interparque (estado, fechas, campeones) |
@@ -183,9 +185,9 @@ Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]
 |------|-------------|
 | `/panel-liga/login` | Login con Supabase Auth |
 | `/panel-liga` | Dashboard de Liga |
-| `/panel-liga?seccion=inscripciones` | Inscripciones: configuración (abierta, cierre, min/max), solicitudes y validación jugador por jugador antes de crear el equipo |
+| `/panel-liga?seccion=inscripciones` | Inscripciones: configuración (abierta, cierre, min/max), solicitudes y validación jugador por jugador antes de crear el equipo. Paso "Podios anteriores": medallas sugeridas por nombre de equipo (se guardan al aprobar; también se agregan/quitan en una inscripción aprobada). Cada solicitud es la **ficha del equipo**: editar datos, categoría y jugadores (pendiente) o plantel, capitán y baja (aprobada), con historial; carga manual, exportar CSV y WhatsApp al capitán (`liga-registration-team.ts`, migración 016) |
 | `/panel-liga/liga-invierno/equipos` | CRUD equipos |
-| `/panel-liga/liga-invierno/jugadores` | CRUD jugadores |
+| `/panel-liga/liga-invierno/jugadores` | CRUD jugadores (en ediciones con inscripción online avisa que el plantel se edita desde Inscripciones y no da de baja equipos aprobados) |
 | `/panel-liga/liga-invierno/fixture` | Cargar y editar fixture |
 | `/panel-liga/liga-invierno/resultados` | Cargar y editar resultados |
 | `/panel-liga/liga-invierno/reprogramaciones` | Reprogramar series |

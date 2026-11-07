@@ -1,6 +1,7 @@
 import type { Series, Team } from "@/lib/tournament/types";
 import { formatDate } from "@/lib/utils";
 import { ResultCard } from "./ResultCard";
+import { TeamMedals } from "./medals/medal-badges";
 
 interface TeamScheduleProps {
   team: Team;
@@ -51,7 +52,7 @@ export function TeamSchedule({ team, series }: TeamScheduleProps) {
                     )}
                   </p>
                   <p className="font-semibold text-foreground">
-                    vs {rival?.name ?? "Por definir"}
+                    vs {rival?.name ?? "Por definir"}<TeamMedals teamId={rival?.id} />
                   </p>
                   <p className="text-sm text-muted-foreground mt-0.5">
                     {isHome ? "Local" : "Visitante"} ·{" "}

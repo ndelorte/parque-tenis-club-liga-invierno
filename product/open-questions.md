@@ -7,6 +7,15 @@
 
 ## Pendientes
 
+### OQ-V3-01: Liga — ¿qué pasa con las series y la tabla cuando un equipo se da de baja con el cuadro sorteado?
+
+Desde la ficha del equipo (Inscripciones) se puede dar de baja un equipo (`teams.active = false`, inscripción `withdrawn`).
+El panel **no toca series ni la tabla**: no hay una regla escrita (¿WO general de todas sus series? ¿se anulan los partidos
+jugados? ¿se rehace el cuadro?). También queda por definir si, con el cuadro sorteado, se permite cambiar jugadores o
+capitán (hoy se permite con el aviso "El cuadro ya está sorteado: revisá que el reglamento lo permita").
+
+---
+
 ### OQ-37: Seed de `tournament_sponsors` — sponsors reales sin edición asignada
 
 **Contexto**: `content/sponsors.ts` tenía una lista estática de sponsors del club (Dental Sur,

@@ -50,24 +50,31 @@ export const playerSchema = z.object({
 
 export type RegistrationPlayerInput = z.infer<typeof playerSchema>
 
+// Campos sueltos, compartidos con la edición desde el panel (ficha del equipo).
+export const teamNameSchema = requiredText("el nombre del equipo", LIMITS.teamName)
+
+export const captainPhoneSchema = z
+  .string()
+  .trim()
+  .min(1, "Completá el teléfono del capitán")
+  .max(LIMITS.phone, "El teléfono es demasiado largo")
+  .regex(/^[0-9+()\-\s]+$/, "Usá solo números, espacios, + y guiones")
+  .refine((v) => v.replace(/\D/g, "").length >= 8, "El teléfono tiene que tener al menos 8 dígitos")
+
+export const notesSchema = z.string().trim().max(LIMITS.notes, `Máximo ${LIMITS.notes} caracteres`)
+
 export function buildRegistrationSchema({ min, max }: { min: number; max: number }) {
   return z
     .object({
-      teamName: requiredText("el nombre del equipo", LIMITS.teamName),
+      teamName: teamNameSchema,
       categoryId: z.string().min(1, "Elegí una categoría"),
       players: z
         .array(playerSchema)
         .min(min, `Cargá al menos ${min} jugadores`)
         .max(max, `Podés cargar hasta ${max} jugadores`),
       captainIndex: z.number().int().min(0, "Marcá quién es el capitán"),
-      captainPhone: z
-        .string()
-        .trim()
-        .min(1, "Completá el teléfono del capitán")
-        .max(LIMITS.phone, "El teléfono es demasiado largo")
-        .regex(/^[0-9+()\-\s]+$/, "Usá solo números, espacios, + y guiones")
-        .refine((v) => v.replace(/\D/g, "").length >= 8, "El teléfono tiene que tener al menos 8 dígitos"),
-      notes: z.string().trim().max(LIMITS.notes, `Máximo ${LIMITS.notes} caracteres`).optional(),
+      captainPhone: captainPhoneSchema,
+      notes: notesSchema.optional(),
       // Honeypot: un humano no lo ve ni lo completa. Si llega con contenido, es un bot.
       website: z.string().max(200).optional(),
     })

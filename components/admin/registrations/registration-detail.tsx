@@ -1,16 +1,26 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { AlertTriangle, Loader2 } from "lucide-react"
+import { AlertTriangle, Loader2, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { InlineError, Notice } from "@/components/admin/states"
 import {
   approveRegistration,
   getRegistrationDetail,
+  listMedalCandidates,
   rejectRegistration,
+  saveTeamMedals,
   setPlayerResolution,
 } from "@/app/actions/liga-registrations"
-import type { DetailCandidate, DetailPlayer, RegistrationDetail } from "@/app/actions/liga-registrations"
+import type { DetailCandidate, DetailPlayer, MedalCandidates, MedalInput, RegistrationDetail } from "@/app/actions/liga-registrations"
+import { MedalsStep } from "@/components/admin/registrations/medals-step"
+import { PendingPlayersEditor } from "@/components/admin/registrations/pending-players-editor"
+import { RegistrationInfoForm } from "@/components/admin/registrations/registration-info-form"
+import { RegistrationHistory } from "@/components/admin/registrations/registration-history"
+import { TeamRoster } from "@/components/admin/registrations/team-roster"
+import { TextAreaField } from "@/components/admin/registrations/field"
+import { reopenRegistration, withdrawTeam } from "@/app/actions/liga-registration-team"
+import { DRAWN_WARNING } from "@/lib/liga/registration/isCategoryDrawn"
 
 const MATCH_LABEL: Record<DetailCandidate["match"], string> = {
   dni: "Mismo DNI",
@@ -115,6 +125,19 @@ export function RegistrationDetailView({
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Podios anteriores: candidatos, lo tildado y lo que ya estaba guardado.
+  const [medals, setMedals] = useState<MedalCandidates | null>(null)
+  const [ticked, setTicked] = useState<Set<string>>(new Set())
+  const [editingPlayers, setEditingPlayers] = useState(false)
+  // "reject" o "withdraw": confirmación inline con motivo opcional.
+  const [confirming, setConfirming] = useState<"reject" | "withdraw" | null>(null)
+  const [reason, setReason] = useState("")
+
+  const loadMedals = useCallback(async () => {
+    const data = await listMedalCandidates(registrationId)
+    setMedals(data)
+    setTicked(new Set(data?.selected ?? []))
+  }, [registrationId])
 
   const load = useCallback(async () => {
     const data = await getRegistrationDetail(registrationId)
@@ -128,6 +151,13 @@ export function RegistrationDetailView({
       if (!current) return
       setDetail(data)
       setLoading(false)
+      if (data && data.status !== "rejected" && data.status !== "withdrawn") {
+        listMedalCandidates(registrationId).then((m) => {
+          if (!current) return
+          setMedals(m)
+          setTicked(new Set(m?.selected ?? []))
+        })
+      }
     })
     return () => {
       current = false
@@ -156,78 +186,252 @@ export function RegistrationDetailView({
     setBusy(false)
   }
 
+  function toggleMedal(key: string) {
+    setTicked((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  function tickedMedals(): MedalInput[] {
+    return (medals?.candidates ?? [])
+      .filter((c) => ticked.has(`${c.categoryId}:${c.place}`))
+      .map((c) => ({ categoryId: c.categoryId, place: c.place }))
+  }
+
+  // Equipo ya aprobado: se guardan solo las diferencias con lo que tenía.
+  async function saveMedals() {
+    if (!medals) return
+    const initial = new Set(medals.selected)
+    const add = tickedMedals().filter((m) => !initial.has(`${m.categoryId}:${m.place}`))
+    const removeCategoryIds = medals.candidates
+      .filter((c) => initial.has(`${c.categoryId}:${c.place}`) && !ticked.has(`${c.categoryId}:${c.place}`))
+      .map((c) => c.categoryId)
+    setBusy(true)
+    setError(null)
+    const result = await saveTeamMedals(registrationId, { add, removeCategoryIds })
+    if (!result.success) setError(result.error ?? "No se pudieron guardar las medallas")
+    await loadMedals()
+    setBusy(false)
+  }
+
   async function approve() {
     setBusy(true)
     setError(null)
-    const result = await approveRegistration(registrationId)
+    const result = await approveRegistration(registrationId, tickedMedals())
     if (!result.success) {
       setError(result.error ?? "No se pudo aprobar")
       setBusy(false)
       return
     }
-    await load()
+    await Promise.all([load(), loadMedals()])
     setBusy(false)
     onChanged()
   }
 
   async function reject() {
-    if (!window.confirm("¿Rechazar esta inscripción? No se crea ningún equipo.")) return
     setBusy(true)
     setError(null)
-    const result = await rejectRegistration(registrationId)
+    const result = await rejectRegistration(registrationId, reason)
     if (!result.success) setError(result.error ?? "No se pudo rechazar")
     await load()
+    setBusy(false)
+    if (result.success) {
+      setConfirming(null)
+      setReason("")
+      onChanged()
+    }
+  }
+
+  async function reopen() {
+    setBusy(true)
+    setError(null)
+    const result = await reopenRegistration(registrationId)
+    if (!result.success) setError(result.error ?? "No se pudo reabrir")
+    await Promise.all([load(), loadMedals()])
     setBusy(false)
     if (result.success) onChanged()
   }
 
-  return (
-    <div className="grid gap-3">
-      <dl className="grid gap-1 text-sm sm:grid-cols-2">
-        <div>
-          <dt className="font-bold">Teléfono del capitán</dt>
-          <dd>{detail.captainPhone}</dd>
-        </div>
-        <div>
-          <dt className="font-bold">Categoría</dt>
-          <dd>{detail.categoryName}</dd>
-        </div>
-        {detail.notes && (
-          <div className="sm:col-span-2">
-            <dt className="font-bold">Observaciones</dt>
-            <dd className="whitespace-pre-wrap">{detail.notes}</dd>
-          </div>
-        )}
-      </dl>
+  async function withdraw() {
+    setBusy(true)
+    setError(null)
+    const result = await withdrawTeam(registrationId, reason)
+    if (!result.success) setError(result.error ?? "No se pudo dar de baja")
+    await load()
+    setBusy(false)
+    if (result.success) {
+      setConfirming(null)
+      setReason("")
+      onChanged()
+    }
+  }
 
-      <ul className="grid gap-3">
-        {detail.players.map((p) => (
-          <PlayerRow key={p.id} player={p} editable={editable} busy={busy} onResolve={(res, pid) => resolve(p.id, res, pid)} />
-        ))}
-      </ul>
+  // Después de editar algo de la ficha: recarga el detalle y avisa al listado.
+  async function refresh() {
+    setEditingPlayers(false)
+    await load()
+    onChanged()
+  }
+
+  const status = detail.status
+  const hasTeam = status === "approved" || status === "withdrawn"
+  const reasonId = `reason-${detail.id}`
+
+  return (
+    <div className="grid gap-5">
+      {detail.drawn && status !== "rejected" && (
+        <Notice variant="error" title={DRAWN_WARNING}>
+          La categoría ya tiene series. Podés seguir editando el equipo, pero no cambiarlo de categoría. Los partidos y la tabla no se tocan desde acá.
+        </Notice>
+      )}
+
+      <section aria-label="Resumen" className="flex flex-wrap items-center gap-3">
+        <p className="text-sm">
+          <span className="font-bold">{detail.categoryName}</span> · Teléfono del capitán: {detail.captainPhone}
+        </p>
+        {detail.whatsappUrl && (
+          <a
+            href={detail.whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md border-[1.5px] border-border bg-background px-4 text-sm font-bold focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            <MessageCircle className="size-4" aria-hidden /> WhatsApp al capitán
+          </a>
+        )}
+        {status === "rejected" && detail.rejectionReason && (
+          <p className="w-full text-sm">
+            <span className="font-bold">Motivo del rechazo:</span> {detail.rejectionReason}
+          </p>
+        )}
+      </section>
+
+      {(status === "pending" || status === "approved") && (
+        <section aria-labelledby={`datos-${detail.id}`} className="grid gap-3">
+          <h3 id={`datos-${detail.id}`} className="font-heading text-xl font-extrabold uppercase">
+            Datos del equipo
+          </h3>
+          <RegistrationInfoForm detail={detail} onChanged={refresh} />
+        </section>
+      )}
+      {!(status === "pending" || status === "approved") && detail.notes && (
+        <p className="whitespace-pre-wrap text-sm">
+          <span className="font-bold">Observaciones:</span> {detail.notes}
+        </p>
+      )}
+
+      <section aria-labelledby={`jugadores-${detail.id}`} className="grid gap-3">
+        <h3 id={`jugadores-${detail.id}`} className="font-heading text-xl font-extrabold uppercase">
+          Jugadores
+        </h3>
+        {hasTeam ? (
+          <TeamRoster registrationId={detail.id} roster={detail.roster} editable={status === "approved"} onChanged={refresh} />
+        ) : editingPlayers ? (
+          <PendingPlayersEditor registrationId={detail.id} players={detail.players} onSaved={refresh} onCancel={() => setEditingPlayers(false)} />
+        ) : (
+          <>
+            <ul className="grid gap-3">
+              {detail.players.map((p) => (
+                <PlayerRow key={p.id} player={p} editable={editable} busy={busy} onResolve={(res, pid) => resolve(p.id, res, pid)} />
+              ))}
+            </ul>
+            {status === "pending" && (
+              <div>
+                <Button type="button" variant="outline" onClick={() => setEditingPlayers(true)} disabled={busy} className="min-h-11 px-5 font-bold">
+                  Editar jugadores
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </section>
+
+      {medals && status !== "rejected" && status !== "withdrawn" && (
+        <>
+          <MedalsStep candidates={medals.candidates} selected={ticked} disabled={busy} onToggle={toggleMedal} />
+          {status === "approved" && (
+            <div>
+              <Button onClick={saveMedals} disabled={busy} variant="outline" className="min-h-11 px-5 font-bold">
+                {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
+                Guardar medallas
+              </Button>
+            </div>
+          )}
+        </>
+      )}
 
       {error && <Notice variant="error" title="No se pudo completar">{error}</Notice>}
 
-      {editable ? (
-        <div className="flex flex-wrap items-center gap-3">
-          <Button onClick={approve} disabled={!allResolved || busy} className="min-h-11 px-5 font-bold">
-            {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
-            Aprobar y crear equipo
-          </Button>
-          <Button variant="outline" onClick={reject} disabled={busy} className="min-h-11 px-5 font-bold">
-            Rechazar
-          </Button>
-          {!allResolved && (
-            <p className="text-sm text-muted-foreground">
-              Falta resolver {unresolved} {unresolved === 1 ? "jugador" : "jugadores"} para poder aprobar.
-            </p>
-          )}
+      {confirming && (
+        <div className="grid gap-3 rounded-lg border border-border p-3">
+          <TextAreaField
+            id={reasonId}
+            label={confirming === "reject" ? "Motivo del rechazo (opcional, interno)" : "Motivo de la baja (opcional, interno)"}
+            value={reason}
+            onChange={setReason}
+            maxLength={300}
+            hint={confirming === "withdraw" ? "El equipo queda inactivo. Las series y la tabla no se tocan: qué pasa con los partidos lo define el reglamento." : "No se crea ningún equipo."}
+          />
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={confirming === "reject" ? reject : withdraw} disabled={busy} className="min-h-11 px-5 font-bold">
+              {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
+              {confirming === "reject" ? "Confirmar rechazo" : "Confirmar baja del equipo"}
+            </Button>
+            <Button variant="outline" onClick={() => setConfirming(null)} disabled={busy} className="min-h-11 px-5 font-bold">
+              Cancelar
+            </Button>
+          </div>
         </div>
-      ) : (
-        <p className="text-sm font-semibold">
-          {detail.status === "approved" ? "Inscripción aprobada: el equipo ya está creado." : "Inscripción rechazada."}
-        </p>
       )}
+
+      {!confirming && (
+        <div className="flex flex-wrap items-center gap-3">
+          {status === "pending" && (
+            <>
+              <Button onClick={approve} disabled={!allResolved || busy || editingPlayers} className="min-h-11 px-5 font-bold">
+                {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
+                Aprobar y crear equipo
+              </Button>
+              <Button variant="outline" onClick={() => setConfirming("reject")} disabled={busy} className="min-h-11 px-5 font-bold">
+                Rechazar
+              </Button>
+              {!allResolved && (
+                <p className="text-sm text-muted-foreground">
+                  Falta resolver {unresolved} {unresolved === 1 ? "jugador" : "jugadores"} para poder aprobar.
+                </p>
+              )}
+            </>
+          )}
+          {status === "rejected" && (
+            <>
+              <Button onClick={reopen} disabled={busy} className="min-h-11 px-5 font-bold">
+                {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
+                Reabrir (vuelve a pendiente)
+              </Button>
+              <p className="text-sm font-semibold">Inscripción rechazada.</p>
+            </>
+          )}
+          {status === "approved" && (
+            <>
+              <p className="text-sm font-semibold">Inscripción aprobada: el equipo ya está creado.</p>
+              <Button variant="outline" onClick={() => setConfirming("withdraw")} disabled={busy} className="min-h-11 px-5 font-bold text-loss">
+                Dar de baja el equipo
+              </Button>
+            </>
+          )}
+          {status === "withdrawn" && <p className="text-sm font-semibold">Equipo dado de baja.</p>}
+        </div>
+      )}
+
+      <section aria-labelledby={`historial-${detail.id}`} className="grid gap-2">
+        <h3 id={`historial-${detail.id}`} className="font-heading text-xl font-extrabold uppercase">
+          Historial
+        </h3>
+        <RegistrationHistory items={detail.history} />
+      </section>
     </div>
   )
 }
