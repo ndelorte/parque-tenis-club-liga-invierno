@@ -93,16 +93,16 @@ export default async function SeasonPage({ params, searchParams }: Props) {
     )
   }
 
-  // Inscripción abierta: la página es el formulario, con el resumen del
-  // reglamento y el link al completo. Sin tablas ni equipos.
+  // Inscripción abierta: primero el resumen del reglamento con el link al
+  // completo, después el formulario. Sin tablas ni equipos.
   if (registration.open) {
     return (
       <main className="min-h-dvh bg-background" data-identity={theme.identity}>
         <SectionHero tournament={tournament} />
+        <LigaReglamento className="pt-8 sm:pt-12" />
         <div className="liga-container liga-registration-page" data-identity={theme.identity}>
           <RegistrationSection seasonSlug={tournament.slug} categories={categories} availability={registration} />
         </div>
-        <LigaReglamento />
         <WhatsappFab />
       </main>
     )
