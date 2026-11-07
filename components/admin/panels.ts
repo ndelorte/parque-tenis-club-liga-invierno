@@ -2,6 +2,7 @@ import {
   CalendarClock,
   CalendarDays,
   Crown,
+  ClipboardList,
   ImagePlus,
   Settings,
   ListChecks,
@@ -69,6 +70,7 @@ const EDICIONES_SECTION: PanelSection = {
 
 export const PANEL_SECTIONS: Record<PanelKey, PanelSection[]> = {
   liga: [
+    { key: "inscripciones", label: "Inscripciones", href: "/panel-liga?seccion=inscripciones", icon: ClipboardList },
     { key: "resultados", label: "Resultados", href: "/panel-liga?seccion=resultados", icon: Trophy },
     { key: "jugadores", label: "Jugadores", href: "/panel-liga?seccion=jugadores", icon: Users },
     { key: "fixture", label: "Fixture", href: "/panel-liga?seccion=fixture", icon: CalendarClock },

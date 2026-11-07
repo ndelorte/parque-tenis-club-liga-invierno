@@ -6,6 +6,7 @@ import { PlayoffManager } from "@/components/admin/playoff-manager"
 import { CloseTournamentButton } from "@/components/admin/close-tournament-button"
 import { PhotoManager } from "@/components/admin/photo-manager"
 import { SponsorManager } from "@/components/admin/sponsor-manager"
+import { RegistrationsManager } from "@/components/admin/registrations/registrations-manager"
 import { AdminShell, AdminPageHeader } from "@/components/admin/admin-shell"
 import { LIGA_SECTION_KEYS } from "@/components/admin/panels"
 import {
@@ -14,6 +15,7 @@ import {
   getMissingFinalsForTournament,
   getTournamentsForPhotoAdmin,
 } from "@/app/actions/admin"
+import { getRegistrationSettings, listRegistrations } from "@/app/actions/liga-registrations"
 import { getActiveTournament } from "@/lib/data/tournaments"
 
 export const metadata: Metadata = {
@@ -23,6 +25,10 @@ export const metadata: Metadata = {
 }
 
 const SECTION_HEADERS: Record<string, { title: string; lede: string }> = {
+  inscripciones: {
+    title: "Inscripciones",
+    lede: "Configurá la inscripción online y validá las solicitudes de equipos antes de crearlos.",
+  },
   resultados: {
     title: "Resultados",
     lede: "Elegí la categoría y la fecha para cargar el resultado de cada serie.",
@@ -67,6 +73,8 @@ export default async function PanelPage({
   const publicTournament = await getActiveTournament()
 
   const header = SECTION_HEADERS[section]
+  const registrationSettings = section === "inscripciones" ? await getRegistrationSettings() : null
+  const registrations = registrationSettings ? await listRegistrations(registrationSettings.tournamentId) : []
 
   return (
     <AdminShell
@@ -81,6 +89,9 @@ export default async function PanelPage({
     >
       <AdminPageHeader title={header.title} lede={header.lede} />
 
+      {section === "inscripciones" && (
+        <RegistrationsManager settings={registrationSettings} registrations={registrations} />
+      )}
       {section === "resultados" && (
         <>
           {activeTournament && (

@@ -41,6 +41,12 @@ export interface Tournament {
   description?: string;
   start_date?: string;
   end_date?: string;
+  /** Inscripción online abierta (la edición también tiene que no estar finalizada). */
+  registration_open?: boolean;
+  /** Último día para inscribirse (YYYY-MM-DD, inclusive). */
+  registration_deadline?: string;
+  registration_min_players?: number;
+  registration_max_players?: number;
 }
 
 export interface Category {

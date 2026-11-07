@@ -138,9 +138,11 @@ En la base de datos: `series.is_general_walkover = true`.
 
 Ocurre cuando un equipo **no presenta pareja para exactamente una cancha**, pero sí se presenta con jugadores en las otras dos.
 
+- **Es siempre la cancha 3** (decisión del organizador, 06/11/2026). Se juegan las canchas 1 y 2.
 - **No cuenta como WO general.**
-- Esa cancha se carga como: `6-0 6-0` con `is_court_walkover = true`.
-- La serie continúa normalmente con las otras dos canchas.
+- La cancha 3 se carga como: `6-0 6-0` con `is_court_walkover = true`, a favor del rival del equipo que da el WO.
+- El panel y el servidor rechazan un WO de cancha en las canchas 1 y 2 (`lib/tournament/courtWalkoverRule.ts`). Los datos históricos no se modifican.
+- Si el WO de cancha se avisa con **menos de 24 hs** de anticipación al partido, el equipo debe abonar la totalidad del valor de la fecha.
 
 ### Regla de presentación mínima
 
@@ -149,11 +151,23 @@ Un equipo **debe presentar pareja para al menos 2 canchas**. No puede presentar 
 | Canchas con jugadores | Canchas en WO | Clasificación |
 |-----------------------|---------------|---------------|
 | 3 | 0 | Serie normal |
-| 2 | 1 | WO de cancha individual |
+| 2 | 1 | WO de cancha individual (siempre la cancha 3) |
 | 1 | 2 | WO general |
 | 0 | 3 | WO general |
 
 En la base de datos: `court_matches.is_court_walkover = true` (solo para esa cancha).
+
+---
+
+## Ausencia, valores y fechas (decisión del organizador, 06/11/2026)
+
+- **Equipo que no se presenta:** si avisa con menos de 24 hs de anticipación al horario del partido, además de perder el partido debe abonar la totalidad del valor de la fecha (también aplica al WO general).
+- **Inscripción por equipo:** $150.000, a pagar antes del inicio del torneo.
+- **Cada fecha:** $108.000 por equipo, a pagar el total el mismo día del partido y antes del comienzo.
+- **Calendario:** la Liga de Verano se disputa de diciembre a marzo y la Liga de Invierno de julio a septiembre.
+- **Liga de Verano 26/27:** sorteo el 2 de diciembre de 2026; se juega del 9 de diciembre de 2026 al 14 de marzo de 2027.
+- **Programación:** se publica principalmente en la web, la semana previa al inicio; para Ronda Campeonato y Repechajes, desde el miércoles anterior de cada semana.
+- El reglamento completo (PDF) se genera desde `content/reglamento/reglamento-liga.html` con `scripts/build-reglamento-pdf.sh`.
 
 ---
 

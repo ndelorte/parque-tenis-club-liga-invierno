@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { canMarkCourtWalkover } from "@/lib/tournament/courtWalkoverRule"
 import {
   type CategoryForAdmin,
   type RoundForAdmin,
@@ -456,6 +457,8 @@ function SeriesEditor({
                 <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-foreground">
                   <Checkbox
                     checked={court.wo}
+                    disabled={!canMarkCourtWalkover(i + 1) && !court.wo}
+                    title={canMarkCourtWalkover(i + 1) ? undefined : "El WO de cancha es siempre la cancha 3"}
                     onCheckedChange={(v) =>
                       setCourt(i, { wo: v === true, score: v === true ? "W.O." : "" })
                     }

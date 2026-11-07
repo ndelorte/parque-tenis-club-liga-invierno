@@ -6,8 +6,17 @@ import { join } from "path"
 // endpoints POST invocables desde cualquier ruta — proxy.ts no las protege.
 // Cada action exportada tiene que validar el rol admin antes de hacer nada.
 // Excepción: los signOut*, que solo cierran la sesión propia.
+// Excepción explícita (PUBLIC_ACTIONS): actions pensadas para el público sin
+// sesión, que no pueden tener guardia admin. Cada una está en su propio
+// archivo y se endurece de otra forma (Zod en el servidor, honeypot, chequeo
+// de ventana de inscripción). No agregar acá actions que escriban datos del
+// panel.
 
 const ACTIONS_DIR = join(process.cwd(), "app/actions")
+const PUBLIC_ACTIONS: Record<string, string[]> = {
+  // Inscripción pública a la Liga: formulario sin login.
+  "liga-registration-public.ts": ["submitLigaRegistration"],
+}
 const GUARD_PATTERN = /isRequestFromAdmin\(\)|isAdminUser\(/
 // Cuánto del cuerpo de la función se mira: la guardia tiene que estar al
 // principio, no enterrada después de una escritura.
@@ -34,6 +43,7 @@ describe("server actions admin guard", () => {
     const source = readFileSync(join(ACTIONS_DIR, file), "utf-8")
     const unguarded = exportedActions(source)
       .filter((a) => !a.name.startsWith("signOut"))
+      .filter((a) => !(PUBLIC_ACTIONS[file] ?? []).includes(a.name))
       .filter((a) => !GUARD_PATTERN.test(a.body))
       .map((a) => a.name)
 

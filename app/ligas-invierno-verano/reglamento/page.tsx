@@ -5,7 +5,7 @@ import { ReglamentoNav } from "@/components/liga/ReglamentoNav"
 
 export const metadata: Metadata = {
   title: "Reglamento | Liga de Invierno y Verano | Parque Tenis Club",
-  description: "Formato, puntos, desempates, WO y fase final de la Liga.",
+  description: "Formato, puntos, desempates, WO, valores, fechas y fase final de la Liga.",
 }
 
 // Números grandes de la sección "Puntos": valores exactos de la tabla de
@@ -36,7 +36,16 @@ const sections = [
   ] },
   { id: "wo", title: "Walkover", items: [
     "WO general: si un equipo no se presenta, el rival recibe 2 puntos y las tres canchas 6-0 6-0. El ausente recibe 0 puntos.",
-    "WO de cancha: si falta pareja en exactamente una cancha, esa cancha queda 6-0 6-0 y la serie continúa. Cada equipo debe presentar pareja en al menos dos canchas.",
+    "WO de cancha: es siempre la cancha 3. Si un equipo no puede presentar pareja para las tres canchas, se juegan las canchas 1 y 2 y la cancha 3 queda 6-0 6-0 para el rival del equipo que da el WO. Cada equipo debe presentar pareja en al menos dos canchas.",
+    "Si el WO de cancha se avisa con menos de 24 hs de anticipación al partido, el equipo debe abonar la totalidad del valor de la fecha.",
+    "WO general: si el equipo que no se presenta avisa con menos de 24 hs de anticipación, además de perder el partido debe abonar la totalidad del valor de la fecha.",
+  ] },
+  { id: "inscripcion", title: "Inscripción, valores y fechas", items: [
+    "Inscripción por equipo: $150.000, a pagar antes del inicio del torneo.",
+    "Cada fecha: $108.000 por equipo, a pagar el mismo día del partido y antes de comenzar.",
+    "La Liga de Verano se disputa de diciembre a marzo y la Liga de Invierno de julio a septiembre.",
+    "Liga de Verano 26/27: sorteo el 2 de diciembre de 2026; se juega del 9 de diciembre de 2026 al 14 de marzo de 2027.",
+    "La programación de partidos se publica en la página web, la semana previa al inicio. Para la Ronda Campeonato y los Repechajes, está disponible desde el miércoles anterior de cada semana.",
   ] },
   { id: "fase-final", title: "Fase final", items: [
     "Con seis equipos, 1.º y 2.º pasan directo a semifinales. En cuartos juegan 3.º contra 6.º y 4.º contra 5.º.",

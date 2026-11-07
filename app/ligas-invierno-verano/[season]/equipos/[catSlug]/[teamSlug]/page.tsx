@@ -3,7 +3,8 @@ import type { Metadata } from "next"
 import { getCategoryBySlugForTournament } from "@/lib/data/categories"
 import { getTournamentBySlug } from "@/lib/data/tournaments"
 import { getTeamBySlugAndCategory } from "@/lib/data/teams"
-import { getSeriesForTeam } from "@/lib/data/series"
+import { areTeamsPublic, roundsHaveSeries } from "@/lib/liga/editionStage"
+import { getRoundsWithSeries, getSeriesForTeam } from "@/lib/data/series"
 import { getStandingsSnapshot } from "@/lib/data/standings"
 import { TeamDetailView } from "@/components/liga/team-detail"
 import type { TeamDetail, PlayedDate, PendingDate, CourtDetail } from "@/lib/team-detail-types"
@@ -61,6 +62,12 @@ export default async function EquipoPage({ params }: Props) {
 
   const category = await getCategoryBySlugForTournament(tournament.id, catSlug)
   if (!category) notFound()
+
+  // Edición en curso: los equipos se ven recién con la inscripción cerrada y cuadros sorteados.
+  if (tournament.status !== "finished") {
+    const rounds = await getRoundsWithSeries(category.id)
+    if (!areTeamsPublic(tournament, roundsHaveSeries(rounds))) notFound()
+  }
 
   const team = await getTeamBySlugAndCategory(teamSlug, category.id)
   if (!team) notFound()

@@ -203,3 +203,21 @@ El validador reporta:
 ## Deploy
 
 El proyecto se despliega en [Vercel](https://vercel.com). Agregar las variables de entorno en el panel de Vercel antes del primer deploy.
+
+### Preview de inscripción de Verano 26/27
+
+En Vercel, el formulario de prueba se habilita únicamente cuando `VERCEL_ENV=preview`
+y `VERCEL_GIT_COMMIT_REF=feat/liga-verano-inscripcion`. Usa la edición y seis categorías
+de muestra, sin modificar Supabase. El envío está bloqueado en el servidor.
+En producción y otras branches se sigue usando el estado real de la base.
+
+Para revisarlo localmente desde esta branch:
+
+```sh
+LIGA_REGISTRATION_PREVIEW=1 npm run dev
+```
+
+Abrir `/ligas-invierno-verano/liga-verano-2026-2027`. También funciona la ruta
+`/ligas-invierno-verano/liga-verano-2026-2027/inscripcion`. No ejecutar el seed
+`004_liga_verano_2026_2027.sql` sobre la base compartida para habilitar una preview:
+ese seed cambia el estado real de la edición para todos los despliegues.

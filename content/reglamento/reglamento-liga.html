@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<title>Reglamento del Campeonato — Liga de Verano 26/27</title>
+<style>
+  @page {
+    size: A4;
+    margin: 22mm 20mm 24mm 20mm;
+    @bottom-left { content: "ORGANIZADORES JAVIER DELORTE – NICOLAS DELORTE"; font: 8.5pt Helvetica, Arial, sans-serif; color: #444; }
+    @bottom-right { content: "Página " counter(page); font: 8.5pt Helvetica, Arial, sans-serif; color: #444; }
+  }
+  @page :first { margin: 0; @bottom-left { content: none; } @bottom-right { content: none; } }
+  /* Los logos chicos de cada página no van acá: Chrome no dibuja imágenes en
+     los márgenes de página. Los estampa scripts/stamp-reglamento-logos.mjs. */
+  * { box-sizing: border-box; }
+  html { font-family: Helvetica, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #111; }
+  body { margin: 0; }
+  a { color: #14532d; }
+  .cover { height: 297mm; page-break-after: always; break-after: page; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 30mm 25mm; background: #14532d; color: #fff; }
+  .cover h1 { font-size: 30pt; line-height: 1.2; margin: 0 0 8mm; letter-spacing: .02em; }
+  .cover p { font-size: 13pt; margin: 0; }
+  .cover .org { position: absolute; bottom: 20mm; font-size: 10pt; letter-spacing: .08em; }
+  .cover .logos { display: flex; gap: 14mm; justify-content: center; margin: 0 0 14mm; }
+  .cover .logos span { display: flex; align-items: center; justify-content: center; width: 58mm; height: 58mm; border-radius: 50%; background: #fff; }
+  .cover .logos img { width: 50mm; height: 50mm; object-fit: contain; }
+  .toc { page-break-after: always; break-after: page; }
+  .toc h1 { font-size: 15pt; text-align: center; margin: 0 0 8mm; }
+  .toc ul { list-style: none; padding: 0; margin: 0; }
+  .toc li { margin: 1.6mm 0; }
+  .toc li.cap { margin-top: 6mm; font-weight: bold; }
+  .toc li.art { padding-left: 8mm; }
+  .toc a { text-decoration: none; color: #111; }
+  .toc a::after { content: leader(".") target-counter(attr(href), page); }
+  h2 { font-size: 13pt; text-transform: uppercase; margin: 0 0 6mm; padding-bottom: 2mm; border-bottom: 2px solid #14532d; page-break-before: always; break-before: page; }
+  h2.nobreak { page-break-before: avoid; break-before: avoid; margin-top: 10mm; }
+  h3 { font-size: 11.5pt; margin: 8mm 0 3mm; }
+  p { margin: 0 0 3mm; text-align: justify; }
+  .item { margin: 0 0 3mm 8mm; text-align: justify; }
+  .sub { margin: 0 0 2mm 18mm; text-align: justify; }
+  ul.bul { margin: 0 0 3mm 8mm; padding-left: 6mm; }
+  table { width: 100%; border-collapse: collapse; margin: 4mm 0 6mm; }
+  th, td { border: 1px solid #333; padding: 2mm 3mm; text-align: left; }
+  th { background: #e5efe8; }
+  h3, .item, table { break-inside: avoid; }
+  /* Un título de artículo nunca queda solo al pie de una página. */
+  h3 { break-after: avoid; page-break-after: avoid; }
+  /* Sin líneas sueltas al principio o al final de una página. */
+  p, li, .item { orphans: 3; widows: 3; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="logos">
+    <span><img src="../../public/images/logoligadeinvierno.png" alt="Logo de la Liga de Invierno"></span>
+    <span><img src="../../public/images/logoligaverano.png" alt="Logo de la Liga de Verano"></span>
+  </div>
+  <h1>REGLAMENTO DEL CAMPEONATO — LIGA DE VERANO 26/27</h1>
+  <p class="org">ORGANIZADORES JAVIER DELORTE – NICOLAS DELORTE</p>
+</section>
+
+<section class="toc">
+  <h1>REGLAMENTO LIGA DE VERANO 26/27</h1>
+  <ul>
+    <li class="cap">CAPÍTULO I: CONCEPTOS GENERALES</li>
+    <li class="art"><a href="#art1">ARTÍCULO 1: DEFINICIÓN, OBJETIVOS Y FINES</a></li>
+    <li class="art"><a href="#art2">ARTÍCULO 2: PARTICIPANTES, JURISDICCIÓN E INFRAESTRUCTURA</a></li>
+    <li class="art"><a href="#art3">ARTÍCULO 3: COMPETENCIA Y ENCUENTROS</a></li>
+    <li class="cap">CAPÍTULO II: INSCRIPCIÓN DE EQUIPOS</li>
+    <li class="art"><a href="#art4">ARTÍCULO 4: CRONOGRAMA Y ARANCELES</a></li>
+    <li class="art"><a href="#art5">ARTÍCULO 5: DEL CAPITÁN</a></li>
+    <li class="art"><a href="#art6">ARTÍCULO 6: INSCRIPCIÓN ONLINE</a></li>
+    <li class="art"><a href="#art7">ARTÍCULO 7: LISTAS DE BUENA FE</a></li>
+    <li class="cap">CAPÍTULO III: DESARROLLO DEL JUEGO</li>
+    <li class="art"><a href="#art8">ARTÍCULO 8: LOS PARTIDOS</a></li>
+    <li class="art"><a href="#art9">ARTÍCULO 9: JUGADORES</a></li>
+    <li class="art"><a href="#art10">ARTÍCULO 10: WALKOVER (WO)</a></li>
+    <li class="art"><a href="#art11">ARTÍCULO 11: PUNTUACIÓN, CONTROL Y SANCIONES</a></li>
+  </ul>
+</section>
+
+<h2 class="nobreak" style="margin-top:0">CAPÍTULO I: CONCEPTOS GENERALES</h2>
+
+<h3 id="art1">ARTÍCULO 1: DEFINICIÓN, OBJETIVOS Y FINES</h3>
+<p>Bienvenidos a la Liga de Tenis de Verano/Invierno del Parque Tenis Club de Quilmes.</p>
+<p>Este es un evento muy especial para todos nosotros: una tradición deportiva que sigue creciendo en nuestra comunidad. Con gran entusiasmo y compromiso damos inicio a una nueva edición, que promete ser un espacio de competencia sana y de aprendizaje.</p>
+<p>El Parque Tenis Club será el escenario de este torneo, con instalaciones y canchas preparadas para brindar el entorno ideal para disfrutar del tenis en toda su esencia. La liga está dirigida a jugadores de todas las edades y niveles, con el objetivo de fomentar el deporte y fortalecer los lazos de camaradería entre los participantes.</p>
+<p>A lo largo de esta competición, cada jugador tendrá la oportunidad de medir sus habilidades, mejorar su técnica y vivir la emoción de la competencia en un ambiente profesional, pero al mismo tiempo amigable y respetuoso. Creemos que el tenis es una excelente forma de superación personal, disciplina y trabajo en equipo, y estamos seguros de que esta edición dará lugar a grandes historias y momentos inolvidables.</p>
+<p>Les deseamos a todos los jugadores mucha suerte y que disfruten al máximo de cada partido. Que esta edición sea una más de muchas, y que juntos podamos seguir construyendo una liga cada vez más fuerte, competitiva y unida.</p>
+
+<h3 id="art2">ARTÍCULO 2: PARTICIPANTES, JURISDICCIÓN E INFRAESTRUCTURA</h3>
+<p class="item">a) Podrá participar cualquier equipo, haya competido o no en ediciones anteriores, así como también jugadores nuevos que quieran sumarse a la competencia por equipos, ya sea incorporándose a un equipo establecido o formando uno nuevo.</p>
+<p class="item">b) El equipo participante de la Liga de Verano/Invierno que, durante el torneo en curso, incumpla los compromisos de pago de la inscripción o incurra en conductas antideportivas será sancionado con:</p>
+<p class="sub">1. La pérdida de los puntos obtenidos hasta ese momento.</p>
+<p class="sub">2. La expulsión del equipo del torneo.</p>
+<p class="item">c) Para la Liga de Verano/Invierno, el club organizador (Parque Tenis Club) ofrecerá 3 canchas descubiertas reglamentarias de polvo de ladrillo, ubicadas en Primera Junta 726, Quilmes.</p>
+<p class="item">d) Se entiende por canchas reglamentarias las que tengan las siguientes medidas: largo, 23,77 metros; ancho para singles, 8,23 metros; ancho para dobles, 10,97 metros; líneas de saque, a 6,40 metros de la red y paralelas a ella; altura de la red en el centro, 0,914 metros; altura de los soportes laterales de la red, 1,07 metros; espacio libre detrás de cada línea de fondo, como mínimo 5,50 metros; espacio libre lateral desde la línea de dobles, 3,05 metros, también entre cancha y cancha.</p>
+<p class="item">e) El club organizador (Parque Tenis Club) dispondrá de la infraestructura adecuada para el desarrollo de la Liga de Verano/Invierno, a saber:</p>
+<ul class="bul">
+  <li>Vestuarios para caballeros y damas con las comodidades esenciales (duchas con agua caliente, sanitarios, toallas, jabón, etc.), en condiciones normales de uso e higiene.</li>
+  <li>Confitería, bar, bufé o kiosco para la atención de los jugadores.</li>
+  <li>Sillas y/o bancos en cancha para el descanso y la comodidad de los jugadores.</li>
+  <li>Servicio médico de urgencia y traslado.</li>
+</ul>
+
+<h3 id="art3">ARTÍCULO 3: COMPETENCIA Y ENCUENTROS</h3>
+<p class="item">a) El Campeonato Liga de Verano/Invierno por equipos, organizado por Javier Delorte y Nicolas Delorte, consiste en encuentros entre equipos divididos en categorías, organizadas por edad y sexo, y en divisiones, que definen los distintos niveles de juego.</p>
+<p class="item">b) A los fines de este Reglamento se definen las siguientes expresiones:</p>
+<ul class="bul">
+  <li>“Liga de Verano/Invierno” comprende las categorías Damas +19 años, Caballeros +19 años y Mixto +19 años, en sus dos divisiones (A y B).</li>
+  <li>En ediciones posteriores de la Liga podrán agregarse más divisiones y/o categorías.</li>
+</ul>
+<p class="item">c) Los partidos se regirán por las reglas de juego aprobadas por la ITF (Federación Internacional de Tenis), disponibles en: <a href="https://www.itftennis.com/media/7223/2024-rules-of-tennis-spanish.pdf">https://www.itftennis.com/media/7223/2024-rules-of-tennis-spanish.pdf</a></p>
+<p class="item">d) La organización resolverá la cantidad de secciones o zonas en función del número de equipos inscriptos en cada división y/o categoría. Los equipos se distribuirán en zonas compuestas por cantidades equitativas de equipos.</p>
+<p class="item">e) Para que se dispute una categoría y división, deberán inscribirse en ella al menos tres (3) equipos. Si no se alcanza ese número, esa categoría y división no se disputará en la temporada.</p>
+<p class="item">f) La programación original de los partidos se publicará principalmente en la página web www.parquetenisclub.com.ar la semana previa al inicio del Campeonato. Para la Ronda Campeonato y/o los Repechajes, la programación estará disponible a partir del miércoles previo de cada semana.</p>
+<p class="item">g) Mediante sorteo en la sede se realizará la distribución y ubicación de los equipos en las categorías, divisiones y secciones correspondientes.</p>
+<p class="item">Los equipos cabeza de serie se seleccionarán según la mejor suma de clasificaciones de los cuatro (4), cinco (5) o seis (6) primeros jugadores de cada equipo inscripto, según corresponda.</p>
+<p class="item">Los equipos así seleccionados se ordenarán correlativamente para repartirlos en forma equitativa en cada categoría, división y sección, conforme a los reglamentos internacionales vigentes.</p>
+<p class="item">En caso de igualdad de clasificaciones entre dos (2) o más equipos, la organización determinará la mejor forma de establecer el orden.</p>
+<p class="item">Los demás equipos se ubicarán según el resultado del sorteo.</p>
+<p class="item">h) Todos los encuentros entre equipos se disputarán al mejor de tres parciales.</p>
+<p class="item">En todas las categorías y divisiones de la Liga de Verano/Invierno, cada parcial se jugará al mejor de tres sets: los dos primeros con definición por tie-break y el tercero, decisivo, por super tie-break.</p>
+<p class="item">i) Todas las categorías y divisiones disputarán 3 dobles.</p>
+<p class="item">j) Ronda Base: dentro de cada zona o sección, los equipos jugarán todos contra todos, respetando el cronograma de partidos que establezca la organización.</p>
+<p class="item">k) El equipo que no se presente a jugar y avise con menos de 24 hs de anticipación al horario del partido, además de perder el partido, deberá abonar la totalidad del valor de la fecha (ver Artículo 10).</p>
+<p class="item">l) Ronda Campeonato:</p>
+<p class="sub">1. Los equipos mejor clasificados de cada sección o zona jugarán una o más rondas de eliminación para determinar al campeón. Previamente se seleccionarán los equipos con mejor suma de clasificación de los cuatro (4), cinco (5) o seis (6) primeros jugadores, según corresponda, para ubicarlos en el cuadro (“draw”) como cabezas de serie. Luego se realizará el sorteo correspondiente para completar el cuadro.</p>
+<p class="sub">2. Las planillas de resultados de los partidos de la Ronda Campeonato y/o del Repechaje deberán ser entregadas por los ganadores al terminar el juego, para que la organización las controle antes de publicar la programación de los encuentros siguientes.</p>
+<p class="sub">Su incumplimiento implicará para el equipo infractor la pérdida del partido, y el triunfo se asignará a su adversario.</p>
+<p class="sub">Si ya se hubiera jugado el partido siguiente entre ganadores, su resultado será anulado y deberá disputarse el encuentro entre los equipos a los que reglamentariamente corresponda.</p>
+
+<h2>CAPÍTULO II: INSCRIPCIÓN DE EQUIPOS</h2>
+
+<h3 id="art4" style="margin-top:0">ARTÍCULO 4: CRONOGRAMA Y ARANCELES</h3>
+<p class="item">a) Antes de cada Liga, la organización informará y publicará el cronograma con las fechas en que se habilitará la carga de las Listas de Buena Fe correspondientes a la inscripción de los equipos. Para la Liga de Verano 26/27, el sorteo se realizará el 2 de diciembre de 2026.</p>
+<p class="item">b) El valor de la inscripción será de $150.000 por equipo, y deberá abonarse antes del inicio del torneo.</p>
+<p class="item">c) El valor de cada fecha será de $108.000 por equipo, y deberá abonarse en su totalidad el mismo día del partido, antes de su comienzo.</p>
+<p class="item">d) La Liga de Verano se disputa de diciembre a marzo y la Liga de Invierno, de julio a septiembre. La edición Liga de Verano 26/27 se jugará del 9 de diciembre de 2026 al 14 de marzo de 2027.</p>
+<p class="item">e) Con una anticipación no menor a una semana al inicio de cada Liga, la organización publicará el programa de partidos y horarios, el cuadro de zonas, la composición de los equipos, el régimen de ascensos y descensos, y las modificaciones al reglamento.</p>
+
+<h3 id="art5">ARTÍCULO 5: DEL CAPITÁN</h3>
+<p class="item">a) Cada equipo designará un Capitán General, quien se comunicará con la organización ante cualquier novedad o comunicado, y también ante cualquier duda o pedido del equipo.</p>
+<p class="item">b) Serán sus funciones:</p>
+<p class="sub">1) Representar al equipo ante la organización en todos los asuntos relacionados con el desarrollo de la Liga de Verano/Invierno por equipos: asistir a las reuniones informativas, presentar y avalar con su firma reclamos, sugerencias y/o propuestas, y solicitar la suspensión o reprogramación de fechas por causas debidamente fundadas.</p>
+<p class="sub">2) Confeccionar las Listas de Buena Fe de acuerdo con el criterio de ventaja deportiva que rige este Reglamento, y solicitar en tiempo y forma los cambios en las clasificaciones, a fin de resguardar la buena fe de las listas.</p>
+<p class="sub">3) Mantener actualizada la información de contacto entre el equipo y la organización.</p>
+<p class="sub">4) Poner en conocimiento del equipo el Reglamento vigente, el Código de Conducta y toda la normativa y documentación necesaria para el buen desarrollo de la competencia.</p>
+<p class="sub">5) Intervenir ante situaciones que impidan el normal desarrollo de los partidos. En caso de ausencia, el Capitán deberá delegar su representación.</p>
+<p class="sub">6) Colaborar con la organización para asegurar el espíritu deportivo, el juego limpio y la camaradería entre los equipos participantes.</p>
+<p class="item">c) La designación de un Capitán tiene como fin unificar la comunicación con la organización; por eso se pide utilizar ese canal, sin perjuicio de que, ante un reclamo, se cite a los capitanes involucrados.</p>
+<p class="item">d) El capitán es responsable de que todos los integrantes del equipo respeten la categoría en la que se inscribieron, a saber:</p>
+<p class="sub">Nivel A: libre.</p>
+<p class="sub">Nivel B: no pueden participar profesores/as, jugadores/as de Intermedia o Primera del Circuito del Parque ni jugadores/as de B1 o A de la Copa Amistad.</p>
+<p class="item">Ante cualquier duda, consultar a los organizadores.</p>
+
+<h3 id="art6">ARTÍCULO 6: INSCRIPCIÓN ONLINE</h3>
+<p class="item">a) Todo equipo que quiera inscribirse en el torneo deberá hacerlo, dentro del plazo establecido, desde el formulario de inscripción de la página web (<a href="https://www.parquetenisclub.com.ar/ligas-invierno-verano/liga-verano-2026-2027">www.parquetenisclub.com.ar/ligas-invierno-verano/liga-verano-2026-2027</a>). Al inscribirse, el equipo acepta los horarios establecidos por la organización para cada categoría.</p>
+<p class="item">b) Se entiende por turnos de juego los horarios establecidos por la organización, a saber:</p>
+<p class="sub">i. Lunes a viernes: 21 hs.</p>
+<p class="sub">ii. Martes, jueves y viernes: 19:30 hs.</p>
+<p class="sub">iii. Sábados: 14, 16 y 18 hs.</p>
+<p class="sub">iv. Domingos: 9, 10:30, 15, 16:30 y 18 hs.</p>
+<p class="sub">El día y la hora de juego podrán modificarse de común acuerdo entre los equipos, en coordinación con la organización y siempre que esta lo acepte. De no existir acuerdo, se mantiene la programación original, sin excepción.</p>
+
+<h3 id="art7">ARTÍCULO 7: LISTAS DE BUENA FE</h3>
+<p>El único responsable de la carga es el Capitán de cada equipo que desee inscribirse en la Liga de Verano/Invierno por equipos. Deberá completar en forma online el listado, sin orden de importancia, de los jugadores que están en condiciones de integrar el equipo y que cumplen todos los requisitos indicados en este Reglamento.</p>
+<p class="item">a) No se exige que los capitanes ordenen la lista según el nivel de juego de los jugadores, ya que el armado de la formación es libre: cualquier jugador puede jugar en cualquiera de las tres canchas.</p>
+<p class="item">b) Se permitirá incorporar jugadores antes del comienzo de la cuarta fecha de cada equipo, informando a los organizadores su nombre, apellido, DNI y fecha de nacimiento.</p>
+<p class="item">c) Se dará por inexistente la inscripción del equipo cuyo Capitán no haya presentado las Listas de Buena Fe en los plazos y las formas establecidos, y NO se reintegrarán los importes abonados en concepto de inscripción.</p>
+
+<h2>CAPÍTULO III: DESARROLLO DEL JUEGO</h2>
+
+<h3 id="art8" style="margin-top:0">ARTÍCULO 8: LOS PARTIDOS</h3>
+<p class="item">a) Todos los partidos se juegan con pelotas nuevas/primer uso: el club anfitrión provee para cada encuentro (3 parciales) 3 pelotas nuevas. Además, brinda hidratación a los jugadores, con un agua grande en cada cancha.</p>
+<p class="item">b) El club también tendrá impresa la planilla de resultados antes del inicio del encuentro. En ella se anotará la formación antes de comenzar los partidos y, al finalizar, los resultados. La planilla queda en el club sede, a cargo de la organización.</p>
+<p class="item">c) Cuando una serie se juegue a continuación de otra y haya retraso en alguna de las canchas, los partidos comenzarán en las canchas que ya estén disponibles, sin esperar a que se liberen las 3 canchas para empezar al mismo tiempo.</p>
+
+<h3 id="art9">ARTÍCULO 9: JUGADORES</h3>
+<p class="item">a) Únicamente podrán jugar en el Campeonato los jugadores declarados en las respectivas Listas de Buena Fe, en las divisiones y categorías en que hayan sido incluidos.</p>
+<p class="item">b) Antes de comenzar el partido, los capitanes de ambos equipos deberán intercambiar en forma simultánea una lista con los nombres de los jugadores que intervendrán, sin especificar en qué puesto jugará cada uno, y presentar los documentos de los jugadores para comprobar su identidad y habilitación.</p>
+<p class="item">Luego, los equipos deberán intercambiar obligatoriamente la nómina con la distribución precisa de los puestos que ocuparán los jugadores, la cual no podrá modificarse a partir de ese momento.</p>
+<p class="item">c) A continuación, ambos capitanes deberán completar la “Planilla de Resultados” con el puesto asignado a cada jugador, y los jugadores firmarán en el casillero correspondiente antes de jugar. Ambos equipos (ganador y perdedor) son responsables de que la planilla esté completa. Si no se cumple este requisito, ambos equipos perderán un parcial por cada planilla presentada incompleta.</p>
+<p class="item">d) La formación y el orden de quién juega cada doble son libres; lo único obligatorio es presentar la nómina del Doble 1, el Doble 2 y el Doble 3 antes del comienzo del juego.</p>
+
+<h3 id="art10">ARTÍCULO 10: WALKOVER (WO)</h3>
+<p class="item">a) WO de cancha: si un equipo no puede presentar pareja para las tres canchas, se dará por WO la cancha 3 y se jugarán las canchas 1 y 2. En la cancha 3, el equipo que da el WO la pierde 6-0 6-0.</p>
+<p class="item">b) Si el WO de cancha se avisa con menos de 24 hs de anticipación al partido, el equipo deberá abonar la totalidad del valor de la fecha.</p>
+<p class="item">c) WO general: si un equipo no se presenta, o presenta pareja en menos de dos canchas, pierde la serie y todas las canchas quedan 6-0 6-0 a favor del rival. La puntuación es la del Artículo 11.</p>
+<p class="item">d) Si el WO general se avisa con menos de 24 hs de anticipación al partido, el equipo deberá abonar igualmente la totalidad del valor de la fecha.</p>
+
+<h3 id="art11">ARTÍCULO 11: PUNTUACIÓN, CONTROL Y SANCIONES</h3>
+<p style="text-align:center"><strong>TABLA DE PUNTUACIÓN</strong></p>
+<table>
+  <thead><tr><th>Concepto</th><th>Puntaje</th></tr></thead>
+  <tbody>
+    <tr><td>Partido ganado</td><td>2 puntos</td></tr>
+    <tr><td>Partido perdido y jugado</td><td>1 punto</td></tr>
+    <tr><td>No se presenta</td><td>0 puntos</td></tr>
+  </tbody>
+</table>
+<p>Al finalizar la primera parte del torneo, el orden de clasificación se establecerá, en primer lugar, por la mayor cantidad de puntos obtenidos. En caso de empate, se tendrá en cuenta la diferencia entre partidos ganados y perdidos; luego, la diferencia entre sets ganados y perdidos y, por último, la diferencia entre games ganados y perdidos.</p>
+
+</body>
+</html>
