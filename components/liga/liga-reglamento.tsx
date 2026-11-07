@@ -1,4 +1,5 @@
 import { FileText } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const RULES = [
   "El torneo es por equipos en modalidad dobles.",
@@ -11,11 +12,13 @@ const RULES = [
   "Liga de Verano 26/27: sorteo el 2 de diciembre de 2026; se juega del 9 de diciembre de 2026 al 14 de marzo de 2027.",
 ]
 
-export function LigaReglamento() {
+// `className` ajusta el espaciado según dónde va: en la etapa de inscripción
+// el resumen va arriba del formulario (padding arriba, no abajo).
+export function LigaReglamento({ className = "pb-16 sm:pb-24" }: { className?: string }) {
   return (
     <section
       id="reglamento"
-      className="mx-auto max-w-6xl scroll-mt-20 px-4 pb-16 sm:px-6 sm:pb-24"
+      className={cn("mx-auto max-w-6xl scroll-mt-20 px-4 sm:px-6", className)}
     >
       <div className="rounded-md border border-border border-t-4 border-t-accent bg-card p-6 sm:p-10">
         <div className="flex items-center gap-2 text-accent">
