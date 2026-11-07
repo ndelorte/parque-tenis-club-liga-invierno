@@ -38,11 +38,11 @@ const sections = [
     "WO general: si un equipo no se presenta, el rival recibe 2 puntos y las tres canchas 6-0 6-0. El ausente recibe 0 puntos.",
     "WO de cancha: es siempre la cancha 3. Si un equipo no puede presentar pareja para las tres canchas, se juegan las canchas 1 y 2 y la cancha 3 queda 6-0 6-0 para el rival del equipo que da el WO. Cada equipo debe presentar pareja en al menos dos canchas.",
     "Si el WO de cancha se avisa con menos de 24 hs de anticipación al partido, el equipo debe abonar la totalidad del valor de la fecha.",
-    "El equipo que no se presenta a jugar y avisa con menos de 24 hs de anticipación, además de perder el partido debe abonar la totalidad del encuentro.",
+    "WO general: si el equipo que no se presenta avisa con menos de 24 hs de anticipación, además de perder el partido debe abonar la totalidad del valor de la fecha.",
   ] },
   { id: "inscripcion", title: "Inscripción, valores y fechas", items: [
     "Inscripción por equipo: $150.000, a pagar antes del inicio del torneo.",
-    "Cada fecha jugada: $110.000, a pagar el mismo día del partido y antes de comenzar.",
+    "Cada fecha: $108.000 por equipo, a pagar el mismo día del partido y antes de comenzar.",
     "La Liga de Verano se disputa de diciembre a marzo y la Liga de Invierno de julio a septiembre.",
     "Liga de Verano 26/27: sorteo el 2 de diciembre de 2026; se juega del 9 de diciembre de 2026 al 14 de marzo de 2027.",
     "La programación de partidos se publica en la página web, la semana previa al inicio. Para la Ronda Campeonato y los Repechajes, está disponible desde el miércoles anterior de cada semana.",

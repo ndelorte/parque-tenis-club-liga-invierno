@@ -7,7 +7,7 @@ const RULES = [
   "Se otorgan 2 puntos por serie ganada y 1 punto por serie perdida.",
   "Los desempates siguen puntos, diferencia de canchas, sets y games; si persiste el empate se arma una mini-tabla solo con los equipos empatados.",
   "El WO de cancha es siempre la cancha 3: se juegan las canchas 1 y 2 y la 3 queda 6-0 6-0 para el rival. Si se avisa con menos de 24 hs, el equipo abona la fecha completa.",
-  "Inscripción por equipo: $150.000. Cada fecha jugada: $110.000, a pagar el día del partido antes de comenzar.",
+  "Inscripción por equipo: $150.000. Cada fecha: $108.000 por equipo, a pagar el día del partido antes de comenzar.",
   "Liga de Verano 26/27: sorteo el 2 de diciembre de 2026; se juega del 9 de diciembre de 2026 al 14 de marzo de 2027.",
 ]
 
