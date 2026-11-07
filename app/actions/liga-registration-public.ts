@@ -8,6 +8,7 @@
 // tamaño de los textos. Inserta con la service role; el teléfono y los DNI
 // nunca vuelven al cliente.
 
+import { isRegistrationPreview, PREVIEW_SEASON } from "@/lib/liga/registration/preview"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getRegistrationAvailability } from "@/lib/liga/registration/availability"
 import { buildRegistrationSchema } from "@/lib/liga/registration/schema"
@@ -22,6 +23,10 @@ export async function submitLigaRegistration(
   seasonSlug: string,
   input: unknown,
 ): Promise<SubmitRegistrationResult> {
+  if (isRegistrationPreview() && seasonSlug === PREVIEW_SEASON) {
+    return { success: false, error: "Vista de prueba: no se envió ni guardó la inscripción." }
+  }
+
   const generic = "No pudimos enviar la inscripción. Probá de nuevo en unos minutos."
   if (typeof seasonSlug !== "string" || seasonSlug.length > 100) return { success: false, error: generic }
 

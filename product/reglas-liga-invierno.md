@@ -161,9 +161,9 @@ En la base de datos: `court_matches.is_court_walkover = true` (solo para esa can
 
 ## Ausencia, valores y fechas (decisión del organizador, 06/11/2026)
 
-- **Equipo que no se presenta:** si avisa con menos de 24 hs de anticipación al horario del partido, además de perder el partido debe abonar la totalidad del encuentro.
+- **Equipo que no se presenta:** si avisa con menos de 24 hs de anticipación al horario del partido, además de perder el partido debe abonar la totalidad del valor de la fecha (también aplica al WO general).
 - **Inscripción por equipo:** $150.000, a pagar antes del inicio del torneo.
-- **Cada fecha jugada:** $110.000, a pagar el total el mismo día del partido y antes del comienzo.
+- **Cada fecha:** $108.000 por equipo, a pagar el total el mismo día del partido y antes del comienzo.
 - **Calendario:** la Liga de Verano se disputa de diciembre a marzo y la Liga de Invierno de julio a septiembre.
 - **Liga de Verano 26/27:** sorteo el 2 de diciembre de 2026; se juega del 9 de diciembre de 2026 al 14 de marzo de 2027.
 - **Programación:** se publica principalmente en la web, la semana previa al inicio; para Ronda Campeonato y Repechajes, desde el miércoles anterior de cada semana.

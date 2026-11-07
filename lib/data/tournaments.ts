@@ -1,3 +1,4 @@
+import { getPreviewTournament } from "@/lib/liga/registration/preview"
 import { createPublicClient } from "@/lib/supabase/public"
 import type { Tournament } from "@/lib/tournament/types"
 import { sortTournaments } from "@/lib/tournament/sortTournaments"
@@ -27,12 +28,14 @@ export async function getAllTournaments(): Promise<Tournament[]> {
 
   const { data, error } = await supabase.from("tournaments").select("*")
 
-  if (error || !data) return []
-
-  return sortTournaments((data as TournamentRow[]).map(mapTournamentRow))
+  const preview = getPreviewTournament()
+  const tournaments = error || !data ? [] : (data as TournamentRow[]).map(mapTournamentRow)
+  return sortTournaments(preview ? [preview, ...tournaments.filter((t) => t.slug !== preview.slug)] : tournaments)
 }
 
 export async function getActiveTournament(): Promise<Tournament | null> {
+  const preview = getPreviewTournament()
+  if (preview) return preview
   const supabase = createPublicClient()
 
   const { data, error } = await supabase
@@ -49,6 +52,8 @@ export async function getActiveTournament(): Promise<Tournament | null> {
 }
 
 export async function getTournamentBySlug(slug: string): Promise<Tournament | null> {
+  const preview = getPreviewTournament()
+  if (preview?.slug === slug) return preview
   const supabase = createPublicClient()
 
   const { data, error } = await supabase
