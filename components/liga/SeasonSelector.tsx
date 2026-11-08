@@ -8,7 +8,7 @@ import type { Tournament } from "@/lib/tournament/types"
 // Acá solo queda lo que ese helper no expone: el rango de fechas de cada estación.
 const SEASON_DATES: Record<Exclude<Season, "neutro">, string> = {
   invierno: "Julio a septiembre",
-  verano: "Diciembre a marzo",
+  verano: "Diciembre a febrero",
 }
 const SEASONS: Exclude<Season, "neutro">[] = ["invierno", "verano"]
 
