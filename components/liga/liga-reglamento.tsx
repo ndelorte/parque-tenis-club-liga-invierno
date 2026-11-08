@@ -5,7 +5,7 @@ const RULES = [
   "El torneo es por equipos en modalidad dobles.",
   "Cada serie enfrenta a dos equipos y se juega en 3 canchas.",
   "Se otorgan 2 puntos por serie ganada y 1 punto por serie perdida.",
-  "Liga de Verano 26/27: sorteo el 2 de diciembre de 2026; se juega del 9 de diciembre de 2026 al 14 de marzo de 2027.",
+  "Liga de Verano 26/27: sorteo el 2 de diciembre de 2026; se juega del 9 de diciembre de 2026 al 28 de febrero de 2027.",
   "Días y horarios de juego: lunes a viernes a las 21 hs; martes, jueves y viernes también a las 19:30 hs; sábados a las 14, 16 y 18 hs; domingos a las 9, 10:30, 15, 16:30 y 18 hs.",
 ]
 

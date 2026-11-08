@@ -43,8 +43,8 @@ const sections = [
   { id: "inscripcion", title: "Inscripción, valores y fechas", items: [
     "Inscripción por equipo: $150.000, a pagar antes del inicio del torneo.",
     "Cada fecha: $108.000 por equipo, a pagar el mismo día del partido y antes de comenzar.",
-    "La Liga de Verano se disputa de diciembre a marzo y la Liga de Invierno de julio a septiembre.",
-    "Liga de Verano 26/27: sorteo el 2 de diciembre de 2026; se juega del 9 de diciembre de 2026 al 14 de marzo de 2027.",
+    "La Liga de Verano se disputa de diciembre a febrero y la Liga de Invierno de julio a septiembre.",
+    "Liga de Verano 26/27: sorteo el 2 de diciembre de 2026; se juega del 9 de diciembre de 2026 al 28 de febrero de 2027.",
     "La programación de partidos se publica en la página web, la semana previa al inicio. Para la Ronda Campeonato y los Repechajes, está disponible desde el miércoles anterior de cada semana.",
   ] },
   { id: "fase-final", title: "Fase final", items: [
