@@ -13,8 +13,10 @@
 -- (lib/auth/requireAdmin.ts). Ninguna escritura de la app a estas tablas
 -- usa el cliente anon/authenticated, así que no rompe el panel.
 --
--- No se usa un chequeo por rol en el JWT a propósito: isAdminUser() acepta
--- el rol en user_metadata, que el propio usuario puede editar.
+-- No se usa un chequeo por rol en el JWT a propósito: la autorización vive
+-- en las server actions (isAdminUser() en lib/auth/admin.ts, que hoy mira
+-- solo app_metadata). Duplicarla en policies abriría una segunda fuente de
+-- verdad; sin policies de escritura, la única puerta es el service role.
 --
 -- La lectura pública (public_select_*) no cambia.
 -- ============================================================
