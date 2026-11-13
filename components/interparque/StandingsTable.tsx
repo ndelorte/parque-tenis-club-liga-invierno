@@ -25,8 +25,16 @@ export function StandingsTable({ standings, seasonDates, participation, champion
 
   return (
     <div>
-      <div className="overflow-x-auto">
-        <Table className="min-w-[520px]">
+      {/* El scroll horizontal (solo desde sm, donde la tabla muestra la columna
+          de fechas) lo hace este contenedor enfocable: se anula el wrapper
+          interno de <Table> para que no haya dos scrolls anidados. */}
+      <div
+        className="max-w-full overflow-x-auto [&>div]:overflow-visible"
+        role="region"
+        aria-label="Tabla de posiciones"
+        tabIndex={0}
+      >
+        <Table className="sm:min-w-[520px]">
           <TableHeader>
             <TableRow className="border-b-2 border-foreground hover:bg-transparent">
               <TableHead className="w-9">
@@ -50,7 +58,7 @@ export function StandingsTable({ standings, seasonDates, participation, champion
               return (
                 <TableRow key={row.playerId} className="h-13">
                   <TableCell className="align-middle text-muted-foreground">{i + 1}</TableCell>
-                  <TableCell className="align-middle font-medium text-foreground">
+                  <TableCell className="align-middle font-medium whitespace-normal text-foreground">
                     <span>{row.displayName}</span>
                     {championIds?.has(row.playerId) && (
                       <Crown

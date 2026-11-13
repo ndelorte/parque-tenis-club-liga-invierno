@@ -132,7 +132,7 @@ export default async function CategoryPage({ params }: Props) {
                 Orden: partidos ganados, diferencia de sets, diferencia de games, enfrentamiento directo.
               </p>
             </div>
-            <div className="grid gap-9 md:grid-cols-2">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-9 md:grid-cols-2">
               <ZoneSection zone={cat.zones[0]} />
               <ZoneSection zone={cat.zones[1]} />
             </div>
