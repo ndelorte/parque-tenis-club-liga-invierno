@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Solo lectura del repo: el CI no necesita escribir nada en GitHub.
+permissions:
+  contents: read
+
+# Una corrida por rama/PR: si llega un push nuevo, se cancela la anterior.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      # Build con variables placeholder: el CI no tiene acceso a la base real.
+      # Las lecturas públicas de lib/data/* (createPublicClient) atrapan el
+      # error de red y devuelven vacío/null, y los generateStaticParams son
+      # `[]` o están envueltos en try/catch, así que el build debería terminar
+      # igual con la home y las páginas ISR renderizadas "sin datos".
+      #
+      # Alternativa (si el build con placeholders llegara a fallar, o si se
+      # quiere que compile contra datos reales): crear un proyecto Supabase de
+      # staging y guardar sus credenciales como secrets del repo
+      # (Settings > Secrets and variables > Actions), por ejemplo:
+      #   NEXT_PUBLIC_SUPABASE_URL:      ${{ secrets.STAGING_SUPABASE_URL }}
+      #   NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+      # Ojo: los secrets no están disponibles en PRs desde forks. Nunca usar la
+      # service role key de producción en CI.
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
+          NEXT_TELEMETRY_DISABLED: "1"

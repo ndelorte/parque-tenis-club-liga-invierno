@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition, useEffect } from "react"
+import Link from "next/link"
 import {
   Trophy,
   CalendarDays,
@@ -27,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { InlineError } from "@/components/admin/states"
 import { canMarkCourtWalkover } from "@/lib/tournament/courtWalkoverRule"
 import {
   type CategoryForAdmin,
@@ -55,6 +57,15 @@ type SeriesForm = {
   courts: [CourtForm, CourtForm, CourtForm]
   saved: boolean
 }
+
+// Resultado del último intento de guardado de una serie (se muestra junto al
+// botón "Guardar serie").
+type SaveFeedback =
+  | { status: "saved"; warning?: string }
+  | { status: "error"; message: string }
+
+const UNAUTHORIZED = "No autorizado"
+const UNEXPECTED_SAVE_ERROR = "No se pudo guardar la serie. Revisá la conexión y probá de nuevo."
 
 function blankCourt(): CourtForm {
   return {
@@ -98,6 +109,7 @@ export function ResultLoader({ categories }: { categories: CategoryForAdmin[] })
   const [forms, setForms] = useState<Record<string, SeriesForm>>({})
   const [isPending, startTransition] = useTransition()
   const [savingId, setSavingId] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<Record<string, SaveFeedback | undefined>>({})
   const [recalculating, setRecalculating] = useState(false)
   const [recalcMsg, setRecalcMsg] = useState<string | null>(null)
 
@@ -144,6 +156,7 @@ export function ResultLoader({ categories }: { categories: CategoryForAdmin[] })
     const form = forms[series.id]
     if (!form) return
     setSavingId(series.id)
+    setFeedback((prev) => ({ ...prev, [series.id]: undefined }))
 
     const courts: CourtInput[] = form.courts.map((c, i) => ({
       courtNumber: (i + 1) as 1 | 2 | 3,
@@ -156,19 +169,29 @@ export function ResultLoader({ categories }: { categories: CategoryForAdmin[] })
       isWalkover: c.wo,
     }))
 
-    const result = await saveSeriesResult({
-      seriesId: series.id,
-      homeTeamId: series.homeTeam.id,
-      awayTeamId: series.awayTeam.id,
-      isGeneralWalkover: form.isGeneralWalkover,
-      walkoverWinnerId: form.walkoverWinnerId,
-      courts,
-    })
-
-    setSavingId(null)
-    if (result.success) {
-      updateForm(series.id, (prev) => ({ ...prev, saved: true }))
+    let next: SaveFeedback
+    try {
+      const result = await saveSeriesResult({
+        seriesId: series.id,
+        homeTeamId: series.homeTeam.id,
+        awayTeamId: series.awayTeam.id,
+        isGeneralWalkover: form.isGeneralWalkover,
+        walkoverWinnerId: form.walkoverWinnerId,
+        courts,
+      })
+      if (result.success) {
+        updateForm(series.id, (prev) => ({ ...prev, saved: true }))
+        next = { status: "saved", warning: result.warning }
+      } else {
+        next = { status: "error", message: result.error ?? UNEXPECTED_SAVE_ERROR }
+      }
+    } catch (e) {
+      console.error("No se pudo guardar la serie", e)
+      next = { status: "error", message: UNEXPECTED_SAVE_ERROR }
+    } finally {
+      setSavingId(null)
     }
+    setFeedback((prev) => ({ ...prev, [series.id]: next }))
   }
 
   async function handleRecalculate() {
@@ -270,6 +293,7 @@ export function ResultLoader({ categories }: { categories: CategoryForAdmin[] })
                 series={series}
                 form={form}
                 saving={savingId === series.id}
+                feedback={feedback[series.id]}
                 onChange={(updater) => updateForm(series.id, updater)}
                 onSave={() => handleSaveSeries(series)}
               />
@@ -293,12 +317,14 @@ function SeriesEditor({
   series,
   form,
   saving,
+  feedback,
   onChange,
   onSave,
 }: {
   series: SeriesForAdmin
   form: SeriesForm
   saving: boolean
+  feedback?: SaveFeedback
   onChange: (updater: (prev: SeriesForm) => SeriesForm) => void
   onSave: () => void
 }) {
@@ -308,6 +334,8 @@ function SeriesEditor({
   const allSet = form.isGeneralWalkover
     ? !!form.walkoverWinnerId
     : form.courts.every((c) => c.winnerTeamId !== null)
+  // "Guardado ✓" solo después de guardar en esta sesión y hasta que se edite.
+  const justSaved = form.saved && feedback?.status === "saved"
   const winner =
     homeCourts > awayCourts
       ? series.homeTeam.name
@@ -326,7 +354,16 @@ function SeriesEditor({
   function setGeneralWo(teamId: string | null) {
     onChange((prev) => {
       if (!teamId) {
-        return { ...prev, isGeneralWalkover: false, walkoverWinnerId: null, saved: false }
+        // Las canchas vuelven a estar en blanco (se conservan los jugadores
+        // asignados): si quedaran con W.O., el servidor rechaza el guardado.
+        const courts = prev.courts.map((c) => ({
+          ...blankCourt(),
+          homePlayer1Id: c.homePlayer1Id,
+          homePlayer2Id: c.homePlayer2Id,
+          awayPlayer1Id: c.awayPlayer1Id,
+          awayPlayer2Id: c.awayPlayer2Id,
+        })) as SeriesForm["courts"]
+        return { ...prev, isGeneralWalkover: false, walkoverWinnerId: null, courts, saved: false }
       }
       const courts = prev.courts.map((c) => ({
         ...c,
@@ -534,13 +571,33 @@ function SeriesEditor({
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {saving ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Save className="size-4" />
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : justSaved ? null : (
+              <Save className="size-4" aria-hidden />
             )}
-            Guardar serie
+            {saving ? "Guardando…" : justSaved ? "Guardado ✓" : "Guardar serie"}
           </Button>
         </div>
+        <p role="status" className="sr-only">
+          {justSaved ? "Serie guardada." : ""}
+        </p>
+        {feedback?.status === "error" && (
+          <InlineError className="justify-end text-right">
+            {feedback.message === UNAUTHORIZED ? (
+              <>
+                Tu sesión venció.{" "}
+                <Link href="/panel-liga/login" className="underline underline-offset-2">
+                  Volvé a ingresar.
+                </Link>
+              </>
+            ) : (
+              feedback.message
+            )}
+          </InlineError>
+        )}
+        {justSaved && feedback?.status === "saved" && feedback.warning && (
+          <InlineError className="justify-end text-right">{feedback.warning}</InlineError>
+        )}
       </CardContent>
     </Card>
   )

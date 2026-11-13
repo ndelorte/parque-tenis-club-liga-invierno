@@ -67,8 +67,8 @@ export default function ReglamentoPage() {
         <h1 className="mt-2 font-heading text-4xl font-extrabold uppercase text-balance text-foreground sm:text-6xl">Reglamento</h1>
         <p className="mt-3 max-w-2xl text-base text-muted-foreground">Las reglas esenciales de la Liga de Invierno y Verano, desde la fase regular hasta la definición.</p>
       </header>
-      <div className="mt-8 grid gap-10 lg:grid-cols-[15rem_minmax(0,1fr)]">
-        <nav aria-label="Índice del reglamento" className="self-start lg:sticky lg:top-28">
+      <div className="mt-8 grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[15rem_minmax(0,1fr)]">
+        <nav aria-label="Índice del reglamento" className="min-w-0 self-start lg:sticky lg:top-28">
           <ReglamentoNav sections={sections.map(({ id, title }) => ({ id, title }))} />
         </nav>
         <div className="min-w-0">

@@ -19,6 +19,7 @@ import { BracketTreeView } from "@/components/circuito/bracket-tree"
 import { RoundsView } from "@/components/circuito/rounds-view"
 import { ChampionCard } from "@/components/circuito/champion-card"
 import { BracketMatchCard } from "@/components/circuito/bracket-match-card"
+import { scoreFromWinnerSide } from "@/lib/circuito/scoreFromWinnerSide"
 import { ZoneStandingsTable, type ZoneMatchRow, type ZoneStandingsRow } from "@/components/circuito/zone-standings-table"
 
 // Los resultados y el repechaje se actualizan al cargar cada partido: sin cache.
@@ -136,7 +137,8 @@ function buildZoneDisplay(
     id: m.id,
     winnerName: names[m.winner_id!]?.name ?? "?",
     loserName: names[m.winner_id === m.participant_a_id ? m.participant_b_id! : m.participant_a_id!]?.name ?? "?",
-    score: m.score!,
+    // El score se guarda "lado A – lado B": se muestra desde el lado del ganador.
+    score: scoreFromWinnerSide(m.score, m.winner_id === m.participant_b_id ? "b" : "a"),
   }))
 
   return { rows, matches: matchRows }
