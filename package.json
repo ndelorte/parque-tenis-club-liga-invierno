@@ -17,6 +17,8 @@
     "dedupe:players": "tsx scripts/dedupe-players.ts",
     "nombres:normalizar": "tsx scripts/normalizar-nombres.ts",
     "recalc:ranking-faltante": "tsx scripts/recalc-ranking-faltante.ts",
+    "recalc:ranking-en-vivo": "tsx scripts/recalc-ranking-en-vivo.ts",
+    "fix:ranking-master": "tsx scripts/fix-ranking-final-master-2026.ts",
     "ajustar:ranking": "tsx scripts/ajustar-ranking-2026.ts",
     "link:participantes": "tsx scripts/link-participants.ts",
     "fix:repechaje-importados": "tsx scripts/fix-repechaje-importados.ts",

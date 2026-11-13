@@ -4,8 +4,11 @@ import { calculateRankingPoints, type CircuitoBracketMatchResult } from "@/lib/c
 import { selectDrawRule } from "@/lib/circuito/generateBracket"
 import { CIRCUITO_FORMAT_SPEC } from "@/lib/circuito/formatSpec"
 import { isGrandSlamMonth } from "@/lib/circuito/pointsTable"
+import { isLivePointsEdition } from "@/lib/circuito/livePoints"
 import { orderRankedCategories, type RankedCategory } from "@/lib/circuito/fixedCategories"
 import { buildAnnualRanking, type AnnualRanking } from "@/lib/circuito/buildAnnualRanking"
+import { pointsByPlayer as computePointsByPlayer } from "@/lib/circuito/pointsByPlayer"
+import { fetchAllRows } from "@/lib/data/fetchAll"
 import type { CircuitoParticipant } from "@/lib/circuito/types"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { CircuitoParticipantRow } from "./types"
@@ -13,7 +16,17 @@ import type { CircuitoParticipantRow } from "./types"
 // Único escritor de circuito_ranking_points (patrón calcado de
 // lib/data/standings.ts:recalculateAndPersistStandings). Reforzado por
 // lib/data/__tests__/circuito-ranking-write-boundary.test.ts.
-export async function recalculateAndPersistCircuitRanking(categoryId: string): Promise<void> {
+export interface CategoryRankingSnapshot {
+  editionId: string
+  // Puntos por jugador que da la regla aplicada a los participantes y partidos
+  // de la categoría (solo los que suman: nunca hay entradas con 0).
+  pointsByPlayer: Map<string, number>
+}
+
+// Calcula (sin escribir) lo que debería quedar en circuito_ranking_points para
+// una categoría. null si la categoría no se puede puntuar (sin cuadro, formato
+// sin regla, sin participantes).
+export async function computeCircuitRankingForCategory(categoryId: string): Promise<CategoryRankingSnapshot | null> {
   const supabase = createAdminClient()
 
   const { data: category } = await supabase
@@ -21,17 +34,17 @@ export async function recalculateAndPersistCircuitRanking(categoryId: string): P
     .select("draw_size, edition_id")
     .eq("id", categoryId)
     .maybeSingle()
-  if (!category?.draw_size) return
+  if (!category?.draw_size) return null
 
   const rule = selectDrawRule(category.draw_size, CIRCUITO_FORMAT_SPEC)
-  if (!rule) return
+  if (!rule) return null
 
   const { data: edition } = await supabase
     .from("circuito_editions")
-    .select("month")
+    .select("month, slug")
     .eq("id", category.edition_id)
     .maybeSingle()
-  if (!edition) return
+  if (!edition) return null
 
   const { data: participantRows } = await supabase
     .from("circuito_participants")
@@ -39,7 +52,7 @@ export async function recalculateAndPersistCircuitRanking(categoryId: string): P
     .eq("category_id", categoryId)
   const participantsRaw = (participantRows ?? []) as CircuitoParticipantRow[]
   const participants: CircuitoParticipant[] = participantsRaw.map((p) => ({ id: p.id, seed: p.seed }))
-  if (participants.length === 0) return
+  if (participants.length === 0) return null
 
   const { data: matchRows } = await supabase.from("circuito_matches").select("*").eq("category_id", categoryId)
   const matches: CircuitoBracketMatchResult[] = (matchRows ?? []).map((m) => ({
@@ -58,22 +71,26 @@ export async function recalculateAndPersistCircuitRanking(categoryId: string): P
     participants,
     matches,
     isGrandSlam: isGrandSlamMonth(edition.month),
+    live: isLivePointsEdition(edition.slug),
   })
 
   // Un participante de dobles acredita los puntos a los 2 jugadores; el
   // ranking es por jugador (circuito_ranking_points.player_id), no por pareja.
-  const pointsByPlayer = new Map<string, number>()
-  for (const p of participantsRaw) {
-    const points = pointsByParticipant.get(p.id) ?? 0
-    if (points === 0) continue
-    if (p.player_id) pointsByPlayer.set(p.player_id, points)
-    if (p.player_2_id) pointsByPlayer.set(p.player_2_id, points)
-  }
+  // Si una persona figura en 2 participantes, queda con el máximo.
+  return { editionId: category.edition_id, pointsByPlayer: computePointsByPlayer(participantsRaw, pointsByParticipant) }
+}
+
+export async function recalculateAndPersistCircuitRanking(categoryId: string): Promise<void> {
+  const supabase = createAdminClient()
+
+  const snapshot = await computeCircuitRankingForCategory(categoryId)
+  if (!snapshot) return
+  const { editionId, pointsByPlayer } = snapshot
 
   const rows = [...pointsByPlayer.entries()].map(([playerId, points]) => ({
     playerId,
     categoryId,
-    editionId: category.edition_id,
+    editionId,
     points,
   }))
 
@@ -88,6 +105,16 @@ export async function recalculateAndPersistCircuitRanking(categoryId: string): P
   }
   const { error: staleError } = await staleQuery
   if (staleError) throw new Error(`Error al limpiar el ranking del circuito: ${staleError.message}`)
+}
+
+// Borrado puntual de filas de puntos por id (correcciones de datos históricos,
+// p. ej. scripts/fix-ranking-final-master-2026.ts). Devuelve cuántas borró.
+export async function deleteCircuitoRankingPointsRows(rowIds: string[]): Promise<number> {
+  if (rowIds.length === 0) return 0
+  const supabase = createAdminClient()
+  const { data, error } = await supabase.from("circuito_ranking_points").delete().in("id", rowIds).select("id")
+  if (error) throw new Error(`Error al borrar puntos del circuito: ${error.message}`)
+  return data?.length ?? 0
 }
 
 // Al unificar dos fichas de la misma persona (lib/players/mergePlayers.ts),
@@ -164,14 +191,14 @@ export interface CircuitoRankingEntry {
 
 export async function getCircuitRanking(editionId: string, categoryId?: string): Promise<CircuitoRankingEntry[]> {
   const supabase = createPublicClient()
-  let query = supabase
-    .from("circuito_ranking_points")
-    .select("player_id, points, players(display_name)")
-    .eq("edition_id", editionId)
-
-  if (categoryId) query = query.eq("category_id", categoryId)
-
-  const { data, error } = await query
+  const { data, error } = await fetchAllRows((from, to) => {
+    let query = supabase
+      .from("circuito_ranking_points")
+      .select("player_id, points, players(display_name)")
+      .eq("edition_id", editionId)
+    if (categoryId) query = query.eq("category_id", categoryId)
+    return query.order("id").range(from, to)
+  })
   if (error || !data) return []
 
   const totals = new Map<string, { name: string; points: number }>()
@@ -204,15 +231,17 @@ export async function getAnnualCircuitRanking(
   beforeMonth?: number,
 ): Promise<AnnualRanking> {
   const supabase = createPublicClient()
-  const query = supabase
-    .from("circuito_ranking_points")
-    .select(
-      "player_id, edition_id, points, players(display_name), circuito_categories!inner(slug), circuito_editions!inner(year, month, name)",
-    )
-    .eq("circuito_editions.year", year)
-    .eq("circuito_categories.slug", categorySlug)
-    .gt("points", 0)
-  const { data, error } = await (beforeMonth === undefined ? query : query.lt("circuito_editions.month", beforeMonth))
+  const { data, error } = await fetchAllRows((from, to) => {
+    const query = supabase
+      .from("circuito_ranking_points")
+      .select(
+        "player_id, edition_id, points, players(display_name), circuito_categories!inner(slug), circuito_editions!inner(year, month, name)",
+      )
+      .eq("circuito_editions.year", year)
+      .eq("circuito_categories.slug", categorySlug)
+      .gt("points", 0)
+    return (beforeMonth === undefined ? query : query.lt("circuito_editions.month", beforeMonth)).order("id").range(from, to)
+  })
 
   if (error || !data) return { entries: [], tournaments: [] }
 
@@ -235,19 +264,21 @@ export async function getAnnualCircuitRanking(
   )
 }
 
-// Slugs de las categorías que tienen al menos un jugador con puntos en el
-// ranking del año — las demás no se muestran en /ranking ni en
-// /final-master. Un count por categoría (14 consultas livianas en paralelo)
-// en vez de traer todas las filas del año: esas superan el límite de 1000
-// filas por respuesta de PostgREST a medida que avanza el año.
-// Categorías (fijas o agregadas a mano) con algún jugador con puntos en el año.
+// Categorías (fijas o agregadas a mano) con al menos un jugador con puntos en
+// el ranking del año — las demás no se muestran en /ranking ni en
+// /final-master. Trae las filas del año paginadas (PostgREST corta cada
+// respuesta en 1000 y a medida que avanza el año las filas lo superan).
 export async function getCircuitoCategoriesWithRanking(year: number): Promise<RankedCategory[]> {
   const supabase = createPublicClient()
-  const { data, error } = await supabase
-    .from("circuito_ranking_points")
-    .select("circuito_categories!inner(name, slug, type), circuito_editions!inner(year)")
-    .eq("circuito_editions.year", year)
-    .gt("points", 0)
+  const { data, error } = await fetchAllRows((from, to) =>
+    supabase
+      .from("circuito_ranking_points")
+      .select("circuito_categories!inner(name, slug, type), circuito_editions!inner(year)")
+      .eq("circuito_editions.year", year)
+      .gt("points", 0)
+      .order("id")
+      .range(from, to),
+  )
   if (error || !data) return []
 
   const found = new Map<string, RankedCategory>()

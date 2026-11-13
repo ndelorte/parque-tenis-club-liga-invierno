@@ -19,6 +19,11 @@ export interface CalculateRankingPointsInput {
   participants: CircuitoParticipant[]
   matches: CircuitoBracketMatchResult[] // todos los partidos de la categoría (main + repechaje)
   isGrandSlam: boolean
+  // Modo "en vivo" (lib/circuito/livePoints.ts): además de la instancia final,
+  // cada participante suma la instancia que ya tiene asegurada — quien gana
+  // un partido (o pasa por bye) suma ya los puntos de la ronda a la que llegó,
+  // sin esperar a perder. Nunca resta: queda el mayor de los dos.
+  live?: boolean
 }
 
 // Puntos por participante según la instancia alcanzada. El repechaje nunca
@@ -49,12 +54,72 @@ export function calculateRankingPoints(input: CalculateRankingPointsInput): Map<
       break
   }
 
+  const guaranteed = input.live ? resolveGuaranteedInstances(format, mainMatches) : new Map<string, CircuitoInstance>()
+
   const points = new Map<string, number>()
   for (const p of participants) {
     const instance = instances.get(p.id)
-    points.set(p.id, instance ? pointsForInstance(instance, isGrandSlam) : 0)
+    const floor = guaranteed.get(p.id)
+    const finalPoints = instance ? pointsForInstance(instance, isGrandSlam) : 0
+    const floorPoints = floor ? pointsForInstance(floor, isGrandSlam) : 0
+    points.set(p.id, Math.max(finalPoints, floorPoints))
   }
   return points
+}
+
+// Instancia mínima asegurada por cada participante del cuadro principal:
+// - jugó (ganó o perdió) un partido de una ronda → mínimo, lo que da perder
+//   en esa ronda;
+// - está ubicado en una ronda posterior a la 1ª (llegó ganando o por bye) →
+//   mínimo, lo que da perder en esa ronda.
+// Los lugares de rondas posteriores los completa syncBracketSlots.ts desde
+// los resultados cargados, así que reflejan quién avanzó.
+function resolveGuaranteedInstances(
+  format: DrawFormatKind,
+  mainMatches: CircuitoBracketMatchResult[],
+): Map<string, CircuitoInstance> {
+  const totalRounds = mainMatches.reduce((max, m) => Math.max(max, m.round), 0)
+  const guaranteed = new Map<string, CircuitoInstance>()
+  const raise = (id: string | null, instance: CircuitoInstance | null) => {
+    if (!id || !instance) return
+    const current = guaranteed.get(id)
+    if (!current || INSTANCE_RANK[instance] > INSTANCE_RANK[current]) guaranteed.set(id, instance)
+  }
+
+  for (const m of mainMatches) {
+    const played = !!m.winnerId && !!m.participantAId && !!m.participantBId
+    if (m.round === 1 && !played) continue
+    const instance = instanceForLosingRound(format, m.round, totalRounds)
+    raise(m.participantAId, instance)
+    raise(m.participantBId, instance)
+  }
+  return guaranteed
+}
+
+const INSTANCE_RANK: Record<CircuitoInstance, number> = {
+  round_of_32_plus: 0,
+  round_of_16: 1,
+  quarterfinalist: 2,
+  semifinalist: 3,
+  runner_up: 4,
+  champion: 5,
+}
+
+// Instancia de quien pierde en la ronda `round` del cuadro principal. En
+// round_robin_pure no hay rondas eliminatorias: perder un partido de zona
+// asegura solo "16vos o más".
+function instanceForLosingRound(format: DrawFormatKind, round: number, totalRounds: number): CircuitoInstance | null {
+  switch (format) {
+    case "round_robin_pure":
+      return "round_of_32_plus"
+    case "round_robin_with_final":
+      return round === 1 ? "round_of_32_plus" : "runner_up"
+    case "groups_then_knockout":
+      if (round === 1) return "round_of_32_plus"
+      return round === 2 ? "semifinalist" : "runner_up"
+    case "single_elimination":
+      return round === totalRounds ? "runner_up" : instanceFromRoundsBeforeFinal(totalRounds - round)
+  }
 }
 
 function toZoneMatches(matches: CircuitoBracketMatchResult[]): ZoneMatchResult[] {
