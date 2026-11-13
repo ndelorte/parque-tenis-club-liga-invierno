@@ -166,6 +166,25 @@ comprimen así:
   1. **Menos torneos jugados** en el año (mismos puntos con menos torneos = mejor promedio).
   2. **Más torneos ganados** (1er puesto) en el año.
 
+### Puntos en vivo — China Open y Paris Open 2026 (excepción)
+
+- **Solo** en las ediciones `circuito-2026-10` (China Open, octubre 2026; le falta la final de
+  Damas Segunda dobles) y `circuito-2026-11` (Paris Open, noviembre 2026; en juego), y
+  durante todo el torneo: cada jugador suma **ya** los puntos de la instancia que tiene
+  asegurada, sin esperar a quedar eliminado. Quien gana un partido (o pasa por bye) suma los
+  puntos de la ronda a la que llegó; nunca se resta.
+- Las demás ediciones (incluido el US Open, ya terminado, y las próximas) siguen con la regla normal: se suman los
+  puntos al quedar eliminado o salir campeón.
+- No hay que revertir nada al terminar: la instancia asegurada nunca supera la instancia final,
+  así que al finalizar el torneo el modo en vivo y la regla normal dan los mismos puntos.
+- Los clasificados al Final Master los **propone el organizador** mirando el ranking del 15/11
+  (puede convocar al 9.º si alguno de los 8 primeros no puede jugar).
+- El campo `status` de `circuito_editions` **no** se usa para decidir esto, porque no se
+  actualiza solo: la lista de slugs es explícita en el código.
+- Implementación: `lib/circuito/livePoints.ts` (slugs) y la opción `live` de
+  `lib/circuito/calculateRankingPoints.ts`. Para recalcular los partidos ya cargados:
+  `npm run recalc:ranking-en-vivo -- --apply`.
+
 ---
 
 ## Mid Master y Final Master (torneos especiales)
