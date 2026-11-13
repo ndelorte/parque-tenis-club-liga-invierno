@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition, useEffect } from "react"
+import Link from "next/link"
 import {
   Trophy,
   Save,
@@ -27,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { InlineError } from "@/components/admin/states"
 import {
   type CategoryForAdmin,
   type PlayoffSeriesForAdmin,
@@ -101,6 +103,36 @@ type SeriesForm = {
   saved: boolean
 }
 
+// Resultado del último intento de guardado de una serie (se muestra junto al
+// botón de guardar).
+type SaveFeedback =
+  | { status: "saved"; warning?: string }
+  | { status: "error"; message: string }
+
+type ActionResult = { success: boolean; error?: string }
+
+const UNAUTHORIZED = "No autorizado"
+const UNEXPECTED_SAVE_ERROR = "No se pudo guardar el resultado. Revisá la conexión y probá de nuevo."
+const UNEXPECTED_SCHEDULE_ERROR = "No se pudo guardar la fecha. Revisá la conexión y probá de nuevo."
+
+// Error de una action del panel; "No autorizado" = la sesión venció.
+function ActionErrorMessage({ message, className }: { message: string; className?: string }) {
+  return (
+    <InlineError className={className}>
+      {message === UNAUTHORIZED ? (
+        <>
+          Tu sesión venció.{" "}
+          <Link href="/panel-liga/login" className="underline underline-offset-2">
+            Volvé a ingresar.
+          </Link>
+        </>
+      ) : (
+        message
+      )}
+    </InlineError>
+  )
+}
+
 function blankCourt(): CourtForm {
   return {
     homePlayer1Id: null,
@@ -144,6 +176,19 @@ export function PlayoffManager({ categories }: { categories: CategoryForAdmin[] 
   const [isPending, startTransition] = useTransition()
   const [bracket, setBracket] = useState<ProvisionalBracket | null>(null)
   const [bracketError, setBracketError] = useState<string | null>(null)
+  // Vive acá (no en BracketSection) porque guardar recarga los datos y
+  // desmonta la sección: así el aviso de guardado sobrevive al refresh.
+  const [feedback, setFeedback] = useState<Record<string, SaveFeedback | undefined>>({})
+  const [announcement, setAnnouncement] = useState("")
+
+  function handleFeedback(seriesId: string, next: SaveFeedback | undefined) {
+    setFeedback((prev) => ({ ...prev, [seriesId]: next }))
+    if (next?.status === "saved") {
+      setAnnouncement(next.warning ? `Resultado guardado. ${next.warning}` : "Resultado guardado.")
+    } else if (next === undefined) {
+      setAnnouncement("")
+    }
+  }
 
   function loadData(catId: string) {
     startTransition(async () => {
@@ -219,6 +264,10 @@ export function PlayoffManager({ categories }: { categories: CategoryForAdmin[] 
         </CardContent>
       </Card>
 
+      <p role="status" className="sr-only">
+        {announcement}
+      </p>
+
       {isPending ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
@@ -236,6 +285,8 @@ export function PlayoffManager({ categories }: { categories: CategoryForAdmin[] 
           categoryId={categoryId}
           playoffSeries={playoffSeries}
           teams={teams}
+          feedback={feedback}
+          onFeedback={handleFeedback}
           onRefresh={() => loadData(categoryId)}
         />
       ) : null}
@@ -250,12 +301,16 @@ function BracketSection({
   categoryId,
   playoffSeries,
   teams,
+  feedback,
+  onFeedback,
   onRefresh,
 }: {
   bracket: ProvisionalBracket
   categoryId: string
   playoffSeries: PlayoffSeriesForAdmin[]
   teams: TeamForAdmin[]
+  feedback: Record<string, SaveFeedback | undefined>
+  onFeedback: (seriesId: string, next: SaveFeedback | undefined) => void
   onRefresh: () => void
 }) {
   const [forms, setForms] = useState<Record<string, SeriesForm>>(() => {
@@ -297,6 +352,7 @@ function BracketSection({
     const form = forms[seriesId]
     if (!form) return
     setSavingId(seriesId)
+    onFeedback(seriesId, undefined)
     const courts: CourtInput[] = form.courts.map((c, i) => ({
       courtNumber: (i + 1) as 1 | 2 | 3,
       homePlayer1Id: c.homePlayer1Id,
@@ -307,19 +363,32 @@ function BracketSection({
       winnerTeamId: c.winnerTeamId,
       isWalkover: c.wo,
     }))
-    const result = await saveSeriesResult({
-      seriesId,
-      homeTeamId,
-      awayTeamId,
-      isGeneralWalkover: form.isGeneralWalkover,
-      walkoverWinnerId: form.walkoverWinnerId,
-      courts,
-    })
-    setSavingId(null)
-    if (result.success) {
-      updateForm(seriesId, (prev) => ({ ...prev, saved: true }))
-      onRefresh()
+    let next: SaveFeedback
+    let saved = false
+    try {
+      const result = await saveSeriesResult({
+        seriesId,
+        homeTeamId,
+        awayTeamId,
+        isGeneralWalkover: form.isGeneralWalkover,
+        walkoverWinnerId: form.walkoverWinnerId,
+        courts,
+      })
+      if (result.success) {
+        saved = true
+        updateForm(seriesId, (prev) => ({ ...prev, saved: true }))
+        next = { status: "saved", warning: result.warning }
+      } else {
+        next = { status: "error", message: result.error ?? UNEXPECTED_SAVE_ERROR }
+      }
+    } catch (e) {
+      console.error("No se pudo guardar el resultado de playoff", e)
+      next = { status: "error", message: UNEXPECTED_SAVE_ERROR }
+    } finally {
+      setSavingId(null)
     }
+    onFeedback(seriesId, next)
+    if (saved) onRefresh()
   }
 
   return (
@@ -350,6 +419,7 @@ function BracketSection({
           }
           form={forms[qf.seriesId ?? ""] ?? null}
           saving={savingId === qf.seriesId}
+          feedback={qf.seriesId ? feedback[qf.seriesId] : undefined}
           onFormChange={(updater) => {
             if (qf.seriesId) updateForm(qf.seriesId, updater)
           }}
@@ -367,6 +437,7 @@ function BracketSection({
         onRefresh={onRefresh}
         forms={forms}
         savingId={savingId}
+        feedback={feedback}
         onFormChange={updateForm}
         onSaveSeries={handleSaveSeries}
       />
@@ -394,6 +465,7 @@ function QFCard({
   existingSeries,
   form,
   saving,
+  feedback,
   onFormChange,
   onSaveSeries,
   onRefresh,
@@ -403,6 +475,7 @@ function QFCard({
   existingSeries?: PlayoffSeriesForAdmin
   form: SeriesForm | null
   saving: boolean
+  feedback?: SaveFeedback
   onFormChange: (updater: (prev: SeriesForm) => SeriesForm) => void
   onSaveSeries: (seriesId: string, homeTeamId: string, awayTeamId: string) => void
   onRefresh: () => void
@@ -432,11 +505,16 @@ function QFCard({
     if (!scheduleDate) return
     setScheduleError(null)
     startScheduling(async () => {
-      let result: { success: boolean; error?: string }
-      if (existingSeries) {
-        result = await updateSeriesSchedule(existingSeries.id, scheduleDate, scheduleTime)
-      } else {
-        result = await createQuarterFinalSeries(categoryId, qf.home.team.id, qf.away.team.id, scheduleDate, scheduleTime)
+      let result: ActionResult
+      try {
+        if (existingSeries) {
+          result = await updateSeriesSchedule(existingSeries.id, scheduleDate, scheduleTime)
+        } else {
+          result = await createQuarterFinalSeries(categoryId, qf.home.team.id, qf.away.team.id, scheduleDate, scheduleTime)
+        }
+      } catch (e) {
+        console.error("No se pudo guardar la fecha de cuartos", e)
+        result = { success: false, error: UNEXPECTED_SCHEDULE_ERROR }
       }
       if (!result.success) {
         setScheduleError(result.error ?? "Error al guardar la fecha")
@@ -522,9 +600,7 @@ function QFCard({
             )}
             {existingSeries ? "Actualizar fecha" : "Crear partido y programar fecha"}
           </Button>
-          {scheduleError && (
-            <p className="text-xs text-destructive font-medium">{scheduleError}</p>
-          )}
+          {scheduleError && <ActionErrorMessage message={scheduleError} />}
           {existingSeries?.scheduledDate && (
             <p className="text-xs text-muted-foreground">
               <Clock className="size-3 inline mr-1" />
@@ -557,6 +633,7 @@ function QFCard({
                 awayPlayers={awayPlayers}
                 form={seriesForm}
                 saving={saving}
+                feedback={feedback}
                 onChange={onFormChange}
                 onSave={() => onSaveSeries(existingSeries.id, homeTeamId, awayTeamId)}
               />
@@ -578,6 +655,7 @@ function SemiFinalAndFinalSection({
   onRefresh,
   forms,
   savingId,
+  feedback,
   onFormChange,
   onSaveSeries,
 }: {
@@ -588,6 +666,7 @@ function SemiFinalAndFinalSection({
   onRefresh: () => void
   forms: Record<string, SeriesForm>
   savingId: string | null
+  feedback: Record<string, SaveFeedback | undefined>
   onFormChange: (seriesId: string, updater: (prev: SeriesForm) => SeriesForm) => void
   onSaveSeries: (seriesId: string, homeTeamId: string, awayTeamId: string) => void
 }) {
@@ -658,6 +737,14 @@ function SemiFinalAndFinalSection({
     ? (sf2Existing?.homeTeam.id === sf2LoserId ? sf2Existing?.homeTeam.players : sf2Existing?.awayTeam.players) ?? []
     : []
 
+  // Crea o reprograma la serie; refresca solo si salió bien y devuelve el
+  // resultado para que la tarjeta muestre el error.
+  async function scheduleSeries(params: Parameters<typeof upsertPlayoffSeries>[0]): Promise<ActionResult> {
+    const result = await upsertPlayoffSeries(params)
+    if (result.success) onRefresh()
+    return result
+  }
+
   const blankForm: SeriesForm = {
     isGeneralWalkover: false,
     walkoverWinnerId: null,
@@ -684,9 +771,10 @@ function SemiFinalAndFinalSection({
           teams={teams}
           form={forms[sf1Existing?.id ?? ""] ?? blankForm}
           saving={savingId === sf1Existing?.id}
+          feedback={sf1Existing ? feedback[sf1Existing.id] : undefined}
           onFormChange={(updater) => { if (sf1Existing) onFormChange(sf1Existing.id, updater) }}
-          onScheduleSave={async (date, time, homeId, awayId) => {
-            await upsertPlayoffSeries({
+          onScheduleSave={(date, time, homeId, awayId) =>
+            scheduleSeries({
               categoryId,
               phase: "semifinal",
               homeTeamId: homeId,
@@ -695,8 +783,7 @@ function SemiFinalAndFinalSection({
               scheduledTime: time,
               existingSeriesId: sf1Existing?.id,
             })
-            onRefresh()
-          }}
+          }
           onResultSave={() => {
             if (sf1Existing) onSaveSeries(sf1Existing.id, sf1Existing.homeTeam.id, sf1Existing.awayTeam.id)
           }}
@@ -717,9 +804,10 @@ function SemiFinalAndFinalSection({
           teams={teams}
           form={forms[sf2Existing?.id ?? ""] ?? blankForm}
           saving={savingId === sf2Existing?.id}
+          feedback={sf2Existing ? feedback[sf2Existing.id] : undefined}
           onFormChange={(updater) => { if (sf2Existing) onFormChange(sf2Existing.id, updater) }}
-          onScheduleSave={async (date, time, homeId, awayId) => {
-            await upsertPlayoffSeries({
+          onScheduleSave={(date, time, homeId, awayId) =>
+            scheduleSeries({
               categoryId,
               phase: "semifinal",
               homeTeamId: homeId,
@@ -728,8 +816,7 @@ function SemiFinalAndFinalSection({
               scheduledTime: time,
               existingSeriesId: sf2Existing?.id,
             })
-            onRefresh()
-          }}
+          }
           onResultSave={() => {
             if (sf2Existing) onSaveSeries(sf2Existing.id, sf2Existing.homeTeam.id, sf2Existing.awayTeam.id)
           }}
@@ -753,9 +840,10 @@ function SemiFinalAndFinalSection({
             teams={teams}
             form={forms[finalExisting?.id ?? ""] ?? blankForm}
             saving={savingId === finalExisting?.id}
+            feedback={finalExisting ? feedback[finalExisting.id] : undefined}
             onFormChange={(updater) => { if (finalExisting) onFormChange(finalExisting.id, updater) }}
-            onScheduleSave={async (date, time, homeId, awayId) => {
-              await upsertPlayoffSeries({
+            onScheduleSave={(date, time, homeId, awayId) =>
+              scheduleSeries({
                 categoryId,
                 phase: "final",
                 homeTeamId: homeId,
@@ -764,8 +852,7 @@ function SemiFinalAndFinalSection({
                 scheduledTime: time,
                 existingSeriesId: finalExisting?.id,
               })
-              onRefresh()
-            }}
+            }
             onResultSave={() => {
               if (finalExisting) onSaveSeries(finalExisting.id, finalExisting.homeTeam.id, finalExisting.awayTeam.id)
             }}
@@ -787,9 +874,10 @@ function SemiFinalAndFinalSection({
             teams={teams}
             form={forms[thirdPlaceExisting?.id ?? ""] ?? blankForm}
             saving={savingId === thirdPlaceExisting?.id}
+            feedback={thirdPlaceExisting ? feedback[thirdPlaceExisting.id] : undefined}
             onFormChange={(updater) => { if (thirdPlaceExisting) onFormChange(thirdPlaceExisting.id, updater) }}
-            onScheduleSave={async (date, time, homeId, awayId) => {
-              await upsertPlayoffSeries({
+            onScheduleSave={(date, time, homeId, awayId) =>
+              scheduleSeries({
                 categoryId,
                 phase: "third_place",
                 homeTeamId: homeId,
@@ -798,8 +886,7 @@ function SemiFinalAndFinalSection({
                 scheduledTime: time,
                 existingSeriesId: thirdPlaceExisting?.id,
               })
-              onRefresh()
-            }}
+            }
             onResultSave={() => {
               if (thirdPlaceExisting) onSaveSeries(thirdPlaceExisting.id, thirdPlaceExisting.homeTeam.id, thirdPlaceExisting.awayTeam.id)
             }}
@@ -823,6 +910,7 @@ function SFOrFinalCard({
   teams,
   form,
   saving,
+  feedback,
   onFormChange,
   onScheduleSave,
   onResultSave,
@@ -837,8 +925,9 @@ function SFOrFinalCard({
   teams: { id: string; name: string }[]
   form: SeriesForm
   saving: boolean
+  feedback?: SaveFeedback
   onFormChange: (updater: (prev: SeriesForm) => SeriesForm) => void
-  onScheduleSave: (date: string, time: string, homeTeamId: string, awayTeamId: string) => Promise<void>
+  onScheduleSave: (date: string, time: string, homeTeamId: string, awayTeamId: string) => Promise<ActionResult>
   onResultSave: () => void
 }) {
   const [date, setDate] = useState(existing?.scheduledDate ?? "")
@@ -846,6 +935,7 @@ function SFOrFinalCard({
   const [selectedHomeId, setSelectedHomeId] = useState(defaultHomeTeamId)
   const [selectedAwayId, setSelectedAwayId] = useState(defaultAwayTeamId)
   const [scheduleSaving, setScheduleSaving] = useState(false)
+  const [scheduleError, setScheduleError] = useState<string | null>(null)
   const [showResult, setShowResult] = useState(false)
 
   useEffect(() => {
@@ -881,8 +971,16 @@ function SFOrFinalCard({
   async function handleScheduleSave() {
     if (!canSchedule) return
     setScheduleSaving(true)
-    await onScheduleSave(date, time, effectiveHomeId, effectiveAwayId)
-    setScheduleSaving(false)
+    setScheduleError(null)
+    try {
+      const result = await onScheduleSave(date, time, effectiveHomeId, effectiveAwayId)
+      if (!result.success) setScheduleError(result.error ?? UNEXPECTED_SCHEDULE_ERROR)
+    } catch (e) {
+      console.error("No se pudo guardar la fecha del playoff", e)
+      setScheduleError(UNEXPECTED_SCHEDULE_ERROR)
+    } finally {
+      setScheduleSaving(false)
+    }
   }
 
   return (
@@ -973,6 +1071,7 @@ function SFOrFinalCard({
         {scheduleSaving ? <Loader2 className="size-4 animate-spin" /> : existing ? <Save className="size-4" /> : <Plus className="size-4" />}
         {existing ? "Actualizar fecha" : "Crear partido"}
       </Button>
+      {scheduleError && <ActionErrorMessage message={scheduleError} />}
       {!existing && !canCreate && (
         <p className="text-xs text-muted-foreground">Seleccioná dos equipos distintos para crear el partido.</p>
       )}
@@ -1006,6 +1105,7 @@ function SFOrFinalCard({
               awayPlayers={awayPlayers}
               form={form}
               saving={saving}
+              feedback={feedback}
               onChange={onFormChange}
               onSave={onResultSave}
             />
@@ -1027,6 +1127,7 @@ function PlayoffSeriesEditor({
   awayPlayers,
   form,
   saving,
+  feedback,
   onChange,
   onSave,
 }: {
@@ -1038,9 +1139,12 @@ function PlayoffSeriesEditor({
   awayPlayers: PlayerInfo[]
   form: SeriesForm
   saving: boolean
+  feedback?: SaveFeedback
   onChange: (updater: (prev: SeriesForm) => SeriesForm) => void
   onSave: () => void
 }) {
+  // "Guardado ✓" solo después de guardar en esta sesión y hasta que se edite.
+  const justSaved = form.saved && feedback?.status === "saved"
   const homeCourts = form.courts.filter((c) => c.winnerTeamId === homeTeamId).length
   const awayCourts = form.courts.filter((c) => c.winnerTeamId === awayTeamId).length
   const decided = homeCourts >= 2 || awayCourts >= 2
@@ -1061,7 +1165,16 @@ function PlayoffSeriesEditor({
   function setGeneralWo(teamId: string | null) {
     onChange((prev) => {
       if (!teamId) {
-        return { ...prev, isGeneralWalkover: false, walkoverWinnerId: null, saved: false }
+        // Las canchas vuelven a estar en blanco (se conservan los jugadores
+        // asignados): si quedaran con W.O., el servidor rechaza el guardado.
+        const courts = prev.courts.map((c) => ({
+          ...blankCourt(),
+          homePlayer1Id: c.homePlayer1Id,
+          homePlayer2Id: c.homePlayer2Id,
+          awayPlayer1Id: c.awayPlayer1Id,
+          awayPlayer2Id: c.awayPlayer2Id,
+        })) as SeriesForm["courts"]
+        return { ...prev, isGeneralWalkover: false, walkoverWinnerId: null, courts, saved: false }
       }
       const courts = prev.courts.map((c) => ({
         ...c,
@@ -1165,10 +1278,24 @@ function PlayoffSeriesEditor({
         </p>
         <Button type="button" disabled={!allSet || saving} onClick={onSave}
           className="bg-primary text-primary-foreground hover:bg-primary/90">
-          {saving ? <Loader2 className="size-4 animate-spin" /> : form.saved ? <Check className="size-4" /> : <Save className="size-4" />}
-          {form.saved ? "Actualizar" : "Guardar resultado"}
+          {saving ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+          ) : justSaved ? null : form.saved ? (
+            <Check className="size-4" aria-hidden />
+          ) : (
+            <Save className="size-4" aria-hidden />
+          )}
+          {saving ? "Guardando…" : justSaved ? "Guardado ✓" : form.saved ? "Actualizar" : "Guardar resultado"}
         </Button>
       </div>
+      {/* El anuncio para lectores de pantalla está en PlayoffManager: al guardar
+          se recargan los datos y este editor se desmonta. */}
+      {feedback?.status === "error" && (
+        <ActionErrorMessage message={feedback.message} className="justify-end text-right" />
+      )}
+      {justSaved && feedback?.status === "saved" && feedback.warning && (
+        <InlineError className="justify-end text-right">{feedback.warning}</InlineError>
+      )}
     </div>
   )
 }

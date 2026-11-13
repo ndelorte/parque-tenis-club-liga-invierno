@@ -5,10 +5,12 @@ import { teamsToDeactivate } from "@/lib/liga/registration/protectedTeams"
 import { revalidatePath } from "next/cache"
 import { findLigaNameConflicts, type LigaNameConflict } from "@/lib/players/ligaNameConflicts"
 import { createAdminClient } from "@/lib/supabase/admin"
+import type { Database } from "@/lib/supabase/types"
 import { createClient } from "@/lib/supabase/server"
 import { isAdminUser } from "@/lib/auth/admin"
 import { generalWalkoverCourts } from "@/lib/tournament/generalWalkoverCourts"
 import { validateCourtWalkovers } from "@/lib/tournament/courtWalkoverRule"
+import { validateSeriesResultTeams } from "@/lib/tournament/validateSeriesResultTeams"
 import { resolveSeriesWinner } from "@/lib/tournament/calculateSeriesResult"
 import { recalculateAndPersistStandings } from "@/lib/data/standings"
 import { isCategoryReadyToClose } from "@/lib/tournament/isCategoryReadyToClose"
@@ -416,9 +418,25 @@ export type SeriesResultInput = {
   courts: CourtInput[]
 }
 
+// `warning`: la serie se guardó, pero algo posterior (la tabla) falló.
+export type SaveSeriesResultResponse = { success: boolean; error?: string; warning?: string }
+
+const SAVE_SERIES_ERROR = "No se pudo guardar el resultado de la serie. Probá de nuevo."
+const STANDINGS_WARNING =
+  "El resultado se guardó, pero no se pudo actualizar la tabla. Tocá “Recalcular tabla” para reintentar."
+
+type CourtMatchInsert = Database["public"]["Tables"]["court_matches"]["Insert"]
+
+type SeriesForSave = {
+  category_id: string
+  home_team_id: string
+  away_team_id: string
+  rounds: { phase: string } | null
+}
+
 export async function saveSeriesResult(
   input: SeriesResultInput,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<SaveSeriesResultResponse> {
   const authClient = await createClient()
   const {
     data: { user },
@@ -436,78 +454,81 @@ export async function saveSeriesResult(
   const supabase = createAdminClient()
 
   try {
-    const { data: seriesRow } = await supabase
+    const { data: seriesData, error: seriesError } = await supabase
       .from("series")
-      .select("category_id, round_id, rounds!inner(phase)")
+      .select("category_id, home_team_id, away_team_id, rounds!inner(phase)")
       .eq("id", input.seriesId)
-      .single()
-    const categoryId: string | undefined = (seriesRow as any)?.category_id
-    const isRegularPhase = (seriesRow as any)?.rounds?.phase === "regular"
+      .maybeSingle()
+    if (seriesError) {
+      console.error("saveSeriesResult: error leyendo la serie", input.seriesId, seriesError)
+      return { success: false, error: "No se pudo leer la serie. Probá de nuevo." }
+    }
+    const seriesRow = seriesData as unknown as SeriesForSave | null
+    if (!seriesRow) {
+      return { success: false, error: "La serie no existe. Recargá la página." }
+    }
+
+    // Los equipos salen de la base; los del cliente solo se aceptan si coinciden.
+    const homeTeamId = seriesRow.home_team_id
+    const awayTeamId = seriesRow.away_team_id
+    const teamsError = validateSeriesResultTeams(input, { homeTeamId, awayTeamId })
+    if (teamsError) return { success: false, error: teamsError }
+
+    const categoryId = seriesRow.category_id
+    const isRegularPhase = seriesRow.rounds?.phase === "regular"
 
     if (input.isGeneralWalkover && input.walkoverWinnerId) {
-      const isHome = input.walkoverWinnerId === input.homeTeamId
-      await supabase
-        .from("series")
-        .update({
-          is_general_walkover: true,
-          walkover_winner_team_id: input.walkoverWinnerId,
-          winner_team_id: input.walkoverWinnerId,
-          home_courts_won: isHome ? 3 : 0,
-          away_courts_won: isHome ? 0 : 3,
-          status: "walkover",
-        })
-        .eq("id", input.seriesId)
+      const walkoverWinnerId = input.walkoverWinnerId
+      const isHome = walkoverWinnerId === homeTeamId
 
+      // Primero las canchas: si alguna falla, la serie no queda marcada como WO.
       // Las 3 canchas pasan a 6-0 6-0 a favor del presente, aunque la serie
       // ya tuviera resultados cargados (reglas-liga-invierno.md, OQ-08). Los
       // jugadores que ya estuvieran asignados se conservan.
-      for (const court of generalWalkoverCourts(input.walkoverWinnerId, input.homeTeamId)) {
+      for (const court of generalWalkoverCourts(walkoverWinnerId, homeTeamId)) {
         const courtResult = {
           score: court.score,
           winner_team_id: court.winnerTeamId,
           is_court_walkover: false,
         }
-        const { data: existing } = await supabase
-          .from("court_matches")
-          .select("id")
-          .eq("series_id", input.seriesId)
-          .eq("court_number", court.courtNumber)
-          .maybeSingle()
-        const { error: courtError } = existing
-          ? await supabase.from("court_matches").update(courtResult).eq("id", (existing as any).id)
-          : await supabase
-              .from("court_matches")
-              .insert({ series_id: input.seriesId, court_number: court.courtNumber, ...courtResult })
-        if (courtError) return { success: false, error: courtError.message }
+        const courtError = await upsertCourtMatch(supabase, input.seriesId, court.courtNumber, courtResult)
+        if (courtError) {
+          console.error("saveSeriesResult: error guardando cancha (WO general)", input.seriesId, court.courtNumber, courtError)
+          return { success: false, error: `No se pudo guardar la cancha ${court.courtNumber}. Probá de nuevo.` }
+        }
       }
 
-      if (categoryId && isRegularPhase) await recalculateAndPersistStandings(categoryId)
-      revalidatePath("/panel-liga")
-      revalidatePath("/ligas-invierno-verano", "layout")
-      return { success: true }
+      const { error: updateError } = await supabase
+        .from("series")
+        .update({
+          is_general_walkover: true,
+          walkover_winner_team_id: walkoverWinnerId,
+          winner_team_id: walkoverWinnerId,
+          home_courts_won: isHome ? 3 : 0,
+          away_courts_won: isHome ? 0 : 3,
+          status: "walkover",
+        })
+        .eq("id", input.seriesId)
+      if (updateError) {
+        console.error("saveSeriesResult: error actualizando la serie (WO general)", input.seriesId, updateError)
+        return { success: false, error: SAVE_SERIES_ERROR }
+      }
+
+      return finishSeriesSave(categoryId, isRegularPhase)
     }
 
     for (const court of input.courts) {
-      const { data: existing } = await supabase
-        .from("court_matches")
-        .select("id")
-        .eq("series_id", input.seriesId)
-        .eq("court_number", court.courtNumber)
-        .maybeSingle()
-
       // Normalizar el score del WO de cancha: si es placeholder "W.O." o vacío,
       // guardarlo como score real según quién gana (desde perspectiva del local).
       const normalizedScore = court.isWalkover
-        ? court.winnerTeamId === input.homeTeamId
+        ? court.winnerTeamId === homeTeamId
           ? "6-0 6-0"
-          : court.winnerTeamId === input.awayTeamId
+          : court.winnerTeamId === awayTeamId
             ? "0-6 0-6"
             : court.score || null
         : court.score || null
 
       const matchData = {
-        series_id: input.seriesId,
-        court_number: court.courtNumber,
         home_player_1_id: court.homePlayer1Id,
         home_player_2_id: court.homePlayer2Id,
         away_player_1_id: court.awayPlayer1Id,
@@ -517,37 +538,90 @@ export async function saveSeriesResult(
         is_court_walkover: court.isWalkover,
       }
 
-      if (existing) {
-        await supabase.from("court_matches").update(matchData).eq("id", (existing as any).id)
-      } else {
-        await supabase.from("court_matches").insert(matchData)
+      const courtError = await upsertCourtMatch(supabase, input.seriesId, court.courtNumber, matchData)
+      if (courtError) {
+        console.error("saveSeriesResult: error guardando cancha", input.seriesId, court.courtNumber, courtError)
+        return { success: false, error: `No se pudo guardar la cancha ${court.courtNumber}. Probá de nuevo.` }
       }
     }
 
     const { winnerId, homeCourtsWon, awayCourtsWon } = resolveSeriesWinner(
       input.courts.map((c) => ({ winnerTeamId: c.winnerTeamId })),
-      input.homeTeamId,
-      input.awayTeamId,
+      homeTeamId,
+      awayTeamId,
     )
 
-    await supabase
+    const { error: updateError } = await supabase
       .from("series")
       .update({
         is_general_walkover: false,
+        walkover_winner_team_id: null,
         home_courts_won: homeCourtsWon,
         away_courts_won: awayCourtsWon,
         winner_team_id: winnerId,
         status: winnerId ? "completed" : "in_progress",
       })
       .eq("id", input.seriesId)
+    if (updateError) {
+      console.error("saveSeriesResult: error actualizando la serie", input.seriesId, updateError)
+      return { success: false, error: SAVE_SERIES_ERROR }
+    }
 
-    if (categoryId && isRegularPhase) await recalculateAndPersistStandings(categoryId)
-    revalidatePath("/panel-liga")
-    revalidatePath("/ligas-invierno-verano", "layout")
-    return { success: true }
+    return finishSeriesSave(categoryId, isRegularPhase)
   } catch (e) {
-    return { success: false, error: String(e) }
+    console.error("saveSeriesResult: error inesperado", input.seriesId, e)
+    return { success: false, error: SAVE_SERIES_ERROR }
   }
+}
+
+// Actualiza la cancha si ya existe o la crea. Devuelve el error de Supabase
+// (de la lectura o de la escritura), o null si salió bien.
+async function upsertCourtMatch(
+  supabase: ReturnType<typeof createAdminClient>,
+  seriesId: string,
+  courtNumber: number,
+  data: Omit<CourtMatchInsert, "series_id" | "court_number">,
+): Promise<{ message: string } | null> {
+  const { data: existing, error: selectError } = await supabase
+    .from("court_matches")
+    .select("id")
+    .eq("series_id", seriesId)
+    .eq("court_number", courtNumber)
+    .maybeSingle()
+  if (selectError) return selectError
+
+  const { error } = existing
+    ? await supabase
+        .from("court_matches")
+        .update(data)
+        .eq("id", (existing as { id: string }).id)
+    : await supabase
+        .from("court_matches")
+        .insert({ series_id: seriesId, court_number: courtNumber, ...data })
+  return error
+}
+
+// Recalcula la tabla (solo fase regular) y revalida. La serie ya está
+// guardada: si la tabla falla, se avisa con `warning` en vez de dar error.
+// Ojo: recalculateAndPersistStandings solo lanza si falla el upsert final;
+// si fallan sus lecturas previas sale sin escribir y no hay forma de enterarse
+// desde acá.
+async function finishSeriesSave(
+  categoryId: string,
+  isRegularPhase: boolean,
+): Promise<SaveSeriesResultResponse> {
+  let warning: string | undefined
+  if (isRegularPhase) {
+    try {
+      await recalculateAndPersistStandings(categoryId)
+    } catch (e) {
+      console.error("saveSeriesResult: error recalculando la tabla", categoryId, e)
+      warning = STANDINGS_WARNING
+    }
+  }
+  revalidatePath("/panel-liga")
+  revalidatePath("/ligas-invierno-verano", "layout")
+  return warning ? { success: true, warning } : { success: true }
 }
 
 // ——— Playoff actions ———
