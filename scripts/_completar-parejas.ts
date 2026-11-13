@@ -1,4 +1,3 @@
-/* eslint-disable */
 // Uso puntual: completa parejas de dobles con un solo jugador vinculado.
 //   npx tsx scripts/_completar-parejas.ts            → comprobación (no escribe)
 //   npx tsx scripts/_completar-parejas.ts --apply    → aplica
