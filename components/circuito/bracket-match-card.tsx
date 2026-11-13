@@ -1,4 +1,5 @@
 import type { BracketTreeMatch, BracketTreeSide } from "@/lib/circuito/bracketTree"
+import { scoreFromWinnerSide } from "@/lib/circuito/scoreFromWinnerSide"
 
 interface Props {
   match: BracketTreeMatch
@@ -7,8 +8,15 @@ interface Props {
   compact?: boolean
 }
 
+// El score se guarda "lado A – lado B": se muestra desde el lado del ganador.
+function winnerScore(match: BracketTreeMatch): string {
+  const winnerSide = match.winnerId && match.winnerId === match.b?.id ? "b" : "a"
+  return scoreFromWinnerSide(match.score, winnerSide)
+}
+
 function outcomeText(match: BracketTreeMatch): string {
-  const { a, b, winnerId, isBye, isWalkover, score } = match
+  const { a, b, winnerId, isBye, isWalkover } = match
+  const score = winnerScore(match)
   if (isBye) return `${a?.name ?? "?"} pasa libre a la próxima ronda.`
   if (winnerId) {
     const winner = winnerId === a?.id ? a : b
@@ -29,7 +37,7 @@ function Side({
 }: {
   side: BracketTreeSide | null
   isWinner: boolean
-  score: string | null
+  score: string
   isWalkover: boolean
   compact?: boolean
 }) {
@@ -62,7 +70,8 @@ function Side({
 // negrita + barra izquierda de color, y además con texto para lectores de
 // pantalla (no solo color/negrita).
 export function BracketMatchCard({ match, compact }: Props) {
-  const { a, b, winnerId, isBye, isWalkover, score } = match
+  const { a, b, winnerId, isBye, isWalkover } = match
+  const score = winnerScore(match)
 
   return (
     <div className="relative overflow-hidden rounded border-[1.5px] border-draw-line bg-card">

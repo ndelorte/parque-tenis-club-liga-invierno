@@ -25,6 +25,8 @@
 // Si ninguno de los dos arma un árbol válido, devuelve null y la UI cae a la
 // vista por lista (classifyMainBracketSections de bracketDisplay.ts).
 
+import { scoreFromWinnerSide } from "./scoreFromWinnerSide"
+
 export interface BracketTreeParticipant {
   name: string
   seed: number | null
@@ -140,7 +142,13 @@ function finalizeTree(
   const champion = finalMatch.winnerId
     ? { id: finalMatch.winnerId, name: participants[finalMatch.winnerId]?.name ?? "?" }
     : null
-  const finalScore = finalMatch.winnerId ? finalMatch.score : null
+  // "Final: score" va junto al campeón: se cuenta desde su lado (el score se
+  // guarda "lado A – lado B").
+  const finalScore = finalMatch.winnerId
+    ? finalMatch.score
+      ? scoreFromWinnerSide(finalMatch.score, finalMatch.winnerId === finalMatch.b?.id ? "b" : "a")
+      : finalMatch.score
+    : null
 
   return { rounds, champion, finalScore }
 }
