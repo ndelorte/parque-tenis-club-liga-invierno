@@ -92,10 +92,10 @@ describe("Final Master", () => {
     cy.visit("/circuito-del-parque/final-master")
     cy.location("pathname").should("eq", `/circuito-del-parque/especiales/${EDITION_SLUG}`)
     cy.contains(CATEGORY_NAME).should("be.visible")
-    cy.contains("2 zonas (4 y 3)").should("exist")
+    cy.contains("2 zonas de jugadores (4 y 3)").should("exist")
 
     cy.visit(`/circuito-del-parque/especiales/${EDITION_SLUG}/categorias/${CATEGORY_SLUG}`)
-    cy.contains("2 zonas (4 y 3)").should("exist")
+    cy.contains("2 zonas de jugadores (4 y 3)").should("exist")
     cy.contains("18:30 h").should("exist")
   })
 

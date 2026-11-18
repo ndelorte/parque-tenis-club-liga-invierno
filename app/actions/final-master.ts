@@ -11,6 +11,7 @@ import {
 import {
   FINAL_MASTER_MAX_ENTRIES,
   FINAL_MASTER_MIN_ENTRIES,
+  PLAYED_MATCH_OR_FILTER,
   drawFinalMaster,
   roundRobinPairs,
 } from "@/lib/final-master/draw"
@@ -30,7 +31,12 @@ function revalidateAll() {
   revalidatePath("/circuito-del-parque", "layout")
 }
 
-function fail(message: string, error?: { message?: string } | null): ActionResult {
+const CONCURRENT_ERROR = "Otro cambio se hizo al mismo tiempo; recargá la página."
+const READ_ERROR = "No se pudo verificar el estado de los cuadros; probá de nuevo."
+
+function fail(message: string, error?: { message?: string; code?: string } | null): ActionResult {
+  // 23505 = violación de unicidad (índices de la migración 019): dos cambios simultáneos.
+  if (error?.code === "23505") return { ok: false, error: CONCURRENT_ERROR }
   return { ok: false, error: error?.message ? `${message} (${error.message})` : message }
 }
 
@@ -49,21 +55,25 @@ function slugify(text: string): string {
 async function loadCategory(
   categoryId: string,
 ): Promise<{ category: DbMmCategory; edition: DbMmEdition } | { error: string }> {
-  const { data: category } = await db().from("mid_master_categories").select("*").eq("id", categoryId).maybeSingle()
+  const { data: category, error: catError } = await db().from("mid_master_categories").select("*").eq("id", categoryId).maybeSingle()
+  if (catError) return { error: "No se pudo leer la categoría; probá de nuevo." }
   if (!category) return { error: "No se encontró la categoría." }
-  const { data: edition } = await db().from("mid_master_editions").select("*").eq("id", category.edition_id).maybeSingle()
+  const { data: edition, error: edError } = await db().from("mid_master_editions").select("*").eq("id", category.edition_id).maybeSingle()
+  if (edError) return { error: "No se pudo leer la edición; probá de nuevo." }
   if (!edition || !isFinalMasterSlug(edition.slug)) {
     return { error: "La categoría no pertenece a un Final Master." }
   }
   return { category: category as DbMmCategory, edition: edition as DbMmEdition }
 }
 
-async function hasDraw(categoryId: string): Promise<boolean> {
-  const [{ data: parts }, { data: matches }] = await Promise.all([
+// Fail-closed: null si la consulta falla (el llamador aborta; nunca se asume false).
+async function hasDraw(categoryId: string): Promise<boolean | null> {
+  const [parts, matches] = await Promise.all([
     db().from("mid_master_participants").select("id").eq("category_id", categoryId).not("group_name", "is", null).limit(1),
     db().from("mid_master_matches").select("id").eq("category_id", categoryId).limit(1),
   ])
-  return (parts?.length ?? 0) > 0 || (matches?.length ?? 0) > 0
+  if (parts.error || matches.error) return null
+  return (parts.data?.length ?? 0) > 0 || (matches.data?.length ?? 0) > 0
 }
 
 // ── Edición ──────────────────────────────────────────────────
@@ -74,7 +84,9 @@ export async function createFinalMasterEditionAction(year: number): Promise<Acti
   const sb = db()
   const slug = finalMasterSlug(year)
 
-  let { data: edition } = await sb.from("mid_master_editions").select("*").eq("slug", slug).maybeSingle()
+  const { data: existingEdition, error: edReadError } = await sb.from("mid_master_editions").select("*").eq("slug", slug).maybeSingle()
+  if (edReadError) return fail("No se pudo leer la edición.", edReadError)
+  let edition = existingEdition
   if (!edition) {
     const { data, error } = await sb
       .from("mid_master_editions")
@@ -109,7 +121,8 @@ export async function createFinalMasterEditionAction(year: number): Promise<Acti
   }
 
   // Las dos zonas de cada categoría (las que falten).
-  const { data: cats } = await sb.from("mid_master_categories").select("id").eq("edition_id", edition.id)
+  const { data: cats, error: catsReadError } = await sb.from("mid_master_categories").select("id").eq("edition_id", edition.id)
+  if (catsReadError) return fail("No se pudieron leer las categorías.", catsReadError)
   const catIds = (cats ?? []).map((c: { id: string }) => c.id)
   const { data: groups, error: groupsError } = await sb
     .from("mid_master_groups")
@@ -155,7 +168,9 @@ export async function addFinalMasterEntryAction(
   }
   const ids = isDouble ? [playerId, player2Id as string] : [playerId]
 
-  if (await hasDraw(categoryId)) return { ok: false, error: "Los cuadros ya están armados. Primero deshacé los cuadros." }
+  const drawn = await hasDraw(categoryId)
+  if (drawn === null) return { ok: false, error: READ_ERROR }
+  if (drawn) return { ok: false, error: "Los cuadros ya están armados. Primero deshacé los cuadros." }
 
   const { data: existing, error: existingError } = await sb
     .from("mid_master_participants")
@@ -199,17 +214,18 @@ export async function addFinalMasterEntryAction(
 export async function removeFinalMasterEntryAction(participantId: string): Promise<ActionResult> {
   if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const sb = db()
-  const { data: participant } = await sb
+  const { data: participant, error: partError } = await sb
     .from("mid_master_participants")
     .select("id, category_id")
     .eq("id", participantId)
     .maybeSingle()
+  if (partError) return fail("No se pudo leer al inscripto.", partError)
   if (!participant) return { ok: false, error: "No se encontró al inscripto." }
   const loaded = await loadCategory(participant.category_id)
   if ("error" in loaded) return { ok: false, error: loaded.error }
-  if (await hasDraw(participant.category_id)) {
-    return { ok: false, error: "Los cuadros ya están armados. Primero deshacé los cuadros." }
-  }
+  const drawn = await hasDraw(participant.category_id)
+  if (drawn === null) return { ok: false, error: READ_ERROR }
+  if (drawn) return { ok: false, error: "Los cuadros ya están armados. Primero deshacé los cuadros." }
   const { error } = await sb.from("mid_master_participants").delete().eq("id", participantId)
   if (error) return fail("No se pudo quitar al inscripto.", error)
   revalidateAll()
@@ -218,13 +234,16 @@ export async function removeFinalMasterEntryAction(participantId: string): Promi
 
 // ── Cuadros ──────────────────────────────────────────────────
 
-async function hasPlayedMatches(categoryId: string): Promise<boolean> {
-  const { data } = await db()
+// Jugado = status played/walkover, o ganador o resultado cargados (isPlayedMatch).
+// Fail-closed: null si la consulta falla.
+async function hasPlayedMatches(categoryId: string): Promise<boolean | null> {
+  const { data, error } = await db()
     .from("mid_master_matches")
     .select("id")
     .eq("category_id", categoryId)
-    .in("status", ["played", "walkover"])
+    .or(PLAYED_MATCH_OR_FILTER)
     .limit(1)
+  if (error) return null
   return (data?.length ?? 0) > 0
 }
 
@@ -235,9 +254,9 @@ export async function drawFinalMasterCategoryAction(categoryId: string): Promise
   if ("error" in loaded) return { ok: false, error: loaded.error }
   const { category, edition } = loaded
 
-  if (await hasPlayedMatches(categoryId)) {
-    return { ok: false, error: "Ya hay partidos jugados: no se pueden rearmar los cuadros." }
-  }
+  const played = await hasPlayedMatches(categoryId)
+  if (played === null) return { ok: false, error: READ_ERROR }
+  if (played) return { ok: false, error: "Ya hay partidos jugados: no se pueden rearmar los cuadros." }
 
   const { data: parts, error: partsError } = await sb
     .from("mid_master_participants")
@@ -260,9 +279,17 @@ export async function drawFinalMasterCategoryAction(categoryId: string): Promise
   const groupB = groups.find((g) => g.name.trim().toUpperCase() === "B")
   if (!groupA || !groupB) return { ok: false, error: "La categoría no tiene las zonas A y B. Creá de nuevo el Final Master." }
 
+  // El ranking se lee con throwOnError: si falla no se sortea (sería como si
+  // nadie tuviera ranking y quedarían ordenados por orden de carga).
+  let ranked
+  try {
+    ranked = await rankFinalMasterEntries(participants, category.slug, edition.year, { throwOnError: true })
+  } catch {
+    return { ok: false, error: "No se pudo leer el ranking; probá de nuevo." }
+  }
   let draw
   try {
-    draw = drawFinalMaster(await rankFinalMasterEntries(participants, category.slug, edition.year))
+    draw = drawFinalMaster(ranked)
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "No se pudo hacer el sorteo." }
   }
@@ -328,9 +355,9 @@ export async function undoFinalMasterDrawAction(categoryId: string): Promise<Act
   const sb = db()
   const loaded = await loadCategory(categoryId)
   if ("error" in loaded) return { ok: false, error: loaded.error }
-  if (await hasPlayedMatches(categoryId)) {
-    return { ok: false, error: "Ya hay partidos jugados: no se pueden deshacer los cuadros." }
-  }
+  const played = await hasPlayedMatches(categoryId)
+  if (played === null) return { ok: false, error: READ_ERROR }
+  if (played) return { ok: false, error: "Ya hay partidos jugados: no se pueden deshacer los cuadros." }
   const { error: delError } = await sb.from("mid_master_matches").delete().eq("category_id", categoryId)
   if (delError) return fail("No se pudieron borrar los partidos.", delError)
   const { error } = await sb
@@ -347,7 +374,8 @@ export async function undoFinalMasterDrawAction(categoryId: string): Promise<Act
 export async function publishFinalMasterAction(editionId: string): Promise<ActionResult> {
   if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const sb = db()
-  const { data: edition } = await sb.from("mid_master_editions").select("*").eq("id", editionId).maybeSingle()
+  const { data: edition, error: edError } = await sb.from("mid_master_editions").select("*").eq("id", editionId).maybeSingle()
+  if (edError) return fail("No se pudo leer el Final Master.", edError)
   if (!edition || !isFinalMasterSlug(edition.slug)) return { ok: false, error: "No se encontró el Final Master." }
 
   let summaries
@@ -358,7 +386,7 @@ export async function publishFinalMasterAction(editionId: string): Promise<Actio
   }
 
   const withEntries = summaries.filter((s) => s.entriesCount > 0)
-  if (!withEntries.some((s) => s.hasDraw)) {
+  if (!withEntries.some((s) => s.drawComplete)) {
     return { ok: false, error: "Para publicar hace falta al menos una categoría con los cuadros armados." }
   }
   const problems = withEntries
@@ -367,6 +395,7 @@ export async function publishFinalMasterAction(editionId: string): Promise<Actio
         return `${s.category.name} (${s.entriesCount} inscriptos)`
       }
       if (!s.hasDraw) return `${s.category.name} (sin cuadros)`
+      if (!s.drawComplete) return `${s.category.name} (cuadros incompletos: deshacé y volvé a armar)`
       return null
     })
     .filter((x): x is string => x !== null)
@@ -386,7 +415,8 @@ export async function publishFinalMasterAction(editionId: string): Promise<Actio
 export async function unpublishFinalMasterAction(editionId: string): Promise<ActionResult> {
   if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const sb = db()
-  const { data: edition } = await sb.from("mid_master_editions").select("slug").eq("id", editionId).maybeSingle()
+  const { data: edition, error: edError } = await sb.from("mid_master_editions").select("slug").eq("id", editionId).maybeSingle()
+  if (edError) return fail("No se pudo leer el Final Master.", edError)
   if (!edition || !isFinalMasterSlug(edition.slug)) return { ok: false, error: "No se encontró el Final Master." }
   const { error } = await sb.from("mid_master_editions").update({ status: "upcoming" }).eq("id", editionId)
   if (error) return fail("No se pudo despublicar el torneo.", error)

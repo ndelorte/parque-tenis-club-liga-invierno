@@ -6,12 +6,12 @@ import { EntriesPanel } from "@/components/admin/final-master/EntriesPanel"
 import { UndoDrawButton } from "@/components/admin/final-master/FinalMasterActions"
 import { AdminShell, AdminPageHeader } from "@/components/admin/admin-shell"
 import { Notice } from "@/components/admin/states"
-import { FinalMasterSchemaError, getFinalMasterEdition, getFinalMasterEntries } from "@/lib/data/final-master"
-import { getMmCategoryAdminData } from "@/lib/data/mid-master"
+import { CreateFinalMasterButton } from "@/components/admin/final-master/FinalMasterActions"
+import { FinalMasterSchemaError, getCurrentFinalMasterEdition, getFinalMasterEntries } from "@/lib/data/final-master"
+import { getMmCategoryAdminData, getMmCategoryBySlug } from "@/lib/data/mid-master"
 import { normalizeType } from "@/lib/data/mid-master/types"
 import { getPlayersForSelect } from "@/lib/data/circuito/participants"
-import { finalMasterSlug } from "@/lib/final-master/categories"
-import { getFinalMasterYear } from "@/lib/final-master/year"
+import { isPlayedMatch } from "@/lib/final-master/draw"
 
 export const dynamic = "force-dynamic"
 
@@ -26,17 +26,41 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PanelFinalMasterCategoryPage({ params }: Props) {
   const { slug } = await params
-  const year = getFinalMasterYear()
-  const edition = await getFinalMasterEdition(year)
+  const edition = await getCurrentFinalMasterEdition()
   if (!edition) notFound()
+  const year = edition.year
   const data = await getMmCategoryAdminData(edition.id, slug)
-  if (!data) notFound()
+  if (!data) {
+    // La categoría existe pero le faltan las zonas A y B: se completa con el
+    // botón de crear (idempotente, solo agrega lo que falta).
+    const category = await getMmCategoryBySlug(edition.id, slug)
+    if (!category) notFound()
+    return (
+      <AdminShell
+        panel="circuito"
+        context={`Final Master ${year} · ${edition.status !== "upcoming" ? "Publicado" : "Borrador"}`}
+        currentSection="final-master"
+        publicHref="/circuito-del-parque/final-master"
+      >
+        <AdminPageHeader
+          crumbs={[{ label: "Final Master", href: "/panel-circuito/final-master" }, { label: category.name }]}
+          title={category.name}
+        />
+        <Notice variant="error" title="La categoría no tiene las zonas A y B">
+          Completá el Final Master para crear las zonas que faltan (no duplica lo que ya existe).
+          <div className="mt-3">
+            <CreateFinalMasterButton year={year} />
+          </div>
+        </Notice>
+      </AdminShell>
+    )
+  }
 
   const { category, groupA, groupB, knockoutMatches, allParticipants } = data
   const isSingles = normalizeType(category.type) === "singles"
   const allMatches = [...groupA.matches, ...groupB.matches, ...knockoutMatches]
   const drawn = allParticipants.some((p) => p.group_name !== null) || allMatches.length > 0
-  const anyPlayed = allMatches.some((m) => m.status === "played" || m.status === "walkover")
+  const anyPlayed = allMatches.some(isPlayedMatch)
   const published = edition.status !== "upcoming"
 
   let entries: Awaited<ReturnType<typeof getFinalMasterEntries>> = []
@@ -58,7 +82,7 @@ export default async function PanelFinalMasterCategoryPage({ params }: Props) {
       currentSection="final-master"
       publicHref={
         published
-          ? `/circuito-del-parque/especiales/${finalMasterSlug(year)}/categorias/${slug}`
+          ? `/circuito-del-parque/especiales/${edition.slug}/categorias/${slug}`
           : "/circuito-del-parque/final-master"
       }
     >

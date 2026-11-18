@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { drawFinalMaster, orderByRanking, roundRobinPairs, serpentineZone } from "../draw"
+import { drawFinalMaster, isDrawComplete, isPlayedMatch, orderByRanking, roundRobinPairs, serpentineZone } from "../draw"
 
 const entry = (id: string, loadOrder: number, rankingPoints = 0, rankingPosition: number | null = null) => ({
   id,
@@ -70,5 +70,25 @@ describe("drawFinalMaster", () => {
     const make = (n: number) => Array.from({ length: n }, (_, i) => entry(`p${i + 1}`, i + 1))
     expect(() => drawFinalMaster(make(5))).toThrow()
     expect(() => drawFinalMaster(make(9))).toThrow()
+  })
+})
+
+describe("isPlayedMatch", () => {
+  it("cuenta status, ganador o score", () => {
+    expect(isPlayedMatch({ status: "played" })).toBe(true)
+    expect(isPlayedMatch({ status: "walkover" })).toBe(true)
+    expect(isPlayedMatch({ status: "scheduled", winner_participant_id: "x" })).toBe(true)
+    expect(isPlayedMatch({ status: "scheduled", score: "6-4 6-4" })).toBe(true)
+    expect(isPlayedMatch({ status: "scheduled", winner_participant_id: null, score: null })).toBe(false)
+  })
+})
+
+describe("isDrawComplete", () => {
+  const base = { participantZones: ["A", "A", "A", "A", "B", "B", "B"], zoneMatchCounts: { A: 6, B: 3 }, semifinals: 2, finals: 1 }
+  it("completo con 4 y 3", () => expect(isDrawComplete(base)).toBe(true))
+  it("incompleto si falta un partido de zona", () => expect(isDrawComplete({ ...base, zoneMatchCounts: { A: 5, B: 3 } })).toBe(false))
+  it("incompleto sin final o con inscripto sin zona", () => {
+    expect(isDrawComplete({ ...base, finals: 0 })).toBe(false)
+    expect(isDrawComplete({ ...base, participantZones: [...base.participantZones, null] })).toBe(false)
   })
 })

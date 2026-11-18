@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { getCircuitoEditions } from "@/lib/data/circuito/editions"
-import { getFinalMasterEdition } from "@/lib/data/final-master"
+import { getCurrentFinalMasterEdition } from "@/lib/data/final-master"
 import { getMmActiveEdition } from "@/lib/data/mid-master"
 import { buildSeasonCalendar } from "@/lib/circuito/seasonCalendar"
 import { SeasonCalendar } from "@/components/circuito/season-calendar"
@@ -20,7 +20,7 @@ export default async function CircuitoDelParquePage() {
   const [editions, midMaster, finalMaster] = await Promise.all([
     getCircuitoEditions(),
     getMmActiveEdition(),
-    getFinalMasterEdition(year),
+    getCurrentFinalMasterEdition(),
   ])
   const finalMasterPublished = !!finalMaster && finalMaster.status !== "upcoming"
   const months = buildSeasonCalendar(editions, year, now.getMonth() + 1)

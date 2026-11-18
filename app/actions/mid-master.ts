@@ -37,15 +37,20 @@ export async function updateMmMatchSchedule(
   scheduledTime: string,
 ): Promise<ActionResult> {
   if (!(await isRequestFromAdmin())) return UNAUTHORIZED
-  const status = scheduledDate ? "scheduled" : "pending"
-  const { error } = await db()
+  const { data: current, error: readError } = await db()
     .from("mid_master_matches")
-    .update({
-      scheduled_date: scheduledDate || null,
-      scheduled_time: scheduledTime || null,
-      status,
-    })
+    .select("status")
     .eq("id", matchId)
+    .maybeSingle()
+  if (readError || !current) return { ok: false, error: "No se encontró el partido." }
+  // Un partido jugado (o por walkover) conserva su estado: solo cambia la fecha/hora.
+  const keepsStatus = current.status === "played" || current.status === "walkover"
+  const update: Record<string, unknown> = {
+    scheduled_date: scheduledDate || null,
+    scheduled_time: scheduledTime || null,
+  }
+  if (!keepsStatus) update.status = scheduledDate ? "scheduled" : "pending"
+  const { error } = await db().from("mid_master_matches").update(update).eq("id", matchId)
 
   if (error) return { ok: false, error: "Error al guardar la fecha." }
   revalidateMm()
@@ -351,8 +356,7 @@ export async function assignMmMatchParticipants(
 
 // ── Trigger revalidation (standings computed on-the-fly) ──────
 
-export async function revalidateMmCategory(slug: string): Promise<void> {
+export async function revalidateMmCategory(): Promise<void> {
   if (!(await isRequestFromAdmin())) return
-  void slug
   revalidateMm()
 }

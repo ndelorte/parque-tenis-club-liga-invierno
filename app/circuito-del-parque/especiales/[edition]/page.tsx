@@ -14,7 +14,7 @@ export async function generateStaticParams() {
 }
 
 const FINAL_MASTER_DESCRIPTION =
-  "El cierre del año del Circuito del Parque. Los 8 mejores del ranking anual de cada categoría en dos zonas de todos contra todos; los dos primeros de cada zona a semifinales y la final a tres sets completos."
+  "El cierre del año del Circuito del Parque. Los mejores del ranking anual de cada categoría (hasta 8) en dos zonas de todos contra todos; los dos primeros de cada zona a semifinales y la final a tres sets completos."
 
 interface Props {
   params: Promise<{ edition: string }>
@@ -35,6 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function EdicionEspecialPage({ params }: Props) {
   const { edition } = await params
   const ed = await getMmEditionBySlug(edition)
+  // Cualquier edición especial en `upcoming` (borrador) es invisible: 404.
   if (!ed || ed.status === "upcoming") notFound()
 
   const categories = await getMmCategoriesForPublic(ed.id)

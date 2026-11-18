@@ -204,7 +204,9 @@ comprimen así:
   inscriptos no se publica.
 - **Orden**: por ranking anual del circuito en esa categoría. Sin ranking → orden de carga (van
   después de los que tienen puntos). En dobles, la pareja se ordena por la **suma** de los puntos
-  de sus dos jugadores (confirmado, OQ-42).
+  de sus dos jugadores (confirmado, OQ-42). **Desempate en dobles (CONFIRMADO por el organizador,
+  2026-11-18)**: a igual suma de puntos queda arriba la pareja cuyo mejor jugador está mejor
+  ubicado en el ranking anual individual de la categoría; si sigue el empate, orden de carga.
 - **Zonas en serpentina**: A = 1°, 4°, 5°, 8° · B = 2°, 3°, 6°, 7°. Todos contra todos en cada
   zona, semifinales cruzadas (1° A–2° B, 1° B–2° A) y final.
 - **Formato de partido**: el mismo del Mid Master (confirmado, OQ-42): super tie-break registrado

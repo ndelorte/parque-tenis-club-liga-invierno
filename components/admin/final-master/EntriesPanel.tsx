@@ -102,6 +102,12 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
         Zonas en serpentina: A = 1°, 4°, 5°, 8° · B = 2°, 3°, 6°, 7°.
       </p>
 
+      {entries.length > 0 && !entries.some((e) => e.rankingPoints > 0) && (
+        <p role="status" className="mb-3 text-sm font-semibold text-muted-foreground">
+          Ningún inscripto tiene puntos en el ranking {year}: se ordenan por orden de carga.
+        </p>
+      )}
+
       {entries.length > 0 && (
         <ol className="mb-4 divide-y divide-border rounded-md border border-border">
           {entries.map((e, i) => (

@@ -177,6 +177,8 @@ No mostrar teléfonos ni DNI en vistas públicas (el DNI vive en `player_private
 | `/circuito-del-parque/especiales/[edition]` | Torneo especial (Mid Master, Final Master, ...) — zonas + semis + final |
 | `/circuito-del-parque/especiales/[edition]/categorias/[slug]` | Zonas, fixture y cuadro final de una categoría de esa edición |
 
+Las rutas `/circuito-del-parque/especiales/[edition]` (y sus categorías) dan 404 para cualquier edición especial en `upcoming` (borrador), no solo el Final Master.
+
 Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]`, `/liga-invierno/equipos/[catSlug]/[teamSlug]`) y `/mid-master`, `/mid-master/categorias/[slug]` quedan como redirects 301 (ver `next.config.ts`) — no reintroducirlas como rutas reales.
 
 ## Rutas admin (no enlazar públicamente)
@@ -194,7 +196,7 @@ Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]
 | `/panel-circuito/login` | Login con Supabase Auth (Circuito del Parque / Mid Master) |
 | `/panel-circuito` | Dashboard de Mid Master |
 | `/panel-circuito/categorias/[slug]` | Carga de resultados de Mid Master |
-| `/panel-circuito/final-master` | Final Master: crear la edición (borrador), estado de las 10 categorías y botón "Publicar torneo" / "Despublicar" (migración 018) |
+| `/panel-circuito/final-master` | Final Master: crear la edición (borrador), estado de las 10 categorías y botón "Publicar torneo" / "Despublicar" (migraciones 018 y 019: índices únicos de integridad del sorteo) |
 | `/panel-circuito/final-master/[slug]` | Categoría del Final Master: cargar hasta 8 jugadores (orden por ranking anual), armar cuadros (serpentina), resultados y fechas, deshacer cuadros |
 | `/panel-circuito/mensual` | Circuito mensual: listado de ediciones + alta de edición nueva |
 | `/panel-circuito/mensual/[editionSlug]` | Categorías de una edición mensual |

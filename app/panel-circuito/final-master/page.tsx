@@ -9,20 +9,19 @@ import {
 } from "@/components/admin/final-master/FinalMasterActions"
 import {
   FinalMasterSchemaError,
+  getCurrentFinalMasterEdition,
   getFinalMasterCategorySummaries,
-  getFinalMasterEdition,
   type FinalMasterCategorySummary,
 } from "@/lib/data/final-master"
 import { normalizeType } from "@/lib/data/mid-master/types"
 import { FINAL_MASTER_MAX_ENTRIES } from "@/lib/final-master/draw"
-import { finalMasterSlug } from "@/lib/final-master/categories"
 import { getFinalMasterYear } from "@/lib/final-master/year"
 
 export const metadata: Metadata = { title: "Final Master | Panel Circuito del Parque" }
 export const dynamic = "force-dynamic"
 
 function CategoryCard({ summary }: { summary: FinalMasterCategorySummary }) {
-  const { category, entriesCount, hasDraw } = summary
+  const { category, entriesCount, hasDraw, drawComplete } = summary
   const typeLabel = normalizeType(category.type) === "singles" ? "Singles" : "Dobles"
   return (
     <Link
@@ -32,7 +31,9 @@ function CategoryCard({ summary }: { summary: FinalMasterCategorySummary }) {
       <span className="grid min-w-0">
         <span className="text-sm text-muted-foreground">
           {typeLabel} · {entriesCount}/{FINAL_MASTER_MAX_ENTRIES} inscriptos ·{" "}
-          <span className={hasDraw ? "font-semibold text-win" : undefined}>{hasDraw ? "Cuadros armados" : "Sin cuadros"}</span>
+          <span className={drawComplete ? "font-semibold text-win" : hasDraw ? "font-semibold text-loss" : undefined}>
+            {drawComplete ? "Cuadros armados" : hasDraw ? "Cuadros incompletos" : "Sin cuadros"}
+          </span>
         </span>
         <span className="truncate font-bold">{category.name}</span>
       </span>
@@ -58,8 +59,9 @@ function Section({ title, items }: { title: string; items: FinalMasterCategorySu
 }
 
 export default async function PanelFinalMasterPage() {
-  const year = getFinalMasterYear()
-  const edition = await getFinalMasterEdition(year)
+  // Edición vigente; si no hay ninguna, "Crear" usa el año actual (o el override e2e).
+  const edition = await getCurrentFinalMasterEdition()
+  const year = edition?.year ?? getFinalMasterYear()
 
   let summaries: FinalMasterCategorySummary[] = []
   let missingMigration = false
@@ -84,7 +86,7 @@ export default async function PanelFinalMasterPage() {
       currentSection="final-master"
       publicHref={
         edition && published
-          ? `/circuito-del-parque/especiales/${finalMasterSlug(year)}`
+          ? `/circuito-del-parque/especiales/${edition.slug}`
           : "/circuito-del-parque/final-master"
       }
     >

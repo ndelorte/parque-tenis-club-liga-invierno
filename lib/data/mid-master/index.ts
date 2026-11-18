@@ -124,7 +124,12 @@ export async function getMmParticipantsByCategory(categoryId: string): Promise<D
 
 export async function getMmMatchesByCategory(categoryId: string): Promise<AnyRow[]> {
   const sb = await supabase()
-  const { data, error } = await sb.from("mid_master_matches").select("*").eq("category_id", categoryId)
+  const { data, error } = await sb
+    .from("mid_master_matches")
+    .select("*")
+    .eq("category_id", categoryId)
+    .order("match_order", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: true })
   if (error) { logError("getMmMatchesByCategory", error); return [] }
   return data ?? []
 }
