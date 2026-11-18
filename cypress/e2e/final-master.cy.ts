@@ -18,18 +18,20 @@ let suiteFailed = false
 // Verifica que el panel esté sobre la edición de prueba (2099) antes de escribir.
 function assertTestEdition() {
   cy.visit("/panel-circuito/final-master")
-  cy.contains(String(YEAR)).should("exist")
+  cy.contains(`Final Master ${YEAR}`).should("exist")
 }
 
 describe("Final Master", () => {
   before(() => {
-    cy.task("cleanupFinalMaster", YEAR)
-    cy.task("ensureE2ePlayers", 8)
+    // Primero la guarda (sin escribir nada): si el server no corre con el
+    // override, aborta antes de tocar la base.
     cy.loginAdmin()
     cy.visit("/panel-circuito/final-master")
     cy.get("body").then(($body) => {
       if (!$body.text().includes(`Final Master ${YEAR}`)) throw new Error(WRONG_SERVER)
     })
+    cy.task("cleanupFinalMaster", YEAR)
+    cy.task("ensureE2ePlayers", 8)
   })
 
   after(() => {

@@ -43,7 +43,7 @@ export async function getFinalMasterEdition(year: number): Promise<DbMmEdition |
 }
 
 // Edición vigente del Final Master: con override (FINAL_MASTER_YEAR) la de ese
-// año; si no, la más reciente no terminada con año >= año AR - 1; si no hay, la
+// año; si no, la más reciente no terminada con año entre año AR - 1 y año AR; si no hay, la
 // del año AR (puede ser null). Ver lib/final-master/currentEdition.ts.
 export async function getCurrentFinalMasterEdition(): Promise<DbMmEdition | null> {
   const override = getFinalMasterYearOverride()
