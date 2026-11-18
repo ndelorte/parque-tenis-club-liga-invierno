@@ -415,6 +415,17 @@ desempate por diferencia de games para los datos importados.
 
 ---
 
+### ~~OQ-42~~: Final Master — ¿formato de partido y orden de las parejas de dobles?
+
+**Respuesta (2026-11-18)**: (1) En dobles, el ranking de la pareja es la **suma de los puntos
+anuales** de sus dos jugadores en la categoría. (2) El formato de partido es el mismo del Mid
+Master: super tie-break registrado 7-6 como tercer set en zonas y semifinales; final a 3 sets
+completos. (3) **Desempate en dobles (confirmado 2026-11-18)**: a igual suma de puntos queda arriba
+la pareja cuyo mejor jugador está mejor ubicado en el ranking anual individual; si sigue el empate,
+orden de carga. Volcado en `reglas-circuito-del-parque.md` (sección "Final Master — decisiones del organizador").
+
+---
+
 ### ~~OQ-25~~: ¿Prefijo `circuito_` nuevo o extender `mid_master_`?
 
 **Respuesta** (2026-09-07): Prefijo nuevo `circuito_`, tablas tipadas en `lib/supabase/types.ts`

@@ -6,6 +6,7 @@ import { KnockoutBracket } from "@/components/mid-master/KnockoutBracket"
 import { MmSponsorsBanner } from "@/components/mid-master/MmSponsorsBanner"
 import { getMmEditionBySlug, getMmCategoryForPublic, getMmCategories } from "@/lib/data/mid-master"
 import type { MmCategory } from "@/lib/mid-master/types"
+import { isFinalMasterSlug } from "@/lib/final-master/categories"
 
 export const revalidate = 60
 
@@ -18,7 +19,7 @@ export async function generateStaticParams({ params }: { params: { edition: stri
   try {
     const { edition } = params
     const ed = await getMmEditionBySlug(edition)
-    if (!ed) return []
+    if (!ed || ed.status === "upcoming") return []
     const categories = await getMmCategories(ed.id)
     return categories.map((c) => ({ slug: c.slug }))
   } catch {
@@ -29,13 +30,18 @@ export async function generateStaticParams({ params }: { params: { edition: stri
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { edition, slug } = await params
   const ed = await getMmEditionBySlug(edition)
-  if (!ed) return {}
+  if (!ed || ed.status === "upcoming") return {}
   const cat = await getMmCategoryForPublic(ed.id, slug)
   if (!cat) return {}
+  if (isFinalMasterSlug(ed.slug) && isEmptyCategory(cat)) return {}
   return {
     title: `${cat.name} · ${ed.name} ${ed.year} | Parque Tenis Club`,
     description: `Zonas, fixture y cuadro final de ${cat.name} en el ${ed.name} ${ed.year}.`,
   }
+}
+
+function isEmptyCategory(category: MmCategory): boolean {
+  return category.zones[0].participants.length === 0 && category.zones[1].participants.length === 0
 }
 
 function getChampionLabel(category: MmCategory): string {
@@ -43,18 +49,26 @@ function getChampionLabel(category: MmCategory): string {
   return /damas/i.test(category.name) ? "Campeona" : "Campeón"
 }
 
-function getCrossDescription(category: MmCategory): string {
+// Tamaños reales de las zonas (en el Final Master pueden ser 4 y 3).
+function describeZones(category: MmCategory): string {
+  const [a, b] = [category.zones[0].participants.length, category.zones[1].participants.length]
   const unit = category.type === "doubles" ? "parejas" : "jugadores"
-  return `2 zonas de ${category.zoneSize} ${unit}. Pasan los dos primeros de cada zona; las semifinales se cruzan (1° A con 2° B, 1° B con 2° A).`
+  return a === b ? `2 zonas de ${a} ${unit}` : `2 zonas de ${unit} (${a} y ${b})`
+}
+
+function getCrossDescription(category: MmCategory): string {
+  return `${describeZones(category)}. Pasan los dos primeros de cada zona; las semifinales se cruzan (1° A con 2° B, 1° B con 2° A).`
 }
 
 export default async function CategoryPage({ params }: Props) {
   const { edition, slug } = await params
   const ed = await getMmEditionBySlug(edition)
-  if (!ed) notFound()
+  if (!ed || ed.status === "upcoming") notFound()
 
   const cat = await getMmCategoryForPublic(ed.id, slug)
   if (!cat) notFound()
+  // Final Master: una categoría sin participantes en zonas (sin sortear) no se muestra.
+  if (isFinalMasterSlug(ed.slug) && isEmptyCategory(cat)) notFound()
 
   const { final } = cat.knockout
   const isFinalPlayed = final.status === "played" || final.status === "walkover"

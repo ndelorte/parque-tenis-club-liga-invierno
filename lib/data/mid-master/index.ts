@@ -60,13 +60,15 @@ export async function getMmEditionBySlug(slug: string): Promise<DbMmEdition | nu
 }
 
 // Ediciones "activas" (en curso) — hoy solo puede haber una a la vez, mismo
-// criterio que getActiveTournament() de Liga.
+// criterio que getActiveTournament() de Liga. Excluye el Final Master
+// (slug final-master-YYYY): tiene su propia sección.
 export async function getMmActiveEdition(): Promise<DbMmEdition | null> {
   const sb = await supabase()
   const { data, error } = await sb
     .from("mid_master_editions")
     .select("*")
     .eq("status", "active")
+    .not("slug", "like", "final-master-%")
     .order("year", { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -122,7 +124,12 @@ export async function getMmParticipantsByCategory(categoryId: string): Promise<D
 
 export async function getMmMatchesByCategory(categoryId: string): Promise<AnyRow[]> {
   const sb = await supabase()
-  const { data, error } = await sb.from("mid_master_matches").select("*").eq("category_id", categoryId)
+  const { data, error } = await sb
+    .from("mid_master_matches")
+    .select("*")
+    .eq("category_id", categoryId)
+    .order("match_order", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: true })
   if (error) { logError("getMmMatchesByCategory", error); return [] }
   return data ?? []
 }
@@ -191,7 +198,13 @@ function adaptGroup(
 }
 
 function adaptKnockout(knockoutMatches: AnyRow[], allParticipants: AnyRow[]): MmKnockout {
-  const semis = knockoutMatches.filter((m) => m.phase === "semifinal")
+  const semis = knockoutMatches
+    .filter((m) => m.phase === "semifinal")
+    .sort(
+      (a, b) =>
+        (a.match_order ?? 999) - (b.match_order ?? 999) ||
+        String(a.created_at ?? "").localeCompare(String(b.created_at ?? "")),
+    )
   const finals = knockoutMatches.filter((m) => m.phase === "final")
 
   function adaptKM(m: AnyRow): MmKnockoutMatch {
@@ -273,7 +286,11 @@ export async function getMmCategoriesForPublic(editionId: string): Promise<MmCat
   const categories = await getMmCategories(editionId)
   if (!categories.length) return []
   const results = await Promise.all(categories.map(buildCategory))
-  return results.filter((r): r is MmCategory => r !== null)
+  // Sin participantes en zonas (ej. una categoría del Final Master sin
+  // inscriptos) no se muestra.
+  return results.filter(
+    (r): r is MmCategory => r !== null && r.zones[0].participants.length + r.zones[1].participants.length > 0,
+  )
 }
 
 export async function getMmCategoryForPublic(editionId: string, slug: string): Promise<MmCategory | null> {

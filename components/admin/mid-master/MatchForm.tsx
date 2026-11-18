@@ -85,7 +85,7 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
   return (
     <div className="border-b border-border last:border-0">
       {/* Row */}
-      <div className="flex items-center gap-2 px-4 py-3">
+      <div data-testid="match-row" className="flex items-center gap-2 px-4 py-3">
         {/* Status indicator */}
         <span className={`size-2 shrink-0 rounded-full ${
           isCompleted ? "bg-win-soft0" :
@@ -131,6 +131,7 @@ export function MatchForm({ match, participants, isFinal = false }: Props) {
             </button>
           )}
           <button
+            data-testid="match-toggle"
             onClick={() => { setOpen(!open); setError(""); setSuccess("") }}
             className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
           >

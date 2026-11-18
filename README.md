@@ -6,6 +6,22 @@ Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS · shadcn/ui · Sup
 
 ---
 
+## Pruebas e2e (Cypress)
+
+Cubren el flujo del Final Master (panel + web pública). Trabajan con una edición de prueba del año **2099**, sin tocar la real.
+
+1. Crear en Supabase Auth un usuario admin de prueba con `app_metadata: {"role":"admin"}`.
+2. `cp cypress.env.example.json cypress.env.json` y completar `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` (el archivo está en `.gitignore`; la service role solo la usa Node para limpiar datos).
+3. Terminal 1: `FINAL_MASTER_YEAR=2099 npm run dev` (la variable es solo para e2e, **no** setearla en Vercel).
+4. Terminal 2: `npm run e2e` (o `npm run e2e:open`).
+
+Datos de prueba: la edición `final-master-2099` y sus categorías/partidos/participantes se borran antes y después (la task rechaza años menores a 2090). Los jugadores "Zz E2E 01".."Zz E2E 08" se crean activos (el combobox solo lista activos) y al final se borran; si alguno quedó referenciado por otra tabla, se desactiva en vez de borrarse.
+
+Riesgos aceptados (la base de pruebas es la compartida):
+- Los jugadores "Zz E2E NN" existen **activos** en la base compartida durante la corrida y se borran (o desactivan si quedaron referenciados) al final.
+- La edición de prueba 2099 se **publica unos segundos** durante la corrida, así que sus páginas (`/circuito-del-parque/especiales/final-master-2099`) son accesibles por URL directa en ese lapso. Sin `FINAL_MASTER_YEAR`, la landing, el redirect de `/circuito-del-parque/final-master` y el panel ignoran ediciones de años mayores al año actual, por lo que la de prueba nunca reemplaza a la real.
+- El spec aborta si el server no corre con `FINAL_MASTER_YEAR=2099`.
+
 ## Configuración inicial
 
 ### 1. Variables de entorno

@@ -225,10 +225,14 @@ export async function getCircuitRanking(editionId: string, categoryId?: string):
 // `beforeMonth`: solo cuenta los torneos de meses anteriores (el ranking
 // "hasta ese momento", para sortear el cuadro de un torneo sin que cuenten ni
 // ese torneo ni los que vienen después).
+// `options.throwOnError`: ante un error de lectura lanza en vez de devolver un
+// ranking vacío (el sorteo del Final Master no puede asumir "sin ranking").
+// Por defecto se mantiene el contrato público: vacío ante error.
 export async function getAnnualCircuitRanking(
   year: number,
   categorySlug: string,
   beforeMonth?: number,
+  options?: { throwOnError?: boolean },
 ): Promise<AnnualRanking> {
   const supabase = createPublicClient()
   const { data, error } = await fetchAllRows((from, to) => {
@@ -243,7 +247,10 @@ export async function getAnnualCircuitRanking(
     return (beforeMonth === undefined ? query : query.lt("circuito_editions.month", beforeMonth)).order("id").range(from, to)
   })
 
-  if (error || !data) return { entries: [], tournaments: [] }
+  if (error || !data) {
+    if (options?.throwOnError) throw new Error(`No se pudo leer el ranking anual: ${error?.message ?? "sin datos"}`)
+    return { entries: [], tournaments: [] }
+  }
 
   type Row = {
     player_id: string

@@ -6,9 +6,11 @@ import { AddParticipantButton } from "./AddParticipantButton"
 
 interface Props {
   data: MmGroupWithData
+  // El Final Master carga los jugadores antes de armar los cuadros: no se agregan desde la zona.
+  allowAddParticipant?: boolean
 }
 
-export function ZoneAdmin({ data }: Props) {
+export function ZoneAdmin({ data, allowAddParticipant = true }: Props) {
   const { group, participants, matches } = data
 
   // Compute standings on-the-fly
@@ -40,7 +42,7 @@ export function ZoneAdmin({ data }: Props) {
             ))}
           </div>
         )}
-        {participants.length < 4 && (
+        {allowAddParticipant && participants.length < 4 && (
           <div className="mt-3">
             <AddParticipantButton
               categoryId={group.category_id}

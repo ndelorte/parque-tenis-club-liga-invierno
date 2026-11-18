@@ -7,6 +7,8 @@ interface Props {
   year: number
   categoriesCount: number
   participantsCount: number
+  // Texto bajo el título; sin valor, el del Mid Master.
+  description?: string
 }
 
 /**
@@ -16,7 +18,7 @@ interface Props {
  * Condensed. El trazo dorado de CourtLines es el único movimiento de la
  * pantalla.
  */
-export function MidMasterHero({ name, year, categoriesCount, participantsCount }: Props) {
+export function MidMasterHero({ name, year, categoriesCount, participantsCount, description }: Props) {
   return (
     <section className="relative overflow-hidden border-b border-mm-gold-muted bg-mm-bg">
       <div className="mx-auto grid max-w-6xl gap-6 px-4 pb-8 pt-6 sm:px-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] md:items-center md:gap-10 md:pb-12 md:pt-8">
@@ -47,8 +49,8 @@ export function MidMasterHero({ name, year, categoriesCount, participantsCount }
           </h1>
 
           <p className="max-w-[52ch] text-[17px] text-mm-text-muted">
-            El torneo de mitad de año. Dos zonas de todos contra todos por categoría, los dos
-            primeros de cada zona a semifinales y la final a tres sets completos.
+            {description ??
+              "El torneo de mitad de año. Dos zonas de todos contra todos por categoría, los dos primeros de cada zona a semifinales y la final a tres sets completos."}
           </p>
 
           <dl className="mt-1.5 grid w-fit grid-cols-2 justify-start gap-x-7 gap-y-0">

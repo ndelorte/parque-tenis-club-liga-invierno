@@ -81,6 +81,7 @@ export const PANEL_SECTIONS: Record<PanelKey, PanelSection[]> = {
   circuito: [
     { key: "mid-master", label: "Mid Master", href: "/panel-circuito", icon: Trophy },
     { key: "mensual", label: "Circuito mensual", href: "/panel-circuito/mensual", icon: CalendarDays },
+    { key: "final-master", label: "Final Master", href: "/panel-circuito/final-master", icon: Crown },
   ],
   interparque: [EDICIONES_SECTION],
 }

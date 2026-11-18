@@ -68,8 +68,9 @@ function getCategoryState(category: MmCategory): CategoryState {
 }
 
 function formatMeta(category: MmCategory): string {
-  const unit = category.type === "doubles" ? "parejas" : ""
-  return unit ? `2 zonas de ${category.zoneSize} ${unit}` : `2 zonas de ${category.zoneSize}`
+  const unit = category.type === "doubles" ? "parejas" : "jugadores"
+  const [a, b] = [category.zones[0].participants.length, category.zones[1].participants.length]
+  return a === b ? `2 zonas de ${a} ${unit}` : `2 zonas de ${unit} (${a} y ${b})`
 }
 
 export function CategoryGrid({ editionSlug, categories }: Props) {

@@ -19,10 +19,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: `${slug} · Panel Mid Master` }
 }
 
-async function RecalcButton({ slug }: { slug: string }) {
+async function RecalcButton() {
   async function revalidate() {
     "use server"
-    await revalidateMmCategory(slug)
+    await revalidateMmCategory()
   }
   return (
     <form action={revalidate}>
@@ -67,14 +67,14 @@ export default async function PanelMasterCategoryPage({ params }: Props) {
           <div>
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="text-sm font-semibold text-muted-foreground">{groupA.group.name}</p>
-              <RecalcButton slug={slug} />
+              <RecalcButton />
             </div>
             <ZoneAdmin data={groupA} />
           </div>
           <div>
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="text-sm font-semibold text-muted-foreground">{groupB.group.name}</p>
-              <RecalcButton slug={slug} />
+              <RecalcButton />
             </div>
             <ZoneAdmin data={groupB} />
           </div>
