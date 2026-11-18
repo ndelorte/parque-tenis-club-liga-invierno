@@ -109,7 +109,7 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
       )}
 
       {entries.length > 0 && (
-        <ol className="mb-4 divide-y divide-border rounded-md border border-border">
+        <ol data-testid="entries-list" className="mb-4 divide-y divide-border rounded-md border border-border">
           {entries.map((e, i) => (
             <li key={e.id} className="flex min-h-12 items-center gap-3 px-3 py-2">
               <span className="w-6 shrink-0 text-center font-bold tabular-nums text-muted-foreground">{i + 1}°</span>

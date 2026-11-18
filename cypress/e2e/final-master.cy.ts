@@ -77,8 +77,8 @@ describe("Final Master", () => {
       cy.contains("button", "Agregar").click()
       cy.contains("p", `${i + 1}/8`).should("be.visible")
     })
-    cy.get("ol > li").should("have.length", 7)
-    cy.get("ol > li").each(($li, i) => {
+    cy.get('[data-testid="entries-list"] > li').should("have.length", 7)
+    cy.get('[data-testid="entries-list"] > li').each(($li, i) => {
       expect($li.text()).to.contain(PLAYERS[i])
       expect($li.text()).to.contain(`Zona ${ZONES[i]}`)
       expect($li.text()).to.contain("Sin ranking")
@@ -93,7 +93,7 @@ describe("Final Master", () => {
     cy.contains("button", "Publicar torneo").should("be.visible")
   })
 
-  it("arma los cuadros (zonas de 4 y 3) y carga fecha y hora de un partido", () => {
+  it("arma los cuadros (zonas de 3 y 4) y carga fecha y hora de un partido", () => {
     assertTestEdition()
     cy.visit(PANEL_CATEGORY)
     cy.contains("button", "Armar cuadros").click()
@@ -120,10 +120,10 @@ describe("Final Master", () => {
     cy.visit("/circuito-del-parque/final-master")
     cy.location("pathname").should("eq", `/circuito-del-parque/especiales/${EDITION_SLUG}`)
     cy.contains(CATEGORY_NAME).should("be.visible")
-    cy.contains("2 zonas de jugadores (4 y 3)").should("exist")
+    cy.contains("2 zonas de jugadores (3 y 4)").should("exist")
 
     cy.visit(`/circuito-del-parque/especiales/${EDITION_SLUG}/categorias/${CATEGORY_SLUG}`)
-    cy.contains("2 zonas de jugadores (4 y 3)").should("exist")
+    cy.contains("2 zonas de jugadores (3 y 4)").should("exist")
     cy.contains("18:30 h").should("exist")
   })
 
@@ -143,6 +143,6 @@ describe("Final Master", () => {
     cy.contains("button", "Deshacer cuadros").click()
     cy.contains("h2", "Inscriptos").should("be.visible")
     cy.contains("p", "7/8").should("be.visible")
-    cy.get("ol > li").should("have.length", 7)
+    cy.get('[data-testid="entries-list"] > li').should("have.length", 7)
   })
 })
