@@ -71,7 +71,7 @@ describe("Final Master", () => {
     cy.contains("Fase de zonas").should("be.visible")
     cy.contains("4 participantes · 0/6 partidos jugados").should("be.visible")
     cy.contains("3 participantes · 0/3 partidos jugados").should("be.visible")
-    cy.contains("h3", "Semifinales").should("exist")
+    cy.contains("p", "Semifinales").should("exist")
     cy.contains("Final").should("exist")
 
     // Primer partido de zona: abrir el formulario (pestaña "Fecha y hora" por defecto).
