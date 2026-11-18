@@ -6,6 +6,7 @@ import { redirect } from "next/navigation"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { parseMmScore, determineWinner } from "@/lib/mid-master/parseMmScore"
+import { isPlayedMatch } from "@/lib/final-master/draw"
 
 type ActionResult = { ok: true } | { ok: false; error: string }
 
@@ -39,12 +40,13 @@ export async function updateMmMatchSchedule(
   if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const { data: current, error: readError } = await db()
     .from("mid_master_matches")
-    .select("status")
+    .select("status, winner_participant_id, score")
     .eq("id", matchId)
     .maybeSingle()
-  if (readError || !current) return { ok: false, error: "No se encontró el partido." }
+  if (readError) return { ok: false, error: "No se pudo leer el partido; probá de nuevo." }
+  if (!current) return { ok: false, error: "No se encontró el partido." }
   // Un partido jugado (o por walkover) conserva su estado: solo cambia la fecha/hora.
-  const keepsStatus = current.status === "played" || current.status === "walkover"
+  const keepsStatus = isPlayedMatch(current)
   const update: Record<string, unknown> = {
     scheduled_date: scheduledDate || null,
     scheduled_time: scheduledTime || null,

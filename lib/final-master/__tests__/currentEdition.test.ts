@@ -28,4 +28,13 @@ describe("pickCurrentFinalMasterEdition", () => {
   it("ignora ediciones que no son Final Master", () => {
     expect(pickCurrentFinalMasterEdition([ed(2026, "active", "mid-master-2026")], { override: null, arYear: 2026 })).toBeNull()
   })
+  it("sin override ignora 2099", () => {
+    const list = [ed(2026, "active"), ed(2099, "upcoming")]
+    expect(pickCurrentFinalMasterEdition(list, { override: null, arYear: 2026 })?.year).toBe(2026)
+    expect(pickCurrentFinalMasterEdition([ed(2099, "upcoming")], { override: null, arYear: 2026 })).toBeNull()
+  })
+  it("con override 2099 la toma", () => {
+    const list = [ed(2026, "active"), ed(2099, "upcoming")]
+    expect(pickCurrentFinalMasterEdition(list, { override: 2099, arYear: 2026 })?.year).toBe(2099)
+  })
 })

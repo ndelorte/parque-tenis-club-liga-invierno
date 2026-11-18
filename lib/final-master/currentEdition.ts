@@ -8,8 +8,9 @@ interface EditionLike {
 
 // Edición "vigente" del Final Master (lógica pura):
 //  1. con override (FINAL_MASTER_YEAR), la de ese año (o null);
-//  2. si no, la más reciente que no esté `finished` y cuyo año sea >= año AR - 1
-//     (así en enero el panel sigue mostrando el Final Master del año que
+//  2. si no, la más reciente que no esté `finished` y cuyo año esté entre
+//     año AR - 1 y año AR (las de años MAYORES se ignoran: una edición de prueba
+//     2099 en la base compartida nunca reemplaza a la real; así en enero el panel sigue mostrando el Final Master del año que
 //     terminó, mientras no se marque como terminado);
 //  3. si no hay, la del año AR (puede ser null).
 export function pickCurrentFinalMasterEdition<T extends EditionLike>(
@@ -19,7 +20,7 @@ export function pickCurrentFinalMasterEdition<T extends EditionLike>(
   const finalMasters = editions.filter((e) => e.slug.startsWith(FINAL_MASTER_SLUG_PREFIX))
   if (options.override !== null) return finalMasters.find((e) => e.year === options.override) ?? null
   const open = finalMasters
-    .filter((e) => e.status !== "finished" && e.year >= options.arYear - 1)
+    .filter((e) => e.status !== "finished" && e.year >= options.arYear - 1 && e.year <= options.arYear)
     .sort((a, b) => b.year - a.year)
   if (open.length > 0) return open[0]
   return finalMasters.find((e) => e.year === options.arYear) ?? null

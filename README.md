@@ -17,6 +17,11 @@ Cubren el flujo del Final Master (panel + web pública). Trabajan con una edici�
 
 Datos de prueba: la edición `final-master-2099` y sus categorías/partidos/participantes se borran antes y después (la task rechaza años menores a 2090). Los jugadores "Zz E2E 01".."Zz E2E 08" se crean activos (el combobox solo lista activos) y al final se borran; si alguno quedó referenciado por otra tabla, se desactiva en vez de borrarse.
 
+Riesgos aceptados (la base de pruebas es la compartida):
+- Los jugadores "Zz E2E NN" existen **activos** en la base compartida durante la corrida y se borran (o desactivan si quedaron referenciados) al final.
+- La edición de prueba 2099 se **publica unos segundos** durante la corrida, así que sus páginas (`/circuito-del-parque/especiales/final-master-2099`) son accesibles por URL directa en ese lapso. Sin `FINAL_MASTER_YEAR`, la landing, el redirect de `/circuito-del-parque/final-master` y el panel ignoran ediciones de años mayores al año actual, por lo que la de prueba nunca reemplaza a la real.
+- El spec aborta si el server no corre con `FINAL_MASTER_YEAR=2099`.
+
 ## Configuración inicial
 
 ### 1. Variables de entorno
