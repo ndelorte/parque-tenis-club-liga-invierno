@@ -45,3 +45,9 @@ next-env.d.ts
 .claude/
 
 .vercel
+
+# cypress
+cypress.env.json
+cypress/screenshots
+cypress/videos
+cypress/downloads

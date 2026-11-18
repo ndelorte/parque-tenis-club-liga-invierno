@@ -11,6 +11,7 @@ import { getMmCategoryAdminData } from "@/lib/data/mid-master"
 import { normalizeType } from "@/lib/data/mid-master/types"
 import { getPlayersForSelect } from "@/lib/data/circuito/participants"
 import { finalMasterSlug } from "@/lib/final-master/categories"
+import { getFinalMasterYear } from "@/lib/final-master/year"
 
 export const dynamic = "force-dynamic"
 
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PanelFinalMasterCategoryPage({ params }: Props) {
   const { slug } = await params
-  const year = new Date().getFullYear()
+  const year = getFinalMasterYear()
   const edition = await getFinalMasterEdition(year)
   if (!edition) notFound()
   const data = await getMmCategoryAdminData(edition.id, slug)

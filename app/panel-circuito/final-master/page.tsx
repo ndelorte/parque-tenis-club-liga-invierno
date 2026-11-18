@@ -16,6 +16,7 @@ import {
 import { normalizeType } from "@/lib/data/mid-master/types"
 import { FINAL_MASTER_MAX_ENTRIES } from "@/lib/final-master/draw"
 import { finalMasterSlug } from "@/lib/final-master/categories"
+import { getFinalMasterYear } from "@/lib/final-master/year"
 
 export const metadata: Metadata = { title: "Final Master | Panel Circuito del Parque" }
 export const dynamic = "force-dynamic"
@@ -57,7 +58,7 @@ function Section({ title, items }: { title: string; items: FinalMasterCategorySu
 }
 
 export default async function PanelFinalMasterPage() {
-  const year = new Date().getFullYear()
+  const year = getFinalMasterYear()
   const edition = await getFinalMasterEdition(year)
 
   let summaries: FinalMasterCategorySummary[] = []
