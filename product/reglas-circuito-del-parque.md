@@ -195,6 +195,23 @@ comprimen así:
   Son eventos independientes con su propio prestigio, sin mezclar escalas de puntos.
 - **Final Master**: clasifican los **8 mejores** del ranking anual, por categoría.
 
+### Final Master — decisiones del organizador (2026-11-18)
+
+- **Categorías (10)**: Single Caballeros Primera, Intermedia, Segunda, Tercera y +50; Single Damas
+  Segunda; Doble Caballeros Primera y Segunda; Doble Damas Segunda; Doble Mixto Intermedia.
+- **Carga**: hasta **8** jugadores (o parejas) por categoría, cargados a mano en el panel. Se puede
+  publicar con categorías de **6 o 7** (con 7, zonas de 4 y 3; con 6, dos de 3). Una categoría sin
+  inscriptos no se publica.
+- **Orden**: por ranking anual del circuito en esa categoría. Sin ranking → orden de carga (van
+  después de los que tienen puntos). En dobles, la pareja se ordena por la **suma** de los puntos
+  de sus dos jugadores (confirmado, OQ-42).
+- **Zonas en serpentina**: A = 1°, 4°, 5°, 8° · B = 2°, 3°, 6°, 7°. Todos contra todos en cada
+  zona, semifinales cruzadas (1° A–2° B, 1° B–2° A) y final.
+- **Formato de partido**: el mismo del Mid Master (confirmado, OQ-42): super tie-break registrado
+  7-6 como tercer set en zonas y semifinales; final a 3 sets completos.
+- **Publicación manual**: el torneo se arma como borrador y recién aparece en la web pública con el
+  botón "Publicar torneo". Se puede cargar fecha y hora de cada partido.
+
 ---
 
 ## Import histórico 2026 (Sprint C7)

@@ -173,7 +173,7 @@ No mostrar teléfonos ni DNI en vistas públicas (el DNI vive en `player_private
 | `/circuito-del-parque/torneos/[edition]` | Categorías de una edición mensual |
 | `/circuito-del-parque/torneos/[edition]/[categoria]` | Cuadro principal + repechaje de una categoría |
 | `/circuito-del-parque/ranking` | Ranking anual, filtrable por categoría |
-| `/circuito-del-parque/final-master` | "Próximamente" + clasificados provisorios (top 8) por categoría |
+| `/circuito-del-parque/final-master` | Clasificados provisorios (top 8) por categoría; cuando el Final Master está publicado redirige a `/circuito-del-parque/especiales/final-master-YYYY` |
 | `/circuito-del-parque/especiales/[edition]` | Torneo especial (Mid Master, Final Master, ...) — zonas + semis + final |
 | `/circuito-del-parque/especiales/[edition]/categorias/[slug]` | Zonas, fixture y cuadro final de una categoría de esa edición |
 
@@ -194,6 +194,8 @@ Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]
 | `/panel-circuito/login` | Login con Supabase Auth (Circuito del Parque / Mid Master) |
 | `/panel-circuito` | Dashboard de Mid Master |
 | `/panel-circuito/categorias/[slug]` | Carga de resultados de Mid Master |
+| `/panel-circuito/final-master` | Final Master: crear la edición (borrador), estado de las 10 categorías y botón "Publicar torneo" / "Despublicar" (migración 018) |
+| `/panel-circuito/final-master/[slug]` | Categoría del Final Master: cargar hasta 8 jugadores (orden por ranking anual), armar cuadros (serpentina), resultados y fechas, deshacer cuadros |
 | `/panel-circuito/mensual` | Circuito mensual: listado de ediciones + alta de edición nueva |
 | `/panel-circuito/mensual/[editionSlug]` | Categorías de una edición mensual |
 | `/panel-circuito/mensual/[editionSlug]/[categorySlug]` | Inscripción de participantes, generar cuadro, carga de resultados |

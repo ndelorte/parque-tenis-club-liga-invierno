@@ -35,7 +35,9 @@ export interface DbMmParticipant {
   name: string               // nombre del jugador/pareja
   slug?: string | null
   seed?: number | null
-  group_name: string         // "A" | "B" — en qué zona juega
+  group_name: string | null  // "A" | "B" — en qué zona juega (null: Final Master sin cuadros armados)
+  player_id?: string | null    // vínculo a players (Final Master, migración 018)
+  player_2_id?: string | null  // segundo jugador en dobles
   display_order?: number | null
   is_active?: boolean | null
   created_at?: string

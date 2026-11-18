@@ -15,6 +15,12 @@ const UNAUTHORIZED: ActionResult = { ok: false, error: "No autorizado." }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function db() { return createAdminClient() as any }
 
+// Sirve para cualquier edición (Mid Master y Final Master).
+function revalidateMm() {
+  revalidatePath("/panel-circuito", "layout")
+  revalidatePath("/circuito-del-parque", "layout")
+}
+
 // ── Auth ──────────────────────────────────────────────────────
 
 export async function signOutMaster() {
@@ -42,8 +48,7 @@ export async function updateMmMatchSchedule(
     .eq("id", matchId)
 
   if (error) return { ok: false, error: "Error al guardar la fecha." }
-  revalidatePath("/panel-circuito")
-  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
+  revalidateMm()
   return { ok: true }
 }
 
@@ -95,6 +100,7 @@ export async function updateMmMatchResult(
       .select("id, phase, winner_participant_id")
       .eq("category_id", match.category_id)
       .is("group_id", null)
+      .order("match_order", { ascending: true })
       .order("created_at", { ascending: true })
 
     if (koMatches) {
@@ -117,8 +123,7 @@ export async function updateMmMatchResult(
     }
   }
 
-  revalidatePath("/panel-circuito")
-  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
+  revalidateMm()
   return { ok: true }
 }
 
@@ -132,8 +137,7 @@ export async function clearMmMatchResult(matchId: string): Promise<ActionResult>
     .eq("id", matchId)
 
   if (error) return { ok: false, error: "Error al borrar el resultado." }
-  revalidatePath("/panel-circuito")
-  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
+  revalidateMm()
   return { ok: true }
 }
 
@@ -195,8 +199,7 @@ export async function addMmParticipant(
     if (matchError) return { ok: false, error: `Error al crear partidos: ${matchError.message}` }
   }
 
-  revalidatePath("/panel-circuito")
-  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
+  revalidateMm()
   return { ok: true }
 }
 
@@ -217,8 +220,7 @@ export async function updateMmParticipant(
 
   if (error) return { ok: false, error: "Error al actualizar el nombre." }
 
-  revalidatePath("/panel-circuito")
-  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
+  revalidateMm()
   return { ok: true }
 }
 
@@ -296,6 +298,7 @@ export async function resolveKnockoutParticipants(
     .select("id, phase")
     .eq("category_id", categoryId)
     .is("group_id", null)
+    .order("match_order", { ascending: true })
     .order("created_at", { ascending: true })
 
   if (!koMatches || koMatches.length < 2) {
@@ -319,8 +322,7 @@ export async function resolveKnockoutParticipants(
     }).eq("id", sfMatches[1].id),
   ])
 
-  revalidatePath("/panel-circuito")
-  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
+  revalidateMm()
   return { ok: true }
 }
 
@@ -343,8 +345,7 @@ export async function assignMmMatchParticipants(
     .update({ participant_1_id: participant1Id, participant_2_id: participant2Id })
     .eq("id", matchId)
   if (error) return { ok: false, error: "Error al asignar participantes." }
-  revalidatePath("/panel-circuito")
-  revalidatePath("/circuito-del-parque/especiales/mid-master-2026")
+  revalidateMm()
   return { ok: true }
 }
 
@@ -352,6 +353,6 @@ export async function assignMmMatchParticipants(
 
 export async function revalidateMmCategory(slug: string): Promise<void> {
   if (!(await isRequestFromAdmin())) return
-  revalidatePath(`/panel-circuito/categorias/${slug}`)
-  revalidatePath(`/circuito-del-parque/especiales/mid-master-2026/categorias/${slug}`)
+  void slug
+  revalidateMm()
 }

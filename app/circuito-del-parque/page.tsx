@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { getCircuitoEditions } from "@/lib/data/circuito/editions"
+import { getFinalMasterEdition } from "@/lib/data/final-master"
 import { getMmActiveEdition } from "@/lib/data/mid-master"
 import { buildSeasonCalendar } from "@/lib/circuito/seasonCalendar"
 import { SeasonCalendar } from "@/components/circuito/season-calendar"
@@ -16,7 +17,12 @@ export default async function CircuitoDelParquePage() {
   const now = new Date()
   const year = now.getFullYear()
 
-  const [editions, midMaster] = await Promise.all([getCircuitoEditions(), getMmActiveEdition()])
+  const [editions, midMaster, finalMaster] = await Promise.all([
+    getCircuitoEditions(),
+    getMmActiveEdition(),
+    getFinalMasterEdition(year),
+  ])
+  const finalMasterPublished = !!finalMaster && finalMaster.status !== "upcoming"
   const months = buildSeasonCalendar(editions, year, now.getMonth() + 1)
 
   return (
@@ -44,8 +50,12 @@ export default async function CircuitoDelParquePage() {
         />
         <LandingRow
           title="Final Master"
-          description="El cierre de la temporada. Hoy, la clasificación provisoria de cada categoría."
-          cta="Ver clasificados"
+          description={
+            finalMasterPublished
+              ? "El cierre de la temporada: zonas, semifinales y final."
+              : "El cierre de la temporada. Hoy, la clasificación provisoria de cada categoría."
+          }
+          cta={finalMasterPublished ? "Ver torneo" : "Ver clasificados"}
           href="/circuito-del-parque/final-master"
         />
         {midMaster && (

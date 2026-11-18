@@ -1,4 +1,7 @@
 import type { Metadata } from "next"
+import { redirect } from "next/navigation"
+import { getFinalMasterEdition } from "@/lib/data/final-master"
+import { finalMasterSlug } from "@/lib/final-master/categories"
 import { getAnnualCircuitRanking, getCircuitoCategoriesWithRanking } from "@/lib/data/circuito/ranking"
 import { RankingTable } from "@/components/circuito/RankingTable"
 import { CategoryFilterPills } from "@/components/circuito/CategoryFilterPills"
@@ -18,6 +21,11 @@ export default async function CircuitoFinalMasterPage({
 }) {
   const { categoria } = await searchParams
   const year = new Date().getFullYear()
+  // Publicado el torneo, esta ruta lleva a él; si no, queda la clasificación provisoria.
+  const finalMaster = await getFinalMasterEdition(year)
+  if (finalMaster && finalMaster.status !== "upcoming") {
+    redirect(`/circuito-del-parque/especiales/${finalMasterSlug(year)}`)
+  }
   // Todas las categorías que se jugaron en el año (las 13 fijas y las que se
   // agregaron a mano a algún torneo): las que tienen jugadores con puntos. Si
   // la pedida no tiene, se muestra la primera que sí.

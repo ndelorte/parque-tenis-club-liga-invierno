@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { MidMasterHero } from "@/components/mid-master/MidMasterHero"
 import { CategoryGrid } from "@/components/mid-master/CategoryGrid"
 import { MmSponsorsBanner } from "@/components/mid-master/MmSponsorsBanner"
+import { isFinalMasterSlug } from "@/lib/final-master/categories"
 import { getMmEditionBySlug, getMmCategoriesForPublic } from "@/lib/data/mid-master"
 
 export const revalidate = 60
@@ -12,6 +13,9 @@ export async function generateStaticParams() {
   return []
 }
 
+const FINAL_MASTER_DESCRIPTION =
+  "El cierre del año del Circuito del Parque. Los 8 mejores del ranking anual de cada categoría en dos zonas de todos contra todos; los dos primeros de cada zona a semifinales y la final a tres sets completos."
+
 interface Props {
   params: Promise<{ edition: string }>
 }
@@ -19,7 +23,8 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { edition } = await params
   const ed = await getMmEditionBySlug(edition)
-  if (!ed) return {}
+  // Borrador (Final Master sin publicar): invisible.
+  if (!ed || ed.status === "upcoming") return {}
   return {
     title: `${ed.name} ${ed.year} | Parque Tenis Club`,
     description:
@@ -30,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function EdicionEspecialPage({ params }: Props) {
   const { edition } = await params
   const ed = await getMmEditionBySlug(edition)
-  if (!ed) notFound()
+  if (!ed || ed.status === "upcoming") notFound()
 
   const categories = await getMmCategoriesForPublic(ed.id)
   const participantsCount = categories.reduce(
@@ -45,6 +50,7 @@ export default async function EdicionEspecialPage({ params }: Props) {
         year={ed.year}
         categoriesCount={categories.length}
         participantsCount={participantsCount}
+        description={isFinalMasterSlug(ed.slug) ? FINAL_MASTER_DESCRIPTION : undefined}
       />
       <CategoryGrid editionSlug={ed.slug} categories={categories} />
       <MmSponsorsBanner />

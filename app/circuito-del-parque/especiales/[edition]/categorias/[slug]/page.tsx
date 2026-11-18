@@ -18,7 +18,7 @@ export async function generateStaticParams({ params }: { params: { edition: stri
   try {
     const { edition } = params
     const ed = await getMmEditionBySlug(edition)
-    if (!ed) return []
+    if (!ed || ed.status === "upcoming") return []
     const categories = await getMmCategories(ed.id)
     return categories.map((c) => ({ slug: c.slug }))
   } catch {
@@ -29,7 +29,7 @@ export async function generateStaticParams({ params }: { params: { edition: stri
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { edition, slug } = await params
   const ed = await getMmEditionBySlug(edition)
-  if (!ed) return {}
+  if (!ed || ed.status === "upcoming") return {}
   const cat = await getMmCategoryForPublic(ed.id, slug)
   if (!cat) return {}
   return {
@@ -43,15 +43,21 @@ function getChampionLabel(category: MmCategory): string {
   return /damas/i.test(category.name) ? "Campeona" : "Campeón"
 }
 
+// Tamaños reales de las zonas (en el Final Master pueden ser 4 y 3).
+function describeZones(category: MmCategory): string {
+  const [a, b] = [category.zones[0].participants.length, category.zones[1].participants.length]
+  return a === b ? `2 zonas de ${a}` : `2 zonas (${a} y ${b})`
+}
+
 function getCrossDescription(category: MmCategory): string {
   const unit = category.type === "doubles" ? "parejas" : "jugadores"
-  return `2 zonas de ${category.zoneSize} ${unit}. Pasan los dos primeros de cada zona; las semifinales se cruzan (1° A con 2° B, 1° B con 2° A).`
+  return `${describeZones(category)} ${unit}. Pasan los dos primeros de cada zona; las semifinales se cruzan (1° A con 2° B, 1° B con 2° A).`
 }
 
 export default async function CategoryPage({ params }: Props) {
   const { edition, slug } = await params
   const ed = await getMmEditionBySlug(edition)
-  if (!ed) notFound()
+  if (!ed || ed.status === "upcoming") notFound()
 
   const cat = await getMmCategoryForPublic(ed.id, slug)
   if (!cat) notFound()
