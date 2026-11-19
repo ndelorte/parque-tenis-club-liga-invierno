@@ -34,10 +34,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cat = await getMmCategoryForPublic(ed.id, slug)
   if (!cat) return {}
   if (isFinalMasterSlug(ed.slug) && isEmptyCategory(cat)) return {}
-  return {
-    title: `${cat.name} · ${ed.name} ${ed.year} | Parque Tenis Club`,
-    description: `Zonas, fixture y cuadro final de ${cat.name} en el ${ed.name} ${ed.year}.`,
-  }
+  const title = `${cat.name} · ${ed.name} ${ed.year} | Parque Tenis Club`
+  const description = `Zonas, fixture y cuadro final de ${cat.name} en el ${ed.name} ${ed.year}.`
+  return { title, description, openGraph: { title, description } }
 }
 
 function isEmptyCategory(category: MmCategory): boolean {
@@ -81,16 +80,17 @@ export default async function CategoryPage({ params }: Props) {
       ? final.participantBLabel
       : final.participantALabel
 
+  const unitLabel = cat.type === "doubles" ? "Pareja" : "Jugador"
   const noParticipants = cat.zones[0].participants.length === 0 && cat.zones[1].participants.length === 0
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <nav aria-label="Estás en" className="flex flex-wrap gap-x-2 gap-y-1 text-sm font-semibold text-mm-text-muted">
-        <Link href="/circuito-del-parque" className="hover:text-mm-gold-light">
+      <nav aria-label="Estás en" className="flex flex-wrap items-center gap-x-2 text-sm font-semibold text-mm-text-muted">
+        <Link href="/circuito-del-parque" className="inline-flex min-h-11 items-center hover:text-mm-gold-light">
           Circuito del Parque
         </Link>
         <span aria-hidden="true">/</span>
-        <Link href={`/circuito-del-parque/especiales/${ed.slug}`} className="hover:text-mm-gold-light">
+        <Link href={`/circuito-del-parque/especiales/${ed.slug}`} className="inline-flex min-h-11 items-center hover:text-mm-gold-light">
           {ed.name} {ed.year}
         </Link>
       </nav>
@@ -146,9 +146,9 @@ export default async function CategoryPage({ params }: Props) {
                 Orden: partidos ganados, diferencia de sets, diferencia de games, enfrentamiento directo.
               </p>
             </div>
-            <div className="grid grid-cols-[minmax(0,1fr)] gap-9 md:grid-cols-2">
-              <ZoneSection zone={cat.zones[0]} />
-              <ZoneSection zone={cat.zones[1]} />
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-9 lg:grid-cols-2">
+              <ZoneSection zone={cat.zones[0]} unitLabel={unitLabel} />
+              <ZoneSection zone={cat.zones[1]} unitLabel={unitLabel} />
             </div>
             <p className="mt-2.5 text-[13px] text-mm-text-muted">
               El tercer set de zonas y semifinales es super tie-break y se registra como 7-6.
@@ -158,8 +158,20 @@ export default async function CategoryPage({ params }: Props) {
       )}
 
       <div className="mt-12">
-        <MmSponsorsBanner />
+        <Link
+          href={`/circuito-del-parque/especiales/${ed.slug}#categorias`}
+          className="inline-flex min-h-12 w-fit items-center gap-2 rounded-sm border border-mm-gold px-5 text-sm font-bold text-mm-gold-light transition-colors hover:bg-mm-gold-wash focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mm-gold-light"
+        >
+          Ver todas las categorías
+        </Link>
       </div>
+
+      {/* Los sponsors son los del Mid Master: el Final Master no los muestra. */}
+      {!isFinalMasterSlug(ed.slug) && (
+        <div className="mt-12">
+          <MmSponsorsBanner />
+        </div>
+      )}
     </div>
   )
 }

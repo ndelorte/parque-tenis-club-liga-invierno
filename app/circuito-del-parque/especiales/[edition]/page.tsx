@@ -25,11 +25,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ed = await getMmEditionBySlug(edition)
   // Borrador (Final Master sin publicar): invisible.
   if (!ed || ed.status === "upcoming") return {}
-  return {
-    title: `${ed.name} ${ed.year} | Parque Tenis Club`,
-    description:
-      "Torneo especial del Circuito del Parque. Los mejores clasificados de cada categoría compiten en zonas, semifinales y final.",
-  }
+  const title = `${ed.name} ${ed.year} | Parque Tenis Club`
+  const description = isFinalMasterSlug(ed.slug)
+    ? FINAL_MASTER_DESCRIPTION
+    : "Torneo especial del Circuito del Parque. Los mejores clasificados de cada categoría compiten en zonas, semifinales y final."
+  return { title, description, openGraph: { title, description } }
 }
 
 export default async function EdicionEspecialPage({ params }: Props) {
@@ -43,6 +43,12 @@ export default async function EdicionEspecialPage({ params }: Props) {
     (sum, cat) => sum + cat.zones[0].participants.length + cat.zones[1].participants.length,
     0,
   )
+  // Final Master: jugadores (categorías single) y parejas (dobles) por separado.
+  const countOf = (type: "singles" | "doubles") =>
+    categories
+      .filter((cat) => cat.type === type)
+      .reduce((sum, cat) => sum + cat.zones[0].participants.length + cat.zones[1].participants.length, 0)
+  const isFinalMaster = isFinalMasterSlug(ed.slug)
 
   return (
     <>
@@ -51,10 +57,13 @@ export default async function EdicionEspecialPage({ params }: Props) {
         year={ed.year}
         categoriesCount={categories.length}
         participantsCount={participantsCount}
-        description={isFinalMasterSlug(ed.slug) ? FINAL_MASTER_DESCRIPTION : undefined}
+        playersCount={isFinalMaster ? countOf("singles") : undefined}
+        pairsCount={isFinalMaster ? countOf("doubles") : undefined}
+        description={isFinalMaster ? FINAL_MASTER_DESCRIPTION : undefined}
       />
       <CategoryGrid editionSlug={ed.slug} categories={categories} />
-      <MmSponsorsBanner />
+      {/* Los sponsors son los del Mid Master: el Final Master no los muestra. */}
+      {!isFinalMasterSlug(ed.slug) && <MmSponsorsBanner />}
     </>
   )
 }
