@@ -304,15 +304,18 @@ export function planLayout(areaW: number, areaH: number, zoneRowCounts: number[]
   spare -= rowExtra * totalRows
   const offsetY = Math.min((spare * scale) / 2, MAX_OFFSET_Y)
   spare = Math.max(spare - offsetY / scale, 0)
-  const gapExtra = spare / 2 // por igual entre sectionGap y koGap
+  // Por igual entre todos los huecos (entre zonas, zonas→semis, semis→final),
+  // así con zonas de 3 no queda un solo hueco grande en el medio.
+  const gapSlots = gapsCount + 2
+  const gapExtra = spare / gapSlots
   return {
     scale,
     natW,
     rowH: FM.rowH + rowExtra,
-    zoneGap: FM.zoneGap,
+    zoneGap: FM.zoneGap + gapExtra,
     sectionGap: FM.sectionGap + gapExtra,
     koGap: FM.koGap + gapExtra,
-    contentH: natH + rowExtra * totalRows + gapExtra * 2,
+    contentH: natH + rowExtra * totalRows + gapExtra * gapSlots,
     offsetY,
   }
 }
