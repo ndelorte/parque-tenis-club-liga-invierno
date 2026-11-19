@@ -209,8 +209,8 @@ comprimen así:
   ubicado en el ranking anual individual de la categoría; si sigue el empate, orden de carga.
 - **Compañero a confirmar (dobles)**: se puede cargar una pareja con el compañero "A confirmar" y
   elegirlo (o cambiarlo) después desde el panel. Mientras haya parejas sin compañero no se pueden
-  armar los cuadros (el orden sale del ranking de los dos); con los cuadros armados se puede
-  cambiar el compañero sin re-sortear.
+  armar los cuadros (el orden sale del ranking de los dos); con los cuadros armados no se cambia:
+  hay que deshacer los cuadros (solo si no hay partidos jugados).
 - **Zonas en serpentina**: A = 1°, 4°, 5°, 8° · B = 2°, 3°, 6°, 7°. Todos contra todos en cada
   zona, semifinales cruzadas (1° A–2° B, 1° B–2° A) y final.
 - **Formato de partido**: el mismo del Mid Master (confirmado, OQ-42): super tie-break registrado

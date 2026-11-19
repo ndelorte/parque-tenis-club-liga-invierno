@@ -8,7 +8,7 @@ import {
   finalMasterSlug,
   isFinalMasterSlug,
 } from "@/lib/final-master/categories"
-import { hasPendingPartner, pairName } from "@/lib/final-master/partner"
+import { hasPendingPartner, pairName, PENDING_PARTNER_MESSAGE } from "@/lib/final-master/partner"
 import {
   FINAL_MASTER_MAX_ENTRIES,
   FINAL_MASTER_MIN_ENTRIES,
@@ -17,6 +17,7 @@ import {
   roundRobinPairs,
 } from "@/lib/final-master/draw"
 import { rankFinalMasterEntries, getFinalMasterCategorySummaries } from "@/lib/data/final-master"
+import { normalizeType } from "@/lib/data/mid-master/types"
 import type { DbMmCategory, DbMmEdition, DbMmGroup, DbMmParticipant } from "@/lib/data/mid-master/types"
 
 type ActionResult = { ok: true } | { ok: false; error: string }
@@ -36,7 +37,7 @@ const CONCURRENT_ERROR = "Otro cambio se hizo al mismo tiempo; recargá la pági
 const READ_ERROR = "No se pudo verificar el estado de los cuadros; probá de nuevo."
 
 function fail(message: string, error?: { message?: string; code?: string } | null): ActionResult {
-  // 23505 = violación de unicidad (índices de la migración 019): dos cambios simultáneos.
+  // 23505 = violación de unicidad (índices de las migraciones 019 y 020): dos cambios simultáneos.
   if (error?.code === "23505") return { ok: false, error: CONCURRENT_ERROR }
   return { ok: false, error: error?.message ? `${message} (${error.message})` : message }
 }
@@ -161,7 +162,7 @@ export async function addFinalMasterEntryAction(
   if ("error" in loaded) return { ok: false, error: loaded.error }
   const { category } = loaded
 
-  const isDouble = category.type === "double" || category.type === "doubles"
+  const isDouble = normalizeType(category.type) === "doubles"
   if (!playerId) return { ok: false, error: "Elegí un jugador." }
   // En dobles el compañero es opcional: sin él queda "A confirmar".
   const partnerId = isDouble && player2Id ? player2Id : null
@@ -213,8 +214,10 @@ export async function addFinalMasterEntryAction(
   return { ok: true }
 }
 
-// Elige (o cambia) el compañero de una pareja de dobles. Permitido con cuadros armados
-// (no re-sortea: el orden ya quedó fijado).
+// Elige (o cambia) el compañero de una pareja de dobles. Solo sin cuadros armados:
+// con cuadros hay que deshacerlos primero (el orden sale del ranking de los dos).
+// El cruce player_id/player_2_id entre filas lo valida esta action (un solo admin);
+// la migración 020 solo cubre player_2_id duplicado.
 export async function setFinalMasterPartnerAction(participantId: string, player2Id: string): Promise<ActionResult> {
   if (!(await isRequestFromAdmin())) return UNAUTHORIZED
   const sb = db()
@@ -229,9 +232,12 @@ export async function setFinalMasterPartnerAction(participantId: string, player2
   const loaded = await loadCategory(participant.category_id)
   if ("error" in loaded) return { ok: false, error: loaded.error }
   const { category } = loaded
-  if (category.type !== "double" && category.type !== "doubles") {
+  if (normalizeType(category.type) !== "doubles") {
     return { ok: false, error: "Solo las categorías de dobles tienen compañero." }
   }
+  const drawn = await hasDraw(participant.category_id)
+  if (drawn === null) return { ok: false, error: READ_ERROR }
+  if (drawn) return { ok: false, error: "Los cuadros ya están armados. Primero deshacé los cuadros." }
   if (!participant.player_id) return { ok: false, error: "La pareja no tiene jugador 1 cargado." }
   if (player2Id === participant.player_id) {
     return { ok: false, error: "Los dos jugadores de la pareja tienen que ser distintos." }
@@ -260,11 +266,14 @@ export async function setFinalMasterPartnerAction(participantId: string, player2
   const name2 = nameOf(player2Id)
   if (!name1 || !name2) return { ok: false, error: "No se encontró alguno de los jugadores." }
 
-  const { error } = await sb
+  const name = pairName(name1, name2)
+  const { data: updated, error } = await sb
     .from("mid_master_participants")
-    .update({ player_2_id: player2Id, name: pairName(name1, name2) })
+    .update({ player_2_id: player2Id, name, slug: `${slugify(name)}-${Date.now().toString(36)}` })
     .eq("id", participantId)
+    .select("id")
   if (error) return fail("No se pudo guardar el compañero.", error)
+  if (!updated || updated.length === 0) return { ok: false, error: "La pareja ya no existe; recargá la página." }
 
   revalidateAll()
   return { ok: true }
@@ -331,13 +340,9 @@ export async function drawFinalMasterCategoryAction(categoryId: string): Promise
     }
   }
 
-  const isDouble = category.type === "double" || category.type === "doubles"
+  const isDouble = normalizeType(category.type) === "doubles"
   if (isDouble && hasPendingPartner(participants)) {
-    return {
-      ok: false,
-      error:
-        "Hay parejas con compañero a confirmar: elegí el compañero antes de armar los cuadros (el orden sale del ranking de los dos).",
-    }
+    return { ok: false, error: PENDING_PARTNER_MESSAGE }
   }
 
   const { data: groupRows, error: groupsError } = await sb.from("mid_master_groups").select("*").eq("category_id", categoryId)
