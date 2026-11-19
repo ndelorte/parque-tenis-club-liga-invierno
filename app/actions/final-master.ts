@@ -8,6 +8,7 @@ import {
   finalMasterSlug,
   isFinalMasterSlug,
 } from "@/lib/final-master/categories"
+import { hasPendingPartner, pairName, PENDING_PARTNER_MESSAGE } from "@/lib/final-master/partner"
 import {
   FINAL_MASTER_MAX_ENTRIES,
   FINAL_MASTER_MIN_ENTRIES,
@@ -16,6 +17,7 @@ import {
   roundRobinPairs,
 } from "@/lib/final-master/draw"
 import { rankFinalMasterEntries, getFinalMasterCategorySummaries } from "@/lib/data/final-master"
+import { normalizeType } from "@/lib/data/mid-master/types"
 import type { DbMmCategory, DbMmEdition, DbMmGroup, DbMmParticipant } from "@/lib/data/mid-master/types"
 
 type ActionResult = { ok: true } | { ok: false; error: string }
@@ -35,7 +37,7 @@ const CONCURRENT_ERROR = "Otro cambio se hizo al mismo tiempo; recargá la pági
 const READ_ERROR = "No se pudo verificar el estado de los cuadros; probá de nuevo."
 
 function fail(message: string, error?: { message?: string; code?: string } | null): ActionResult {
-  // 23505 = violación de unicidad (índices de la migración 019): dos cambios simultáneos.
+  // 23505 = violación de unicidad (índices de las migraciones 019 y 020): dos cambios simultáneos.
   if (error?.code === "23505") return { ok: false, error: CONCURRENT_ERROR }
   return { ok: false, error: error?.message ? `${message} (${error.message})` : message }
 }
@@ -160,13 +162,14 @@ export async function addFinalMasterEntryAction(
   if ("error" in loaded) return { ok: false, error: loaded.error }
   const { category } = loaded
 
-  const isDouble = category.type === "double" || category.type === "doubles"
+  const isDouble = normalizeType(category.type) === "doubles"
   if (!playerId) return { ok: false, error: "Elegí un jugador." }
-  if (isDouble) {
-    if (!player2Id) return { ok: false, error: "En dobles hay que elegir los dos jugadores de la pareja." }
-    if (player2Id === playerId) return { ok: false, error: "Los dos jugadores de la pareja tienen que ser distintos." }
+  // En dobles el compañero es opcional: sin él queda "A confirmar".
+  const partnerId = isDouble && player2Id ? player2Id : null
+  if (partnerId && partnerId === playerId) {
+    return { ok: false, error: "Los dos jugadores de la pareja tienen que ser distintos." }
   }
-  const ids = isDouble ? [playerId, player2Id as string] : [playerId]
+  const ids = partnerId ? [playerId, partnerId] : [playerId]
 
   const drawn = await hasDraw(categoryId)
   if (drawn === null) return { ok: false, error: READ_ERROR }
@@ -192,7 +195,7 @@ export async function addFinalMasterEntryAction(
   const nameOf = (id: string) => (players ?? []).find((p: { id: string }) => p.id === id)?.display_name as string | undefined
   const names = ids.map(nameOf)
   if (names.some((n) => !n)) return { ok: false, error: "No se encontró alguno de los jugadores." }
-  const name = (names as string[]).join(" / ")
+  const name = isDouble ? pairName(names[0] as string, names[1]) : (names[0] as string)
 
   const displayOrder = rows.reduce((max, r) => Math.max(max, r.display_order ?? 0), 0) + 1
   const { error } = await sb.from("mid_master_participants").insert({
@@ -200,12 +203,77 @@ export async function addFinalMasterEntryAction(
     name,
     slug: `${slugify(name)}-${Date.now().toString(36)}`,
     player_id: playerId,
-    player_2_id: isDouble ? player2Id : null,
+    player_2_id: partnerId,
     display_order: displayOrder,
     group_name: null,
     is_active: true,
   })
   if (error) return fail("No se pudo agregar al inscripto.", error)
+
+  revalidateAll()
+  return { ok: true }
+}
+
+// Elige (o cambia) el compañero de una pareja de dobles. Solo sin cuadros armados:
+// con cuadros hay que deshacerlos primero (el orden sale del ranking de los dos).
+// El cruce player_id/player_2_id entre filas lo valida esta action (un solo admin);
+// la migración 020 solo cubre player_2_id duplicado.
+export async function setFinalMasterPartnerAction(participantId: string, player2Id: string): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
+  const sb = db()
+  if (!player2Id) return { ok: false, error: "Elegí el compañero." }
+  const { data: participant, error: partError } = await sb
+    .from("mid_master_participants")
+    .select("id, category_id, player_id")
+    .eq("id", participantId)
+    .maybeSingle()
+  if (partError) return fail("No se pudo leer al inscripto.", partError)
+  if (!participant) return { ok: false, error: "No se encontró al inscripto." }
+  const loaded = await loadCategory(participant.category_id)
+  if ("error" in loaded) return { ok: false, error: loaded.error }
+  const { category } = loaded
+  if (normalizeType(category.type) !== "doubles") {
+    return { ok: false, error: "Solo las categorías de dobles tienen compañero." }
+  }
+  const drawn = await hasDraw(participant.category_id)
+  if (drawn === null) return { ok: false, error: READ_ERROR }
+  if (drawn) return { ok: false, error: "Los cuadros ya están armados. Primero deshacé los cuadros." }
+  if (!participant.player_id) return { ok: false, error: "La pareja no tiene jugador 1 cargado." }
+  if (player2Id === participant.player_id) {
+    return { ok: false, error: "Los dos jugadores de la pareja tienen que ser distintos." }
+  }
+
+  const { data: others, error: othersError } = await sb
+    .from("mid_master_participants")
+    .select("id, player_id, player_2_id")
+    .eq("category_id", participant.category_id)
+    .neq("id", participantId)
+  if (othersError) return fail("No se pudieron leer los inscriptos.", othersError)
+  const taken = new Set(
+    ((others ?? []) as Array<{ player_id: string | null; player_2_id: string | null }>)
+      .flatMap((r) => [r.player_id, r.player_2_id])
+      .filter((x): x is string => !!x),
+  )
+  if (taken.has(player2Id)) return { ok: false, error: "Ese jugador ya está inscripto en la categoría." }
+
+  const { data: players, error: playersError } = await sb
+    .from("players")
+    .select("id, display_name")
+    .in("id", [participant.player_id, player2Id])
+  if (playersError) return fail("No se pudieron leer los jugadores.", playersError)
+  const nameOf = (id: string) => (players ?? []).find((p: { id: string }) => p.id === id)?.display_name as string | undefined
+  const name1 = nameOf(participant.player_id)
+  const name2 = nameOf(player2Id)
+  if (!name1 || !name2) return { ok: false, error: "No se encontró alguno de los jugadores." }
+
+  const name = pairName(name1, name2)
+  const { data: updated, error } = await sb
+    .from("mid_master_participants")
+    .update({ player_2_id: player2Id, name, slug: `${slugify(name)}-${Date.now().toString(36)}` })
+    .eq("id", participantId)
+    .select("id")
+  if (error) return fail("No se pudo guardar el compañero.", error)
+  if (!updated || updated.length === 0) return { ok: false, error: "La pareja ya no existe; recargá la página." }
 
   revalidateAll()
   return { ok: true }
@@ -270,6 +338,11 @@ export async function drawFinalMasterCategoryAction(categoryId: string): Promise
       ok: false,
       error: `Para armar los cuadros hacen falta entre ${FINAL_MASTER_MIN_ENTRIES} y ${FINAL_MASTER_MAX_ENTRIES} inscriptos (hay ${participants.length}).`,
     }
+  }
+
+  const isDouble = normalizeType(category.type) === "doubles"
+  if (isDouble && hasPendingPartner(participants)) {
+    return { ok: false, error: PENDING_PARTNER_MESSAGE }
   }
 
   const { data: groupRows, error: groupsError } = await sb.from("mid_master_groups").select("*").eq("category_id", categoryId)

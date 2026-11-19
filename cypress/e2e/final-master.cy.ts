@@ -85,6 +85,41 @@ describe("Final Master", () => {
     })
   })
 
+  it("dobles: la pareja con compañero A confirmar bloquea armar cuadros hasta elegirlo", () => {
+    assertTestEdition()
+    cy.visit("/panel-circuito/final-master/caballeros-primera-dobles")
+    // 3 parejas completas (01/02, 03/04, 05/06) + 1 sin compañero (07).
+    const pick = (selector: string, name: string) => {
+      cy.get(selector).type(name)
+      cy.contains('[role="option"]', name).click()
+    }
+    const pairs: Array<[number, number | null]> = [[1, 2], [3, 4], [5, 6], [7, null]]
+    pairs.forEach(([a, b], i) => {
+      pick('input[role="combobox"][placeholder^="Jugador/a 1"]', PLAYERS[a - 1])
+      if (b) pick('input[role="combobox"][placeholder^="Jugador/a 2"]', PLAYERS[b - 1])
+      cy.contains("button", "Agregar").click()
+      cy.contains("p", `${i + 1}/8`).should("be.visible")
+    })
+    cy.get('[data-testid="entries-list"] > li').should("have.length", 4)
+    cy.get('[data-testid="entries-list"]').contains("A confirmar").should("be.visible")
+    cy.contains("button", "Armar cuadros").should("be.disabled")
+    cy.contains("Hay parejas con compañero a confirmar").should("be.visible")
+
+    cy.get('[data-testid="choose-partner"]').click()
+    cy.get('[data-testid="entries-list"] input[role="combobox"]').type("Zz E2E 08")
+    cy.contains('[role="option"]', "Zz E2E 08").click()
+    cy.get('[data-testid="confirm-partner"]').click()
+    cy.get('[data-testid="entries-list"]').contains("Zz E2E 07 / Zz E2E 08").should("be.visible")
+    cy.get('[data-testid="entries-list"]').should("not.contain", "A confirmar")
+    cy.contains("Hay parejas con compañero a confirmar").should("not.exist")
+
+    // Se quitan las parejas: si no, "Publicar torneo" fallaría por esta categoría sin cuadros.
+    for (let left = 4; left > 0; left--) {
+      cy.get('[data-testid="entries-list"] > li').first().find('button[aria-label^="Quitar"]').click()
+      cy.contains("p", `${left - 1}/8`).should("be.visible")
+    }
+  })
+
   it("no se puede publicar sin cuadros armados", () => {
     assertTestEdition()
     cy.visit("/panel-circuito/final-master")

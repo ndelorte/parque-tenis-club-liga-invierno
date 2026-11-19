@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
+import { pairName } from "@/lib/final-master/partner"
 import { mergeRankingPoints } from "@/lib/data/circuito/ranking"
 
 // Cliente de servicio, tipado o no (lo usan la app y los scripts).
@@ -12,6 +13,7 @@ export interface MergeSummary {
   rankingRows: number
   teamPlayers: number
   courtMatches: number
+  finalMasterParticipants: number
 }
 
 async function must<T>(op: PromiseLike<{ data: T | null; error: { message: string } | null }>, what: string): Promise<T> {
@@ -29,7 +31,27 @@ async function must<T>(op: PromiseLike<{ data: T | null; error: { message: strin
 // puede volver a correr si algo falla a mitad).
 export async function mergePlayers(db: Db, keepId: string, dropId: string, finalName?: string): Promise<MergeSummary> {
   if (keepId === dropId) throw new Error("No se puede unificar un jugador consigo mismo.")
-  const summary: MergeSummary = { keepId, dropId, circuitoParticipants: 0, rankingRows: 0, teamPlayers: 0, courtMatches: 0 }
+  const summary: MergeSummary = { keepId, dropId, circuitoParticipants: 0, rankingRows: 0, teamPlayers: 0, courtMatches: 0, finalMasterParticipants: 0 }
+
+  // Final Master: índices únicos (category_id, player_id) y (category_id, player_2_id). Si
+  // ambas fichas están en la misma categoría no se puede mover sin duplicar: se falla antes
+  // de escribir nada, para resolverlo a mano.
+  const fmDrop = await must<Array<{ id: string; category_id: string }>>(
+    db.from("mid_master_participants").select("id, category_id").or(`player_id.eq.${dropId},player_2_id.eq.${dropId}`),
+    "Leyendo inscripciones del Final Master",
+  )
+  if (fmDrop.length > 0) {
+    const fmKeep = await must<Array<{ category_id: string }>>(
+      db.from("mid_master_participants").select("category_id").or(`player_id.eq.${keepId},player_2_id.eq.${keepId}`),
+      "Leyendo inscripciones del Final Master",
+    )
+    const keepCats = new Set(fmKeep.map((r) => r.category_id))
+    if (fmDrop.some((r) => keepCats.has(r.category_id))) {
+      throw new Error(
+        "Las dos fichas están inscriptas en la misma categoría del Final Master: quitá una inscripción antes de unificar.",
+      )
+    }
+  }
 
   // Puntos de ranking (solo ranking.ts puede escribir esa tabla).
   summary.rankingRows = await mergeRankingPoints(db, keepId, dropId)
@@ -41,6 +63,15 @@ export async function mergePlayers(db: Db, keepId: string, dropId: string, final
       "Moviendo inscripciones",
     )
     summary.circuitoParticipants += moved.length
+  }
+
+  // Final Master (el nombre de la pareja se recalcula más abajo).
+  for (const column of ["player_id", "player_2_id"] as const) {
+    const moved = await must<Array<{ id: string }>>(
+      db.from("mid_master_participants").update({ [column]: keepId }).eq(column, dropId).select("id"),
+      "Moviendo inscripciones del Final Master",
+    )
+    summary.finalMasterParticipants += moved.length
   }
 
   // Equipos de la Liga: unique (team_id, player_id).
@@ -93,6 +124,27 @@ export async function mergePlayers(db: Db, keepId: string, dropId: string, final
     if (!p.player_id) continue
     const displayName = p.player_2_id ? `${nameOf(p.player_id)} / ${nameOf(p.player_2_id)}` : nameOf(p.player_id)
     await must(db.from("circuito_participants").update({ display_name: displayName }).eq("id", p.id).select("id"), "Actualizando nombres")
+  }
+
+  // Nombre de las parejas del Final Master (copia: "J1 / J2" o "J1 / A confirmar").
+  const fmAffected = await must<Array<{ id: string; name: string; player_id: string | null; player_2_id: string | null }>>(
+    db.from("mid_master_participants").select("id, name, player_id, player_2_id").or(`player_id.eq.${keepId},player_2_id.eq.${keepId}`),
+    "Leyendo inscripciones del Final Master",
+  )
+  const fmIds = [...new Set(fmAffected.flatMap((p) => [p.player_id, p.player_2_id]).filter((id): id is string => !!id))]
+  const fmPlayers = fmIds.length
+    ? await must<Array<{ id: string; display_name: string }>>(db.from("players").select("id, display_name").in("id", fmIds), "Leyendo jugadores")
+    : []
+  for (const p of fmAffected) {
+    if (!p.player_id) continue
+    const n1 = fmPlayers.find((x) => x.id === p.player_id)?.display_name ?? "?"
+    const n2 = p.player_2_id ? fmPlayers.find((x) => x.id === p.player_2_id)?.display_name ?? "?" : null
+    // Single: nombre solo. Dobles (con o sin compañero): pairName (las pendientes llevan " / " en el nombre).
+    const isPair = !!p.player_2_id || p.name.includes(" / ")
+    await must(
+      db.from("mid_master_participants").update({ name: isPair ? pairName(n1, n2) : n1 }).eq("id", p.id).select("id"),
+      "Actualizando nombres del Final Master",
+    )
   }
 
   return summary
