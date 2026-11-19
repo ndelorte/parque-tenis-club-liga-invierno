@@ -278,6 +278,8 @@ export async function setFinalMasterPartnerAction(participantId: string, player2
     .eq("id", participantId)
   // Completar una pendiente no pisa a otro admin que ya la completó.
   if (completingPending) update = update.is("player_2_id", null)
+  // Cambiar un compañero ya cargado: no pisa un sorteo simultáneo (group_name sigue null).
+  else update = update.is("group_name", null)
   const { data: updated, error } = await update.select("id")
   if (error) return fail("No se pudo guardar el compañero.", error)
   if (!updated || updated.length === 0) {
@@ -285,7 +287,7 @@ export async function setFinalMasterPartnerAction(participantId: string, player2
       ok: false,
       error: completingPending
         ? "La pareja ya tiene compañero o no existe; recargá la página."
-        : "La pareja ya no existe; recargá la página.",
+        : "Los cuadros ya están armados (o la pareja ya no existe). Primero deshacé los cuadros y recargá la página.",
     }
   }
 

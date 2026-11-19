@@ -15,3 +15,9 @@ export function pairName(name1: string, name2?: string | null): string {
 export function hasPendingPartner(participants: Array<{ player_2_id?: string | null }>): boolean {
   return participants.some((p) => !p.player_2_id)
 }
+
+/** Quita el sufijo " / A confirmar" del nombre de una pareja pendiente. */
+export function stripPendingSuffix(name: string): string {
+  const suffix = ` / ${PARTNER_TBD_LABEL}`
+  return name.endsWith(suffix) ? name.slice(0, -suffix.length) : name
+}

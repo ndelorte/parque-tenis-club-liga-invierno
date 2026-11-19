@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useId, useState } from "react"
 import { useRouter } from "next/navigation"
 import { setFinalMasterPartnerAction } from "@/app/actions/final-master"
 import { Button } from "@/components/ui/button"
@@ -17,11 +17,13 @@ interface PickerProps {
   onCreate: (name: string, force?: boolean) => Promise<CreateResult>
   // Se llama tras confirmar con éxito (ej. cerrar el editor).
   onDone?: () => void
+  // Avisa si está guardando (el panel deshabilita sus demás botones).
+  onBusy?: (busy: boolean) => void
 }
 
 // Combobox de compañero + "Confirmar" + error inline. Lo usa la lista de inscriptos
 // (elegir/cambiar) y el bloque de parejas pendientes con los cuadros ya armados.
-export function PartnerPicker({ participantId, players, excludeIds, onCreate, onDone }: PickerProps) {
+export function PartnerPicker({ participantId, players, excludeIds, onCreate, onDone, onBusy }: PickerProps) {
   const router = useRouter()
   const [partnerId, setPartnerId] = useState("")
   const [error, setError] = useState("")
@@ -29,9 +31,11 @@ export function PartnerPicker({ participantId, players, excludeIds, onCreate, on
 
   async function handleConfirm() {
     setLoading(true)
+    onBusy?.(true)
     setError("")
     const result = await setFinalMasterPartnerAction(participantId, partnerId)
     setLoading(false)
+    onBusy?.(false)
     if (result.ok) {
       setPartnerId("")
       onDone?.()
@@ -89,6 +93,7 @@ interface PendingProps {
 export function PendingPartnersPanel({ pending, players: initialPlayers, inscribedIds }: PendingProps) {
   const [createdPlayers, setCreatedPlayers] = useState<ComboboxPlayer[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
+  const baseId = useId()
   const players = [...initialPlayers, ...createdPlayers]
 
   async function handleCreatePlayer(name: string, force = false) {
@@ -120,13 +125,15 @@ export function PendingPartnersPanel({ pending, players: initialPlayers, inscrib
                 data-testid="choose-partner"
                 onClick={() => setEditingId(editingId === e.id ? null : e.id)}
                 aria-expanded={editingId === e.id}
+                aria-controls={`${baseId}-${e.id}`}
+                aria-label={`Elegir compañero de ${e.name1}`}
                 className="press shrink-0 rounded-md border border-border-strong px-2.5 py-1.5 text-xs font-bold hover:bg-surface focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 Elegir compañero
               </button>
             </div>
             {editingId === e.id && (
-              <div className="mt-2">
+              <div id={`${baseId}-${e.id}`} className="mt-2">
                 <PartnerPicker
                   participantId={e.id}
                   players={players}

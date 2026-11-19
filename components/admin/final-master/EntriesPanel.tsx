@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button"
 import { PartnerPicker } from "@/components/admin/final-master/PartnerPicker"
 import { InlineError } from "@/components/admin/states"
 import { PlayerCombobox } from "@/components/admin/PlayerCombobox"
-import { hasPendingPartner, PARTNER_TBD_LABEL, PENDING_PARTNER_NOTICE } from "@/lib/final-master/partner"
+import { hasPendingPartner, PARTNER_TBD_LABEL, PENDING_PARTNER_NOTICE, stripPendingSuffix } from "@/lib/final-master/partner"
 import { serpentineZone, FINAL_MASTER_MAX_ENTRIES, FINAL_MASTER_MIN_ENTRIES } from "@/lib/final-master/draw"
 
 interface Entry {
@@ -46,6 +46,8 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
   const [player2Id, setPlayer2Id] = useState("")
   const [resetKey, setResetKey] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [pickerBusy, setPickerBusy] = useState(false)
+  const busy = loading || pickerBusy
   const [error, setError] = useState("")
   const [editingId, setEditingId] = useState<string | null>(null)
 
@@ -128,7 +130,7 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
                   <span className="truncate font-semibold text-foreground">
                     {isDouble && !e.player2Id ? (
                       <>
-                        {players.find((p) => p.id === e.playerId)?.displayName ?? e.name.replace(/ \/ A confirmar$/, "")} /{" "}
+                        {players.find((p) => p.id === e.playerId)?.displayName ?? stripPendingSuffix(e.name)} /{" "}
                         <span className="rounded bg-surface px-1.5 py-0.5 text-xs font-bold uppercase text-accent">
                           {PARTNER_TBD_LABEL}
                         </span>
@@ -146,7 +148,7 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
                     type="button"
                     data-testid={e.player2Id ? "change-partner" : "choose-partner"}
                     onClick={() => (editingId === e.id ? setEditingId(null) : startEditing(e.id))}
-                    disabled={loading}
+                    disabled={busy}
                     aria-expanded={editingId === e.id}
                     className="press shrink-0 rounded-md border border-border-strong px-2.5 py-1.5 text-xs font-bold hover:bg-surface focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent"
                   >
@@ -162,7 +164,7 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
                 <button
                   type="button"
                   onClick={() => void handleRemove(e.id)}
-                  disabled={loading}
+                  disabled={busy}
                   className="press flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-loss-soft hover:text-loss focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent"
                   aria-label={`Quitar a ${e.name}`}
                   title="Quitar"
@@ -179,6 +181,7 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
                     onCreate={handleCreatePlayer}
                     excludeIds={[...inscribedIds.filter((id) => id !== e.player2Id), e.playerId ?? ""].filter(Boolean)}
                     onDone={() => setEditingId(null)}
+                    onBusy={setPickerBusy}
                   />
                 </div>
               )}
@@ -209,7 +212,7 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
               excludeIds={[...inscribedIds, playerId].filter(Boolean)}
             />
           )}
-          <Button type="button" onClick={handleAdd} disabled={loading || !canAdd} size="sm" className="press min-h-10">
+          <Button type="button" onClick={handleAdd} disabled={busy || !canAdd} size="sm" className="press min-h-10">
             Agregar
           </Button>
         </div>
@@ -224,7 +227,7 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
         <Button
           type="button"
           onClick={handleDraw}
-          disabled={loading || !canDraw}
+          disabled={busy || !canDraw}
           className="press min-h-11 h-auto w-full px-4 text-[15px] font-bold"
         >
           {loading ? "Procesando..." : "Armar cuadros"}

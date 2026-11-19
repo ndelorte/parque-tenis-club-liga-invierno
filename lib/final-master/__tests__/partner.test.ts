@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { PARTNER_TBD_LABEL, PENDING_PARTNER_NOTICE, hasPendingPartner, pairName } from "../partner"
+import { PARTNER_TBD_LABEL, PENDING_PARTNER_NOTICE, hasPendingPartner, pairName, stripPendingSuffix } from "../partner"
 
 describe("pairName", () => {
   it("une los dos nombres", () => {
@@ -24,5 +24,14 @@ describe("PENDING_PARTNER_NOTICE", () => {
   it("es informativo: no pide elegir el compañero antes de armar", () => {
     expect(PENDING_PARTNER_NOTICE).toContain("puesto y la zona no cambian")
     expect(PENDING_PARTNER_NOTICE).not.toContain("antes de armar")
+  })
+})
+
+describe("stripPendingSuffix", () => {
+  it("quita el sufijo de pendiente", () => {
+    expect(stripPendingSuffix("Ana Pérez / A confirmar")).toBe("Ana Pérez")
+  })
+  it("no toca una pareja completa", () => {
+    expect(stripPendingSuffix("Ana Pérez / Luz Gómez")).toBe("Ana Pérez / Luz Gómez")
   })
 })
