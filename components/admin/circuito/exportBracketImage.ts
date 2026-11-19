@@ -32,12 +32,12 @@ const C = {
   line: "rgba(244, 246, 242, 0.55)",
 }
 
-function fontFamily(variable: string, fallback: string): string {
+export function fontFamily(variable: string, fallback: string): string {
   const v = getComputedStyle(document.documentElement).getPropertyValue(variable).trim()
   return v ? `${v}, ${fallback}` : fallback
 }
 
-function loadImage(src: string): Promise<HTMLImageElement | null> {
+export function loadImage(src: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
     const img = new Image()
     img.onload = () => resolve(img)
@@ -46,7 +46,7 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   })
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
   ctx.moveTo(x + r, y)
   ctx.arcTo(x + w, y, x + w, y + h, r)
@@ -180,7 +180,7 @@ async function setupCanvas(format: IgFormat, title: string, subtitle: string) {
   return { canvas, ctx, area, fonts: { sans, heading } as Fonts }
 }
 
-function toJpeg(canvas: HTMLCanvasElement): Promise<Blob> {
+export function toJpeg(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) =>
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("No se pudo generar la imagen."))), "image/jpeg", 0.92),
   )
