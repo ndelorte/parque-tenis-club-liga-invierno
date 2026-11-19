@@ -24,19 +24,21 @@ export function KnockoutBracket({ knockout }: Props) {
   const { semifinal1, semifinal2, final } = knockout
 
   return (
-    <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1.15fr_1fr] md:items-center md:gap-0">
+    <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.15fr_1fr] lg:items-center lg:gap-0">
       <BracketMatch
         match={semifinal1}
+        title="Semifinal 1"
         seedA="1° Zona A"
         seedB="2° Zona B"
-        className="order-1 md:order-none md:relative md:mr-7 after:content-[''] after:absolute after:top-1/2 after:right-[-29px] after:hidden after:h-px after:w-7 after:bg-mm-gold md:after:block"
+        className="order-1 lg:order-none lg:relative lg:mr-7 after:content-[''] after:absolute after:top-1/2 after:right-[-29px] after:hidden after:h-px after:w-7 after:bg-mm-gold lg:after:block"
       />
-      <BracketMatch match={final} seedA="Ganador semifinal 1" seedB="Ganador semifinal 2" isFinal className="order-3 md:order-none" />
+      <BracketMatch match={final} seedA="Ganador semifinal 1" seedB="Ganador semifinal 2" isFinal className="order-3 lg:order-none" />
       <BracketMatch
         match={semifinal2}
+        title="Semifinal 2"
         seedA="1° Zona B"
         seedB="2° Zona A"
-        className="order-2 md:order-none md:relative md:ml-7 before:content-[''] before:absolute before:top-1/2 before:left-[-29px] before:hidden before:h-px before:w-7 before:bg-mm-gold md:before:block"
+        className="order-2 lg:order-none lg:relative lg:ml-7 before:content-[''] before:absolute before:top-1/2 before:left-[-29px] before:hidden before:h-px before:w-7 before:bg-mm-gold lg:before:block"
       />
     </div>
   )
@@ -47,9 +49,11 @@ function BracketMatch({
   seedA,
   seedB,
   isFinal,
+  title,
   className = "",
 }: {
   match: MmKnockoutMatch
+  title?: string
   seedA: string
   seedB: string
   isFinal?: boolean
@@ -63,11 +67,11 @@ function BracketMatch({
   return (
     <article
       className={`border bg-mm-surface ${isFinal ? "border-mm-gold" : "border-mm-border-strong"} ${className}`}
-      aria-label={match.label}
+      aria-label={title ?? match.label}
     >
       <p className="flex items-center justify-between gap-2 border-b border-mm-border-strong px-3.5 py-2.5 text-sm text-mm-text-muted">
         <strong className="font-heading text-[17px] font-bold tracking-[0.01em] text-mm-gold">
-          {match.label}
+          {title ?? match.label}
         </strong>
         {match.scheduledDate && (
           <span>
@@ -97,8 +101,8 @@ function BracketMatch({
       />
 
       {!match.scheduledDate && !isCompleted && (
-        <p className="border-t border-mm-border-strong px-3.5 py-2 text-[11px] text-mm-text-muted">
-          {isFinal ? "Se define al final de las semifinales" : "Por definir"}
+        <p className="border-t border-mm-border-strong px-3.5 py-2 text-[13px] text-mm-text-muted">
+          {isFinal ? "Se define al final de las semifinales" : "Fecha a confirmar"}
         </p>
       )}
     </article>
@@ -131,7 +135,7 @@ function BracketSide({
       <div className="min-w-0">
         <p className="text-[12.5px] leading-tight text-mm-text-muted">{seed}</p>
         <p
-          className={`truncate text-sm ${isFinal ? "font-mm-display text-[19px]" : ""} ${
+          className={`text-balance break-words text-sm ${isFinal ? "font-mm-display text-[19px]" : ""} ${
             isWinner ? "font-bold text-mm-gold-light" : isPending ? "italic text-mm-text-muted" : "text-mm-text"
           }`}
         >

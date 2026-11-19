@@ -7,6 +7,9 @@ interface Props {
   year: number
   categoriesCount: number
   participantsCount: number
+  // Final Master: en lugar de «Inscriptos», dos cifras separadas.
+  playersCount?: number
+  pairsCount?: number
   // Texto bajo el título; sin valor, el del Mid Master.
   description?: string
 }
@@ -18,7 +21,7 @@ interface Props {
  * Condensed. El trazo dorado de CourtLines es el único movimiento de la
  * pantalla.
  */
-export function MidMasterHero({ name, year, categoriesCount, participantsCount, description }: Props) {
+export function MidMasterHero({ name, year, categoriesCount, participantsCount, playersCount, pairsCount, description }: Props) {
   return (
     <section className="relative overflow-hidden border-b border-mm-gold-muted bg-mm-bg">
       <div className="mx-auto grid max-w-6xl gap-6 px-4 pb-8 pt-6 sm:px-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] md:items-center md:gap-10 md:pb-12 md:pt-8">
@@ -31,7 +34,9 @@ export function MidMasterHero({ name, year, categoriesCount, participantsCount, 
               Circuito del Parque
             </Link>
             <span aria-hidden="true">/</span>
-            <span>Especiales</span>
+            <span aria-current="page">
+              {name} {year}
+            </span>
           </nav>
 
           <p className="flex items-center gap-3 text-[15px] font-semibold text-mm-text-muted">
@@ -53,19 +58,36 @@ export function MidMasterHero({ name, year, categoriesCount, participantsCount, 
               "El torneo de mitad de año. Dos zonas de todos contra todos por categoría, los dos primeros de cada zona a semifinales y la final a tres sets completos."}
           </p>
 
-          <dl className="mt-1.5 grid w-fit grid-cols-2 justify-start gap-x-7 gap-y-0">
+          <dl className="mt-1.5 flex w-fit flex-wrap justify-start gap-x-7 gap-y-1">
             <div>
               <dt className="text-[13px] text-mm-text-muted">Categorías</dt>
               <dd className="font-heading text-[26px] font-bold leading-[1.1] text-mm-gold-light tabular-nums">
                 {categoriesCount}
               </dd>
             </div>
-            <div>
-              <dt className="text-[13px] text-mm-text-muted">Inscriptos</dt>
-              <dd className="font-heading text-[26px] font-bold leading-[1.1] text-mm-gold-light tabular-nums">
-                {participantsCount}
-              </dd>
-            </div>
+            {playersCount !== undefined && pairsCount !== undefined ? (
+              <>
+                <div>
+                  <dt className="text-[13px] text-mm-text-muted">Jugadores</dt>
+                  <dd className="font-heading text-[26px] font-bold leading-[1.1] text-mm-gold-light tabular-nums">
+                    {playersCount}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-[13px] text-mm-text-muted">Parejas</dt>
+                  <dd className="font-heading text-[26px] font-bold leading-[1.1] text-mm-gold-light tabular-nums">
+                    {pairsCount}
+                  </dd>
+                </div>
+              </>
+            ) : (
+              <div>
+                <dt className="text-[13px] text-mm-text-muted">Inscriptos</dt>
+                <dd className="font-heading text-[26px] font-bold leading-[1.1] text-mm-gold-light tabular-nums">
+                  {participantsCount}
+                </dd>
+              </div>
+            )}
           </dl>
 
           <Link

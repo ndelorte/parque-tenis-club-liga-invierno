@@ -4,11 +4,12 @@ import { ZoneFixture } from "./ZoneFixture"
 
 interface Props {
   zone: MmZone
+  unitLabel?: string
 }
 
 const PLAYED_STATUSES = new Set(["played", "walkover"])
 
-export function ZoneSection({ zone }: Props) {
+export function ZoneSection({ zone, unitLabel }: Props) {
   const total = zone.matches.length
   const played = zone.matches.filter((m) => PLAYED_STATUSES.has(m.status)).length
 
@@ -23,7 +24,7 @@ export function ZoneSection({ zone }: Props) {
           </span>
         )}
       </h3>
-      <ZoneStandingsTable zone={zone} />
+      <ZoneStandingsTable zone={zone} unitLabel={unitLabel} />
       <ZoneFixture zone={zone} />
     </div>
   )
