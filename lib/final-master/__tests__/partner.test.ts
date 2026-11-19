@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { PARTNER_TBD_LABEL, hasPendingPartner, pairName } from "../partner"
+import { PARTNER_TBD_LABEL, PENDING_PARTNER_NOTICE, hasPendingPartner, pairName } from "../partner"
 
 describe("pairName", () => {
   it("une los dos nombres", () => {
@@ -17,5 +17,12 @@ describe("hasPendingPartner", () => {
     expect(hasPendingPartner([{ player_2_id: "a" }, { player_2_id: null }])).toBe(true)
     expect(hasPendingPartner([{ player_2_id: "a" }, { player_2_id: "b" }])).toBe(false)
     expect(hasPendingPartner([])).toBe(false)
+  })
+})
+
+describe("PENDING_PARTNER_NOTICE", () => {
+  it("es informativo: no pide elegir el compañero antes de armar", () => {
+    expect(PENDING_PARTNER_NOTICE).toContain("puesto y la zona no cambian")
+    expect(PENDING_PARTNER_NOTICE).not.toContain("antes de armar")
   })
 })

@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { ZoneAdmin } from "@/components/admin/mid-master/ZoneAdmin"
 import { KnockoutAdmin } from "@/components/admin/mid-master/KnockoutAdmin"
 import { EntriesPanel } from "@/components/admin/final-master/EntriesPanel"
+import { PendingPartnersPanel } from "@/components/admin/final-master/PartnerPicker"
 import { UndoDrawButton } from "@/components/admin/final-master/FinalMasterActions"
 import { AdminShell, AdminPageHeader } from "@/components/admin/admin-shell"
 import { Notice } from "@/components/admin/states"
@@ -73,7 +74,10 @@ export default async function PanelFinalMasterCategoryPage({ params }: Props) {
       else throw e
     }
   }
-  const players = !drawn && !missingMigration ? await getPlayersForSelect() : []
+  // Con cuadros armados solo se necesita la lista para completar parejas pendientes.
+  const pendingPairs = drawn && !isSingles ? allParticipants.filter((p) => !p.player_2_id) : []
+  const players = (!drawn && !missingMigration) || pendingPairs.length > 0 ? await getPlayersForSelect() : []
+  const inscribedIds = allParticipants.flatMap((p) => [p.player_id, p.player_2_id]).filter((id): id is string => !!id)
 
   return (
     <AdminShell
@@ -112,6 +116,15 @@ export default async function PanelFinalMasterCategoryPage({ params }: Props) {
         />
       ) : (
         <>
+          <PendingPartnersPanel
+            pending={pendingPairs.map((p) => ({
+              id: p.id,
+              playerId: p.player_id ?? null,
+              name1: p.name.replace(/ \/ A confirmar$/, ""),
+            }))}
+            players={players}
+            inscribedIds={inscribedIds}
+          />
           <section className="mb-8">
             <h2 className="mb-3 font-heading text-xl font-bold uppercase">Fase de zonas</h2>
             <div className="grid gap-6 lg:grid-cols-2">

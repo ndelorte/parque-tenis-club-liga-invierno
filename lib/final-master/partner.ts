@@ -1,9 +1,9 @@
 // Pareja de dobles con compañero "a confirmar".
 export const PARTNER_TBD_LABEL = "A confirmar"
 
-/** Aviso cuando hay parejas sin compañero (bloquea armar los cuadros). */
-export const PENDING_PARTNER_MESSAGE =
-  "Hay parejas con compañero a confirmar: elegí el compañero antes de armar los cuadros (el orden sale del ranking de los dos)."
+/** Aviso informativo (no bloquea armar los cuadros) cuando hay parejas sin compañero. */
+export const PENDING_PARTNER_NOTICE =
+  "Hay parejas con compañero a confirmar: se ordenan con los puntos del jugador cargado. Si confirmás el compañero después de armar los cuadros, el puesto y la zona no cambian."
 
 /** Nombre de la pareja: "Jugador 1 / Jugador 2" o "Jugador 1 / A confirmar". */
 export function pairName(name1: string, name2?: string | null): string {

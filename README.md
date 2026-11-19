@@ -15,7 +15,7 @@ Cubren el flujo del Final Master (panel + web pública). Trabajan con una edici�
 3. Terminal 1: `FINAL_MASTER_YEAR=2099 npm run dev` (la variable es solo para e2e, **no** setearla en Vercel).
 4. Terminal 2: `npm run e2e` (o `npm run e2e:open`).
 
-Datos de prueba: la edición `final-master-2099` y sus categorías/partidos/participantes se borran antes y después (la task rechaza años menores a 2090). Los jugadores "Zz E2E 01".."Zz E2E 08" se crean activos (el combobox solo lista activos) y al final se borran; si alguno quedó referenciado por otra tabla, se desactiva en vez de borrarse.
+Datos de prueba: la edición `final-master-2099` y sus categorías/partidos/participantes se borran antes y después (la task rechaza años menores a 2090). Los jugadores "Zz E2E 01".."Zz E2E 12" se crean activos (el combobox solo lista activos) y al final se borran; si alguno quedó referenciado por otra tabla, se desactiva en vez de borrarse.
 
 Riesgos aceptados (la base de pruebas es la compartida):
 - Los jugadores "Zz E2E NN" existen **activos** en la base compartida durante la corrida y se borran (o desactivan si quedaron referenciados) al final.

@@ -8,7 +8,7 @@ import {
   finalMasterSlug,
   isFinalMasterSlug,
 } from "@/lib/final-master/categories"
-import { hasPendingPartner, pairName, PENDING_PARTNER_MESSAGE } from "@/lib/final-master/partner"
+import { pairName } from "@/lib/final-master/partner"
 import {
   FINAL_MASTER_MAX_ENTRIES,
   FINAL_MASTER_MIN_ENTRIES,
@@ -214,8 +214,10 @@ export async function addFinalMasterEntryAction(
   return { ok: true }
 }
 
-// Elige (o cambia) el compañero de una pareja de dobles. Solo sin cuadros armados:
-// con cuadros hay que deshacerlos primero (el orden sale del ranking de los dos).
+// Elige (o cambia) el compañero de una pareja de dobles. Sin cuadros armados se puede
+// elegir o cambiar. Con cuadros armados solo se completa una pareja pendiente (player_2_id
+// null, "A confirmar"): no se re-sortea, el puesto y la zona quedan como estaban; cambiar un
+// compañero ya cargado exige deshacer los cuadros.
 // El cruce player_id/player_2_id entre filas lo valida esta action (un solo admin);
 // la migración 020 solo cubre player_2_id duplicado.
 export async function setFinalMasterPartnerAction(participantId: string, player2Id: string): Promise<ActionResult> {
@@ -224,7 +226,7 @@ export async function setFinalMasterPartnerAction(participantId: string, player2
   if (!player2Id) return { ok: false, error: "Elegí el compañero." }
   const { data: participant, error: partError } = await sb
     .from("mid_master_participants")
-    .select("id, category_id, player_id")
+    .select("id, category_id, player_id, player_2_id")
     .eq("id", participantId)
     .maybeSingle()
   if (partError) return fail("No se pudo leer al inscripto.", partError)
@@ -232,12 +234,15 @@ export async function setFinalMasterPartnerAction(participantId: string, player2
   const loaded = await loadCategory(participant.category_id)
   if ("error" in loaded) return { ok: false, error: loaded.error }
   const { category } = loaded
+  const completingPending = !participant.player_2_id
   if (normalizeType(category.type) !== "doubles") {
     return { ok: false, error: "Solo las categorías de dobles tienen compañero." }
   }
   const drawn = await hasDraw(participant.category_id)
   if (drawn === null) return { ok: false, error: READ_ERROR }
-  if (drawn) return { ok: false, error: "Los cuadros ya están armados. Primero deshacé los cuadros." }
+  if (drawn && !completingPending) {
+    return { ok: false, error: "Los cuadros ya están armados. Primero deshacé los cuadros." }
+  }
   if (!participant.player_id) return { ok: false, error: "La pareja no tiene jugador 1 cargado." }
   if (player2Id === participant.player_id) {
     return { ok: false, error: "Los dos jugadores de la pareja tienen que ser distintos." }
@@ -267,13 +272,22 @@ export async function setFinalMasterPartnerAction(participantId: string, player2
   if (!name1 || !name2) return { ok: false, error: "No se encontró alguno de los jugadores." }
 
   const name = pairName(name1, name2)
-  const { data: updated, error } = await sb
+  let update = sb
     .from("mid_master_participants")
     .update({ player_2_id: player2Id, name, slug: `${slugify(name)}-${Date.now().toString(36)}` })
     .eq("id", participantId)
-    .select("id")
+  // Completar una pendiente no pisa a otro admin que ya la completó.
+  if (completingPending) update = update.is("player_2_id", null)
+  const { data: updated, error } = await update.select("id")
   if (error) return fail("No se pudo guardar el compañero.", error)
-  if (!updated || updated.length === 0) return { ok: false, error: "La pareja ya no existe; recargá la página." }
+  if (!updated || updated.length === 0) {
+    return {
+      ok: false,
+      error: completingPending
+        ? "La pareja ya tiene compañero o no existe; recargá la página."
+        : "La pareja ya no existe; recargá la página.",
+    }
+  }
 
   revalidateAll()
   return { ok: true }
@@ -338,11 +352,6 @@ export async function drawFinalMasterCategoryAction(categoryId: string): Promise
       ok: false,
       error: `Para armar los cuadros hacen falta entre ${FINAL_MASTER_MIN_ENTRIES} y ${FINAL_MASTER_MAX_ENTRIES} inscriptos (hay ${participants.length}).`,
     }
-  }
-
-  const isDouble = normalizeType(category.type) === "doubles"
-  if (isDouble && hasPendingPartner(participants)) {
-    return { ok: false, error: PENDING_PARTNER_MESSAGE }
   }
 
   const { data: groupRows, error: groupsError } = await sb.from("mid_master_groups").select("*").eq("category_id", categoryId)
