@@ -1,9 +1,9 @@
 // Pareja de dobles con compañero "a confirmar".
 export const PARTNER_TBD_LABEL = "A confirmar"
 
-/** Aviso cuando hay parejas sin compañero (bloquea armar los cuadros). */
-export const PENDING_PARTNER_MESSAGE =
-  "Hay parejas con compañero a confirmar: elegí el compañero antes de armar los cuadros (el orden sale del ranking de los dos)."
+/** Aviso informativo (no bloquea armar los cuadros) cuando hay parejas sin compañero. */
+export const PENDING_PARTNER_NOTICE =
+  "Hay parejas con compañero a confirmar: se ordenan con los puntos del jugador cargado. Si confirmás el compañero después de armar los cuadros, el puesto y la zona no cambian."
 
 /** Nombre de la pareja: "Jugador 1 / Jugador 2" o "Jugador 1 / A confirmar". */
 export function pairName(name1: string, name2?: string | null): string {
@@ -14,4 +14,10 @@ export function pairName(name1: string, name2?: string | null): string {
 /** True si alguna pareja (dobles) todavía no tiene compañero cargado. */
 export function hasPendingPartner(participants: Array<{ player_2_id?: string | null }>): boolean {
   return participants.some((p) => !p.player_2_id)
+}
+
+/** Quita el sufijo " / A confirmar" del nombre de una pareja pendiente. */
+export function stripPendingSuffix(name: string): string {
+  const suffix = ` / ${PARTNER_TBD_LABEL}`
+  return name.endsWith(suffix) ? name.slice(0, -suffix.length) : name
 }

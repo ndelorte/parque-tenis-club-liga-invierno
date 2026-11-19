@@ -7,13 +7,13 @@ import {
   addFinalMasterEntryAction,
   drawFinalMasterCategoryAction,
   removeFinalMasterEntryAction,
-  setFinalMasterPartnerAction,
 } from "@/app/actions/final-master"
 import { createCircuitoPlayerAction } from "@/app/actions/circuito"
 import { Button } from "@/components/ui/button"
+import { PartnerPicker } from "@/components/admin/final-master/PartnerPicker"
 import { InlineError } from "@/components/admin/states"
 import { PlayerCombobox } from "@/components/admin/PlayerCombobox"
-import { hasPendingPartner, PARTNER_TBD_LABEL, PENDING_PARTNER_MESSAGE } from "@/lib/final-master/partner"
+import { hasPendingPartner, PARTNER_TBD_LABEL, PENDING_PARTNER_NOTICE, stripPendingSuffix } from "@/lib/final-master/partner"
 import { serpentineZone, FINAL_MASTER_MAX_ENTRIES, FINAL_MASTER_MIN_ENTRIES } from "@/lib/final-master/draw"
 
 interface Entry {
@@ -46,16 +46,16 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
   const [player2Id, setPlayer2Id] = useState("")
   const [resetKey, setResetKey] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [pickerBusy, setPickerBusy] = useState(false)
+  const busy = loading || pickerBusy
   const [error, setError] = useState("")
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [partnerId, setPartnerId] = useState("")
-  const [partnerError, setPartnerError] = useState("")
 
   const inscribedIds = entries.flatMap((e) => [e.playerId, e.player2Id]).filter((id): id is string => !!id)
   const full = entries.length >= FINAL_MASTER_MAX_ENTRIES
   const canAdd = !full && !!playerId && (!isDouble || !player2Id || player2Id !== playerId)
   const pending = isDouble && hasPendingPartner(entries.map((e) => ({ player_2_id: e.player2Id })))
-  const canDraw = entries.length >= FINAL_MASTER_MIN_ENTRIES && entries.length <= FINAL_MASTER_MAX_ENTRIES && !pending
+  const canDraw = entries.length >= FINAL_MASTER_MIN_ENTRIES && entries.length <= FINAL_MASTER_MAX_ENTRIES
 
   async function handleAdd() {
     setLoading(true)
@@ -70,28 +70,9 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
     } else setError(result.error)
   }
 
-  async function handleSetPartner(participantId: string) {
-    setLoading(true)
-    setPartnerError("")
-    const result = await setFinalMasterPartnerAction(participantId, partnerId)
-    setLoading(false)
-    if (result.ok) {
-      setEditingId(null)
-      setPartnerId("")
-      router.refresh()
-    } else setPartnerError(result.error)
-  }
-
   function startEditing(id: string) {
     setEditingId(id)
-    setPartnerId("")
     setError("")
-    setPartnerError("")
-  }
-
-  function stopEditing() {
-    setEditingId(null)
-    setPartnerError("")
   }
 
   async function handleRemove(id: string) {
@@ -104,7 +85,8 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
   }
 
   async function handleDraw() {
-    if (!confirm(`¿Armar los cuadros con ${entries.length} inscriptos?`)) return
+    const note = pending ? `\n\n${PENDING_PARTNER_NOTICE}` : ""
+    if (!confirm(`¿Armar los cuadros con ${entries.length} inscriptos?${note}`)) return
     setLoading(true)
     setError("")
     const result = await drawFinalMasterCategoryAction(categoryId)
@@ -148,7 +130,7 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
                   <span className="truncate font-semibold text-foreground">
                     {isDouble && !e.player2Id ? (
                       <>
-                        {players.find((p) => p.id === e.playerId)?.displayName ?? e.name.replace(/ \/ A confirmar$/, "")} /{" "}
+                        {players.find((p) => p.id === e.playerId)?.displayName ?? stripPendingSuffix(e.name)} /{" "}
                         <span className="rounded bg-surface px-1.5 py-0.5 text-xs font-bold uppercase text-accent">
                           {PARTNER_TBD_LABEL}
                         </span>
@@ -165,8 +147,8 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
                   <button
                     type="button"
                     data-testid={e.player2Id ? "change-partner" : "choose-partner"}
-                    onClick={() => (editingId === e.id ? stopEditing() : startEditing(e.id))}
-                    disabled={loading}
+                    onClick={() => (editingId === e.id ? setEditingId(null) : startEditing(e.id))}
+                    disabled={busy}
                     aria-expanded={editingId === e.id}
                     className="press shrink-0 rounded-md border border-border-strong px-2.5 py-1.5 text-xs font-bold hover:bg-surface focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent"
                   >
@@ -182,7 +164,7 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
                 <button
                   type="button"
                   onClick={() => void handleRemove(e.id)}
-                  disabled={loading}
+                  disabled={busy}
                   className="press flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-loss-soft hover:text-loss focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent"
                   aria-label={`Quitar a ${e.name}`}
                   title="Quitar"
@@ -191,33 +173,16 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
                 </button>
               </div>
               {editingId === e.id && (
-                <div className="mt-2 flex flex-wrap items-start gap-2 pl-9">
-                  <PlayerCombobox
+                <div className="mt-2 pl-9">
+                  <PartnerPicker
                     key={`partner-${e.id}`}
+                    participantId={e.id}
                     players={players}
                     onCreate={handleCreatePlayer}
-                    onChange={(id) => {
-                      setPartnerId(id)
-                      setPartnerError("")
-                    }}
-                    placeholder="Compañero/a — escribí nombre o apellido"
                     excludeIds={[...inscribedIds.filter((id) => id !== e.player2Id), e.playerId ?? ""].filter(Boolean)}
+                    onDone={() => setEditingId(null)}
+                    onBusy={setPickerBusy}
                   />
-                  <Button
-                    type="button"
-                    data-testid="confirm-partner"
-                    onClick={() => void handleSetPartner(e.id)}
-                    disabled={loading || !partnerId}
-                    size="sm"
-                    className="press min-h-10"
-                  >
-                    Confirmar
-                  </Button>
-                  {partnerError && (
-                    <p role="alert" className="w-full text-sm font-semibold text-loss">
-                      {partnerError}
-                    </p>
-                  )}
                 </div>
               )}
             </li>
@@ -247,7 +212,7 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
               excludeIds={[...inscribedIds, playerId].filter(Boolean)}
             />
           )}
-          <Button type="button" onClick={handleAdd} disabled={loading || !canAdd} size="sm" className="press min-h-10">
+          <Button type="button" onClick={handleAdd} disabled={busy || !canAdd} size="sm" className="press min-h-10">
             Agregar
           </Button>
         </div>
@@ -262,14 +227,14 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
         <Button
           type="button"
           onClick={handleDraw}
-          disabled={loading || !canDraw}
+          disabled={busy || !canDraw}
           className="press min-h-11 h-auto w-full px-4 text-[15px] font-bold"
         >
           {loading ? "Procesando..." : "Armar cuadros"}
         </Button>
         {pending && (
           <p role="status" className="mt-1.5 text-xs font-semibold text-muted-foreground">
-            {PENDING_PARTNER_MESSAGE}
+            {PENDING_PARTNER_NOTICE}
           </p>
         )}
         {entries.length < FINAL_MASTER_MIN_ENTRIES && (

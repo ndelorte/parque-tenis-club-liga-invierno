@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
+import { stripPendingSuffix } from "@/lib/final-master/partner"
 import { ZoneAdmin } from "@/components/admin/mid-master/ZoneAdmin"
 import { KnockoutAdmin } from "@/components/admin/mid-master/KnockoutAdmin"
 import { EntriesPanel } from "@/components/admin/final-master/EntriesPanel"
+import { PendingPartnersPanel } from "@/components/admin/final-master/PartnerPicker"
 import { UndoDrawButton } from "@/components/admin/final-master/FinalMasterActions"
 import { AdminShell, AdminPageHeader } from "@/components/admin/admin-shell"
 import { Notice } from "@/components/admin/states"
@@ -73,7 +75,10 @@ export default async function PanelFinalMasterCategoryPage({ params }: Props) {
       else throw e
     }
   }
-  const players = !drawn && !missingMigration ? await getPlayersForSelect() : []
+  // Con cuadros armados solo se necesita la lista para completar parejas pendientes.
+  const pendingPairs = drawn && !isSingles ? allParticipants.filter((p) => !p.player_2_id && !!p.player_id) : []
+  const players = (!drawn && !missingMigration) || pendingPairs.length > 0 ? await getPlayersForSelect() : []
+  const inscribedIds = allParticipants.flatMap((p) => [p.player_id, p.player_2_id]).filter((id): id is string => !!id)
 
   return (
     <AdminShell
@@ -112,14 +117,23 @@ export default async function PanelFinalMasterCategoryPage({ params }: Props) {
         />
       ) : (
         <>
+          <PendingPartnersPanel
+            pending={pendingPairs.map((p) => ({
+              id: p.id,
+              playerId: p.player_id ?? null,
+              name1: stripPendingSuffix(p.name),
+            }))}
+            players={players}
+            inscribedIds={inscribedIds}
+          />
           <section className="mb-8">
             <h2 className="mb-3 font-heading text-xl font-bold uppercase">Fase de zonas</h2>
             <div className="grid gap-6 lg:grid-cols-2">
-              <div>
+              <div data-testid="zone-A">
                 <p className="mb-2 text-sm font-semibold text-muted-foreground">{groupA.group.name}</p>
                 <ZoneAdmin data={groupA} allowAddParticipant={false} />
               </div>
-              <div>
+              <div data-testid="zone-B">
                 <p className="mb-2 text-sm font-semibold text-muted-foreground">{groupB.group.name}</p>
                 <ZoneAdmin data={groupB} allowAddParticipant={false} />
               </div>
