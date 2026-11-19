@@ -37,16 +37,20 @@ export function MatchCard({ match, participants }: Props) {
       <span className={`text-[15px] ${winnerA ? "font-bold text-mm-gold-light" : "text-mm-text"}`}>
         {nameA}
       </span>
-      <ScoreCells sets={sets} side="a" rawScore={isCompleted ? match.score : undefined} />
+      {isCompleted ? (
+        <ScoreCells sets={sets} side="a" rawScore={match.score} />
+      ) : (
+        // Sin resultado, la columna derecha de la fila A quedaba vacía y la
+        // grilla corría al jugador B a esa celda. El "vs" ocupa las dos filas.
+        <span className="row-span-2 self-center text-right text-xs uppercase tracking-wider text-mm-text-muted">
+          vs
+        </span>
+      )}
 
       <span className={`text-[15px] ${winnerB ? "font-bold text-mm-gold-light" : "text-mm-text"}`}>
         {nameB}
       </span>
-      {isCompleted ? (
-        <ScoreCells sets={sets} side="b" rawScore={match.score} />
-      ) : (
-        <span className="text-right text-xs text-mm-text-muted">vs</span>
-      )}
+      {isCompleted && <ScoreCells sets={sets} side="b" rawScore={match.score} />}
     </li>
   )
 }
