@@ -7,11 +7,13 @@ import {
   addFinalMasterEntryAction,
   drawFinalMasterCategoryAction,
   removeFinalMasterEntryAction,
+  setFinalMasterPartnerAction,
 } from "@/app/actions/final-master"
 import { createCircuitoPlayerAction } from "@/app/actions/circuito"
 import { Button } from "@/components/ui/button"
 import { InlineError } from "@/components/admin/states"
 import { PlayerCombobox } from "@/components/admin/PlayerCombobox"
+import { hasPendingPartner, PARTNER_TBD_LABEL } from "@/lib/final-master/partner"
 import { serpentineZone, FINAL_MASTER_MAX_ENTRIES, FINAL_MASTER_MIN_ENTRIES } from "@/lib/final-master/draw"
 
 interface Entry {
@@ -45,11 +47,14 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
   const [resetKey, setResetKey] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [partnerId, setPartnerId] = useState("")
 
   const inscribedIds = entries.flatMap((e) => [e.playerId, e.player2Id]).filter((id): id is string => !!id)
   const full = entries.length >= FINAL_MASTER_MAX_ENTRIES
-  const canAdd = !full && !!playerId && (!isDouble || (!!player2Id && player2Id !== playerId))
-  const canDraw = entries.length >= FINAL_MASTER_MIN_ENTRIES && entries.length <= FINAL_MASTER_MAX_ENTRIES
+  const canAdd = !full && !!playerId && (!isDouble || !player2Id || player2Id !== playerId)
+  const pending = isDouble && hasPendingPartner(entries.map((e) => ({ player_2_id: e.player2Id })))
+  const canDraw = entries.length >= FINAL_MASTER_MIN_ENTRIES && entries.length <= FINAL_MASTER_MAX_ENTRIES && !pending
 
   async function handleAdd() {
     setLoading(true)
@@ -62,6 +67,24 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
       setResetKey((k) => k + 1)
       router.refresh()
     } else setError(result.error)
+  }
+
+  async function handleSetPartner(participantId: string) {
+    setLoading(true)
+    setError("")
+    const result = await setFinalMasterPartnerAction(participantId, partnerId)
+    setLoading(false)
+    if (result.ok) {
+      setEditingId(null)
+      setPartnerId("")
+      router.refresh()
+    } else setError(result.error)
+  }
+
+  function startEditing(id: string) {
+    setEditingId(id)
+    setPartnerId("")
+    setError("")
   }
 
   async function handleRemove(id: string) {
@@ -111,30 +134,76 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
       {entries.length > 0 && (
         <ol data-testid="entries-list" className="mb-4 divide-y divide-border rounded-md border border-border">
           {entries.map((e, i) => (
-            <li key={e.id} className="flex min-h-12 items-center gap-3 px-3 py-2">
-              <span className="w-6 shrink-0 text-center font-bold tabular-nums text-muted-foreground">{i + 1}°</span>
-              <span className="grid min-w-0 flex-1">
-                <span className="truncate font-semibold text-foreground">{e.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {e.rankingPoints > 0 ? `${e.rankingPoints} pts de ranking` : "Sin ranking"}
+            <li key={e.id} className="px-3 py-2">
+              <div className="flex min-h-12 items-center gap-3">
+                <span className="w-6 shrink-0 text-center font-bold tabular-nums text-muted-foreground">{i + 1}°</span>
+                <span className="grid min-w-0 flex-1">
+                  <span className="truncate font-semibold text-foreground">
+                    {isDouble && !e.player2Id ? (
+                      <>
+                        {e.name.replace(/ \/ [^/]*$/, "")} /{" "}
+                        <span className="rounded bg-surface px-1.5 py-0.5 text-xs font-bold uppercase text-accent">
+                          {PARTNER_TBD_LABEL}
+                        </span>
+                      </>
+                    ) : (
+                      e.name
+                    )}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {e.rankingPoints > 0 ? `${e.rankingPoints} pts de ranking` : "Sin ranking"}
+                  </span>
                 </span>
-              </span>
-              <span
-                className="shrink-0 rounded-full border border-border-strong bg-surface px-2.5 py-0.5 text-xs font-bold"
-                title="Zona que le tocaría"
-              >
-                Zona {serpentineZone(i + 1)}
-              </span>
-              <button
-                type="button"
-                onClick={() => void handleRemove(e.id)}
-                disabled={loading}
-                className="press flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-loss-soft hover:text-loss focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                aria-label={`Quitar a ${e.name}`}
-                title="Quitar"
-              >
-                <Trash2 className="size-4" aria-hidden />
-              </button>
+                {isDouble && (
+                  <button
+                    type="button"
+                    data-testid={e.player2Id ? "change-partner" : "choose-partner"}
+                    onClick={() => (editingId === e.id ? setEditingId(null) : startEditing(e.id))}
+                    disabled={loading}
+                    className="press shrink-0 rounded-md border border-border-strong px-2.5 py-1.5 text-xs font-bold hover:bg-surface focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                  >
+                    {e.player2Id ? "Cambiar compañero" : "Elegir compañero"}
+                  </button>
+                )}
+                <span
+                  className="shrink-0 rounded-full border border-border-strong bg-surface px-2.5 py-0.5 text-xs font-bold"
+                  title="Zona que le tocaría"
+                >
+                  Zona {serpentineZone(i + 1)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void handleRemove(e.id)}
+                  disabled={loading}
+                  className="press flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-loss-soft hover:text-loss focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                  aria-label={`Quitar a ${e.name}`}
+                  title="Quitar"
+                >
+                  <Trash2 className="size-4" aria-hidden />
+                </button>
+              </div>
+              {editingId === e.id && (
+                <div className="mt-2 flex flex-wrap items-start gap-2 pl-9">
+                  <PlayerCombobox
+                    key={`partner-${e.id}`}
+                    players={players}
+                    onCreate={handleCreatePlayer}
+                    onChange={setPartnerId}
+                    placeholder="Compañero/a — escribí nombre o apellido"
+                    excludeIds={[...inscribedIds.filter((id) => id !== e.player2Id), e.playerId ?? ""].filter(Boolean)}
+                  />
+                  <Button
+                    type="button"
+                    data-testid="confirm-partner"
+                    onClick={() => void handleSetPartner(e.id)}
+                    disabled={loading || !partnerId}
+                    size="sm"
+                    className="press min-h-10"
+                  >
+                    Confirmar
+                  </Button>
+                </div>
+              )}
             </li>
           ))}
         </ol>
@@ -167,6 +236,11 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
           </Button>
         </div>
       )}
+      {isDouble && !full && (
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          Si todavía no sabés el compañero, dejalo vacío: queda &quot;{PARTNER_TBD_LABEL}&quot;.
+        </p>
+      )}
 
       <div className="mt-4 border-t border-border pt-4">
         <Button
@@ -177,6 +251,12 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
         >
           {loading ? "Procesando..." : "Armar cuadros"}
         </Button>
+        {pending && (
+          <p role="status" className="mt-1.5 text-xs font-semibold text-muted-foreground">
+            Hay parejas con compañero a confirmar: elegí el compañero antes de armar los cuadros (el orden sale del
+            ranking de los dos).
+          </p>
+        )}
         {entries.length < FINAL_MASTER_MIN_ENTRIES && (
           <p className="mt-1.5 text-xs text-muted-foreground">
             Mínimo {FINAL_MASTER_MIN_ENTRIES} inscriptos para armar los cuadros (hay {entries.length}).

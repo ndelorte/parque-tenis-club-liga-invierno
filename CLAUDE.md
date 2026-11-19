@@ -197,7 +197,7 @@ Rutas viejas sin `[season]` (`/liga-invierno`, `/liga-invierno/categorias/[slug]
 | `/panel-circuito` | Dashboard de Mid Master |
 | `/panel-circuito/categorias/[slug]` | Carga de resultados de Mid Master |
 | `/panel-circuito/final-master` | Final Master: crear la edición (borrador), estado de las 10 categorías y botón "Publicar torneo" / "Despublicar" (migraciones 018 y 019: índices únicos de integridad del sorteo) |
-| `/panel-circuito/final-master/[slug]` | Categoría del Final Master: cargar hasta 8 jugadores (orden por ranking anual), armar cuadros (serpentina), resultados y fechas, deshacer cuadros |
+| `/panel-circuito/final-master/[slug]` | Categoría del Final Master: cargar hasta 8 jugadores (orden por ranking anual), en dobles el compañero puede quedar "A confirmar" y elegirse después (bloquea armar cuadros hasta definirlo), armar cuadros (serpentina), resultados y fechas, deshacer cuadros |
 | `/panel-circuito/mensual` | Circuito mensual: listado de ediciones + alta de edición nueva |
 | `/panel-circuito/mensual/[editionSlug]` | Categorías de una edición mensual |
 | `/panel-circuito/mensual/[editionSlug]/[categorySlug]` | Inscripción de participantes, generar cuadro, carga de resultados |

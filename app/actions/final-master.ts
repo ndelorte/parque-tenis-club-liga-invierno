@@ -8,6 +8,7 @@ import {
   finalMasterSlug,
   isFinalMasterSlug,
 } from "@/lib/final-master/categories"
+import { hasPendingPartner, pairName } from "@/lib/final-master/partner"
 import {
   FINAL_MASTER_MAX_ENTRIES,
   FINAL_MASTER_MIN_ENTRIES,
@@ -162,11 +163,12 @@ export async function addFinalMasterEntryAction(
 
   const isDouble = category.type === "double" || category.type === "doubles"
   if (!playerId) return { ok: false, error: "Elegí un jugador." }
-  if (isDouble) {
-    if (!player2Id) return { ok: false, error: "En dobles hay que elegir los dos jugadores de la pareja." }
-    if (player2Id === playerId) return { ok: false, error: "Los dos jugadores de la pareja tienen que ser distintos." }
+  // En dobles el compañero es opcional: sin él queda "A confirmar".
+  const partnerId = isDouble && player2Id ? player2Id : null
+  if (partnerId && partnerId === playerId) {
+    return { ok: false, error: "Los dos jugadores de la pareja tienen que ser distintos." }
   }
-  const ids = isDouble ? [playerId, player2Id as string] : [playerId]
+  const ids = partnerId ? [playerId, partnerId] : [playerId]
 
   const drawn = await hasDraw(categoryId)
   if (drawn === null) return { ok: false, error: READ_ERROR }
@@ -192,7 +194,7 @@ export async function addFinalMasterEntryAction(
   const nameOf = (id: string) => (players ?? []).find((p: { id: string }) => p.id === id)?.display_name as string | undefined
   const names = ids.map(nameOf)
   if (names.some((n) => !n)) return { ok: false, error: "No se encontró alguno de los jugadores." }
-  const name = (names as string[]).join(" / ")
+  const name = isDouble ? pairName(names[0] as string, names[1]) : (names[0] as string)
 
   const displayOrder = rows.reduce((max, r) => Math.max(max, r.display_order ?? 0), 0) + 1
   const { error } = await sb.from("mid_master_participants").insert({
@@ -200,12 +202,69 @@ export async function addFinalMasterEntryAction(
     name,
     slug: `${slugify(name)}-${Date.now().toString(36)}`,
     player_id: playerId,
-    player_2_id: isDouble ? player2Id : null,
+    player_2_id: partnerId,
     display_order: displayOrder,
     group_name: null,
     is_active: true,
   })
   if (error) return fail("No se pudo agregar al inscripto.", error)
+
+  revalidateAll()
+  return { ok: true }
+}
+
+// Elige (o cambia) el compañero de una pareja de dobles. Permitido con cuadros armados
+// (no re-sortea: el orden ya quedó fijado).
+export async function setFinalMasterPartnerAction(participantId: string, player2Id: string): Promise<ActionResult> {
+  if (!(await isRequestFromAdmin())) return UNAUTHORIZED
+  const sb = db()
+  if (!player2Id) return { ok: false, error: "Elegí el compañero." }
+  const { data: participant, error: partError } = await sb
+    .from("mid_master_participants")
+    .select("id, category_id, player_id")
+    .eq("id", participantId)
+    .maybeSingle()
+  if (partError) return fail("No se pudo leer al inscripto.", partError)
+  if (!participant) return { ok: false, error: "No se encontró al inscripto." }
+  const loaded = await loadCategory(participant.category_id)
+  if ("error" in loaded) return { ok: false, error: loaded.error }
+  const { category } = loaded
+  if (category.type !== "double" && category.type !== "doubles") {
+    return { ok: false, error: "Solo las categorías de dobles tienen compañero." }
+  }
+  if (!participant.player_id) return { ok: false, error: "La pareja no tiene jugador 1 cargado." }
+  if (player2Id === participant.player_id) {
+    return { ok: false, error: "Los dos jugadores de la pareja tienen que ser distintos." }
+  }
+
+  const { data: others, error: othersError } = await sb
+    .from("mid_master_participants")
+    .select("id, player_id, player_2_id")
+    .eq("category_id", participant.category_id)
+    .neq("id", participantId)
+  if (othersError) return fail("No se pudieron leer los inscriptos.", othersError)
+  const taken = new Set(
+    ((others ?? []) as Array<{ player_id: string | null; player_2_id: string | null }>)
+      .flatMap((r) => [r.player_id, r.player_2_id])
+      .filter((x): x is string => !!x),
+  )
+  if (taken.has(player2Id)) return { ok: false, error: "Ese jugador ya está inscripto en la categoría." }
+
+  const { data: players, error: playersError } = await sb
+    .from("players")
+    .select("id, display_name")
+    .in("id", [participant.player_id, player2Id])
+  if (playersError) return fail("No se pudieron leer los jugadores.", playersError)
+  const nameOf = (id: string) => (players ?? []).find((p: { id: string }) => p.id === id)?.display_name as string | undefined
+  const name1 = nameOf(participant.player_id)
+  const name2 = nameOf(player2Id)
+  if (!name1 || !name2) return { ok: false, error: "No se encontró alguno de los jugadores." }
+
+  const { error } = await sb
+    .from("mid_master_participants")
+    .update({ player_2_id: player2Id, name: pairName(name1, name2) })
+    .eq("id", participantId)
+  if (error) return fail("No se pudo guardar el compañero.", error)
 
   revalidateAll()
   return { ok: true }
@@ -269,6 +328,15 @@ export async function drawFinalMasterCategoryAction(categoryId: string): Promise
     return {
       ok: false,
       error: `Para armar los cuadros hacen falta entre ${FINAL_MASTER_MIN_ENTRIES} y ${FINAL_MASTER_MAX_ENTRIES} inscriptos (hay ${participants.length}).`,
+    }
+  }
+
+  const isDouble = category.type === "double" || category.type === "doubles"
+  if (isDouble && hasPendingPartner(participants)) {
+    return {
+      ok: false,
+      error:
+        "Hay parejas con compañero a confirmar: elegí el compañero antes de armar los cuadros (el orden sale del ranking de los dos).",
     }
   }
 
