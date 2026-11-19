@@ -141,6 +141,7 @@ export interface FinalMasterExport {
   semis: KnockoutMatchExport[]
   final: KnockoutMatchExport
   champion: { label: string; name: string } | null
+  isDoubles: boolean
 }
 
 export interface FinalMasterExportInput {
@@ -184,9 +185,10 @@ function buildKnockoutMatch(
   const idB = match?.participant_2_id ?? null
   const winnerId = match?.winner_participant_id ?? null
   const walkover = match?.status === "walkover"
+  const completed = match?.status === "played" || match?.status === "walkover"
   const parsed = parseSetScores(match?.score ?? undefined)
   const side = (id: string | null, seed: string, isA: boolean): KnockoutSideExport => {
-    const isWinner = !!winnerId && !!id && winnerId === id
+    const isWinner = completed && !!winnerId && !!id && winnerId === id
     let sets: string[] = []
     if (walkover) sets = isWinner ? ["W.O."] : []
     else if (parsed.length > 0) sets = parsed.map((s) => String(isA ? s.a : s.b))
@@ -240,11 +242,13 @@ export function buildFinalMasterExport(input: FinalMasterExportInput): FinalMast
   const semis = [0, 1].map((i) => buildKnockoutMatch(semisRaw[i], `Semifinal ${i + 1}`, SEMI_SEEDS[i], nameOf))
   const final = buildKnockoutMatch(finalRaw, "Final", FINAL_SEEDS, nameOf)
 
-  const championName = finalRaw?.winner_participant_id ? nameOf(finalRaw.winner_participant_id) : null
+  const finalDone = finalRaw?.status === "played" || finalRaw?.status === "walkover"
+  const championName = finalDone && finalRaw?.winner_participant_id ? nameOf(finalRaw.winner_participant_id) : null
   return {
     zones,
     semis,
     final,
+    isDoubles: input.isDoubles,
     champion: championName ? { label: championLabel(input.isDoubles, input.categoryName), name: championName } : null,
   }
 }
@@ -273,13 +277,17 @@ export const KO_CARD_H = FM.koHeadH + FM.koSideH * 2
 
 export interface LayoutPlan {
   scale: number
+  natW: number // ancho natural usado (se adapta al aspecto del formato)
   rowH: number
   zoneGap: number
   sectionGap: number
   koGap: number
   contentH: number // en unidades naturales, ya con el reparto del alto sobrante
-  offsetY: number // px que se baja el contenido para centrarlo en el área
+  offsetY: number // px que se baja el contenido (tope 32: el sobrante no se centra)
 }
+
+const MIN_NAT_W = 840
+const MAX_OFFSET_Y = 32
 
 export function planLayout(areaW: number, areaH: number, zoneRowCounts: number[], hasChampion: boolean): LayoutPlan {
   const totalRows = zoneRowCounts.reduce((a, b) => a + b, 0)
@@ -288,20 +296,23 @@ export function planLayout(areaW: number, areaH: number, zoneRowCounts: number[]
   const gapsCount = Math.max(zoneRowCounts.length - 1, 0)
   const natH = zonesFixed + totalRows * FM.rowH + gapsCount * FM.zoneGap + FM.sectionGap + koFixed + FM.koGap
 
-  const scale = Math.min(areaW / FM.natW, areaH / natH, FM.maxScale)
+  // En formatos altos (story) un ancho natural menor sube la escala y llena el alto.
+  const natW = Math.min(Math.max(areaW / (areaH / natH), MIN_NAT_W), FM.natW)
+  const scale = Math.min(areaW / natW, areaH / natH, FM.maxScale)
   let spare = Math.max(areaH / scale - natH, 0)
-  const rowExtra = totalRows > 0 ? Math.min(spare / totalRows, FM.rowH * 0.4) : 0
+  const rowExtra = totalRows > 0 ? Math.min(spare / totalRows, FM.rowH * 0.6) : 0
   spare -= rowExtra * totalRows
-  const gapExtra = Math.min(spare / (gapsCount + 2), 30)
-  spare -= gapExtra * (gapsCount + 2)
-  const contentH = natH + rowExtra * totalRows + gapExtra * (gapsCount + 2)
+  const offsetY = Math.min((spare * scale) / 2, MAX_OFFSET_Y)
+  spare = Math.max(spare - offsetY / scale, 0)
+  const gapExtra = spare / 2 // por igual entre sectionGap y koGap
   return {
     scale,
+    natW,
     rowH: FM.rowH + rowExtra,
-    zoneGap: FM.zoneGap + gapExtra,
+    zoneGap: FM.zoneGap,
     sectionGap: FM.sectionGap + gapExtra,
     koGap: FM.koGap + gapExtra,
-    contentH,
-    offsetY: Math.max((areaH - contentH * scale) / 2, 0),
+    contentH: natH + rowExtra * totalRows + gapExtra * 2,
+    offsetY,
   }
 }

@@ -112,6 +112,7 @@ describe("Final Master", () => {
     cy.get('[data-testid="zone-B"]').should("contain", "Zz E2E 11 / A confirmar")
     cy.get('[data-testid="pending-partners"]').should("be.visible").and("contain", "Zz E2E 11")
     // Se puede exportar el cuadro aunque haya una pareja a confirmar.
+    cy.task("deleteDownload", "final-master-2099-caballeros-primera-dobles-feed.jpg")
     cy.contains("button", "Descargar JPG").click()
     cy.readFile("cypress/downloads/final-master-2099-caballeros-primera-dobles-feed.jpg", null, { timeout: 20000 }).should(
       "have.length.greaterThan",

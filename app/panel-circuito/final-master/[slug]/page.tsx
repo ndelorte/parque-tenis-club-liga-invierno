@@ -10,7 +10,7 @@ import { AdminShell, AdminPageHeader } from "@/components/admin/admin-shell"
 import { Notice } from "@/components/admin/states"
 import { CreateFinalMasterButton } from "@/components/admin/final-master/FinalMasterActions"
 import { FinalMasterSchemaError, getCurrentFinalMasterEdition, getFinalMasterEntries } from "@/lib/data/final-master"
-import { getMmCategoryAdminData, getMmCategoryBySlug } from "@/lib/data/mid-master"
+import { getMmCategoryAdminData, getMmCategoryBySlug, normalizeGroupName } from "@/lib/data/mid-master"
 import { normalizeType } from "@/lib/data/mid-master/types"
 import { getPlayersForSelect } from "@/lib/data/circuito/participants"
 import { isPlayedMatch } from "@/lib/final-master/draw"
@@ -80,14 +80,13 @@ export default async function PanelFinalMasterCategoryPage({ params }: Props) {
   // Con cuadros armados solo se necesita la lista para completar parejas pendientes.
   const pendingPairs = drawn && !isSingles ? allParticipants.filter((p) => !p.player_2_id && !!p.player_id) : []
   const players = (!drawn && !missingMigration) || pendingPairs.length > 0 ? await getPlayersForSelect() : []
-  const zoneName = (name: string) => (/^zona/i.test(name.trim()) ? name.trim() : `Zona ${name.trim()}`)
   const exportData = drawn
     ? buildFinalMasterExport({
         categoryName: category.name,
         isDoubles: !isSingles,
         zones: [
-          { name: zoneName(groupA.group.name), participants: groupA.participants, matches: groupA.matches },
-          { name: zoneName(groupB.group.name), participants: groupB.participants, matches: groupB.matches },
+          { name: normalizeGroupName(groupA.group.name), participants: groupA.participants, matches: groupA.matches },
+          { name: normalizeGroupName(groupB.group.name), participants: groupB.participants, matches: groupB.matches },
         ],
         knockoutMatches,
         allParticipants,

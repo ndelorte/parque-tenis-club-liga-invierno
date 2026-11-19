@@ -153,7 +153,7 @@ function adaptMatch(m: AnyRow): MmMatch {
   }
 }
 
-function normalizeGroupName(raw: string): "Zona A" | "Zona B" {
+export function normalizeGroupName(raw: string): "Zona A" | "Zona B" {
   const upper = raw.toUpperCase().trim()
   if (upper === "A" || upper.endsWith(" A") || upper.startsWith("A")) return "Zona A"
   return "Zona B"

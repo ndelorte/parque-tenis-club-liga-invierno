@@ -138,6 +138,18 @@ describe("buildFinalMasterExport", () => {
     expect(d.champion).toEqual({ label: "Campeones", name: "Dani Soto / Eze Vera" })
   })
 
+  it("isDoubles se propaga", () => {
+    expect(buildFinalMasterExport(input([])).isDoubles).toBe(true)
+    expect(buildFinalMasterExport({ ...input([]), isDoubles: false }).isDoubles).toBe(false)
+  })
+
+  it("sin partido jugado/walkover no hay ganador ni campeón", () => {
+    const final = m({ group_id: null, phase: "final", participant_1_id: "2", participant_2_id: "3", winner_participant_id: "3", status: "pending" })
+    const d = buildFinalMasterExport(input([final]))
+    expect(d.final.b.isWinner).toBe(false)
+    expect(d.champion).toBeNull()
+  })
+
   it("walkover muestra W.O. solo en el ganador", () => {
     const sf = m({ group_id: null, phase: "semifinal", match_order: 1, participant_1_id: "1", participant_2_id: "3", winner_participant_id: "1", status: "walkover" })
     const d = buildFinalMasterExport(input([sf]))
@@ -157,12 +169,30 @@ describe("planLayout", () => {
       it(`${name}${champ ? " con campeón" : ""}: el contenido entra completo`, () => {
         const plan = planLayout(w, h, [4, 4], champ)
         expect(plan.contentH * plan.scale).toBeLessThanOrEqual(h + 0.5)
-        expect(FM.natW * plan.scale).toBeLessThanOrEqual(w + 0.5)
+        expect(plan.natW * plan.scale).toBeLessThanOrEqual(w + 0.5)
         expect(plan.offsetY).toBeGreaterThanOrEqual(0)
         expect(plan.scale).toBeGreaterThan(0.6)
       })
     }
   }
+  for (const rows of [[4, 4], [3, 3]]) {
+    for (const champ of [false, true]) {
+      it(`story ${rows[0]}+${rows[1]}${champ ? " con campeón" : ""}: sin hueco grande arriba`, () => {
+        const plan = planLayout(1000, 1738, rows, champ)
+        expect(plan.offsetY).toBeLessThanOrEqual(40)
+        expect(plan.natW).toBeLessThan(FM.natW)
+        expect(plan.scale).toBeGreaterThan(1)
+        expect(plan.contentH * plan.scale + plan.offsetY).toBeLessThanOrEqual(1738 + 0.5)
+        expect(plan.contentH * plan.scale + plan.offsetY).toBeGreaterThan(1738 - 40)
+      })
+    }
+  }
+  it("feed sin huecos grandes y square completo", () => {
+    const feed = planLayout(1000, 1168, [4, 4], true)
+    expect(feed.contentH * feed.scale + feed.offsetY).toBeGreaterThan(1168 - 40)
+    const sq = planLayout(1000, 898, [4, 4], true)
+    expect(sq.contentH * sq.scale + sq.offsetY).toBeLessThanOrEqual(898 + 0.5)
+  })
   it("zonas de 3 también entran", () => {
     const plan = planLayout(1016, 898, [3, 3], true)
     expect(plan.contentH * plan.scale).toBeLessThanOrEqual(898 + 0.5)

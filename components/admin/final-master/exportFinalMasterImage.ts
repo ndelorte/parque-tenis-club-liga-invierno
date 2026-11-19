@@ -217,9 +217,17 @@ async function setupCanvas(format: IgFormat, year: number, categoryName: string)
 
 const ZC = { pos: 46, pj: 58, pg: 58, pp: 58, sets: 84, dif: 72 }
 
-function drawZone(ctx: CanvasRenderingContext2D, z: ZoneExport, y: number, rowH: number, f: Fonts): number {
+function drawZone(
+  ctx: CanvasRenderingContext2D,
+  z: ZoneExport,
+  y: number,
+  rowH: number,
+  natW: number,
+  isDoubles: boolean,
+  f: Fonts,
+): number {
   const x = 0
-  const w = FM.natW
+  const w = natW
   sectionTitle(ctx, z.name, x, w, y + FM.zoneTitleH - 14, f)
   const top = y + FM.zoneTitleH
   const n = z.rows.length
@@ -242,7 +250,7 @@ function drawZone(ctx: CanvasRenderingContext2D, z: ZoneExport, y: number, rowH:
   ctx.font = `700 15px ${f.sans}`
   const hMid = top + FM.zoneHdrH / 2
   ctx.textAlign = "left"
-  ctx.fillText("JUGADOR", x + ZC.pos, hMid)
+  ctx.fillText(isDoubles ? "PAREJA" : "JUGADOR", x + ZC.pos, hMid)
   ctx.textAlign = "right"
   ;["PJ", "PG", "PP", "SETS", "DIF G"].forEach((h, i) => ctx.fillText(h, colRight(i), hMid))
 
@@ -302,14 +310,16 @@ function drawSide(ctx: CanvasRenderingContext2D, s: KnockoutSideExport, x: numbe
   const setW = 30
   const isWo = s.sets.length === 1 && s.sets[0] === "W.O."
   const isRaw = s.sets.length === 1 && s.sets[0].length > 2 && !isWo
+  const rawText = isRaw ? s.sets[0] : ""
   let right = x + w - 14
   ctx.textAlign = "right"
   ctx.fillStyle = s.isWinner ? C.goldLight : C.muted
   ctx.font = `700 22px ${f.heading}`
   if (isWo || isRaw) {
     ctx.font = `700 ${isWo ? 20 : 16}px ${f.sans}`
-    ctx.fillText(s.sets[0], right, mid)
-    right -= ctx.measureText(s.sets[0]).width + 12
+    const txt = isRaw ? fitLine(ctx, rawText, w * 0.4) : s.sets[0]
+    ctx.fillText(txt, right, mid)
+    right -= ctx.measureText(txt).width + 12
   } else {
     for (let i = s.sets.length - 1; i >= 0; i--) {
       ctx.fillText(s.sets[i], right - 4, mid)
@@ -387,27 +397,27 @@ export async function renderFinalMasterJpeg({ data, year, categoryName, format }
   const plan = planLayout(area.w, area.h, data.zones.map((z) => z.rows.length), !!data.champion)
 
   ctx.save()
-  ctx.translate(area.x + (area.w - FM.natW * plan.scale) / 2, area.y + plan.offsetY)
+  ctx.translate(area.x + (area.w - plan.natW * plan.scale) / 2, area.y + plan.offsetY)
   ctx.scale(plan.scale, plan.scale)
 
   let y = 0
   data.zones.forEach((z, i) => {
-    y = drawZone(ctx, z, y, plan.rowH, fonts)
+    y = drawZone(ctx, z, y, plan.rowH, plan.natW, data.isDoubles, fonts)
     if (i < data.zones.length - 1) y += plan.zoneGap
   })
   y += plan.sectionGap
 
-  sectionTitle(ctx, "Semifinales y final", 0, FM.natW, y + FM.koTitleH - 14, fonts)
+  sectionTitle(ctx, "Semifinales y final", 0, plan.natW, y + FM.koTitleH - 14, fonts)
   y += FM.koTitleH
-  const colW = (FM.natW - 24) / 2
+  const colW = (plan.natW - 24) / 2
   drawKoCard(ctx, data.semis[0], 0, y, colW, false, fonts)
   drawKoCard(ctx, data.semis[1], colW + 24, y, colW, false, fonts)
   y += KO_CARD_H + plan.koGap
-  const finalW = 580
-  drawKoCard(ctx, data.final, (FM.natW - finalW) / 2, y, finalW, true, fonts)
+  const finalW = Math.min(580, plan.natW)
+  drawKoCard(ctx, data.final, (plan.natW - finalW) / 2, y, finalW, true, fonts)
   y += KO_CARD_H
   if (data.champion) {
-    drawChampion(ctx, data.champion, (FM.natW - finalW) / 2, y + FM.champGap, finalW, fonts)
+    drawChampion(ctx, data.champion, (plan.natW - finalW) / 2, y + FM.champGap, finalW, fonts)
   }
   ctx.restore()
   return toJpeg(canvas)

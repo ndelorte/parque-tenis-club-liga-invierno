@@ -1,5 +1,6 @@
 import { defineConfig } from "cypress"
-import { existsSync, readFileSync } from "node:fs"
+import { existsSync, readFileSync, rmSync } from "node:fs"
+import { basename, join } from "node:path"
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 
 // Año de las pruebas e2e: el server tiene que correr con FINAL_MASTER_YEAR=2099.
@@ -39,6 +40,12 @@ export default defineConfig({
     defaultCommandTimeout: 10000,
     setupNodeEvents(on, config) {
       on("task", {
+        // Borra un archivo previo de cypress/downloads/ (solo el nombre, sin rutas).
+        deleteDownload(file: string) {
+          rmSync(join("cypress", "downloads", basename(file)), { force: true })
+          return null
+        },
+
         // Borra la edición final-master-<year> y todo lo que cuelga de ella.
         async cleanupFinalMaster(year: number) {
           if (!Number.isInteger(year) || year < MIN_E2E_YEAR) {
