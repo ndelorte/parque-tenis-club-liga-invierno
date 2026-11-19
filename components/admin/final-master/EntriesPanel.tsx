@@ -148,7 +148,7 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
                   <span className="truncate font-semibold text-foreground">
                     {isDouble && !e.player2Id ? (
                       <>
-                        {players.find((p) => p.id === e.playerId)?.displayName ?? e.name} /{" "}
+                        {players.find((p) => p.id === e.playerId)?.displayName ?? e.name.replace(/ \/ A confirmar$/, "")} /{" "}
                         <span className="rounded bg-surface px-1.5 py-0.5 text-xs font-bold uppercase text-accent">
                           {PARTNER_TBD_LABEL}
                         </span>
@@ -196,7 +196,10 @@ export function EntriesPanel({ categoryId, isDouble, year, entries, players: ini
                     key={`partner-${e.id}`}
                     players={players}
                     onCreate={handleCreatePlayer}
-                    onChange={setPartnerId}
+                    onChange={(id) => {
+                      setPartnerId(id)
+                      setPartnerError("")
+                    }}
                     placeholder="Compañero/a — escribí nombre o apellido"
                     excludeIds={[...inscribedIds.filter((id) => id !== e.player2Id), e.playerId ?? ""].filter(Boolean)}
                   />

@@ -85,7 +85,7 @@ describe("Final Master", () => {
     })
   })
 
-  it("dobles: pareja con compañero A confirmar bloquea armar cuadros hasta elegirlo", () => {
+  it("dobles: la pareja con compañero A confirmar bloquea armar cuadros hasta elegirlo", () => {
     assertTestEdition()
     cy.visit("/panel-circuito/final-master/caballeros-primera-dobles")
     // 3 parejas completas (01/02, 03/04, 05/06) + 1 sin compañero (07).
@@ -111,7 +111,13 @@ describe("Final Master", () => {
     cy.get('[data-testid="confirm-partner"]').click()
     cy.get('[data-testid="entries-list"]').contains("Zz E2E 07 / Zz E2E 08").should("be.visible")
     cy.get('[data-testid="entries-list"]').should("not.contain", "A confirmar")
-    cy.contains("button", "Armar cuadros").should("be.enabled")
+    cy.contains("Hay parejas con compañero a confirmar").should("not.exist")
+
+    // Se quitan las parejas: si no, "Publicar torneo" fallaría por esta categoría sin cuadros.
+    for (let left = 4; left > 0; left--) {
+      cy.get('[data-testid="entries-list"] > li').first().find('button[aria-label^="Quitar"]').click()
+      cy.contains("p", `${left - 1}/8`).should("be.visible")
+    }
   })
 
   it("no se puede publicar sin cuadros armados", () => {
