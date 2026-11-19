@@ -14,6 +14,8 @@ import { getMmCategoryAdminData, getMmCategoryBySlug } from "@/lib/data/mid-mast
 import { normalizeType } from "@/lib/data/mid-master/types"
 import { getPlayersForSelect } from "@/lib/data/circuito/participants"
 import { isPlayedMatch } from "@/lib/final-master/draw"
+import { buildFinalMasterExport } from "@/lib/final-master/exportImage"
+import { ExportFinalMasterButton } from "@/components/admin/final-master/ExportFinalMasterButton"
 
 export const dynamic = "force-dynamic"
 
@@ -78,6 +80,19 @@ export default async function PanelFinalMasterCategoryPage({ params }: Props) {
   // Con cuadros armados solo se necesita la lista para completar parejas pendientes.
   const pendingPairs = drawn && !isSingles ? allParticipants.filter((p) => !p.player_2_id && !!p.player_id) : []
   const players = (!drawn && !missingMigration) || pendingPairs.length > 0 ? await getPlayersForSelect() : []
+  const zoneName = (name: string) => (/^zona/i.test(name.trim()) ? name.trim() : `Zona ${name.trim()}`)
+  const exportData = drawn
+    ? buildFinalMasterExport({
+        categoryName: category.name,
+        isDoubles: !isSingles,
+        zones: [
+          { name: zoneName(groupA.group.name), participants: groupA.participants, matches: groupA.matches },
+          { name: zoneName(groupB.group.name), participants: groupB.participants, matches: groupB.matches },
+        ],
+        knockoutMatches,
+        allParticipants,
+      })
+    : null
   const inscribedIds = allParticipants.flatMap((p) => [p.player_id, p.player_2_id]).filter((id): id is string => !!id)
 
   return (
@@ -126,6 +141,14 @@ export default async function PanelFinalMasterCategoryPage({ params }: Props) {
             players={players}
             inscribedIds={inscribedIds}
           />
+          {exportData && (
+            <ExportFinalMasterButton
+              data={exportData}
+              year={year}
+              categoryName={category.name}
+              fileName={`final-master-${year}-${slug}`}
+            />
+          )}
           <section className="mb-8">
             <h2 className="mb-3 font-heading text-xl font-bold uppercase">Fase de zonas</h2>
             <div className="grid gap-6 lg:grid-cols-2">
