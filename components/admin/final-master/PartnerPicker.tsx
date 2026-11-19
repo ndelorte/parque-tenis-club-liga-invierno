@@ -33,9 +33,15 @@ export function PartnerPicker({ participantId, players, excludeIds, onCreate, on
     setLoading(true)
     onBusy?.(true)
     setError("")
-    const result = await setFinalMasterPartnerAction(participantId, partnerId)
-    setLoading(false)
-    onBusy?.(false)
+    let result: Awaited<ReturnType<typeof setFinalMasterPartnerAction>>
+    try {
+      result = await setFinalMasterPartnerAction(participantId, partnerId)
+    } catch {
+      result = { ok: false, error: "No se pudo guardar el compañero. Revisá la conexión y probá de nuevo." }
+    } finally {
+      setLoading(false)
+      onBusy?.(false)
+    }
     if (result.ok) {
       setPartnerId("")
       onDone?.()

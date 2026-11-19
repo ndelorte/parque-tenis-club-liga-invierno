@@ -129,11 +129,11 @@ export default async function PanelFinalMasterCategoryPage({ params }: Props) {
           <section className="mb-8">
             <h2 className="mb-3 font-heading text-xl font-bold uppercase">Fase de zonas</h2>
             <div className="grid gap-6 lg:grid-cols-2">
-              <div data-testid={`zone-${groupA.group.name}`}>
+              <div data-testid="zone-A">
                 <p className="mb-2 text-sm font-semibold text-muted-foreground">{groupA.group.name}</p>
                 <ZoneAdmin data={groupA} allowAddParticipant={false} />
               </div>
-              <div data-testid={`zone-${groupB.group.name}`}>
+              <div data-testid="zone-B">
                 <p className="mb-2 text-sm font-semibold text-muted-foreground">{groupB.group.name}</p>
                 <ZoneAdmin data={groupB} allowAddParticipant={false} />
               </div>

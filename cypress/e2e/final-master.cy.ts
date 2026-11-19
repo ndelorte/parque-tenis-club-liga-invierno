@@ -109,7 +109,7 @@ describe("Final Master", () => {
     // Con cuadros armados: bloque de pendientes arriba de las zonas.
     cy.contains("Fase de zonas").should("be.visible")
     // Sin ranking: orden de carga; la 6ª pareja cae en la zona B por serpentina.
-    cy.get('[data-testid="zone-Zona B"]').should("contain", "Zz E2E 11 / A confirmar")
+    cy.get('[data-testid="zone-B"]').should("contain", "Zz E2E 11 / A confirmar")
     cy.get('[data-testid="pending-partners"]').should("be.visible").and("contain", "Zz E2E 11")
     cy.get('[data-testid="pending-partners"] [data-testid="choose-partner"]')
       .click()
@@ -119,7 +119,7 @@ describe("Final Master", () => {
     cy.get('[data-testid="confirm-partner"]').click()
     cy.get('[data-testid="pending-partners"]').should("not.exist")
     // Sin re-sortear: sigue en la zona B.
-    cy.get('[data-testid="zone-Zona B"]').should("contain", "Zz E2E 11 / Zz E2E 12")
+    cy.get('[data-testid="zone-B"]').should("contain", "Zz E2E 11 / Zz E2E 12")
 
     // Se deshacen los cuadros y se quitan las parejas: si no, "Publicar torneo" fallaría
     // por esta categoría sin cuadros.
